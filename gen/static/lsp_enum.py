@@ -21,6 +21,16 @@ def _is_descriptor(obj: Any) -> bool:
     )
 
 
+class LSPEnumException(Exception):
+    value: str
+
+    def __init__(self, value: str) -> None:
+        self.value = value
+
+    def __str__(self) -> str:
+        return f"Enum does not contain an entry with value {self.value} and does not support custom values."
+
+
 class _LSPEnumProtoMember:
     """This class is a temporary representation of an LSPEnum member.
     When the final LSPEnum class is created, it replaces the value with
@@ -68,7 +78,7 @@ class _LSPEnum(metaclass=_LSPEnumMeta):
         elif cls._allow_custom_values:
             return cls._create_member(value)
         else:
-            raise Exception("Error") # TODO
+            raise LSPEnumException(value)
 
 
     @classmethod

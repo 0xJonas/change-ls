@@ -5,6 +5,7 @@ from gen.generator import Generator, LSPGeneratorException, ReferenceResolver
 import pytest
 
 from gen.static.util import LSPLiteralException, LSPTypeException
+from gen.static.lsp_enum import LSPEnumException
 
 
 def test_reference_resolver_resolves_reference() -> None:
@@ -121,7 +122,9 @@ def get_empty_meta_model() -> MetaModel:
 
 def get_test_default_names() -> Dict[str, Any]:
     import gen.static.util as util
+    import gen.static.lsp_enum as lsp_enum
     names = util.__dict__.copy()
+    names.update(lsp_enum.__dict__)
     exec("""\
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Union
@@ -498,10 +501,7 @@ def test_generator_generate_structure_definition() -> None:
 
     generator = Generator(model)
 
-    import gen.static.util as util
-    from dataclasses import dataclass
-    names = util.__dict__.copy()
-    names["dataclass"] = dataclass
+    names = get_test_default_names()
 
     # Process class definition
     exec(generator.generate_structure_definition(model.structures[2]), names)
@@ -627,3 +627,66 @@ def test_generator_get_referenced_definition_anytype() -> None:
     assert "Test5" in res
     assert "TestTypeAlias" in res
     assert "ShouldNotShowUp" not in res
+
+
+def test_generator_generate_enum_definition() -> None:
+    model = MetaModel.from_json({
+        "enumerations": [
+            {
+                "name": "TestEnum1",
+                "type": {
+                    "kind": "base",
+                    "name": "string"
+                },
+                "values": [
+                    {
+                        "name": "testStr1",
+                        "value": "Hello"
+                    },
+                    {
+                        "name": "testStr2",
+                        "value": "World"
+                    }
+                ]
+            },
+            {
+                "name": "TestEnum2",
+                "type": {
+                    "kind": "base",
+                    "name": "integer"
+                },
+                "supportsCustomValues": True,
+                "values": [
+                    {
+                        "name": "testInt1",
+                        "value": 11
+                    },
+                    {
+                        "name": "testInt2",
+                        "value": 22
+                    }
+                ]
+            }
+        ],
+        "notifications": [],
+        "requests": [],
+        "structures": [],
+        "typeAliases": [],
+    })
+    generator = Generator(model)
+
+    names = get_test_default_names()
+
+    exec(generator.generate_enumeration_definition(model.enumerations[0]), names)
+    exec(generator.generate_enumeration_definition(model.enumerations[1]), names)
+
+    assert eval("TestEnum1.testStr1.value", names) == "Hello"
+    assert eval("TestEnum1.testStr2.value", names) == "World"
+    assert eval("TestEnum1('Hello') is TestEnum1.testStr1", names)
+    assert eval("TestEnum2.testInt1.value", names) == 11
+    assert eval("TestEnum2.testInt2.value", names) == 22
+    assert eval("TestEnum2(33).value", names) == 33
+    assert eval("TestEnum2(44) is TestEnum2(44)", names)
+
+    with pytest.raises(LSPEnumException):
+        eval("TestEnum1('Error')", names)

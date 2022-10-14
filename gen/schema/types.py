@@ -53,7 +53,7 @@ class Enumeration:
     proposed: Optional[bool]
     since: Optional[str]
     supports_custom_values: Optional[bool]
-    enum_type: EnumerationType
+    type: EnumerationType
     values: Tuple[EnumerationEntry, ...]
 
     @classmethod
@@ -63,12 +63,12 @@ class Enumeration:
         proposed = json_get_optional_bool(obj, "proposed")
         since = json_get_optional_string(obj, "since")
         supports_custom_values = json_get_optional_bool(obj, "supportsCustomValues")
-        enum_type_json = json_get_object(obj, "type")
+        type_json = json_get_object(obj, "type")
         values_json = json_get_array_of_objects(obj, "values")
 
-        enum_type = EnumerationType.from_json(enum_type_json)
+        type = EnumerationType.from_json(type_json)
         values = tuple(EnumerationEntry.from_json(v) for v in values_json)
-        return cls(documentation, name, proposed, since, supports_custom_values, enum_type, values)
+        return cls(documentation, name, proposed, since, supports_custom_values, type, values)
 
 
 @dataclass(frozen=True)

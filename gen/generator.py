@@ -421,6 +421,12 @@ class Generator:
             return out
 
 
+    def _generate_documentation_comment(self, documentation: str) -> str:
+        out = '\n'.join(["# " + l for l in documentation.splitlines()])
+        out += '\n'
+        return out
+
+
     def _generate_property_declaration(self, prop: Property) -> str:
         """Generates declaration code for a `Property`."""
         type_annotation = self._generate_type_annotation(prop.type)
@@ -428,8 +434,7 @@ class Generator:
             type_annotation = f"Optional[{type_annotation}]"
 
         if prop.documentation:
-            documentation = '\n'.join(["# " + l for l in prop.documentation.splitlines()])
-            documentation += '\n'
+            documentation = self._generate_documentation_comment(prop.documentation)
         else:
             documentation = ""
 
@@ -612,6 +617,38 @@ class {class_name}({", ".join(superclasses)}):
         properties = tuple(self.collect_structure_properties(struct))
 
         return self._generate_structure_definition_generic(struct.name, struct.documentation, properties, tuple(superclasses))
+
+
+    def generate_enumeration_definition(self, enum: Enumeration) -> str:
+        superclasses: List[str] = []
+        if enum.type.name == "string":
+            superclasses.append("TypedLSPEnum[str]")
+        elif enum.type.name in ["integer", "uinteger"]:
+            superclasses.append("TypedLSPEnum[int]")
+        else:
+            assert False # Broken Enumeration
+
+        if enum.supports_custom_values:
+            superclasses.append("AllowCustomValues")
+
+        entry_definitions: List[str] = []
+        for e in enum.values:
+            if e.documentation:
+                documentation = self._generate_documentation_comment(e.documentation)
+            else:
+                documentation = ""
+
+            value = '\"' + str(e.value) + '\"' if enum.type.name == "string" else str(e.value)
+
+            entry_definitions.append(f"{documentation}{e.name}: ClassVar[\"{enum.name}\"] = {value} # type: ignore")
+
+        body = "\n\n".join(entry_definitions)
+
+        return f'''\
+class {enum.name}({", ".join(superclasses)}):
+    """{enum.documentation if enum.documentation else ""}"""
+
+{indent(body)}'''
 
 
 #     def generate_anonymus_py(self) -> str:

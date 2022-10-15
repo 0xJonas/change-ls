@@ -57,6 +57,9 @@ class ReferenceResolver:
         return self._resolve_reference_internal(reference.name, [])
 
 
+# All the types which end up in structures.py
+structures_py_type = Union[Structure, StructureLiteral, TypeAlias, AndType]
+
 class Generator:
     _meta_model: MetaModel
     _reference_resolver: ReferenceResolver
@@ -155,6 +158,19 @@ class Generator:
         return arg
 
 
+    def _generate_parse_expression_reference(self, reference: ReferenceType, arg: str) -> str:
+        target = self._reference_resolver.resolve_reference(reference)
+        if isinstance(target, AnyType):
+            # typeAlias pointing to an AnyType
+            return self.generate_parse_expression(target, arg)
+        elif isinstance(target, Structure):
+            return f"{reference.name}.from_json({arg})"
+        elif isinstance(target, Enumeration):
+            return f"{reference.name}({arg})"
+        else:
+            raise LSPGeneratorException("Reference pointing to an unsupported type.")
+
+
     def _generate_parse_expression_mapping(self, map: MapType, arg: str) -> str:
         """Generates an expression that parses the given `MapType` from the given `arg`.
         The expression evaluates to a Python dict, which maps arbitrary instances of the
@@ -162,7 +178,13 @@ class Generator:
         if isinstance(map.key, MapKeyType):
             assert_type_func_key = self._json_type_to_assert_function[self._get_expected_json_type_mapkey(map.key)]
         else:
-            return "" # TODO reference
+            target = self._reference_resolver.resolve_reference(map.key)
+            if not isinstance(target, AnyType):
+                raise LSPGeneratorException("A Reference in a map key must point to an AnyType.")
+            json_expected_type = self._get_expected_json_type(target)
+            if not json_expected_type:
+                raise LSPGeneratorException("Weird AnyType in a map key.")
+            assert_type_func_key = self._json_type_to_assert_function[json_expected_type]
 
         if expected_json_type_value := self._get_expected_json_type(map.value):
             assert_type_func_value = self._json_type_to_assert_function[expected_json_type_value]
@@ -203,7 +225,8 @@ class Generator:
             assert isinstance(val.content, BaseType)
             return self._generate_parse_expression_base(val.content, arg)
         elif val.kind == "reference":
-            return "" # TODO
+            assert isinstance(val.content, ReferenceType)
+            return self._generate_parse_expression_reference(val.content, arg)
         elif val.kind == "array":
             assert isinstance(val.content, ArrayType)
             json_type = self._get_expected_json_type(val.content.element)
@@ -267,7 +290,8 @@ class Generator:
             assert isinstance(val.content, BaseType)
             return self._generate_type_annotation_base(val.content)
         elif val.kind == "reference":
-            return "" # TODO
+            assert isinstance(val.content, ReferenceType)
+            return val.content.name
         elif val.kind == "array":
             assert isinstance(val.content, ArrayType)
             return f"List[{self._generate_type_annotation(val.content.element)}]"
@@ -276,10 +300,11 @@ class Generator:
             if isinstance(val.content.key, MapKeyType):
                 key_annotation = self._generate_type_annotation_mapkey(val.content.key)
             else:
-                key_annotation = "" # TODO
+                key_annotation = val.content.key.name
             return f"Dict[{key_annotation}, {self._generate_type_annotation(val.content.value)}]"
         elif val.kind == "and":
-            return "" # TODO
+            assert isinstance(val.content, AndType)
+            return self._anonymus_andtype_names[val.content]
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
             item_annotations = [self._generate_type_annotation(v) for v in val.content.items]
@@ -341,7 +366,9 @@ class Generator:
 
 
     def get_referenced_definitions(self, obj: Union[Notification, Request, Structure, TypeAlias, StructureLiteral, AndType]) -> List[str]:
-        if isinstance(obj, Notification):
+        if isinstance(obj, Enumeration):
+            return []
+        elif isinstance(obj, Notification):
             out: List[str] = []
 
             if obj.params:
@@ -419,6 +446,41 @@ class Generator:
                     raise LSPGeneratorException("References to non-structure values are not supported in AndType items")
                 out += self.get_referenced_definitions(target)
             return out
+
+
+    def sort_structures_and_typealiases_rec(self, obj: structures_py_type, status: Dict[structures_py_type, str], list: List[structures_py_type]) -> None:
+        if status.get(obj) in ["pending", "visited"]:
+            return
+
+        status[obj] = "pending"
+
+        for r in self.get_referenced_definitions(obj):
+            if isinstance(r, Enumeration):
+                # Enumerations only ever reference AnyTypes
+                continue
+
+            if not isinstance(r, (Structure, TypeAlias, StructureLiteral, AndType)):
+                raise LSPGeneratorException("Structure or TypeAlias is referencing an unsupported type.")
+
+            self.sort_structures_and_typealiases_rec(r, status, list)
+
+        list.append(obj)
+        status[obj] = "visited"
+
+
+    def sort_structures_and_typealiases(self) -> List[structures_py_type]:
+        """Topologically sorts Structures and TypeAliases, so that the definition can
+        be generated in a valid order."""
+        status: Dict[structures_py_type, str] = {}
+        list: List[structures_py_type] = []
+
+        for s in self._meta_model.structures:
+            self.sort_structures_and_typealiases_rec(s, status, list)
+
+        for t in self._meta_model.type_aliases:
+            self.sort_structures_and_typealiases_rec(t, status, list)
+
+        return list
 
 
     def _generate_documentation_comment(self, documentation: str) -> str:
@@ -510,7 +572,7 @@ class {class_name}({", ".join(superclasses)}):
             for i in val.content.items:
                 self._add_anonymus_definitions_from_anytype(i)
 
-            class_name = "AnonymusAndType" + str(len(self._anonymus_structure_names))
+            class_name = "AnonymusAndType" + str(len(self._anonymus_andtype_names))
             self._anonymus_andtype_names[val.content] = class_name
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
@@ -649,15 +711,3 @@ class {enum.name}({", ".join(superclasses)}):
     """{enum.documentation if enum.documentation else ""}"""
 
 {indent(body)}'''
-
-
-#     def generate_anonymus_py(self) -> str:
-#         header = """\
-# from util import *
-# from dataclasses import dataclass
-# from typing import Dict, List, Tuple, Union
-
-# """
-#         definitions = "\n\n\n".join(self._anonymus_structures)
-
-#         return header + definitions

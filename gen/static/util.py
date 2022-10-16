@@ -88,7 +88,7 @@ json_get_bool = _create_get_function(bool, "bool", bool)
 json_get_string = _create_get_function(str, "string", str)
 json_get_array = _create_get_function(MutableSequence, "array", Sequence[JSON_VALUE]) # use MutableSequence so that a str is not classified as an array
 json_get_object = _create_get_function(Mapping, "object", Mapping[str, JSON_VALUE])
-json_get_none = _create_get_function(type(None), "null", type(None))
+json_get_null = _create_get_function(type(None), "null", type(None))
 
 json_get_optional_int = _create_get_optional_function(int, "number (int)", int)
 json_get_optional_float = _create_get_optional_function(float, "number (real)", float)
@@ -96,7 +96,7 @@ json_get_optional_bool = _create_get_optional_function(bool, "bool", bool)
 json_get_optional_string = _create_get_optional_function(str, "string", str)
 json_get_optional_array = _create_get_optional_function(MutableSequence, "array", Sequence[JSON_VALUE]) # use MutableSequence so that a str is not classified as an array
 json_get_optional_object = _create_get_optional_function(Mapping, "object", Mapping[str, JSON_VALUE])
-json_get_optional_none = _create_get_optional_function(type(None), "null", type(None))
+json_get_optional_null = _create_get_optional_function(type(None), "null", type(None))
 
 json_assert_type_int = _create_assert_type_function(int, "number (int)", int)
 json_assert_type_float = _create_assert_type_function(float, "number (real)", float)
@@ -104,7 +104,7 @@ json_assert_type_bool = _create_assert_type_function(bool, "bool", bool)
 json_assert_type_string = _create_assert_type_function(str, "string", str)
 json_assert_type_array = _create_assert_type_function(MutableSequence, "array", Sequence[JSON_VALUE]) # use MutableSequence so that a str is not classified as an array
 json_assert_type_object = _create_assert_type_function(Mapping, "object", Mapping[str, JSON_VALUE])
-json_assert_type_none = _create_assert_type_function(type(None), "null", type(None))
+json_assert_type_null = _create_assert_type_function(type(None), "null", type(None))
 
 
 def match_string(val: str, expected: str) -> str:

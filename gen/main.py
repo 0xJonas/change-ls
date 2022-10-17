@@ -1,5 +1,5 @@
-from .generator import Generator
-import schema.types as t
+from gen.generator import Generator
+import gen.schema.types as t
 import json
 
 
@@ -14,5 +14,8 @@ if __name__ == "__main__":
         print(len(meta_model.enumerations))
 
         generator = Generator(meta_model)
-        # print(generator.generate_structure_literal_definition(meta_model.structures[266].properties[0].type.content))
-        generator.generate_anonymus_structure_definitions()
+
+        with open("lspscript/protocol/enumerations.py", "w", encoding="utf-8") as file:
+            file.write(generator.generate_enumerations_py())
+        with open("lspscript/protocol/structures.py", "w", encoding="utf-8") as file:
+            file.write(generator.generate_structures_py())

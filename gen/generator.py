@@ -1,10 +1,10 @@
 from keyword import iskeyword
-from .schema.anytype import AndType, AnyType, ArrayType, BaseType, BooleanLiteralType, IntegerLiteralType, MapKeyType, MapType, OrType, Property, StringLiteralType, StructureLiteral, StructureLiteralType, TupleType
-from .schema.types import Enumeration, MetaModel, Notification, ReferenceType, Request, Structure, TypeAlias
+from gen.schema.anytype import AndType, AnyType, ArrayType, BaseType, BooleanLiteralType, IntegerLiteralType, MapKeyType, MapType, OrType, Property, StringLiteralType, StructureLiteral, StructureLiteralType, TupleType
+from gen.schema.types import Enumeration, MetaModel, Notification, ReferenceType, Request, Structure, TypeAlias
 
 from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
 
-from .schema.util import JSON_TYPE_NAME
+from gen.schema.util import JSON_TYPE_NAME
 
 
 class LSPGeneratorException(Exception):
@@ -22,9 +22,12 @@ def indent(text: str) -> str:
 
 
 def _generate_documentation_comment(documentation: str) -> str:
-    out = '\n'.join(["# " + l for l in documentation.splitlines()])
-    out += '\n'
-    return out
+    out: List[str] = []
+    for l in documentation.splitlines():
+        l = l.replace("\\", "\\\\")
+        l = "# " + l
+        out.append(l)
+    return "\n".join(out) + "\n"
 
 
 def _escape_keyword(name: str) -> str:

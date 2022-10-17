@@ -620,13 +620,14 @@ def test_generator_get_referenced_definition_anytype() -> None:
     generator = Generator(model)
 
     res = generator.get_referenced_definitions(model.structures[0])
-    assert "Test1" in res
-    assert "Test2" in res
-    assert "Test3" in res
-    assert "Test4" in res
-    assert "Test5" in res
-    assert "TestTypeAlias" in res
-    assert "ShouldNotShowUp" not in res
+    print(res)
+    assert model.structures[1] in res
+    assert model.structures[2] in res
+    assert model.structures[3] in res
+    assert model.structures[4] in res
+    assert model.structures[5] in res
+    assert model.type_aliases[0] in res
+    assert model.structures[6] not in res
 
 
 def test_generator_generate_enum_definition() -> None:

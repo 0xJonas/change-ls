@@ -1,8 +1,10 @@
-from typing import Any, Dict
 from gen.schema.anytype import AnyType
 from gen.schema.types import MetaModel, ReferenceType
 from gen.generator import Generator, LSPGeneratorException, ReferenceResolver
+from gen.schema.util import JSON_VALUE
+
 import pytest
+from typing import Any, Dict
 
 from gen.static.util import LSPLiteralException, LSPTypeException
 from gen.static.lsp_enum import LSPEnumException
@@ -209,7 +211,7 @@ def test_generator_generate_parse_expression_anytype_literal() -> None:
     names["dataclass"] = dataclass
 
     # Process class definition
-    exec(generator._anonymus_structures[0], names)
+    # exec(generator._anonymus_structures[0], names)
 
     # Parse expression using class definition
     res = eval(expr, names)
@@ -217,8 +219,8 @@ def test_generator_generate_parse_expression_anytype_literal() -> None:
     assert res.test1 == "Hello"
 
 
-def test_generator_parse_anytypes() -> None:
-    model = MetaModel.from_json({
+def get_anytype_test_model() -> Dict[str, JSON_VALUE]:
+    return {
         "enumerations": [],
         "notifications": [],
         "requests": [],
@@ -294,6 +296,75 @@ def test_generator_parse_anytypes() -> None:
                 ]
             },
             {
+                "name": "Part1",
+                "properties": [
+                    {
+                        "name": "part1",
+                        "type": {
+                            "kind": "base",
+                            "name": "integer"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Part2",
+                "properties": [
+                    {
+                        "name": "part2",
+                        "type": {
+                            "kind": "base",
+                            "name": "boolean"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "TestAnd",
+                "properties": [
+                    {
+                        "name": "test",
+                        "type": {
+                            "kind": "and",
+                            "items": [
+                                {
+                                    "kind": "reference",
+                                    "name": "Part1"
+                                },
+                                {
+                                    "kind": "reference",
+                                    "name": "Part2"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "TestOr",
+                "properties": [
+                    {
+                        "name": "test",
+                        "type": {
+                            "kind": "or",
+                            "items": [
+                                {
+                                    "kind": "base",
+                                    "name": "integer"
+                                },
+                                {
+                                    "kind": "array",
+                                    "element": {
+                                        "kind": "base",
+                                        "name": "integer"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
                 "name": "TestTuple",
                 "properties": [
                     {
@@ -316,21 +387,79 @@ def test_generator_parse_anytypes() -> None:
                         }
                     }
                 ]
+            },
+            {
+                "name": "TestLiteral",
+                "properties": [
+                    {
+                        "name": "test",
+                        "type": {
+                            "kind": "literal",
+                            "value": {
+                                "properties": [
+                                    {
+                                        "name": "sub",
+                                        "type": {
+                                            "kind": "base",
+                                            "name": "string"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "TestStringLiteral",
+                "properties": [
+                    {
+                        "name": "test",
+                        "type": {
+                            "kind": "stringLiteral",
+                            "value": "test123"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "TestIntegerLiteral",
+                "properties": [
+                    {
+                        "name": "test",
+                        "type": {
+                            "kind": "integerLiteral",
+                            "value": 4096
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "TestBooleanLiteral",
+                "properties": [
+                    {
+                        "name": "test",
+                        "type": {
+                            "kind": "booleanLiteral",
+                            "value": True
+                        }
+                    }
+                ]
             }
         ],
         "typeAliases": []
-    })
+    }
+
+
+def test_generator_parse_anytypes() -> None:
+    model = MetaModel.from_json(get_anytype_test_model())
 
     generator = Generator(model)
 
     names = get_test_default_names()
 
-    exec(generator.generate_structure_definition(model.structures[0]), names)
-    exec(generator.generate_structure_definition(model.structures[1]), names)
-    exec(generator.generate_structure_definition(model.structures[2]), names)
-    exec(generator.generate_structure_definition(model.structures[3]), names)
-    exec(generator.generate_structure_definition(model.structures[4]), names)
-    exec(generator.generate_structure_definition(model.structures[5]), names)
+    structures_py = generator.generate_structures_py() # Skip imports, because they don't work inside the test
+    exec(structures_py[structures_py.index("@dataclass"):], names)
 
     res1 = eval("TestBaseString.from_json({ 'test': 'test' })", names)
     assert res1.test == "test"
@@ -347,8 +476,29 @@ def test_generator_parse_anytypes() -> None:
     res5 = eval("TestMap.from_json({ 'test': { 'test1': True, 'test2': False }})", names)
     assert res5.test == { "test1": True, "test2": False }
 
-    res5 = eval("TestTuple.from_json({ 'test': ['test', [5, 10]] })", names)
-    assert res5.test == ("test", [5, 10])
+    res6 = eval("TestAnd.from_json({ 'test': { 'part1': 3, 'part2': True } })", names)
+    assert res6.test.part1 == 3
+    assert res6.test.part2 == True
+
+    res7 = eval("TestOr.from_json({ 'test': 16 })", names)
+    assert res7.test == 16
+    res7 = eval("TestOr.from_json({ 'test': [2, 4, 8, 16] })", names)
+    assert res7.test == [2, 4, 8, 16]
+
+    res8 = eval("TestTuple.from_json({ 'test': ['test', [5, 10]] })", names)
+    assert res8.test == ("test", [5, 10])
+
+    res9 = eval("TestLiteral.from_json({ 'test': { 'sub': 'Nested struct' } })", names)
+    assert res9.test.sub == 'Nested struct'
+
+    res10 = eval("TestStringLiteral.from_json({ 'test': 'test123' })", names)
+    assert res10.test == "test123"
+
+    res11 = eval("TestIntegerLiteral.from_json({ 'test': 4096 })", names)
+    assert res11.test == 4096
+
+    res12 = eval("TestBooleanLiteral.from_json({ 'test': True })", names)
+    assert res12.test == True
 
     with pytest.raises(LSPTypeException):
         eval("TestBaseString.from_json({ 'test': 5 })", names)
@@ -366,70 +516,10 @@ def test_generator_parse_anytypes() -> None:
         eval("TestMap.from_json({ 'test': { 'test1': 1, 'test2': 0 }})", names)
 
     with pytest.raises(LSPTypeException):
+        eval("TestTuple.from_json({ 'test': ['a', 'b', 'c'] })", names)
+
+    with pytest.raises(LSPTypeException):
         eval("TestTuple.from_json({ 'test': ['test', 7] })", names)
-
-
-def test_generator_parse_anytypes_matching() -> None:
-    model = MetaModel.from_json({
-        "enumerations": [],
-        "notifications": [],
-        "requests": [],
-        "structures": [
-             {
-                "name": "TestStringLiteral",
-                "properties": [
-                    {
-                        "name": "test",
-                        "type": {
-                            "kind": "stringLiteral",
-                            "value": "test123"
-                        }
-                    }
-                ]
-             },
-             {
-                "name": "TestIntegerLiteral",
-                "properties": [
-                    {
-                        "name": "test",
-                        "type": {
-                            "kind": "integerLiteral",
-                            "value": 4096
-                        }
-                    }
-                ]
-             },
-             {
-                "name": "TestBooleanLiteral",
-                "properties": [
-                    {
-                        "name": "test",
-                        "type": {
-                            "kind": "booleanLiteral",
-                            "value": True
-                        }
-                    }
-                ]
-             }
-        ],
-        "typeAliases": [],
-    })
-    generator = Generator(model)
-
-    names = get_test_default_names()
-
-    exec(generator.generate_structure_definition(model.structures[0]), names)
-    exec(generator.generate_structure_definition(model.structures[1]), names)
-    exec(generator.generate_structure_definition(model.structures[2]), names)
-
-    res1 = eval("TestStringLiteral.from_json({ 'test': 'test123' })", names)
-    assert res1.test == "test123"
-
-    res2 = eval("TestIntegerLiteral.from_json({ 'test': 4096 })", names)
-    assert res2.test == 4096
-
-    res3 = eval("TestBooleanLiteral.from_json({ 'test': True })", names)
-    assert res3.test == True
 
     with pytest.raises(LSPLiteralException):
         eval("TestStringLiteral.from_json({ 'test': 'wrong' })", names)
@@ -439,6 +529,35 @@ def test_generator_parse_anytypes_matching() -> None:
 
     with pytest.raises(LSPLiteralException):
         eval("TestBooleanLiteral.from_json({ 'test': False })", names)
+
+
+def test_generator_write_anytypes() -> None:
+    model = MetaModel.from_json(get_anytype_test_model())
+
+    generator = Generator(model)
+
+    names = get_test_default_names()
+
+    structures_py = generator.generate_structures_py() # Skip imports, because they don't work inside the test
+    exec(structures_py[structures_py.index("@dataclass"):], names)
+
+    res1 = eval("TestBaseString(test='Hello').to_json()", names)
+    assert res1 == { "test": "Hello" }
+
+    res2 = eval("TestBaseInteger(test=123).to_json()", names)
+    assert res2 == { "test": 123 }
+
+    res3 = eval("TestBaseBoolean(test=False).to_json()", names)
+    assert res3 == { "test": False }
+
+    res4 = eval("TestArray(test=[3, 6, 9]).to_json()", names)
+    assert res4 == { "test": [3, 6, 9] }
+
+    res5 = eval("TestMap(test={ 'a': True, 'b': False, 'c': True }).to_json()", names)
+    assert res5 == { "test": { 'a': True, 'b': False, 'c': True } }
+
+    res6 = eval("TestTuple(test=('Array', [0, 1, 0])).to_json()", names)
+    assert res6 == { "test": ["Array", [0, 1, 0]] }
 
 
 def test_generator_generate_structure_definition() -> None:

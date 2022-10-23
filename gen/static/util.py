@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Literal, Mapping, MutableSequence, Optional, Sequence, Type, TypeVar, Union
+from typing import Any, Callable, List, Literal, Mapping, MutableSequence, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 JSON_VALUE = Union[int, float, bool, str, Sequence['JSON_VALUE'], Mapping[str, 'JSON_VALUE'], None]
 JSON_TYPE_NAME = Literal["number (int)", "number (real)", "bool", "string", "array", "object", "null"]
@@ -128,7 +128,7 @@ def match_bool(val: bool, expected: bool) -> bool:
         raise LSPLiteralException(val, expected)
 
 
-def parse_or_type(val: JSON_VALUE, variant_parsers: List[Callable[[JSON_VALUE], Any]]) -> Any:
+def parse_or_type(val: JSON_VALUE, variant_parsers: Tuple[Callable[[JSON_VALUE], Any]]) -> Any:
     errors: List[Exception] = []
     for parse in variant_parsers:
         try:
@@ -138,3 +138,10 @@ def parse_or_type(val: JSON_VALUE, variant_parsers: List[Callable[[JSON_VALUE], 
             errors.append(e)
     # All parsers raised an exception
     raise errors[0] # TODO other exception?
+
+
+def write_or_type(val: Any, type_tests: Tuple[Callable[[Any], bool]], variant_writers: Tuple[Callable[[Any], JSON_VALUE]]) -> JSON_VALUE:
+    for t, w in zip(type_tests, variant_writers):
+        if t(val):
+            return w(val)
+    assert False # TODO exception

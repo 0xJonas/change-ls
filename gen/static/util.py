@@ -128,7 +128,7 @@ def match_bool(val: bool, expected: bool) -> bool:
         raise LSPLiteralException(val, expected)
 
 
-def parse_or_type(val: JSON_VALUE, variant_parsers: Tuple[Callable[[JSON_VALUE], Any]]) -> Any:
+def parse_or_type(val: JSON_VALUE, variant_parsers: Tuple[Callable[[JSON_VALUE], Any], ...]) -> Any:
     errors: List[Exception] = []
     for parse in variant_parsers:
         try:
@@ -140,7 +140,7 @@ def parse_or_type(val: JSON_VALUE, variant_parsers: Tuple[Callable[[JSON_VALUE],
     raise errors[0] # TODO other exception?
 
 
-def write_or_type(val: Any, type_tests: Tuple[Callable[[Any], bool]], variant_writers: Tuple[Callable[[Any], JSON_VALUE]]) -> JSON_VALUE:
+def write_or_type(val: Any, type_tests: Tuple[Callable[[Any], bool], ...], variant_writers: Tuple[Callable[[Any], JSON_VALUE], ...]) -> JSON_VALUE:
     for t, w in zip(type_tests, variant_writers):
         if t(val):
             return w(val)

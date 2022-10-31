@@ -1,6 +1,7 @@
 from gen.generator import Generator
 import gen.schema.types as t
 import json
+from pathlib import Path
 
 
 if __name__ == "__main__":
@@ -15,7 +16,17 @@ if __name__ == "__main__":
 
         generator = Generator(meta_model)
 
+        static_dir = Path("./gen/static/")
+        assert static_dir.is_dir()
+        for d in static_dir.iterdir():
+            if not d.suffix == "py":
+                continue
+            with open(d) as input, open(f"lspscript/protocol/{d.name}", "w") as output:
+                output.write(input.read())
+
         with open("lspscript/protocol/enumerations.py", "w", encoding="utf-8") as file:
             file.write(generator.generate_enumerations_py())
         with open("lspscript/protocol/structures.py", "w", encoding="utf-8") as file:
             file.write(generator.generate_structures_py())
+        with open("lspscript/protocol/dispatch.py", "w", encoding="utf-8") as file:
+            file.write(generator.generate_dispatch_py())

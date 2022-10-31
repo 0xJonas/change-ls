@@ -85,8 +85,8 @@ class Generator:
     _meta_model: MetaModel
     _reference_resolver: ReferenceResolver
 
-    _anonymus_structure_names: Dict[StructureLiteral, str]
-    _anonymus_andtype_names: Dict[AndType, str]
+    _anonymous_structure_names: Dict[StructureLiteral, str]
+    _anonymous_andtype_names: Dict[AndType, str]
 
     _json_type_to_get_function: ClassVar[Dict[JSON_TYPE_NAME, str]] = {
         "number (int)": "json_get_int",
@@ -123,8 +123,8 @@ class Generator:
     def __init__(self, meta_model: MetaModel) -> None:
         self._meta_model = meta_model
         self._reference_resolver = ReferenceResolver(meta_model)
-        self._anonymus_structure_names = {}
-        self._anonymus_andtype_names = {}
+        self._anonymous_structure_names = {}
+        self._anonymous_andtype_names = {}
 
 
     def _get_expected_json_type_base(self, base: BaseType) -> JSON_TYPE_NAME:
@@ -270,7 +270,7 @@ class Generator:
             return self._generate_parse_expression_mapping(val.content, arg)
         elif val.kind == "and":
             assert isinstance(val.content, AndType)
-            return f"{self._anonymus_andtype_names[val.content]}.from_json({arg})"
+            return f"{self._anonymous_andtype_names[val.content]}.from_json({arg})"
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
             return self._generate_parse_expression_or(val.content, arg)
@@ -279,7 +279,7 @@ class Generator:
             return self._generate_parse_expression_tuple(val.content, arg)
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return f"{self._anonymus_structure_names[val.content.value]}.from_json({arg})"
+            return f"{self._anonymous_structure_names[val.content.value]}.from_json({arg})"
         elif val.kind == "stringLiteral":
             assert isinstance(val.content, StringLiteralType)
             return f'match_string({arg}, "{val.content.value}")'
@@ -328,26 +328,34 @@ class Generator:
             if isinstance(target, (Structure, Enumeration)):
                 return f"isinstance({name}, {target.name})"
             elif isinstance(target, TypeAlias):
-                return self._generate_type_test(target.type, name)
+                if target.name == "LSPAny":
+                    # Special case, because this type is mutually recursive with
+                    # LSPArray and would cause infinite recursion in other parts.
+                    return "True"
+                else:
+                    return self._generate_type_test(target.type, name)
             else:
                 assert False
         elif val.kind == "array":
-            return f"isinstance({name}, List)"
+            assert isinstance(val.content, ArrayType)
+            element_type_test = self._generate_type_test(val.content.element, name + "[0]")
+            return f"isinstance({name}, List) and (len({name}) == 0 or ({element_type_test}))"
+            # return f"isinstance({name}, List)"
         elif val.kind == "map":
             return f"isinstance({name}, Dict)"
         elif val.kind == "and":
             assert isinstance(val.content, AndType)
-            structure_name = self._anonymus_andtype_names[val.content]
+            structure_name = self._anonymous_andtype_names[val.content]
             return f"isinstance({name}, {structure_name})"
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
-            tests = [self._generate_type_test(i, name) for i in val.content.items]
+            tests = ["(" + self._generate_type_test(i, name) + ")" for i in val.content.items]
             return " or ".join(tests)
         elif val.kind == "tuple":
             return f"isinstance({name}, Tuple)"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            structure_name = self._anonymus_structure_names[val.content.value]
+            structure_name = self._anonymous_structure_names[val.content.value]
             return f"isinstance({name}, {structure_name})"
         elif val.kind == "stringLiteral":
             assert isinstance(val.content, StringLiteralType)
@@ -367,7 +375,9 @@ class Generator:
 
         # Currently we cannot check generic type parameters, so if this
         # is ever required to disambiguate, assert here.
-        assert kinds.count("array") <= 1
+        # if not kinds.count("array") <= 1:
+        #     print(val)
+        # assert kinds.count("array") <= 1
         assert kinds.count("map") <= 1
         assert kinds.count("tuple") <= 1
 
@@ -470,7 +480,7 @@ class Generator:
             return f"Dict[{key_annotation}, {self._generate_type_annotation(val.content.value)}]"
         elif val.kind == "and":
             assert isinstance(val.content, AndType)
-            return self._anonymus_andtype_names[val.content]
+            return self._anonymous_andtype_names[val.content]
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
             item_annotations = [self._generate_type_annotation(v) for v in val.content.items]
@@ -481,7 +491,7 @@ class Generator:
             return f"Tuple[{', '.join(item_annotations)}]"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return self._anonymus_structure_names[val.content.value]
+            return self._anonymous_structure_names[val.content.value]
         elif val.kind == "stringLiteral":
             return "str"
         elif val.kind == "integerLiteral":
@@ -649,6 +659,12 @@ class Generator:
         for t in self._meta_model.type_aliases:
             self.sort_structures_and_typealiases_rec(t, status, list)
 
+        for s in self._anonymous_structure_names.keys():
+            self.sort_structures_and_typealiases_rec(s, status, list)
+
+        for a in self._anonymous_andtype_names.keys():
+            self.sort_structures_and_typealiases_rec(a, status, list)
+
         return list
 
     # --------------------------------------------
@@ -739,7 +755,7 @@ class {class_name}({", ".join(superclasses)}):
 {indent(self._generate_structure_to_json_method(properties))}'''
 
 
-    def _add_anonymus_definitions_from_anytype(self, val: AnyType) -> None:
+    def _add_anonymous_definitions_from_anytype(self, val: AnyType) -> None:
         """Adds a definition to the list of anonymus definitions for the given anytype.
         If `val` is an aggregate type, definitions are created recursively for all
         encountered anonymus types (literal, and). Recursion stops if a type is not an
@@ -749,31 +765,31 @@ class {class_name}({", ".join(superclasses)}):
             return
         elif val.kind == "array":
             assert isinstance(val.content, ArrayType)
-            self._add_anonymus_definitions_from_anytype(val.content.element)
+            self._add_anonymous_definitions_from_anytype(val.content.element)
         elif val.kind == "map":
             assert isinstance(val.content, MapType)
-            self._add_anonymus_definitions_from_anytype(val.content.value)
+            self._add_anonymous_definitions_from_anytype(val.content.value)
         elif val.kind == "and":
             assert isinstance(val.content, AndType)
             for i in val.content.items:
-                self._add_anonymus_definitions_from_anytype(i)
+                self._add_anonymous_definitions_from_anytype(i)
 
-            class_name = "AnonymusAndType" + str(len(self._anonymus_andtype_names))
-            self._anonymus_andtype_names[val.content] = class_name
+            class_name = "AnonymousAndType" + str(len(self._anonymous_andtype_names))
+            self._anonymous_andtype_names[val.content] = class_name
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
             for i in val.content.items:
-                self._add_anonymus_definitions_from_anytype(i)
+                self._add_anonymous_definitions_from_anytype(i)
         elif val.kind == "tuple":
             assert isinstance(val.content, TupleType)
             for i in val.content.items:
-                self._add_anonymus_definitions_from_anytype(i)
+                self._add_anonymous_definitions_from_anytype(i)
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
             for i in val.content.value.properties:
-                self._add_anonymus_definitions_from_anytype(i.type)
+                self._add_anonymous_definitions_from_anytype(i.type)
 
-            if val.content.value in self._anonymus_structure_names:
+            if val.content.value in self._anonymous_structure_names:
                 # The code below is expected to always add a new name
                 # to the _anonymus_structure_names dict. However, because
                 # the metamodel defines several empty structures which
@@ -782,11 +798,11 @@ class {class_name}({", ".join(superclasses)}):
                 # simply return here.
                 return
 
-            class_name = "AnonymusStructure" + str(len(self._anonymus_structure_names))
-            self._anonymus_structure_names[val.content.value] = class_name
+            class_name = "AnonymousStructure" + str(len(self._anonymous_structure_names))
+            self._anonymous_structure_names[val.content.value] = class_name
 
 
-    def generate_anonymus_structure_definitions(self) -> None:
+    def generate_anonymous_structure_definitions(self) -> None:
         """Traverses the `MetaModel` and generates definitions for all
         anonymus types used"""
 
@@ -794,46 +810,46 @@ class {class_name}({", ".join(superclasses)}):
             if n.params:
                 if isinstance(n.params, Tuple):
                     for p in n.params:
-                        self._add_anonymus_definitions_from_anytype(p)
+                        self._add_anonymous_definitions_from_anytype(p)
                 else:
-                    self._add_anonymus_definitions_from_anytype(n.params)
+                    self._add_anonymous_definitions_from_anytype(n.params)
 
             if n.registration_options:
-                self._add_anonymus_definitions_from_anytype(n.registration_options)
+                self._add_anonymous_definitions_from_anytype(n.registration_options)
 
         for r in self._meta_model.requests:
             if r.error_data:
-                self._add_anonymus_definitions_from_anytype(r.error_data)
+                self._add_anonymous_definitions_from_anytype(r.error_data)
 
             if r.params:
                 if isinstance(r.params, Tuple):
                     for p in r.params:
-                        self._add_anonymus_definitions_from_anytype(p)
+                        self._add_anonymous_definitions_from_anytype(p)
                 else:
-                    self._add_anonymus_definitions_from_anytype(r.params)
+                    self._add_anonymous_definitions_from_anytype(r.params)
 
             if r.partial_result:
-                self._add_anonymus_definitions_from_anytype(r.partial_result)
+                self._add_anonymous_definitions_from_anytype(r.partial_result)
 
             if r.registration_options:
-                self._add_anonymus_definitions_from_anytype(r.registration_options)
+                self._add_anonymous_definitions_from_anytype(r.registration_options)
 
-            self._add_anonymus_definitions_from_anytype(r.result)
+            self._add_anonymous_definitions_from_anytype(r.result)
 
         for s in self._meta_model.structures:
             if s.extends:
                 for p in s.extends:
-                    self._add_anonymus_definitions_from_anytype(p)
+                    self._add_anonymous_definitions_from_anytype(p)
 
             if s.mixins:
                 for p in s.mixins:
-                    self._add_anonymus_definitions_from_anytype(p)
+                    self._add_anonymous_definitions_from_anytype(p)
 
             for p in s.properties:
-                self._add_anonymus_definitions_from_anytype(p.type)
+                self._add_anonymous_definitions_from_anytype(p.type)
 
         for t in self._meta_model.type_aliases:
-            self._add_anonymus_definitions_from_anytype(t.type)
+            self._add_anonymous_definitions_from_anytype(t.type)
 
 
     def collect_structure_properties(self, struct: Structure) -> List[Property]:
@@ -865,7 +881,7 @@ class {class_name}({", ".join(superclasses)}):
 
 
     def generate_andtype_definition(self, val: AndType) -> str:
-        name = self._anonymus_andtype_names[val]
+        name = self._anonymous_andtype_names[val]
         properties: List[Property] = []
         for i in val.items:
             if not isinstance(i.content, ReferenceType):
@@ -964,7 +980,7 @@ from lsp_enum import AllowCustomValues, TypedLSPEnum
 
 
     def generate_structures_py(self) -> str:
-        self.generate_anonymus_structure_definitions()
+        self.generate_anonymous_structure_definitions()
         sorted_types = self.sort_structures_and_typealiases()
 
         definitions: List[str] = []
@@ -975,7 +991,7 @@ from lsp_enum import AllowCustomValues, TypedLSPEnum
             elif isinstance(t, Structure):
                 definitions.append(self.generate_structure_definition(t))
             elif isinstance(t, StructureLiteral):
-                name = self._anonymus_structure_names[t]
+                name = self._anonymous_structure_names[t]
                 definitions.append(self._generate_structure_definition_generic(name, None, t.properties, ()))
             else: # isinstance(t, AndType)
                 definitions.append(self.generate_andtype_definition(t))
@@ -989,4 +1005,87 @@ from dataclasses import dataclass
 from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 {sep.join(definitions)}
+"""
+
+
+    def _generate_parse_lambda(self, val: AnyType) -> str:
+        expected_json_type = self._get_expected_json_type(val)
+        if expected_json_type:
+            assert_fun = self._json_type_to_assert_function[expected_json_type]
+        else:
+            assert_fun = ""
+        return f'lambda p: {self.generate_parse_expression(val, f"{assert_fun}(p)")}'
+
+
+    def generate_dispatch_py(self) -> str:
+        parse_request_params: List[str] = []
+        parse_request_result: List[str] = []
+        parse_request_partial_result: List[str] = []
+        write_request_params: List[str] = []
+        write_request_result: List[str] = []
+        write_request_partial_result: List[str] = []
+
+        for r in self._meta_model.requests:
+            # print(r)
+            if r.params:
+                assert not isinstance(r.params, Tuple)  # TODO implement
+                parse_request_params.append(f'"{r.method}": {self._generate_parse_lambda(r.params)}')
+                write_request_params.append(f'"{r.method}": lambda p: {self.generate_write_expression(r.params, "p")}')
+
+            parse_request_result.append(f'"{r.method}": {self._generate_parse_lambda(r.result)}')
+            write_request_result.append(f'"{r.method}": lambda p: {self.generate_write_expression(r.result, "p")}')
+
+            if r.partial_result:
+                parse_request_partial_result.append(f'"{r.method}": {self._generate_parse_lambda(r.partial_result)}')
+                write_request_partial_result.append(f'"{r.method}": lambda p: {self.generate_write_expression(r.partial_result, "p")}')
+
+        parse_notification_params: List[str] = []
+        write_notification_params: List[str] = []
+
+        for n in self._meta_model.notifications:
+            if n.params:
+                assert not isinstance(n.params, Tuple)  # TODO implement
+                parse_notification_params.append(f'"{n.method}": {self._generate_parse_lambda(n.params)}')
+                write_notification_params.append(f'"{n.method}": lambda p: {self.generate_write_expression(n.params, "p")}')
+
+        sep = ",\n"
+        return f"""\
+from util import *
+from enumerations import *
+from structures import *
+
+parse_request_params: Dict[str, Callable[[JSON_VALUE], Any]] = {{
+{indent(sep.join(parse_request_params))}
+}}
+
+write_request_params: Dict[str, Callable[[Any], JSON_VALUE]] = {{
+{indent(sep.join(write_request_params))}
+}}
+
+
+parse_request_result: Dict[str, Callable[[JSON_VALUE], Any]] = {{
+{indent(sep.join(parse_request_result))}
+}}
+
+write_request_result: Dict[str, Callable[[Any], JSON_VALUE]] = {{
+{indent(sep.join(write_request_result))}
+}}
+
+
+parse_request_partial_result: Dict[str, Callable[[JSON_VALUE], Any]] = {{
+{indent(sep.join(parse_request_partial_result))}
+}}
+
+write_request_partial_result: Dict[str, Callable[[Any], JSON_VALUE]] = {{
+{indent(sep.join(write_request_partial_result))}
+}}
+
+
+parse_notification_params: Dict[str, Callable[[JSON_VALUE], Any]] = {{
+{indent(sep.join(parse_notification_params))}
+}}
+
+write_notification_params: Dict[str, Callable[[Any], JSON_VALUE]] = {{
+{indent(sep.join(write_notification_params))}
+}}
 """

@@ -11,6 +11,12 @@ class TextDocumentIdentifier():
     # The text document's uri.
     uri: str
 
+    def __init__(self, *, uri: str) -> None:
+        """
+        - uri: The text document's uri.
+        """
+        self.uri = uri
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentIdentifier":
         uri = json_get_string(obj, "uri")
@@ -67,6 +73,23 @@ that denotes `\r|\n` or `\n|` where `|` represents the character offset.
     # line length.
     character: int
 
+    def __init__(self, *, line: int, character: int) -> None:
+        """
+        - line: Line position in a document (zero-based).
+            
+            If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
+            If a line number is negative, it defaults to 0.
+        - character: Character offset on a line in a document (zero-based).
+            
+            The meaning of this offset is determined by the negotiated
+            `PositionEncodingKind`.
+            
+            If the character value is greater than the line length it defaults back to the
+            line length.
+        """
+        self.line = line
+        self.character = character
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Position":
         line = json_get_int(obj, "line")
@@ -90,6 +113,14 @@ document."""
     
     # The position inside the text document.
     position: "Position"
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position") -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        """
+        self.textDocument = textDocument
+        self.position = position
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentPositionParams":
@@ -129,6 +160,19 @@ class ImplementationParams(TextDocumentPositionParams):
     # An optional token that a server can use to report partial results (e.g. streaming) to
     # the client.
     partialResultToken: Optional["ProgressToken"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationParams":
@@ -175,6 +219,14 @@ For example:
     # The range's end position.
     end: "Position"
 
+    def __init__(self, *, start: "Position", end: "Position") -> None:
+        """
+        - start: The range's start position.
+        - end: The range's end position.
+        """
+        self.start = start
+        self.end = end
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Range":
         start = Position.from_json(json_get_object(obj, "start"))
@@ -196,6 +248,13 @@ inside a text file."""
     uri: str
     
     range: "Range"
+
+    def __init__(self, *, uri: str, range: "Range") -> None:
+        """
+    
+        """
+        self.uri = uri
+        self.range = range
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Location":
@@ -418,6 +477,20 @@ document by different properties.
     # notebook cell document. '*' matches every language.
     language: Optional[str]
 
+    def __init__(self, *, notebook: Union[str, "NotebookDocumentFilter"], language: Optional[str] = None) -> None:
+        """
+        - notebook: A filter that matches against the notebook
+            containing the notebook cell. If a string
+            value is provided it matches against the
+            notebook type. '*' matches every notebook.
+        - language: A language id like `python`.
+            
+            Will be matched against the language id of the
+            notebook cell document. '*' matches every language.
+        """
+        self.notebook = notebook
+        self.language = language
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCellTextDocumentFilter":
         notebook = parse_or_type(obj["notebook"], (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
@@ -470,6 +543,13 @@ class TextDocumentRegistrationOptions():
     # the document selector provided on the client side will be used.
     documentSelector: Union["DocumentSelector", None]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None]) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -486,6 +566,12 @@ class ImplementationOptions():
     """"""
 
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationOptions":
@@ -515,6 +601,17 @@ class ImplementationRegistrationOptions(TextDocumentRegistrationOptions, Impleme
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationRegistrationOptions":
@@ -556,6 +653,19 @@ class TypeDefinitionParams(TextDocumentPositionParams):
     # the client.
     partialResultToken: Optional["ProgressToken"]
 
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -587,6 +697,12 @@ class TypeDefinitionOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -615,6 +731,17 @@ class TypeDefinitionRegistrationOptions(TextDocumentRegistrationOptions, TypeDef
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionRegistrationOptions":
@@ -650,6 +777,15 @@ class WorkspaceFolder():
     # workspace folder in the user interface.
     name: str
 
+    def __init__(self, *, uri: str, name: str) -> None:
+        """
+        - uri: The associated URI for this workspace folder.
+        - name: The name of the workspace folder. Used to refer to this
+            workspace folder in the user interface.
+        """
+        self.uri = uri
+        self.name = name
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFolder":
         uri = json_get_string(obj, "uri")
@@ -673,6 +809,14 @@ class WorkspaceFoldersChangeEvent():
     # The array of the removed workspace folders
     removed: List["WorkspaceFolder"]
 
+    def __init__(self, *, added: List["WorkspaceFolder"], removed: List["WorkspaceFolder"]) -> None:
+        """
+        - added: The array of added workspace folders
+        - removed: The array of the removed workspace folders
+        """
+        self.added = added
+        self.removed = removed
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersChangeEvent":
         added = [WorkspaceFolder.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "added")]
@@ -692,6 +836,12 @@ class DidChangeWorkspaceFoldersParams():
 
     # The actual workspace folder change event.
     event: "WorkspaceFoldersChangeEvent"
+
+    def __init__(self, *, event: "WorkspaceFoldersChangeEvent") -> None:
+        """
+        - event: The actual workspace folder change event.
+        """
+        self.event = event
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWorkspaceFoldersParams":
@@ -713,6 +863,14 @@ class ConfigurationItem():
     
     # The configuration section asked for.
     section: Optional[str]
+
+    def __init__(self, *, scopeUri: Optional[str] = None, section: Optional[str] = None) -> None:
+        """
+        - scopeUri: The scope to get the configuration section for.
+        - section: The configuration section asked for.
+        """
+        self.scopeUri = scopeUri
+        self.section = section
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationItem":
@@ -741,6 +899,12 @@ class ConfigurationParams():
 
     items: List["ConfigurationItem"]
 
+    def __init__(self, *, items: List["ConfigurationItem"]) -> None:
+        """
+    
+        """
+        self.items = items
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationParams":
         items = [ConfigurationItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
@@ -759,6 +923,13 @@ class PartialResultParams():
     # An optional token that a server can use to report partial results (e.g. streaming) to
     # the client.
     partialResultToken: Optional["ProgressToken"]
+
+    def __init__(self, *, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.partialResultToken = partialResultToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PartialResultParams":
@@ -788,6 +959,17 @@ class DocumentColorParams():
     
     # The text document.
     textDocument: "TextDocumentIdentifier"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorParams":
@@ -828,6 +1010,18 @@ class Color():
     # The alpha component of this color in the range [0-1].
     alpha: float
 
+    def __init__(self, *, red: float, green: float, blue: float, alpha: float) -> None:
+        """
+        - red: The red component of this color in the range [0-1].
+        - green: The green component of this color in the range [0-1].
+        - blue: The blue component of this color in the range [0-1].
+        - alpha: The alpha component of this color in the range [0-1].
+        """
+        self.red = red
+        self.green = green
+        self.blue = blue
+        self.alpha = alpha
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Color":
         red = json_get_float(obj, "red")
@@ -855,6 +1049,14 @@ class ColorInformation():
     # The actual color value for this color range.
     color: "Color"
 
+    def __init__(self, *, range: "Range", color: "Color") -> None:
+        """
+        - range: The range in the document where this color appears.
+        - color: The actual color value for this color range.
+        """
+        self.range = range
+        self.color = color
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorInformation":
         range = Range.from_json(json_get_object(obj, "range"))
@@ -873,6 +1075,12 @@ class DocumentColorOptions():
     """"""
 
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorOptions":
@@ -902,6 +1110,17 @@ class DocumentColorRegistrationOptions(TextDocumentRegistrationOptions, Document
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorRegistrationOptions":
@@ -946,6 +1165,21 @@ class ColorPresentationParams():
     # The range where the color would be inserted. Serves as a context.
     range: "Range"
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", color: "Color", range: "Range") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        - color: The color to request presentations for.
+        - range: The range where the color would be inserted. Serves as a context.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
+        self.color = color
+        self.range = range
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorPresentationParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -985,6 +1219,16 @@ class TextEdit():
     # empty string.
     newText: str
 
+    def __init__(self, *, range: "Range", newText: str) -> None:
+        """
+        - range: The range of the text document to be manipulated. To insert
+            text into a document create a range where start === end.
+        - newText: The string to be inserted. For delete operations use an
+            empty string.
+        """
+        self.range = range
+        self.newText = newText
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextEdit":
         range = Range.from_json(json_get_object(obj, "range"))
@@ -1016,6 +1260,21 @@ class ColorPresentation():
     # selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves.
     additionalTextEdits: Optional[List["TextEdit"]]
 
+    def __init__(self, *, label: str, textEdit: Optional["TextEdit"] = None, additionalTextEdits: Optional[List["TextEdit"]] = None) -> None:
+        """
+        - label: The label of this color presentation. It will be shown on the color
+            picker header. By default this is also the text that is inserted when selecting
+            this color presentation.
+        - textEdit: An [edit](#TextEdit) which is applied to a document when selecting
+            this presentation for the color.  When `falsy` the [label](#ColorPresentation.label)
+            is used.
+        - additionalTextEdits: An optional array of additional [text edits](#TextEdit) that are applied when
+            selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves.
+        """
+        self.label = label
+        self.textEdit = textEdit
+        self.additionalTextEdits = additionalTextEdits
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorPresentation":
         label = json_get_string(obj, "label")
@@ -1045,6 +1304,12 @@ class WorkDoneProgressOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -1073,6 +1338,17 @@ class FoldingRangeParams():
     
     # The text document.
     textDocument: "TextDocumentIdentifier"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeParams":
@@ -1128,6 +1404,30 @@ than the number of lines in the document. Clients are free to ignore invalid ran
     # @since 3.17.0
     collapsedText: Optional[str]
 
+    def __init__(self, *, startLine: int, startCharacter: Optional[int] = None, endLine: int, endCharacter: Optional[int] = None, kind: Optional["FoldingRangeKind"] = None, collapsedText: Optional[str] = None) -> None:
+        """
+        - startLine: The zero-based start line of the range to fold. The folded area starts after the line's last character.
+            To be valid, the end must be zero or larger and smaller than the number of lines in the document.
+        - startCharacter: The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.
+        - endLine: The zero-based end line of the range to fold. The folded area ends with the line's last character.
+            To be valid, the end must be zero or larger and smaller than the number of lines in the document.
+        - endCharacter: The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
+        - kind: Describes the kind of the folding range such as `comment' or 'region'. The kind
+            is used to categorize folding ranges and used by commands like 'Fold all comments'.
+            See [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
+        - collapsedText: The text that the client should show when the specified range is
+            collapsed. If not defined or not supported by the client, a default
+            will be chosen by the client.
+            
+            @since 3.17.0
+        """
+        self.startLine = startLine
+        self.startCharacter = startCharacter
+        self.endLine = endLine
+        self.endCharacter = endCharacter
+        self.kind = kind
+        self.collapsedText = collapsedText
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRange":
         startLine = json_get_int(obj, "startLine")
@@ -1171,6 +1471,12 @@ class FoldingRangeOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -1199,6 +1505,17 @@ class FoldingRangeRegistrationOptions(TextDocumentRegistrationOptions, FoldingRa
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeRegistrationOptions":
@@ -1240,6 +1557,19 @@ class DeclarationParams(TextDocumentPositionParams):
     # the client.
     partialResultToken: Optional["ProgressToken"]
 
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -1271,6 +1601,12 @@ class DeclarationOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -1299,6 +1635,17 @@ class DeclarationRegistrationOptions(DeclarationOptions, TextDocumentRegistratio
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, documentSelector: Union["DocumentSelector", None], id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.documentSelector = documentSelector
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationRegistrationOptions":
@@ -1340,6 +1687,19 @@ class SelectionRangeParams():
     # The positions inside the text document.
     positions: List["Position"]
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", positions: List["Position"]) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        - positions: The positions inside the text document.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
+        self.positions = positions
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -1376,6 +1736,14 @@ may have a parent selection range that contains it."""
     # The parent selection range containing this range. Therefore `parent.range` must contain `this.range`.
     parent: Optional["SelectionRange"]
 
+    def __init__(self, *, range: "Range", parent: Optional["SelectionRange"] = None) -> None:
+        """
+        - range: The [range](#Range) of this selection range.
+        - parent: The parent selection range containing this range. Therefore `parent.range` must contain `this.range`.
+        """
+        self.range = range
+        self.parent = parent
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRange":
         range = Range.from_json(json_get_object(obj, "range"))
@@ -1398,6 +1766,12 @@ class SelectionRangeOptions():
     """"""
 
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeOptions":
@@ -1427,6 +1801,17 @@ class SelectionRangeRegistrationOptions(SelectionRangeOptions, TextDocumentRegis
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, documentSelector: Union["DocumentSelector", None], id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.documentSelector = documentSelector
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeRegistrationOptions":
@@ -1458,6 +1843,12 @@ class WorkDoneProgressCreateParams():
     # The token to be used to report progress.
     token: "ProgressToken"
 
+    def __init__(self, *, token: "ProgressToken") -> None:
+        """
+        - token: The token to be used to report progress.
+        """
+        self.token = token
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressCreateParams":
         token = parse_ProgressToken(obj["token"])
@@ -1475,6 +1866,12 @@ class WorkDoneProgressCancelParams():
 
     # The token to be used to report progress.
     token: "ProgressToken"
+
+    def __init__(self, *, token: "ProgressToken") -> None:
+        """
+        - token: The token to be used to report progress.
+        """
+        self.token = token
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressCancelParams":
@@ -1502,6 +1899,16 @@ class CallHierarchyPrepareParams(TextDocumentPositionParams):
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
 
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyPrepareParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -1525,6 +1932,8 @@ class CallHierarchyPrepareParams(TextDocumentPositionParams):
 class LSPObject():
     """LSP object definition.
 @since 3.17.0"""
+
+
 
 
 
@@ -1598,6 +2007,28 @@ of call hierarchy.
     # incoming calls or outgoing calls requests.
     data: Optional["LSPAny"]
 
+    def __init__(self, *, name: str, kind: "SymbolKind", tags: Optional[List["SymbolTag"]] = None, detail: Optional[str] = None, uri: str, range: "Range", selectionRange: "Range", data: Optional["LSPAny"] = None) -> None:
+        """
+        - name: The name of this item.
+        - kind: The kind of this item.
+        - tags: Tags for this item.
+        - detail: More detail for this item, e.g. the signature of a function.
+        - uri: The resource identifier of this item.
+        - range: The range enclosing this symbol not including leading/trailing whitespace but everything else, e.g. comments and code.
+        - selectionRange: The range that should be selected and revealed when this symbol is being picked, e.g. the name of a function.
+            Must be contained by the [`range`](#CallHierarchyItem.range).
+        - data: A data entry field that is preserved between a call hierarchy prepare and
+            incoming calls or outgoing calls requests.
+        """
+        self.name = name
+        self.kind = kind
+        self.tags = tags
+        self.detail = detail
+        self.uri = uri
+        self.range = range
+        self.selectionRange = selectionRange
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyItem":
         name = json_get_string(obj, "name")
@@ -1643,6 +2074,12 @@ class CallHierarchyOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -1673,6 +2110,17 @@ class CallHierarchyRegistrationOptions(TextDocumentRegistrationOptions, CallHier
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyRegistrationOptions":
@@ -1712,6 +2160,16 @@ class CallHierarchyIncomingCallsParams():
     
     item: "CallHierarchyItem"
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, item: "CallHierarchyItem") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.item = item
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyIncomingCallsParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -1748,6 +2206,15 @@ class CallHierarchyIncomingCall():
     # denoted by [`this.from`](#CallHierarchyIncomingCall.from).
     fromRanges: List["Range"]
 
+    def __init__(self, *, from_: "CallHierarchyItem", fromRanges: List["Range"]) -> None:
+        """
+        - from: The item that makes the call.
+        - fromRanges: The ranges at which the calls appear. This is relative to the caller
+            denoted by [`this.from`](#CallHierarchyIncomingCall.from).
+        """
+        self.from_ = from_
+        self.fromRanges = fromRanges
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyIncomingCall":
         from_ = CallHierarchyItem.from_json(json_get_object(obj, "from"))
@@ -1775,6 +2242,16 @@ class CallHierarchyOutgoingCallsParams():
     partialResultToken: Optional["ProgressToken"]
     
     item: "CallHierarchyItem"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, item: "CallHierarchyItem") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.item = item
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOutgoingCallsParams":
@@ -1813,6 +2290,16 @@ class CallHierarchyOutgoingCall():
     # and not [`this.to`](#CallHierarchyOutgoingCall.to).
     fromRanges: List["Range"]
 
+    def __init__(self, *, to: "CallHierarchyItem", fromRanges: List["Range"]) -> None:
+        """
+        - to: The item that is called.
+        - fromRanges: The range at which this item is called. This is the range relative to the caller, e.g the item
+            passed to [`provideCallHierarchyOutgoingCalls`](#CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls)
+            and not [`this.to`](#CallHierarchyOutgoingCall.to).
+        """
+        self.to = to
+        self.fromRanges = fromRanges
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOutgoingCall":
         to = CallHierarchyItem.from_json(json_get_object(obj, "to"))
@@ -1839,6 +2326,17 @@ class SemanticTokensParams():
     
     # The text document.
     textDocument: "TextDocumentIdentifier"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensParams":
@@ -1876,6 +2374,17 @@ class SemanticTokens():
     # The actual tokens.
     data: List[int]
 
+    def __init__(self, *, resultId: Optional[str] = None, data: List[int]) -> None:
+        """
+        - resultId: An optional result id. If provided and clients support delta updating
+            the client will include the result id in the next semantic token request.
+            A server can then instead of computing all semantic tokens again simply
+            send a delta.
+        - data: The actual tokens.
+        """
+        self.resultId = resultId
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokens":
         if resultId_json := json_get_optional_string(obj, "resultId"):
@@ -1899,6 +2408,12 @@ class SemanticTokensPartialResult():
 
     data: List[int]
 
+    def __init__(self, *, data: List[int]) -> None:
+        """
+    
+        """
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensPartialResult":
         data = [json_assert_type_int(i) for i in json_get_array(obj, "data")]
@@ -1920,6 +2435,14 @@ class SemanticTokensLegend():
     # The token modifiers a server uses.
     tokenModifiers: List[str]
 
+    def __init__(self, *, tokenTypes: List[str], tokenModifiers: List[str]) -> None:
+        """
+        - tokenTypes: The token types a server uses.
+        - tokenModifiers: The token modifiers a server uses.
+        """
+        self.tokenTypes = tokenTypes
+        self.tokenModifiers = tokenModifiers
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensLegend":
         tokenTypes = [json_assert_type_string(i) for i in json_get_array(obj, "tokenTypes")]
@@ -1933,7 +2456,7 @@ class SemanticTokensLegend():
         return out
 
 
-AnonymousStructure5Keys = Literal[]
+AnonymousStructure5Keys = Literal[None]
 
 def parse_AnonymousStructure5(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure5Keys, Any]:
     out: Dict[AnonymousStructure5Keys, Any] = {}
@@ -1978,6 +2501,18 @@ class SemanticTokensOptions():
     
     # Server supports providing semantic tokens for a full document.
     full: Optional[Union[bool, Dict[AnonymousStructure6Keys, Any]]]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, legend: "SemanticTokensLegend", range: Optional[Union[bool, Dict[AnonymousStructure5Keys, Any]]] = None, full: Optional[Union[bool, Dict[AnonymousStructure6Keys, Any]]] = None) -> None:
+        """
+        - legend: The legend used by the server
+        - range: Server supports providing semantic tokens for a specific range
+            of a document.
+        - full: Server supports providing semantic tokens for a full document.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.legend = legend
+        self.range = range
+        self.full = full
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensOptions":
@@ -2031,6 +2566,24 @@ class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, Semanti
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, legend: "SemanticTokensLegend", range: Optional[Union[bool, Dict[AnonymousStructure5Keys, Any]]] = None, full: Optional[Union[bool, Dict[AnonymousStructure6Keys, Any]]] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - legend: The legend used by the server
+        - range: Server supports providing semantic tokens for a specific range
+            of a document.
+        - full: Server supports providing semantic tokens for a full document.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.legend = legend
+        self.range = range
+        self.full = full
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensRegistrationOptions":
@@ -2087,6 +2640,20 @@ class SemanticTokensDeltaParams():
     # or a delta response depending on what was received last.
     previousResultId: str
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", previousResultId: str) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        - previousResultId: The result id of a previous response. The result Id can either point to a full response
+            or a delta response depending on what was received last.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
+        self.previousResultId = previousResultId
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDeltaParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -2125,6 +2692,16 @@ class SemanticTokensEdit():
     # The elements to insert.
     data: Optional[List[int]]
 
+    def __init__(self, *, start: int, deleteCount: int, data: Optional[List[int]] = None) -> None:
+        """
+        - start: The start offset of the edit.
+        - deleteCount: The count of elements to remove.
+        - data: The elements to insert.
+        """
+        self.start = start
+        self.deleteCount = deleteCount
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensEdit":
         start = json_get_int(obj, "start")
@@ -2153,6 +2730,13 @@ class SemanticTokensDelta():
     # The semantic token edits to transform a previous result into a new result.
     edits: List["SemanticTokensEdit"]
 
+    def __init__(self, *, resultId: Optional[str] = None, edits: List["SemanticTokensEdit"]) -> None:
+        """
+        - edits: The semantic token edits to transform a previous result into a new result.
+        """
+        self.resultId = resultId
+        self.edits = edits
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDelta":
         if resultId_json := json_get_optional_string(obj, "resultId"):
@@ -2175,6 +2759,12 @@ class SemanticTokensDeltaPartialResult():
     """@since 3.16.0"""
 
     edits: List["SemanticTokensEdit"]
+
+    def __init__(self, *, edits: List["SemanticTokensEdit"]) -> None:
+        """
+    
+        """
+        self.edits = edits
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDeltaPartialResult":
@@ -2203,6 +2793,19 @@ class SemanticTokensRangeParams():
     
     # The range the semantic tokens are requested for.
     range: "Range"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", range: "Range") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        - range: The range the semantic tokens are requested for.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
+        self.range = range
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensRangeParams":
@@ -2255,6 +2858,26 @@ class ShowDocumentParams():
     # file.
     selection: Optional["Range"]
 
+    def __init__(self, *, uri: str, external: Optional[bool] = None, takeFocus: Optional[bool] = None, selection: Optional["Range"] = None) -> None:
+        """
+        - uri: The document uri to show.
+        - external: Indicates to show the resource in an external program.
+            To show for example `https://code.visualstudio.com/`
+            in the default WEB browser set `external` to `true`.
+        - takeFocus: An optional property to indicate whether the editor
+            showing the document should take focus or not.
+            Clients might ignore this property if an external
+            program is started.
+        - selection: An optional selection range if the document is a text
+            document. Clients might ignore the property if an
+            external program is started or the file is not a text
+            file.
+        """
+        self.uri = uri
+        self.external = external
+        self.takeFocus = takeFocus
+        self.selection = selection
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowDocumentParams":
         uri = json_get_string(obj, "uri")
@@ -2293,6 +2916,12 @@ class ShowDocumentResult():
     # A boolean indicating if the show was successful.
     success: bool
 
+    def __init__(self, *, success: bool) -> None:
+        """
+        - success: A boolean indicating if the show was successful.
+        """
+        self.success = success
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowDocumentResult":
         success = json_get_bool(obj, "success")
@@ -2316,6 +2945,16 @@ class LinkedEditingRangeParams(TextDocumentPositionParams):
     
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeParams":
@@ -2351,6 +2990,17 @@ class LinkedEditingRanges():
     # pattern will be used.
     wordPattern: Optional[str]
 
+    def __init__(self, *, ranges: List["Range"], wordPattern: Optional[str] = None) -> None:
+        """
+        - ranges: A list of ranges that can be edited together. The ranges must have
+            identical length and contain identical text content. The ranges cannot overlap.
+        - wordPattern: An optional word pattern (regular expression) that describes valid contents for
+            the given ranges. If no pattern is provided, the client configuration's word
+            pattern will be used.
+        """
+        self.ranges = ranges
+        self.wordPattern = wordPattern
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRanges":
         ranges = [Range.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "ranges")]
@@ -2373,6 +3023,12 @@ class LinkedEditingRangeOptions():
     """"""
 
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeOptions":
@@ -2402,6 +3058,17 @@ class LinkedEditingRangeRegistrationOptions(TextDocumentRegistrationOptions, Lin
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeRegistrationOptions":
@@ -2435,6 +3102,12 @@ class FileCreate():
     # A file:// URI for the location of the file/folder being created.
     uri: str
 
+    def __init__(self, *, uri: str) -> None:
+        """
+        - uri: A file:// URI for the location of the file/folder being created.
+        """
+        self.uri = uri
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileCreate":
         uri = json_get_string(obj, "uri")
@@ -2455,6 +3128,12 @@ files.
 
     # An array of all files/folders created in this operation.
     files: List["FileCreate"]
+
+    def __init__(self, *, files: List["FileCreate"]) -> None:
+        """
+        - files: An array of all files/folders created in this operation.
+        """
+        self.files = files
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFilesParams":
@@ -2480,6 +3159,18 @@ class OptionalVersionedTextDocumentIdentifier(TextDocumentIdentifier):
     # `null` to indicate that the version is unknown and the content on disk is the
     # truth (as specified with document content ownership).
     version: Union[int, None]
+
+    def __init__(self, *, uri: str, version: Union[int, None]) -> None:
+        """
+        - uri: The text document's uri.
+        - version: The version number of this document. If a versioned text document identifier
+            is sent from the server to the client and the file is not open in the editor
+            (the server has not received an open notification before) the server can send
+            `null` to indicate that the version is unknown and the content on disk is the
+            truth (as specified with document content ownership).
+        """
+        self.uri = uri
+        self.version = version
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "OptionalVersionedTextDocumentIdentifier":
@@ -2521,6 +3212,18 @@ class AnnotatedTextEdit(TextEdit):
     # The actual identifier of the change annotation
     annotationId: "ChangeAnnotationIdentifier"
 
+    def __init__(self, *, range: "Range", newText: str, annotationId: "ChangeAnnotationIdentifier") -> None:
+        """
+        - range: The range of the text document to be manipulated. To insert
+            text into a document create a range where start === end.
+        - newText: The string to be inserted. For delete operations use an
+            empty string.
+        - annotationId: The actual identifier of the change annotation
+        """
+        self.range = range
+        self.newText = newText
+        self.annotationId = annotationId
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnnotatedTextEdit":
         range = Range.from_json(json_get_object(obj, "range"))
@@ -2552,6 +3255,17 @@ kind of ordering. However the edits must be non overlapping."""
     # client capability.
     edits: List[Union["TextEdit", "AnnotatedTextEdit"]]
 
+    def __init__(self, *, textDocument: "OptionalVersionedTextDocumentIdentifier", edits: List[Union["TextEdit", "AnnotatedTextEdit"]]) -> None:
+        """
+        - textDocument: The text document to change.
+        - edits: The edits to be applied.
+            
+            @since 3.16.0 - support for AnnotatedTextEdit. This is guarded using a
+            client capability.
+        """
+        self.textDocument = textDocument
+        self.edits = edits
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentEdit":
         textDocument = OptionalVersionedTextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -2576,6 +3290,16 @@ class ResourceOperation():
     # 
     # @since 3.16.0
     annotationId: Optional["ChangeAnnotationIdentifier"]
+
+    def __init__(self, *, kind: str, annotationId: Optional["ChangeAnnotationIdentifier"] = None) -> None:
+        """
+        - kind: The resource operation kind.
+        - annotationId: An optional annotation identifier describing the operation.
+            
+            @since 3.16.0
+        """
+        self.kind = kind
+        self.annotationId = annotationId
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ResourceOperation":
@@ -2603,6 +3327,14 @@ class CreateFileOptions():
     
     # Ignore if exists.
     ignoreIfExists: Optional[bool]
+
+    def __init__(self, *, overwrite: Optional[bool] = None, ignoreIfExists: Optional[bool] = None) -> None:
+        """
+        - overwrite: Overwrite existing file. Overwrite wins over `ignoreIfExists`
+        - ignoreIfExists: Ignore if exists.
+        """
+        self.overwrite = overwrite
+        self.ignoreIfExists = ignoreIfExists
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFileOptions":
@@ -2643,6 +3375,20 @@ class CreateFile(ResourceOperation):
     # Additional options
     options: Optional["CreateFileOptions"]
 
+    def __init__(self, *, kind: str, annotationId: Optional["ChangeAnnotationIdentifier"] = None, uri: str, options: Optional["CreateFileOptions"] = None) -> None:
+        """
+        - kind: A create
+        - annotationId: An optional annotation identifier describing the operation.
+            
+            @since 3.16.0
+        - uri: The resource to create.
+        - options: Additional options
+        """
+        self.kind = kind
+        self.annotationId = annotationId
+        self.uri = uri
+        self.options = options
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFile":
         kind = match_string(json_get_string(obj, "kind"), "create")
@@ -2677,6 +3423,14 @@ class RenameFileOptions():
     
     # Ignores if target exists.
     ignoreIfExists: Optional[bool]
+
+    def __init__(self, *, overwrite: Optional[bool] = None, ignoreIfExists: Optional[bool] = None) -> None:
+        """
+        - overwrite: Overwrite target if existing. Overwrite wins over `ignoreIfExists`
+        - ignoreIfExists: Ignores if target exists.
+        """
+        self.overwrite = overwrite
+        self.ignoreIfExists = ignoreIfExists
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFileOptions":
@@ -2720,6 +3474,22 @@ class RenameFile(ResourceOperation):
     # Rename options.
     options: Optional["RenameFileOptions"]
 
+    def __init__(self, *, kind: str, annotationId: Optional["ChangeAnnotationIdentifier"] = None, oldUri: str, newUri: str, options: Optional["RenameFileOptions"] = None) -> None:
+        """
+        - kind: A rename
+        - annotationId: An optional annotation identifier describing the operation.
+            
+            @since 3.16.0
+        - oldUri: The old (existing) location.
+        - newUri: The new location.
+        - options: Rename options.
+        """
+        self.kind = kind
+        self.annotationId = annotationId
+        self.oldUri = oldUri
+        self.newUri = newUri
+        self.options = options
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFile":
         kind = match_string(json_get_string(obj, "kind"), "rename")
@@ -2756,6 +3526,14 @@ class DeleteFileOptions():
     
     # Ignore the operation if the file doesn't exist.
     ignoreIfNotExists: Optional[bool]
+
+    def __init__(self, *, recursive: Optional[bool] = None, ignoreIfNotExists: Optional[bool] = None) -> None:
+        """
+        - recursive: Delete the content recursively if a folder is denoted.
+        - ignoreIfNotExists: Ignore the operation if the file doesn't exist.
+        """
+        self.recursive = recursive
+        self.ignoreIfNotExists = ignoreIfNotExists
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFileOptions":
@@ -2795,6 +3573,20 @@ class DeleteFile(ResourceOperation):
     
     # Delete options.
     options: Optional["DeleteFileOptions"]
+
+    def __init__(self, *, kind: str, annotationId: Optional["ChangeAnnotationIdentifier"] = None, uri: str, options: Optional["DeleteFileOptions"] = None) -> None:
+        """
+        - kind: A delete
+        - annotationId: An optional annotation identifier describing the operation.
+            
+            @since 3.16.0
+        - uri: The file to delete.
+        - options: Delete options.
+        """
+        self.kind = kind
+        self.annotationId = annotationId
+        self.uri = uri
+        self.options = options
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFile":
@@ -2838,6 +3630,19 @@ class ChangeAnnotation():
     # A human-readable string which is rendered less prominent in
     # the user interface.
     description: Optional[str]
+
+    def __init__(self, *, label: str, needsConfirmation: Optional[bool] = None, description: Optional[str] = None) -> None:
+        """
+        - label: A human-readable string describing the actual change. The string
+            is rendered prominent in the user interface.
+        - needsConfirmation: A flag which indicates that user confirmation is needed
+            before applying the change.
+        - description: A human-readable string which is rendered less prominent in
+            the user interface.
+        """
+        self.label = label
+        self.needsConfirmation = needsConfirmation
+        self.description = description
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ChangeAnnotation":
@@ -2900,6 +3705,30 @@ the client capability: `workspace.workspaceEdit.failureHandling`"""
     # @since 3.16.0
     changeAnnotations: Optional[Dict[ChangeAnnotationIdentifier, "ChangeAnnotation"]]
 
+    def __init__(self, *, changes: Optional[Dict[str, List["TextEdit"]]] = None, documentChanges: Optional[List[Union["TextDocumentEdit", "CreateFile", "RenameFile", "DeleteFile"]]] = None, changeAnnotations: Optional[Dict[ChangeAnnotationIdentifier, "ChangeAnnotation"]] = None) -> None:
+        """
+        - changes: Holds changes to existing resources.
+        - documentChanges: Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
+            are either an array of `TextDocumentEdit`s to express changes to n different text documents
+            where each text document edit addresses a specific version of a text document. Or it can contain
+            above `TextDocumentEdit`s mixed with create, rename and delete file / folder operations.
+            
+            Whether a client supports versioned document edits is expressed via
+            `workspace.workspaceEdit.documentChanges` client capability.
+            
+            If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
+            only plain `TextEdit`s using the `changes` property are supported.
+        - changeAnnotations: A map of change annotations that can be referenced in `AnnotatedTextEdit`s or create, rename and
+            delete file / folder operations.
+            
+            Whether clients honor this property depends on the client capability `workspace.changeAnnotationSupport`.
+            
+            @since 3.16.0
+        """
+        self.changes = changes
+        self.documentChanges = documentChanges
+        self.changeAnnotations = changeAnnotations
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceEdit":
         if changes_json := json_get_optional_object(obj, "changes"):
@@ -2935,6 +3764,12 @@ class FileOperationPatternOptions():
 
     # The pattern should be matched ignoring casing.
     ignoreCase: Optional[bool]
+
+    def __init__(self, *, ignoreCase: Optional[bool] = None) -> None:
+        """
+        - ignoreCase: The pattern should be matched ignoring casing.
+        """
+        self.ignoreCase = ignoreCase
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationPatternOptions":
@@ -2975,6 +3810,24 @@ the server is interested in receiving.
     # Additional options used during matching.
     options: Optional["FileOperationPatternOptions"]
 
+    def __init__(self, *, glob: str, matches: Optional["FileOperationPatternKind"] = None, options: Optional["FileOperationPatternOptions"] = None) -> None:
+        """
+        - glob: The glob pattern to match. Glob patterns can have the following syntax:
+            - `*` to match one or more characters in a path segment
+            - `?` to match on one character in a path segment
+            - `**` to match any number of path segments, including none
+            - `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+            - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+            - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+        - matches: Whether to match files or folders with this pattern.
+            
+            Matches both if undefined.
+        - options: Additional options used during matching.
+        """
+        self.glob = glob
+        self.matches = matches
+        self.options = options
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationPattern":
         glob = json_get_string(obj, "glob")
@@ -3011,6 +3864,14 @@ the server is interested in receiving.
     # The actual file operation pattern.
     pattern: "FileOperationPattern"
 
+    def __init__(self, *, scheme: Optional[str] = None, pattern: "FileOperationPattern") -> None:
+        """
+        - scheme: A Uri scheme like `file` or `untitled`.
+        - pattern: The actual file operation pattern.
+        """
+        self.scheme = scheme
+        self.pattern = pattern
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationFilter":
         if scheme_json := json_get_optional_string(obj, "scheme"):
@@ -3037,6 +3898,12 @@ class FileOperationRegistrationOptions():
     # The actual filters.
     filters: List["FileOperationFilter"]
 
+    def __init__(self, *, filters: List["FileOperationFilter"]) -> None:
+        """
+        - filters: The actual filters.
+        """
+        self.filters = filters
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationRegistrationOptions":
         filters = [FileOperationFilter.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "filters")]
@@ -3059,6 +3926,14 @@ class FileRename():
     
     # A file:// URI for the new location of the file/folder being renamed.
     newUri: str
+
+    def __init__(self, *, oldUri: str, newUri: str) -> None:
+        """
+        - oldUri: A file:// URI for the original location of the file/folder being renamed.
+        - newUri: A file:// URI for the new location of the file/folder being renamed.
+        """
+        self.oldUri = oldUri
+        self.newUri = newUri
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileRename":
@@ -3084,6 +3959,13 @@ files.
     # the folder will be included, and not its children.
     files: List["FileRename"]
 
+    def __init__(self, *, files: List["FileRename"]) -> None:
+        """
+        - files: An array of all files/folders renamed in this operation. When a folder is renamed, only
+            the folder will be included, and not its children.
+        """
+        self.files = files
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFilesParams":
         files = [FileRename.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "files")]
@@ -3103,6 +3985,12 @@ class FileDelete():
 
     # A file:// URI for the location of the file/folder being deleted.
     uri: str
+
+    def __init__(self, *, uri: str) -> None:
+        """
+        - uri: A file:// URI for the location of the file/folder being deleted.
+        """
+        self.uri = uri
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileDelete":
@@ -3124,6 +4012,12 @@ files.
 
     # An array of all files/folders deleted in this operation.
     files: List["FileDelete"]
+
+    def __init__(self, *, files: List["FileDelete"]) -> None:
+        """
+        - files: An array of all files/folders deleted in this operation.
+        """
+        self.files = files
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFilesParams":
@@ -3152,6 +4046,19 @@ class MonikerParams(TextDocumentPositionParams):
     # An optional token that a server can use to report partial results (e.g. streaming) to
     # the client.
     partialResultToken: Optional["ProgressToken"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerParams":
@@ -3197,6 +4104,19 @@ class Moniker():
     # The moniker kind if known.
     kind: Optional["MonikerKind"]
 
+    def __init__(self, *, scheme: str, identifier: str, unique: "UniquenessLevel", kind: Optional["MonikerKind"] = None) -> None:
+        """
+        - scheme: The scheme of the moniker. For example tsc or .Net
+        - identifier: The identifier of the moniker. The value is opaque in LSIF however
+            schema owners are allowed to define the structure if they want.
+        - unique: The scope in which the moniker is unique
+        - kind: The moniker kind if known.
+        """
+        self.scheme = scheme
+        self.identifier = identifier
+        self.unique = unique
+        self.kind = kind
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Moniker":
         scheme = json_get_string(obj, "scheme")
@@ -3224,6 +4144,12 @@ class MonikerOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -3248,6 +4174,14 @@ class MonikerRegistrationOptions(TextDocumentRegistrationOptions, MonikerOptions
     documentSelector: Union["DocumentSelector", None]
     
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerRegistrationOptions":
@@ -3280,6 +4214,16 @@ class TypeHierarchyPrepareParams(TextDocumentPositionParams):
     
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyPrepareParams":
@@ -3334,6 +4278,32 @@ class TypeHierarchyItem():
     # resolving supertypes and subtypes.
     data: Optional["LSPAny"]
 
+    def __init__(self, *, name: str, kind: "SymbolKind", tags: Optional[List["SymbolTag"]] = None, detail: Optional[str] = None, uri: str, range: "Range", selectionRange: "Range", data: Optional["LSPAny"] = None) -> None:
+        """
+        - name: The name of this item.
+        - kind: The kind of this item.
+        - tags: Tags for this item.
+        - detail: More detail for this item, e.g. the signature of a function.
+        - uri: The resource identifier of this item.
+        - range: The range enclosing this symbol not including leading/trailing whitespace
+            but everything else, e.g. comments and code.
+        - selectionRange: The range that should be selected and revealed when this symbol is being
+            picked, e.g. the name of a function. Must be contained by the
+            [`range`](#TypeHierarchyItem.range).
+        - data: A data entry field that is preserved between a type hierarchy prepare and
+            supertypes or subtypes requests. It could also be used to identify the
+            type hierarchy in the server, helping improve the performance on
+            resolving supertypes and subtypes.
+        """
+        self.name = name
+        self.kind = kind
+        self.tags = tags
+        self.detail = detail
+        self.uri = uri
+        self.range = range
+        self.selectionRange = selectionRange
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyItem":
         name = json_get_string(obj, "name")
@@ -3379,6 +4349,12 @@ class TypeHierarchyOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -3409,6 +4385,17 @@ class TypeHierarchyRegistrationOptions(TextDocumentRegistrationOptions, TypeHier
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyRegistrationOptions":
@@ -3448,6 +4435,16 @@ class TypeHierarchySupertypesParams():
     
     item: "TypeHierarchyItem"
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, item: "TypeHierarchyItem") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.item = item
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchySupertypesParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -3486,6 +4483,16 @@ class TypeHierarchySubtypesParams():
     
     item: "TypeHierarchyItem"
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, item: "TypeHierarchyItem") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.item = item
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchySubtypesParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -3520,6 +4527,15 @@ class InlineValueContext():
     # Typically the end position of the range denotes the line where the inline values are shown.
     stoppedLocation: "Range"
 
+    def __init__(self, *, frameId: int, stoppedLocation: "Range") -> None:
+        """
+        - frameId: The stack frame (as a DAP Id) where the execution has stopped.
+        - stoppedLocation: The document range where execution has stopped.
+            Typically the end position of the range denotes the line where the inline values are shown.
+        """
+        self.frameId = frameId
+        self.stoppedLocation = stoppedLocation
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueContext":
         frameId = json_get_int(obj, "frameId")
@@ -3552,6 +4568,19 @@ class InlineValueParams():
     # requested.
     context: "InlineValueContext"
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", range: "Range", context: "InlineValueContext") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - textDocument: The text document.
+        - range: The document range for which inline values should be computed.
+        - context: Additional information about the context in which inline values were
+            requested.
+        """
+        self.workDoneToken = workDoneToken
+        self.textDocument = textDocument
+        self.range = range
+        self.context = context
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -3580,6 +4609,12 @@ class InlineValueOptions():
 @since 3.17.0"""
 
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueOptions":
@@ -3611,6 +4646,17 @@ class InlineValueRegistrationOptions(InlineValueOptions, TextDocumentRegistratio
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, documentSelector: Union["DocumentSelector", None], id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.documentSelector = documentSelector
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueRegistrationOptions":
@@ -3649,6 +4695,16 @@ class InlayHintParams():
     
     # The document range for which inlay hints should be computed.
     range: "Range"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", range: "Range") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - textDocument: The text document.
+        - range: The document range for which inlay hints should be computed.
+        """
+        self.workDoneToken = workDoneToken
+        self.textDocument = textDocument
+        self.range = range
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintParams":
@@ -3700,6 +4756,14 @@ remove HTML from the markdown to avoid script execution."""
     # The content itself
     value: str
 
+    def __init__(self, *, kind: "MarkupKind", value: str) -> None:
+        """
+        - kind: The type of the Markup
+        - value: The content itself
+        """
+        self.kind = kind
+        self.value = value
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MarkupContent":
         kind = MarkupKind(json_get_string(obj, "kind"))
@@ -3729,6 +4793,17 @@ function when invoked."""
     # Arguments that the command handler should be
     # invoked with.
     arguments: Optional[List["LSPAny"]]
+
+    def __init__(self, *, title: str, command: str, arguments: Optional[List["LSPAny"]] = None) -> None:
+        """
+        - title: Title of the command, like `save`.
+        - command: The identifier of the actual command handler.
+        - arguments: Arguments that the command handler should be
+            invoked with.
+        """
+        self.title = title
+        self.command = command
+        self.arguments = arguments
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Command":
@@ -3782,6 +4857,33 @@ of inlay hints.
     # Depending on the client capability `inlayHint.resolveSupport` clients
     # might resolve this property late using the resolve request.
     command: Optional["Command"]
+
+    def __init__(self, *, value: str, tooltip: Optional[Union[str, "MarkupContent"]] = None, location: Optional["Location"] = None, command: Optional["Command"] = None) -> None:
+        """
+        - value: The value of this label part.
+        - tooltip: The tooltip text when you hover over this label part. Depending on
+            the client capability `inlayHint.resolveSupport` clients might resolve
+            this property late using the resolve request.
+        - location: An optional source code location that represents this
+            label part.
+            
+            The editor will use this location for the hover and for code navigation
+            features: This part will become a clickable link that resolves to the
+            definition of the symbol at the given location (not necessarily the
+            location itself), it shows the hover that shows at the given location,
+            and it shows a context menu with further code navigation commands.
+            
+            Depending on the client capability `inlayHint.resolveSupport` clients
+            might resolve this property late using the resolve request.
+        - command: An optional command for this label part.
+            
+            Depending on the client capability `inlayHint.resolveSupport` clients
+            might resolve this property late using the resolve request.
+        """
+        self.value = value
+        self.tooltip = tooltip
+        self.location = location
+        self.command = command
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintLabelPart":
@@ -3859,6 +4961,43 @@ class InlayHint():
     # a `textDocument/inlayHint` and a `inlayHint/resolve` request.
     data: Optional["LSPAny"]
 
+    def __init__(self, *, position: "Position", label: Union[str, List["InlayHintLabelPart"]], kind: Optional["InlayHintKind"] = None, textEdits: Optional[List["TextEdit"]] = None, tooltip: Optional[Union[str, "MarkupContent"]] = None, paddingLeft: Optional[bool] = None, paddingRight: Optional[bool] = None, data: Optional["LSPAny"] = None) -> None:
+        """
+        - position: The position of this hint.
+        - label: The label of this hint. A human readable string or an array of
+            InlayHintLabelPart label parts.
+            
+            *Note* that neither the string nor the label part can be empty.
+        - kind: The kind of this hint. Can be omitted in which case the client
+            should fall back to a reasonable default.
+        - textEdits: Optional text edits that are performed when accepting this inlay hint.
+            
+            *Note* that edits are expected to change the document so that the inlay
+            hint (or its nearest variant) is now part of the document and the inlay
+            hint itself is now obsolete.
+        - tooltip: The tooltip text when you hover over this item.
+        - paddingLeft: Render padding before the hint.
+            
+            Note: Padding should use the editor's background color, not the
+            background color of the hint itself. That means padding can be used
+            to visually align/separate an inlay hint.
+        - paddingRight: Render padding after the hint.
+            
+            Note: Padding should use the editor's background color, not the
+            background color of the hint itself. That means padding can be used
+            to visually align/separate an inlay hint.
+        - data: A data entry field that is preserved on an inlay hint between
+            a `textDocument/inlayHint` and a `inlayHint/resolve` request.
+        """
+        self.position = position
+        self.label = label
+        self.kind = kind
+        self.textEdits = textEdits
+        self.tooltip = tooltip
+        self.paddingLeft = paddingLeft
+        self.paddingRight = paddingRight
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHint":
         position = Position.from_json(json_get_object(obj, "position"))
@@ -3920,6 +5059,14 @@ class InlayHintOptions():
     # information for an inlay hint item.
     resolveProvider: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - resolveProvider: The server provides support to resolve additional
+            information for an inlay hint item.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -3960,6 +5107,20 @@ class InlayHintRegistrationOptions(InlayHintOptions, TextDocumentRegistrationOpt
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None, documentSelector: Union["DocumentSelector", None], id: Optional[str] = None) -> None:
+        """
+        - resolveProvider: The server provides support to resolve additional
+            information for an inlay hint item.
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
+        self.documentSelector = documentSelector
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintRegistrationOptions":
@@ -4012,6 +5173,21 @@ class DocumentDiagnosticParams():
     # The result id of a previous response if provided.
     previousResultId: Optional[str]
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", identifier: Optional[str] = None, previousResultId: Optional[str] = None) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        - identifier: The additional identifier  provided during registration.
+        - previousResultId: The result id of a previous response if provided.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
+        self.identifier = identifier
+        self.previousResultId = previousResultId
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentDiagnosticParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -4055,6 +5231,12 @@ class DocumentDiagnosticReportPartialResult():
 
     relatedDocuments: Dict[str, Union["FullDocumentDiagnosticReport", "UnchangedDocumentDiagnosticReport"]]
 
+    def __init__(self, *, relatedDocuments: Dict[str, Union["FullDocumentDiagnosticReport", "UnchangedDocumentDiagnosticReport"]]) -> None:
+        """
+    
+        """
+        self.relatedDocuments = relatedDocuments
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentDiagnosticReportPartialResult":
         relatedDocuments = { json_assert_type_string(key): parse_or_type((value), (lambda v: FullDocumentDiagnosticReport.from_json(json_assert_type_object(v)), lambda v: UnchangedDocumentDiagnosticReport.from_json(json_assert_type_object(v)))) for key, value in json_get_object(obj, "relatedDocuments").items()}
@@ -4073,6 +5255,12 @@ class DiagnosticServerCancellationData():
 @since 3.17.0"""
 
     retriggerRequest: bool
+
+    def __init__(self, *, retriggerRequest: bool) -> None:
+        """
+    
+        """
+        self.retriggerRequest = retriggerRequest
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticServerCancellationData":
@@ -4105,6 +5293,21 @@ class DiagnosticOptions():
     
     # The server provides support for workspace diagnostics as well.
     workspaceDiagnostics: bool
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, identifier: Optional[str] = None, interFileDependencies: bool, workspaceDiagnostics: bool) -> None:
+        """
+        - identifier: An optional identifier under which the diagnostics are
+            managed by the client.
+        - interFileDependencies: Whether the language has inter file dependencies meaning that
+            editing code in one file can result in a different diagnostic
+            set in another file. Inter file dependencies are common for
+            most programming languages and typically uncommon for linters.
+        - workspaceDiagnostics: The server provides support for workspace diagnostics as well.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.identifier = identifier
+        self.interFileDependencies = interFileDependencies
+        self.workspaceDiagnostics = workspaceDiagnostics
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticOptions":
@@ -4160,6 +5363,27 @@ class DiagnosticRegistrationOptions(TextDocumentRegistrationOptions, DiagnosticO
     # the request again. See also Registration#id.
     id: Optional[str]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, identifier: Optional[str] = None, interFileDependencies: bool, workspaceDiagnostics: bool, id: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - identifier: An optional identifier under which the diagnostics are
+            managed by the client.
+        - interFileDependencies: Whether the language has inter file dependencies meaning that
+            editing code in one file can result in a different diagnostic
+            set in another file. Inter file dependencies are common for
+            most programming languages and typically uncommon for linters.
+        - workspaceDiagnostics: The server provides support for workspace diagnostics as well.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.identifier = identifier
+        self.interFileDependencies = interFileDependencies
+        self.workspaceDiagnostics = workspaceDiagnostics
+        self.id = id
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -4206,6 +5430,15 @@ class PreviousResultId():
     # The value of the previous result id.
     value: str
 
+    def __init__(self, *, uri: str, value: str) -> None:
+        """
+        - uri: The URI for which the client knowns a
+            result id.
+        - value: The value of the previous result id.
+        """
+        self.uri = uri
+        self.value = value
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PreviousResultId":
         uri = json_get_string(obj, "uri")
@@ -4238,6 +5471,20 @@ class WorkspaceDiagnosticParams():
     # The currently known diagnostic reports with their
     # previous result ids.
     previousResultIds: List["PreviousResultId"]
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, identifier: Optional[str] = None, previousResultIds: List["PreviousResultId"]) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - identifier: The additional identifier provided during registration.
+        - previousResultIds: The currently known diagnostic reports with their
+            previous result ids.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.identifier = identifier
+        self.previousResultIds = previousResultIds
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceDiagnosticParams":
@@ -4277,6 +5524,12 @@ class CodeDescription():
     # An URI to open with more information about the diagnostic error.
     href: str
 
+    def __init__(self, *, href: str) -> None:
+        """
+        - href: An URI to open with more information about the diagnostic error.
+        """
+        self.href = href
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeDescription":
         href = json_get_string(obj, "href")
@@ -4299,6 +5552,14 @@ a symbol in a scope."""
     
     # The message of this related diagnostic information.
     message: str
+
+    def __init__(self, *, location: "Location", message: str) -> None:
+        """
+        - location: The location of this related diagnostic information.
+        - message: The message of this related diagnostic information.
+        """
+        self.location = location
+        self.message = message
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticRelatedInformation":
@@ -4356,6 +5617,40 @@ are only valid in the scope of a resource."""
     # 
     # @since 3.16.0
     data: Optional["LSPAny"]
+
+    def __init__(self, *, range: "Range", severity: Optional["DiagnosticSeverity"] = None, code: Optional[Union[int, str]] = None, codeDescription: Optional["CodeDescription"] = None, source: Optional[str] = None, message: str, tags: Optional[List["DiagnosticTag"]] = None, relatedInformation: Optional[List["DiagnosticRelatedInformation"]] = None, data: Optional["LSPAny"] = None) -> None:
+        """
+        - range: The range at which the message applies
+        - severity: The diagnostic's severity. Can be omitted. If omitted it is up to the
+            client to interpret diagnostics as error, warning, info or hint.
+        - code: The diagnostic's code, which usually appear in the user interface.
+        - codeDescription: An optional property to describe the error code.
+            Requires the code field (above) to be present/not null.
+            
+            @since 3.16.0
+        - source: A human-readable string describing the source of this
+            diagnostic, e.g. 'typescript' or 'super lint'. It usually
+            appears in the user interface.
+        - message: The diagnostic's message. It usually appears in the user interface
+        - tags: Additional metadata about the diagnostic.
+            
+            @since 3.15.0
+        - relatedInformation: An array of related diagnostic information, e.g. when symbol-names within
+            a scope collide all definitions can be marked via this property.
+        - data: A data entry field that is preserved between a `textDocument/publishDiagnostics`
+            notification and `textDocument/codeAction` request.
+            
+            @since 3.16.0
+        """
+        self.range = range
+        self.severity = severity
+        self.code = code
+        self.codeDescription = codeDescription
+        self.source = source
+        self.message = message
+        self.tags = tags
+        self.relatedInformation = relatedInformation
+        self.data = data
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Diagnostic":
@@ -4429,6 +5724,18 @@ class FullDocumentDiagnosticReport():
     # The actual items.
     items: List["Diagnostic"]
 
+    def __init__(self, *, kind: str, resultId: Optional[str] = None, items: List["Diagnostic"]) -> None:
+        """
+        - kind: A full document diagnostic report.
+        - resultId: An optional result id. If provided it will
+            be sent on the next diagnostic request for the
+            same document.
+        - items: The actual items.
+        """
+        self.kind = kind
+        self.resultId = resultId
+        self.items = items
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FullDocumentDiagnosticReport":
         kind = match_string(json_get_string(obj, "kind"), "full")
@@ -4472,6 +5779,23 @@ class WorkspaceFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
     # If the document is not marked as open `null` can be provided.
     version: Union[int, None]
 
+    def __init__(self, *, kind: str, resultId: Optional[str] = None, items: List["Diagnostic"], uri: str, version: Union[int, None]) -> None:
+        """
+        - kind: A full document diagnostic report.
+        - resultId: An optional result id. If provided it will
+            be sent on the next diagnostic request for the
+            same document.
+        - items: The actual items.
+        - uri: The URI for which diagnostic information is reported.
+        - version: The version number for which the diagnostics are reported.
+            If the document is not marked as open `null` can be provided.
+        """
+        self.kind = kind
+        self.resultId = resultId
+        self.items = items
+        self.uri = uri
+        self.version = version
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFullDocumentDiagnosticReport":
         kind = match_string(json_get_string(obj, "kind"), "full")
@@ -4512,6 +5836,18 @@ report is still accurate.
     # diagnostic request for the same document.
     resultId: str
 
+    def __init__(self, *, kind: str, resultId: str) -> None:
+        """
+        - kind: A document diagnostic report indicating
+            no changes to the last result. A server can
+            only return `unchanged` if result ids are
+            provided.
+        - resultId: A result id which will be sent on the next
+            diagnostic request for the same document.
+        """
+        self.kind = kind
+        self.resultId = resultId
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "UnchangedDocumentDiagnosticReport":
         kind = match_string(json_get_string(obj, "kind"), "unchanged")
@@ -4547,6 +5883,23 @@ class WorkspaceUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticRepo
     # The version number for which the diagnostics are reported.
     # If the document is not marked as open `null` can be provided.
     version: Union[int, None]
+
+    def __init__(self, *, kind: str, resultId: str, uri: str, version: Union[int, None]) -> None:
+        """
+        - kind: A document diagnostic report indicating
+            no changes to the last result. A server can
+            only return `unchanged` if result ids are
+            provided.
+        - resultId: A result id which will be sent on the next
+            diagnostic request for the same document.
+        - uri: The URI for which diagnostic information is reported.
+        - version: The version number for which the diagnostics are reported.
+            If the document is not marked as open `null` can be provided.
+        """
+        self.kind = kind
+        self.resultId = resultId
+        self.uri = uri
+        self.version = version
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceUnchangedDocumentDiagnosticReport":
@@ -4585,6 +5938,12 @@ class WorkspaceDiagnosticReport():
 
     items: List["WorkspaceDocumentDiagnosticReport"]
 
+    def __init__(self, *, items: List["WorkspaceDocumentDiagnosticReport"]) -> None:
+        """
+    
+        """
+        self.items = items
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceDiagnosticReport":
         items = [parse_WorkspaceDocumentDiagnosticReport((i)) for i in json_get_array(obj, "items")]
@@ -4603,6 +5962,12 @@ class WorkspaceDiagnosticReportPartialResult():
 @since 3.17.0"""
 
     items: List["WorkspaceDocumentDiagnosticReport"]
+
+    def __init__(self, *, items: List["WorkspaceDocumentDiagnosticReport"]) -> None:
+        """
+    
+        """
+        self.items = items
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceDiagnosticReportPartialResult":
@@ -4627,6 +5992,17 @@ class ExecutionSummary():
     # Whether the execution was successful or
     # not if known by the client.
     success: Optional[bool]
+
+    def __init__(self, *, executionOrder: int, success: Optional[bool] = None) -> None:
+        """
+        - executionOrder: A strict monotonically increasing value
+            indicating the execution order of a cell
+            inside a notebook.
+        - success: Whether the execution was successful or
+            not if known by the client.
+        """
+        self.executionOrder = executionOrder
+        self.success = success
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecutionSummary":
@@ -4670,6 +6046,22 @@ notebook cell or the cell's text document.
     # Additional execution summary information
     # if supported by the client.
     executionSummary: Optional["ExecutionSummary"]
+
+    def __init__(self, *, kind: "NotebookCellKind", document: str, metadata: Optional["LSPObject"] = None, executionSummary: Optional["ExecutionSummary"] = None) -> None:
+        """
+        - kind: The cell's kind
+        - document: The URI of the cell's text document
+            content.
+        - metadata: Additional metadata stored with the cell.
+            
+            Note: should always be an object literal (e.g. LSPObject)
+        - executionSummary: Additional execution summary information
+            if supported by the client.
+        """
+        self.kind = kind
+        self.document = document
+        self.metadata = metadata
+        self.executionSummary = executionSummary
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCell":
@@ -4721,6 +6113,24 @@ class NotebookDocument():
     # The cells of a notebook.
     cells: List["NotebookCell"]
 
+    def __init__(self, *, uri: str, notebookType: str, version: int, metadata: Optional["LSPObject"] = None, cells: List["NotebookCell"]) -> None:
+        """
+        - uri: The notebook document's uri.
+        - notebookType: The type of the notebook.
+        - version: The version number of this document (it will increase after each
+            change, including undo/redo).
+        - metadata: Additional metadata stored with the notebook
+            document.
+            
+            Note: should always be an object literal (e.g. LSPObject)
+        - cells: The cells of a notebook.
+        """
+        self.uri = uri
+        self.notebookType = notebookType
+        self.version = version
+        self.metadata = metadata
+        self.cells = cells
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocument":
         uri = json_get_string(obj, "uri")
@@ -4762,6 +6172,19 @@ server."""
     # The content of the opened text document.
     text: str
 
+    def __init__(self, *, uri: str, languageId: str, version: int, text: str) -> None:
+        """
+        - uri: The text document's uri.
+        - languageId: The text document's language identifier.
+        - version: The version number of this document (it will increase after each
+            change, including undo/redo).
+        - text: The content of the opened text document.
+        """
+        self.uri = uri
+        self.languageId = languageId
+        self.version = version
+        self.text = text
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentItem":
         uri = json_get_string(obj, "uri")
@@ -4792,6 +6215,15 @@ class DidOpenNotebookDocumentParams():
     # of a notebook cell.
     cellTextDocuments: List["TextDocumentItem"]
 
+    def __init__(self, *, notebookDocument: "NotebookDocument", cellTextDocuments: List["TextDocumentItem"]) -> None:
+        """
+        - notebookDocument: The notebook document that got opened.
+        - cellTextDocuments: The text documents that represent the content
+            of a notebook cell.
+        """
+        self.notebookDocument = notebookDocument
+        self.cellTextDocuments = cellTextDocuments
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidOpenNotebookDocumentParams":
         notebookDocument = NotebookDocument.from_json(json_get_object(obj, "notebookDocument"))
@@ -4816,6 +6248,14 @@ class VersionedNotebookDocumentIdentifier():
     
     # The notebook document's uri.
     uri: str
+
+    def __init__(self, *, version: int, uri: str) -> None:
+        """
+        - version: The version number of this notebook document.
+        - uri: The notebook document's uri.
+        """
+        self.version = version
+        self.uri = uri
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "VersionedNotebookDocumentIdentifier":
@@ -4845,6 +6285,16 @@ array from state S to S'.
     
     # The new cells, if any
     cells: Optional[List["NotebookCell"]]
+
+    def __init__(self, *, start: int, deleteCount: int, cells: Optional[List["NotebookCell"]] = None) -> None:
+        """
+        - start: The start oftest of the cell that changed.
+        - deleteCount: The deleted cells
+        - cells: The new cells, if any
+        """
+        self.start = start
+        self.deleteCount = deleteCount
+        self.cells = cells
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCellArrayChange":
@@ -4899,6 +6349,14 @@ class VersionedTextDocumentIdentifier(TextDocumentIdentifier):
     
     # The version number of this document.
     version: int
+
+    def __init__(self, *, uri: str, version: int) -> None:
+        """
+        - uri: The text document's uri.
+        - version: The version number of this document.
+        """
+        self.uri = uri
+        self.version = version
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "VersionedTextDocumentIdentifier":
@@ -5016,6 +6474,16 @@ class NotebookDocumentChangeEvent():
     # Changes to cells
     cells: Optional[Dict[AnonymousStructure9Keys, Any]]
 
+    def __init__(self, *, metadata: Optional["LSPObject"] = None, cells: Optional[Dict[AnonymousStructure9Keys, Any]] = None) -> None:
+        """
+        - metadata: The changed meta data if any.
+            
+            Note: should always be an object literal (e.g. LSPObject)
+        - cells: Changes to cells
+        """
+        self.metadata = metadata
+        self.cells = cells
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentChangeEvent":
         if metadata_json := json_get_optional_object(obj, "metadata"):
@@ -5064,6 +6532,29 @@ class DidChangeNotebookDocumentParams():
     #   you receive them.
     change: "NotebookDocumentChangeEvent"
 
+    def __init__(self, *, notebookDocument: "VersionedNotebookDocumentIdentifier", change: "NotebookDocumentChangeEvent") -> None:
+        """
+        - notebookDocument: The notebook document that did change. The version number points
+            to the version after all provided changes have been applied. If
+            only the text document content of a cell changes the notebook version
+            doesn't necessarily have to change.
+        - change: The actual changes to the notebook document.
+            
+            The changes describe single state changes to the notebook document.
+            So if there are two changes c1 (at array index 0) and c2 (at array
+            index 1) for a notebook in state S then c1 moves the notebook from
+            S to S' and c2 from S' to S''. So c1 is computed on the state S and
+            c2 is computed on the state S'.
+            
+            To mirror the content of a notebook using change events use the following approach:
+            - start with the same initial content
+            - apply the 'notebookDocument/didChange' notifications in the order you receive them.
+            - apply the `NotebookChangeEvent`s in a single notification in the order
+              you receive them.
+        """
+        self.notebookDocument = notebookDocument
+        self.change = change
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeNotebookDocumentParams":
         notebookDocument = VersionedNotebookDocumentIdentifier.from_json(json_get_object(obj, "notebookDocument"))
@@ -5086,6 +6577,12 @@ class NotebookDocumentIdentifier():
     # The notebook document's uri.
     uri: str
 
+    def __init__(self, *, uri: str) -> None:
+        """
+        - uri: The notebook document's uri.
+        """
+        self.uri = uri
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentIdentifier":
         uri = json_get_string(obj, "uri")
@@ -5105,6 +6602,12 @@ class DidSaveNotebookDocumentParams():
 
     # The notebook document that got saved.
     notebookDocument: "NotebookDocumentIdentifier"
+
+    def __init__(self, *, notebookDocument: "NotebookDocumentIdentifier") -> None:
+        """
+        - notebookDocument: The notebook document that got saved.
+        """
+        self.notebookDocument = notebookDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidSaveNotebookDocumentParams":
@@ -5129,6 +6632,15 @@ class DidCloseNotebookDocumentParams():
     # The text documents that represent the content
     # of a notebook cell that got closed.
     cellTextDocuments: List["TextDocumentIdentifier"]
+
+    def __init__(self, *, notebookDocument: "NotebookDocumentIdentifier", cellTextDocuments: List["TextDocumentIdentifier"]) -> None:
+        """
+        - notebookDocument: The notebook document that got closed.
+        - cellTextDocuments: The text documents that represent the content
+            of a notebook cell that got closed.
+        """
+        self.notebookDocument = notebookDocument
+        self.cellTextDocuments = cellTextDocuments
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidCloseNotebookDocumentParams":
@@ -5157,6 +6669,17 @@ class Registration():
     # Options necessary for the registration.
     registerOptions: Optional["LSPAny"]
 
+    def __init__(self, *, id: str, method: str, registerOptions: Optional["LSPAny"] = None) -> None:
+        """
+        - id: The id used to register the request. The id can be used to deregister
+            the request again.
+        - method: The method / capability to register for.
+        - registerOptions: Options necessary for the registration.
+        """
+        self.id = id
+        self.method = method
+        self.registerOptions = registerOptions
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Registration":
         id = json_get_string(obj, "id")
@@ -5182,6 +6705,12 @@ class RegistrationParams():
 
     registrations: List["Registration"]
 
+    def __init__(self, *, registrations: List["Registration"]) -> None:
+        """
+    
+        """
+        self.registrations = registrations
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RegistrationParams":
         registrations = [Registration.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "registrations")]
@@ -5204,6 +6733,15 @@ class Unregistration():
     # The method to unregister for.
     method: str
 
+    def __init__(self, *, id: str, method: str) -> None:
+        """
+        - id: The id used to unregister the request or notification. Usually an id
+            provided during the register request.
+        - method: The method to unregister for.
+        """
+        self.id = id
+        self.method = method
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Unregistration":
         id = json_get_string(obj, "id")
@@ -5222,6 +6760,12 @@ class UnregistrationParams():
     """"""
 
     unregisterations: List["Unregistration"]
+
+    def __init__(self, *, unregisterations: List["Unregistration"]) -> None:
+        """
+    
+        """
+        self.unregisterations = unregisterations
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "UnregistrationParams":
@@ -5304,6 +6848,35 @@ class WorkspaceEditClientCapabilities():
     # @since 3.16.0
     changeAnnotationSupport: Optional[Dict[AnonymousStructure17Keys, Any]]
 
+    def __init__(self, *, documentChanges: Optional[bool] = None, resourceOperations: Optional[List["ResourceOperationKind"]] = None, failureHandling: Optional["FailureHandlingKind"] = None, normalizesLineEndings: Optional[bool] = None, changeAnnotationSupport: Optional[Dict[AnonymousStructure17Keys, Any]] = None) -> None:
+        """
+        - documentChanges: The client supports versioned document changes in `WorkspaceEdit`s
+        - resourceOperations: The resource operations the client supports. Clients should at least
+            support 'create', 'rename' and 'delete' files and folders.
+            
+            @since 3.13.0
+        - failureHandling: The failure handling strategy of a client if applying the workspace edit
+            fails.
+            
+            @since 3.13.0
+        - normalizesLineEndings: Whether the client normalizes line endings to the client specific
+            setting.
+            If set to `true` the client will normalize line ending characters
+            in a workspace edit to the client-specified new line
+            character.
+            
+            @since 3.16.0
+        - changeAnnotationSupport: Whether the client in general supports change annotations on text edits,
+            create file, rename file and delete file changes.
+            
+            @since 3.16.0
+        """
+        self.documentChanges = documentChanges
+        self.resourceOperations = resourceOperations
+        self.failureHandling = failureHandling
+        self.normalizesLineEndings = normalizesLineEndings
+        self.changeAnnotationSupport = changeAnnotationSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceEditClientCapabilities":
         if documentChanges_json := json_get_optional_bool(obj, "documentChanges"):
@@ -5350,6 +6923,12 @@ class DidChangeConfigurationClientCapabilities():
     # Did change configuration notification supports dynamic registration.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Did change configuration notification supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -5379,6 +6958,19 @@ class DidChangeWatchedFilesClientCapabilities():
     # 
     # @since 3.17.0
     relativePatternSupport: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, relativePatternSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Did change watched files notification supports dynamic registration. Please note
+            that the current protocol doesn't support static configuration for file changes
+            from the server side.
+        - relativePatternSupport: Whether the client has support for {@link  RelativePattern relative pattern}
+            or not.
+            
+            @since 3.17.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.relativePatternSupport = relativePatternSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWatchedFilesClientCapabilities":
@@ -5467,6 +7059,25 @@ class WorkspaceSymbolClientCapabilities():
     # @since 3.17.0
     resolveSupport: Optional[Dict[AnonymousStructure20Keys, Any]]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, symbolKind: Optional[Dict[AnonymousStructure18Keys, Any]] = None, tagSupport: Optional[Dict[AnonymousStructure19Keys, Any]] = None, resolveSupport: Optional[Dict[AnonymousStructure20Keys, Any]] = None) -> None:
+        """
+        - dynamicRegistration: Symbol request supports dynamic registration.
+        - symbolKind: Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
+        - tagSupport: The client supports tags on `SymbolInformation`.
+            Clients supporting tags have to handle unknown tags gracefully.
+            
+            @since 3.16.0
+        - resolveSupport: The client support partial workspace symbols. The client will send the
+            request `workspaceSymbol/resolve` to the server to resolve additional
+            properties.
+            
+            @since 3.17.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.symbolKind = symbolKind
+        self.tagSupport = tagSupport
+        self.resolveSupport = resolveSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -5507,6 +7118,12 @@ class ExecuteCommandClientCapabilities():
     # Execute command supports dynamic registration.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Execute command supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -5535,6 +7152,18 @@ class SemanticTokensWorkspaceClientCapabilities():
     # wide change that requires such a calculation.
     refreshSupport: Optional[bool]
 
+    def __init__(self, *, refreshSupport: Optional[bool] = None) -> None:
+        """
+        - refreshSupport: Whether the client implementation supports a refresh request sent from
+            the server to the client.
+            
+            Note that this event is global and will force the client to refresh all
+            semantic tokens currently shown. It should be used with absolute care
+            and is useful for situation where a server for example detects a project
+            wide change that requires such a calculation.
+        """
+        self.refreshSupport = refreshSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensWorkspaceClientCapabilities":
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
@@ -5562,6 +7191,18 @@ class CodeLensWorkspaceClientCapabilities():
     # useful for situation where a server for example detect a project wide
     # change that requires such a calculation.
     refreshSupport: Optional[bool]
+
+    def __init__(self, *, refreshSupport: Optional[bool] = None) -> None:
+        """
+        - refreshSupport: Whether the client implementation supports a refresh request sent from the
+            server to the client.
+            
+            Note that this event is global and will force the client to refresh all
+            code lenses currently shown. It should be used with absolute care and is
+            useful for situation where a server for example detect a project wide
+            change that requires such a calculation.
+        """
+        self.refreshSupport = refreshSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensWorkspaceClientCapabilities":
@@ -5607,6 +7248,24 @@ like renaming a file in the UI.
     
     # The client has support for sending willDeleteFiles requests.
     willDelete: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, didCreate: Optional[bool] = None, willCreate: Optional[bool] = None, didRename: Optional[bool] = None, willRename: Optional[bool] = None, didDelete: Optional[bool] = None, willDelete: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether the client supports dynamic registration for file requests/notifications.
+        - didCreate: The client has support for sending didCreateFiles notifications.
+        - willCreate: The client has support for sending willCreateFiles requests.
+        - didRename: The client has support for sending didRenameFiles notifications.
+        - willRename: The client has support for sending willRenameFiles requests.
+        - didDelete: The client has support for sending didDeleteFiles notifications.
+        - willDelete: The client has support for sending willDeleteFiles requests.
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.didCreate = didCreate
+        self.willCreate = willCreate
+        self.didRename = didRename
+        self.willRename = willRename
+        self.didDelete = didDelete
+        self.willDelete = willDelete
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationClientCapabilities":
@@ -5674,6 +7333,18 @@ class InlineValueWorkspaceClientCapabilities():
     # change that requires such a calculation.
     refreshSupport: Optional[bool]
 
+    def __init__(self, *, refreshSupport: Optional[bool] = None) -> None:
+        """
+        - refreshSupport: Whether the client implementation supports a refresh request sent from the
+            server to the client.
+            
+            Note that this event is global and will force the client to refresh all
+            inline values currently shown. It should be used with absolute care and is
+            useful for situation where a server for example detects a project wide
+            change that requires such a calculation.
+        """
+        self.refreshSupport = refreshSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueWorkspaceClientCapabilities":
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
@@ -5704,6 +7375,18 @@ class InlayHintWorkspaceClientCapabilities():
     # change that requires such a calculation.
     refreshSupport: Optional[bool]
 
+    def __init__(self, *, refreshSupport: Optional[bool] = None) -> None:
+        """
+        - refreshSupport: Whether the client implementation supports a refresh request sent from
+            the server to the client.
+            
+            Note that this event is global and will force the client to refresh all
+            inlay hints currently shown. It should be used with absolute care and
+            is useful for situation where a server for example detects a project wide
+            change that requires such a calculation.
+        """
+        self.refreshSupport = refreshSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintWorkspaceClientCapabilities":
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
@@ -5733,6 +7416,18 @@ class DiagnosticWorkspaceClientCapabilities():
     # is useful for situation where a server for example detects a project wide
     # change that requires such a calculation.
     refreshSupport: Optional[bool]
+
+    def __init__(self, *, refreshSupport: Optional[bool] = None) -> None:
+        """
+        - refreshSupport: Whether the client implementation supports a refresh request sent from
+            the server to the client.
+            
+            Note that this event is global and will force the client to refresh all
+            pulled diagnostics currently shown. It should be used with absolute care and
+            is useful for situation where a server for example detects a project wide
+            change that requires such a calculation.
+        """
+        self.refreshSupport = refreshSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticWorkspaceClientCapabilities":
@@ -5817,6 +7512,61 @@ class WorkspaceClientCapabilities():
     # 
     # @since 3.17.0.
     diagnostics: Optional["DiagnosticWorkspaceClientCapabilities"]
+
+    def __init__(self, *, applyEdit: Optional[bool] = None, workspaceEdit: Optional["WorkspaceEditClientCapabilities"] = None, didChangeConfiguration: Optional["DidChangeConfigurationClientCapabilities"] = None, didChangeWatchedFiles: Optional["DidChangeWatchedFilesClientCapabilities"] = None, symbol: Optional["WorkspaceSymbolClientCapabilities"] = None, executeCommand: Optional["ExecuteCommandClientCapabilities"] = None, workspaceFolders: Optional[bool] = None, configuration: Optional[bool] = None, semanticTokens: Optional["SemanticTokensWorkspaceClientCapabilities"] = None, codeLens: Optional["CodeLensWorkspaceClientCapabilities"] = None, fileOperations: Optional["FileOperationClientCapabilities"] = None, inlineValue: Optional["InlineValueWorkspaceClientCapabilities"] = None, inlayHint: Optional["InlayHintWorkspaceClientCapabilities"] = None, diagnostics: Optional["DiagnosticWorkspaceClientCapabilities"] = None) -> None:
+        """
+        - applyEdit: The client supports applying batch edits
+            to the workspace by supporting the request
+            'workspace/applyEdit'
+        - workspaceEdit: Capabilities specific to `WorkspaceEdit`s.
+        - didChangeConfiguration: Capabilities specific to the `workspace/didChangeConfiguration` notification.
+        - didChangeWatchedFiles: Capabilities specific to the `workspace/didChangeWatchedFiles` notification.
+        - symbol: Capabilities specific to the `workspace/symbol` request.
+        - executeCommand: Capabilities specific to the `workspace/executeCommand` request.
+        - workspaceFolders: The client has support for workspace folders.
+            
+            @since 3.6.0
+        - configuration: The client supports `workspace/configuration` requests.
+            
+            @since 3.6.0
+        - semanticTokens: Capabilities specific to the semantic token requests scoped to the
+            workspace.
+            
+            @since 3.16.0.
+        - codeLens: Capabilities specific to the code lens requests scoped to the
+            workspace.
+            
+            @since 3.16.0.
+        - fileOperations: The client has support for file notifications/requests for user operations on files.
+            
+            Since 3.16.0
+        - inlineValue: Capabilities specific to the inline values requests scoped to the
+            workspace.
+            
+            @since 3.17.0.
+        - inlayHint: Capabilities specific to the inlay hint requests scoped to the
+            workspace.
+            
+            @since 3.17.0.
+        - diagnostics: Capabilities specific to the diagnostic requests scoped to the
+            workspace.
+            
+            @since 3.17.0.
+        """
+        self.applyEdit = applyEdit
+        self.workspaceEdit = workspaceEdit
+        self.didChangeConfiguration = didChangeConfiguration
+        self.didChangeWatchedFiles = didChangeWatchedFiles
+        self.symbol = symbol
+        self.executeCommand = executeCommand
+        self.workspaceFolders = workspaceFolders
+        self.configuration = configuration
+        self.semanticTokens = semanticTokens
+        self.codeLens = codeLens
+        self.fileOperations = fileOperations
+        self.inlineValue = inlineValue
+        self.inlayHint = inlayHint
+        self.diagnostics = diagnostics
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceClientCapabilities":
@@ -5928,6 +7678,20 @@ class TextDocumentSyncClientCapabilities():
     
     # The client supports did save notifications.
     didSave: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, willSave: Optional[bool] = None, willSaveWaitUntil: Optional[bool] = None, didSave: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether text document synchronization supports dynamic registration.
+        - willSave: The client supports sending will save notifications.
+        - willSaveWaitUntil: The client supports sending a will save request and
+            waits for a response providing text edits which will
+            be applied to the document before it is saved.
+        - didSave: The client supports did save notifications.
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.willSave = willSave
+        self.willSaveWaitUntil = willSaveWaitUntil
+        self.didSave = didSave
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSyncClientCapabilities":
@@ -6136,6 +7900,30 @@ class CompletionClientCapabilities():
     # @since 3.17.0
     completionList: Optional[Dict[AnonymousStructure26Keys, Any]]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, completionItem: Optional[Dict[AnonymousStructure24Keys, Any]] = None, completionItemKind: Optional[Dict[AnonymousStructure25Keys, Any]] = None, insertTextMode: Optional["InsertTextMode"] = None, contextSupport: Optional[bool] = None, completionList: Optional[Dict[AnonymousStructure26Keys, Any]] = None) -> None:
+        """
+        - dynamicRegistration: Whether completion supports dynamic registration.
+        - completionItem: The client supports the following `CompletionItem` specific
+            capabilities.
+        - insertTextMode: Defines how the client handles whitespace and indentation
+            when accepting a completion item that uses multi line
+            text in either `insertText` or `textEdit`.
+            
+            @since 3.17.0
+        - contextSupport: The client supports to send additional context information for a
+            `textDocument/completion` request.
+        - completionList: The client supports the following `CompletionList` specific
+            capabilities.
+            
+            @since 3.17.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.completionItem = completionItem
+        self.completionItemKind = completionItemKind
+        self.insertTextMode = insertTextMode
+        self.contextSupport = contextSupport
+        self.completionList = completionList
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6191,6 +7979,15 @@ class HoverClientCapabilities():
     # Client supports the following content formats for the content
     # property. The order describes the preferred format of the client.
     contentFormat: Optional[List["MarkupKind"]]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, contentFormat: Optional[List["MarkupKind"]] = None) -> None:
+        """
+        - dynamicRegistration: Whether hover supports dynamic registration.
+        - contentFormat: Client supports the following content formats for the content
+            property. The order describes the preferred format of the client.
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.contentFormat = contentFormat
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverClientCapabilities":
@@ -6278,6 +8075,22 @@ class SignatureHelpClientCapabilities():
     # @since 3.15.0
     contextSupport: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, signatureInformation: Optional[Dict[AnonymousStructure28Keys, Any]] = None, contextSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether signature help supports dynamic registration.
+        - signatureInformation: The client supports the following `SignatureInformation`
+            specific properties.
+        - contextSupport: The client supports to send additional context information for a
+            `textDocument/signatureHelp` request. A client that opts into
+            contextSupport will also support the `retriggerCharacters` on
+            `SignatureHelpOptions`.
+            
+            @since 3.15.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.signatureInformation = signatureInformation
+        self.contextSupport = contextSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6317,6 +8130,16 @@ class DeclarationClientCapabilities():
     # The client supports additional metadata in the form of declaration links.
     linkSupport: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, linkSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether declaration supports dynamic registration. If this is set to `true`
+            the client supports the new `DeclarationRegistrationOptions` return value
+            for the corresponding server capability as well.
+        - linkSupport: The client supports additional metadata in the form of declaration links.
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.linkSupport = linkSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6349,6 +8172,16 @@ class DefinitionClientCapabilities():
     # 
     # @since 3.14.0
     linkSupport: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, linkSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether definition supports dynamic registration.
+        - linkSupport: The client supports additional metadata in the form of definition links.
+            
+            @since 3.14.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.linkSupport = linkSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionClientCapabilities":
@@ -6385,6 +8218,18 @@ class TypeDefinitionClientCapabilities():
     # Since 3.14.0
     linkSupport: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, linkSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `TypeDefinitionRegistrationOptions` return value
+            for the corresponding server capability as well.
+        - linkSupport: The client supports additional metadata in the form of definition links.
+            
+            Since 3.14.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.linkSupport = linkSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6420,6 +8265,18 @@ class ImplementationClientCapabilities():
     # @since 3.14.0
     linkSupport: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, linkSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `ImplementationRegistrationOptions` return value
+            for the corresponding server capability as well.
+        - linkSupport: The client supports additional metadata in the form of definition links.
+            
+            @since 3.14.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.linkSupport = linkSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6448,6 +8305,12 @@ class ReferenceClientCapabilities():
     # Whether references supports dynamic registration.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether references supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6469,6 +8332,12 @@ class DocumentHighlightClientCapabilities():
 
     # Whether document highlight supports dynamic registration.
     dynamicRegistration: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether document highlight supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightClientCapabilities":
@@ -6511,6 +8380,28 @@ class DocumentSymbolClientCapabilities():
     # 
     # @since 3.16.0
     labelSupport: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, symbolKind: Optional[Dict[AnonymousStructure18Keys, Any]] = None, hierarchicalDocumentSymbolSupport: Optional[bool] = None, tagSupport: Optional[Dict[AnonymousStructure19Keys, Any]] = None, labelSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether document symbol supports dynamic registration.
+        - symbolKind: Specific capabilities for the `SymbolKind` in the
+            `textDocument/documentSymbol` request.
+        - hierarchicalDocumentSymbolSupport: The client supports hierarchical document symbols.
+        - tagSupport: The client supports tags on `SymbolInformation`. Tags are supported on
+            `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
+            Clients supporting tags have to handle unknown tags gracefully.
+            
+            @since 3.16.0
+        - labelSupport: The client supports an additional label presented in the UI when
+            registering a document symbol provider.
+            
+            @since 3.16.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.symbolKind = symbolKind
+        self.hierarchicalDocumentSymbolSupport = hierarchicalDocumentSymbolSupport
+        self.tagSupport = tagSupport
+        self.labelSupport = labelSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolClientCapabilities":
@@ -6623,6 +8514,45 @@ class CodeActionClientCapabilities():
     # @since 3.16.0
     honorsChangeAnnotations: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, codeActionLiteralSupport: Optional[Dict[AnonymousStructure30Keys, Any]] = None, isPreferredSupport: Optional[bool] = None, disabledSupport: Optional[bool] = None, dataSupport: Optional[bool] = None, resolveSupport: Optional[Dict[AnonymousStructure22Keys, Any]] = None, honorsChangeAnnotations: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether code action supports dynamic registration.
+        - codeActionLiteralSupport: The client support code action literals of type `CodeAction` as a valid
+            response of the `textDocument/codeAction` request. If the property is not
+            set the request can only return `Command` literals.
+            
+            @since 3.8.0
+        - isPreferredSupport: Whether code action supports the `isPreferred` property.
+            
+            @since 3.15.0
+        - disabledSupport: Whether code action supports the `disabled` property.
+            
+            @since 3.16.0
+        - dataSupport: Whether code action supports the `data` property which is
+            preserved between a `textDocument/codeAction` and a
+            `codeAction/resolve` request.
+            
+            @since 3.16.0
+        - resolveSupport: Whether the client supports resolving additional code action
+            properties via a separate `codeAction/resolve` request.
+            
+            @since 3.16.0
+        - honorsChangeAnnotations: Whether the client honors the change annotations in
+            text edits and resource operations returned via the
+            `CodeAction#edit` property by for example presenting
+            the workspace edit in the user interface and asking
+            for confirmation.
+            
+            @since 3.16.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.codeActionLiteralSupport = codeActionLiteralSupport
+        self.isPreferredSupport = isPreferredSupport
+        self.disabledSupport = disabledSupport
+        self.dataSupport = dataSupport
+        self.resolveSupport = resolveSupport
+        self.honorsChangeAnnotations = honorsChangeAnnotations
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6681,6 +8611,12 @@ class CodeLensClientCapabilities():
     # Whether code lens supports dynamic registration.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether code lens supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6707,6 +8643,16 @@ class DocumentLinkClientCapabilities():
     # 
     # @since 3.15.0
     tooltipSupport: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, tooltipSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether document link supports dynamic registration.
+        - tooltipSupport: Whether the client supports the `tooltip` property on `DocumentLink`.
+            
+            @since 3.15.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.tooltipSupport = tooltipSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkClientCapabilities":
@@ -6738,6 +8684,14 @@ class DocumentColorClientCapabilities():
     # for the corresponding server capability as well.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `DocumentColorRegistrationOptions` return value
+            for the corresponding server capability as well.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6759,6 +8713,12 @@ class DocumentFormattingClientCapabilities():
 
     # Whether formatting supports dynamic registration.
     dynamicRegistration: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether formatting supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingClientCapabilities":
@@ -6782,6 +8742,12 @@ class DocumentRangeFormattingClientCapabilities():
     # Whether range formatting supports dynamic registration.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether range formatting supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6803,6 +8769,12 @@ class DocumentOnTypeFormattingClientCapabilities():
 
     # Whether on type formatting supports dynamic registration.
     dynamicRegistration: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether on type formatting supports dynamic registration.
+        """
+        self.dynamicRegistration = dynamicRegistration
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingClientCapabilities":
@@ -6848,6 +8820,32 @@ class RenameClientCapabilities():
     # 
     # @since 3.16.0
     honorsChangeAnnotations: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, prepareSupport: Optional[bool] = None, prepareSupportDefaultBehavior: Optional["PrepareSupportDefaultBehavior"] = None, honorsChangeAnnotations: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether rename supports dynamic registration.
+        - prepareSupport: Client supports testing for validity of rename operations
+            before execution.
+            
+            @since 3.12.0
+        - prepareSupportDefaultBehavior: Client supports the default behavior result.
+            
+            The value indicates the default behavior used by the
+            client.
+            
+            @since 3.16.0
+        - honorsChangeAnnotations: Whether the client honors the change annotations in
+            text edits and resource operations returned via the
+            rename request's workspace edit by for example presenting
+            the workspace edit in the user interface and asking
+            for confirmation.
+            
+            @since 3.16.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.prepareSupport = prepareSupport
+        self.prepareSupportDefaultBehavior = prepareSupportDefaultBehavior
+        self.honorsChangeAnnotations = honorsChangeAnnotations
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameClientCapabilities":
@@ -6946,6 +8944,31 @@ class FoldingRangeClientCapabilities():
     # @since 3.17.0
     foldingRange: Optional[Dict[AnonymousStructure32Keys, Any]]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, rangeLimit: Optional[int] = None, lineFoldingOnly: Optional[bool] = None, foldingRangeKind: Optional[Dict[AnonymousStructure31Keys, Any]] = None, foldingRange: Optional[Dict[AnonymousStructure32Keys, Any]] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration for folding range
+            providers. If this is set to `true` the client supports the new
+            `FoldingRangeRegistrationOptions` return value for the corresponding
+            server capability as well.
+        - rangeLimit: The maximum number of folding ranges that the client prefers to receive
+            per document. The value serves as a hint, servers are free to follow the
+            limit.
+        - lineFoldingOnly: If set, the client signals that it only supports folding complete lines.
+            If set, client will ignore specified `startCharacter` and `endCharacter`
+            properties in a FoldingRange.
+        - foldingRangeKind: Specific options for the folding range kind.
+            
+            @since 3.17.0
+        - foldingRange: Specific options for the folding range.
+            
+            @since 3.17.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.rangeLimit = rangeLimit
+        self.lineFoldingOnly = lineFoldingOnly
+        self.foldingRangeKind = foldingRangeKind
+        self.foldingRange = foldingRange
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -6993,6 +9016,14 @@ class SelectionRangeClientCapabilities():
     # the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
     # capability as well.
     dynamicRegistration: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
+            the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
+            capability as well.
+        """
+        self.dynamicRegistration = dynamicRegistration
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeClientCapabilities":
@@ -7053,6 +9084,32 @@ class PublishDiagnosticsClientCapabilities():
     # @since 3.16.0
     dataSupport: Optional[bool]
 
+    def __init__(self, *, relatedInformation: Optional[bool] = None, tagSupport: Optional[Dict[AnonymousStructure33Keys, Any]] = None, versionSupport: Optional[bool] = None, codeDescriptionSupport: Optional[bool] = None, dataSupport: Optional[bool] = None) -> None:
+        """
+        - relatedInformation: Whether the clients accepts diagnostics with related information.
+        - tagSupport: Client supports the tag property to provide meta data about a diagnostic.
+            Clients supporting tags have to handle unknown tags gracefully.
+            
+            @since 3.15.0
+        - versionSupport: Whether the client interprets the version property of the
+            `textDocument/publishDiagnostics` notification's parameter.
+            
+            @since 3.15.0
+        - codeDescriptionSupport: Client supports a codeDescription property
+            
+            @since 3.16.0
+        - dataSupport: Whether code action supports the `data` property which is
+            preserved between a `textDocument/publishDiagnostics` and
+            `textDocument/codeAction` request.
+            
+            @since 3.16.0
+        """
+        self.relatedInformation = relatedInformation
+        self.tagSupport = tagSupport
+        self.versionSupport = versionSupport
+        self.codeDescriptionSupport = codeDescriptionSupport
+        self.dataSupport = dataSupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PublishDiagnosticsClientCapabilities":
         if relatedInformation_json := json_get_optional_bool(obj, "relatedInformation"):
@@ -7100,6 +9157,14 @@ class CallHierarchyClientCapabilities():
     # the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
     # return value for the corresponding server capability as well.
     dynamicRegistration: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+            return value for the corresponding server capability as well.
+        """
+        self.dynamicRegistration = dynamicRegistration
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyClientCapabilities":
@@ -7210,6 +9275,51 @@ class SemanticTokensClientCapabilities():
     # @since 3.17.0
     augmentsSyntaxTokens: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, requests: Dict[AnonymousStructure35Keys, Any], tokenTypes: List[str], tokenModifiers: List[str], formats: List["TokenFormat"], overlappingTokenSupport: Optional[bool] = None, multilineTokenSupport: Optional[bool] = None, serverCancelSupport: Optional[bool] = None, augmentsSyntaxTokens: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+            return value for the corresponding server capability as well.
+        - requests: Which requests the client supports and might send to the server
+            depending on the server's capability. Please note that clients might not
+            show semantic tokens or degrade some of the user experience if a range
+            or full request is advertised by the client but not provided by the
+            server. If for example the client capability `requests.full` and
+            `request.range` are both set to true but the server only provides a
+            range provider the client might not render a minimap correctly or might
+            even decide to not show any semantic tokens at all.
+        - tokenTypes: The token types that the client supports.
+        - tokenModifiers: The token modifiers that the client supports.
+        - formats: The token formats the clients supports.
+        - overlappingTokenSupport: Whether the client supports tokens that can overlap each other.
+        - multilineTokenSupport: Whether the client supports tokens that can span multiple lines.
+        - serverCancelSupport: Whether the client allows the server to actively cancel a
+            semantic token request, e.g. supports returning
+            LSPErrorCodes.ServerCancelled. If a server does the client
+            needs to retrigger the request.
+            
+            @since 3.17.0
+        - augmentsSyntaxTokens: Whether the client uses semantic tokens to augment existing
+            syntax tokens. If set to `true` client side created syntax
+            tokens and semantic tokens are both used for colorization. If
+            set to `false` the client only uses the returned semantic tokens
+            for colorization.
+            
+            If the value is `undefined` then the client behavior is not
+            specified.
+            
+            @since 3.17.0
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.requests = requests
+        self.tokenTypes = tokenTypes
+        self.tokenModifiers = tokenModifiers
+        self.formats = formats
+        self.overlappingTokenSupport = overlappingTokenSupport
+        self.multilineTokenSupport = multilineTokenSupport
+        self.serverCancelSupport = serverCancelSupport
+        self.augmentsSyntaxTokens = augmentsSyntaxTokens
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -7268,6 +9378,14 @@ class LinkedEditingRangeClientCapabilities():
     # return value for the corresponding server capability as well.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+            return value for the corresponding server capability as well.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -7294,6 +9412,14 @@ class MonikerClientCapabilities():
     # for the corresponding server capability as well.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether moniker supports dynamic registration. If this is set to `true`
+            the client supports the new `MonikerRegistrationOptions` return value
+            for the corresponding server capability as well.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -7318,6 +9444,14 @@ class TypeHierarchyClientCapabilities():
     # return value for the corresponding server capability as well.
     dynamicRegistration: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+            return value for the corresponding server capability as well.
+        """
+        self.dynamicRegistration = dynamicRegistration
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -7341,6 +9475,12 @@ class InlineValueClientCapabilities():
 
     # Whether implementation supports dynamic registration for inline value providers.
     dynamicRegistration: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration for inline value providers.
+        """
+        self.dynamicRegistration = dynamicRegistration
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueClientCapabilities":
@@ -7369,6 +9509,15 @@ class InlayHintClientCapabilities():
     # Indicates which properties a client can resolve lazily on an inlay
     # hint.
     resolveSupport: Optional[Dict[AnonymousStructure22Keys, Any]]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, resolveSupport: Optional[Dict[AnonymousStructure22Keys, Any]] = None) -> None:
+        """
+        - dynamicRegistration: Whether inlay hints support dynamic registration.
+        - resolveSupport: Indicates which properties a client can resolve lazily on an inlay
+            hint.
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.resolveSupport = resolveSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintClientCapabilities":
@@ -7404,6 +9553,16 @@ class DiagnosticClientCapabilities():
     
     # Whether the clients supports related documents for document diagnostic pulls.
     relatedDocumentSupport: Optional[bool]
+
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, relatedDocumentSupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is set to `true`
+            the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+            return value for the corresponding server capability as well.
+        - relatedDocumentSupport: Whether the clients supports related documents for document diagnostic pulls.
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.relatedDocumentSupport = relatedDocumentSupport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticClientCapabilities":
@@ -7548,6 +9707,99 @@ class TextDocumentClientCapabilities():
     # 
     # @since 3.17.0
     diagnostic: Optional["DiagnosticClientCapabilities"]
+
+    def __init__(self, *, synchronization: Optional["TextDocumentSyncClientCapabilities"] = None, completion: Optional["CompletionClientCapabilities"] = None, hover: Optional["HoverClientCapabilities"] = None, signatureHelp: Optional["SignatureHelpClientCapabilities"] = None, declaration: Optional["DeclarationClientCapabilities"] = None, definition: Optional["DefinitionClientCapabilities"] = None, typeDefinition: Optional["TypeDefinitionClientCapabilities"] = None, implementation: Optional["ImplementationClientCapabilities"] = None, references: Optional["ReferenceClientCapabilities"] = None, documentHighlight: Optional["DocumentHighlightClientCapabilities"] = None, documentSymbol: Optional["DocumentSymbolClientCapabilities"] = None, codeAction: Optional["CodeActionClientCapabilities"] = None, codeLens: Optional["CodeLensClientCapabilities"] = None, documentLink: Optional["DocumentLinkClientCapabilities"] = None, colorProvider: Optional["DocumentColorClientCapabilities"] = None, formatting: Optional["DocumentFormattingClientCapabilities"] = None, rangeFormatting: Optional["DocumentRangeFormattingClientCapabilities"] = None, onTypeFormatting: Optional["DocumentOnTypeFormattingClientCapabilities"] = None, rename: Optional["RenameClientCapabilities"] = None, foldingRange: Optional["FoldingRangeClientCapabilities"] = None, selectionRange: Optional["SelectionRangeClientCapabilities"] = None, publishDiagnostics: Optional["PublishDiagnosticsClientCapabilities"] = None, callHierarchy: Optional["CallHierarchyClientCapabilities"] = None, semanticTokens: Optional["SemanticTokensClientCapabilities"] = None, linkedEditingRange: Optional["LinkedEditingRangeClientCapabilities"] = None, moniker: Optional["MonikerClientCapabilities"] = None, typeHierarchy: Optional["TypeHierarchyClientCapabilities"] = None, inlineValue: Optional["InlineValueClientCapabilities"] = None, inlayHint: Optional["InlayHintClientCapabilities"] = None, diagnostic: Optional["DiagnosticClientCapabilities"] = None) -> None:
+        """
+        - synchronization: Defines which synchronization capabilities the client supports.
+        - completion: Capabilities specific to the `textDocument/completion` request.
+        - hover: Capabilities specific to the `textDocument/hover` request.
+        - signatureHelp: Capabilities specific to the `textDocument/signatureHelp` request.
+        - declaration: Capabilities specific to the `textDocument/declaration` request.
+            
+            @since 3.14.0
+        - definition: Capabilities specific to the `textDocument/definition` request.
+        - typeDefinition: Capabilities specific to the `textDocument/typeDefinition` request.
+            
+            @since 3.6.0
+        - implementation: Capabilities specific to the `textDocument/implementation` request.
+            
+            @since 3.6.0
+        - references: Capabilities specific to the `textDocument/references` request.
+        - documentHighlight: Capabilities specific to the `textDocument/documentHighlight` request.
+        - documentSymbol: Capabilities specific to the `textDocument/documentSymbol` request.
+        - codeAction: Capabilities specific to the `textDocument/codeAction` request.
+        - codeLens: Capabilities specific to the `textDocument/codeLens` request.
+        - documentLink: Capabilities specific to the `textDocument/documentLink` request.
+        - colorProvider: Capabilities specific to the `textDocument/documentColor` and the
+            `textDocument/colorPresentation` request.
+            
+            @since 3.6.0
+        - formatting: Capabilities specific to the `textDocument/formatting` request.
+        - rangeFormatting: Capabilities specific to the `textDocument/rangeFormatting` request.
+        - onTypeFormatting: Capabilities specific to the `textDocument/onTypeFormatting` request.
+        - rename: Capabilities specific to the `textDocument/rename` request.
+        - foldingRange: Capabilities specific to the `textDocument/foldingRange` request.
+            
+            @since 3.10.0
+        - selectionRange: Capabilities specific to the `textDocument/selectionRange` request.
+            
+            @since 3.15.0
+        - publishDiagnostics: Capabilities specific to the `textDocument/publishDiagnostics` notification.
+        - callHierarchy: Capabilities specific to the various call hierarchy requests.
+            
+            @since 3.16.0
+        - semanticTokens: Capabilities specific to the various semantic token request.
+            
+            @since 3.16.0
+        - linkedEditingRange: Capabilities specific to the `textDocument/linkedEditingRange` request.
+            
+            @since 3.16.0
+        - moniker: Client capabilities specific to the `textDocument/moniker` request.
+            
+            @since 3.16.0
+        - typeHierarchy: Capabilities specific to the various type hierarchy requests.
+            
+            @since 3.17.0
+        - inlineValue: Capabilities specific to the `textDocument/inlineValue` request.
+            
+            @since 3.17.0
+        - inlayHint: Capabilities specific to the `textDocument/inlayHint` request.
+            
+            @since 3.17.0
+        - diagnostic: Capabilities specific to the diagnostic pull model.
+            
+            @since 3.17.0
+        """
+        self.synchronization = synchronization
+        self.completion = completion
+        self.hover = hover
+        self.signatureHelp = signatureHelp
+        self.declaration = declaration
+        self.definition = definition
+        self.typeDefinition = typeDefinition
+        self.implementation = implementation
+        self.references = references
+        self.documentHighlight = documentHighlight
+        self.documentSymbol = documentSymbol
+        self.codeAction = codeAction
+        self.codeLens = codeLens
+        self.documentLink = documentLink
+        self.colorProvider = colorProvider
+        self.formatting = formatting
+        self.rangeFormatting = rangeFormatting
+        self.onTypeFormatting = onTypeFormatting
+        self.rename = rename
+        self.foldingRange = foldingRange
+        self.selectionRange = selectionRange
+        self.publishDiagnostics = publishDiagnostics
+        self.callHierarchy = callHierarchy
+        self.semanticTokens = semanticTokens
+        self.linkedEditingRange = linkedEditingRange
+        self.moniker = moniker
+        self.typeHierarchy = typeHierarchy
+        self.inlineValue = inlineValue
+        self.inlayHint = inlayHint
+        self.diagnostic = diagnostic
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentClientCapabilities":
@@ -7753,6 +10005,17 @@ class NotebookDocumentSyncClientCapabilities():
     # The client supports sending execution summary data per cell.
     executionSummarySupport: Optional[bool]
 
+    def __init__(self, *, dynamicRegistration: Optional[bool] = None, executionSummarySupport: Optional[bool] = None) -> None:
+        """
+        - dynamicRegistration: Whether implementation supports dynamic registration. If this is
+            set to `true` the client supports the new
+            `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+            return value for the corresponding server capability as well.
+        - executionSummarySupport: The client supports sending execution summary data per cell.
+        """
+        self.dynamicRegistration = dynamicRegistration
+        self.executionSummarySupport = executionSummarySupport
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncClientCapabilities":
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
@@ -7784,6 +10047,14 @@ class NotebookDocumentClientCapabilities():
     # 
     # @since 3.17.0
     synchronization: "NotebookDocumentSyncClientCapabilities"
+
+    def __init__(self, *, synchronization: "NotebookDocumentSyncClientCapabilities") -> None:
+        """
+        - synchronization: Capabilities specific to notebook document synchronization
+            
+            @since 3.17.0
+        """
+        self.synchronization = synchronization
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentClientCapabilities":
@@ -7820,6 +10091,12 @@ class ShowMessageRequestClientCapabilities():
     # Capabilities specific to the `MessageActionItem` type.
     messageActionItem: Optional[Dict[AnonymousStructure36Keys, Any]]
 
+    def __init__(self, *, messageActionItem: Optional[Dict[AnonymousStructure36Keys, Any]] = None) -> None:
+        """
+        - messageActionItem: Capabilities specific to the `MessageActionItem` type.
+        """
+        self.messageActionItem = messageActionItem
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageRequestClientCapabilities":
         if messageActionItem_json := json_get_optional_object(obj, "messageActionItem"):
@@ -7844,6 +10121,13 @@ class ShowDocumentClientCapabilities():
     # The client has support for the showDocument
     # request.
     support: bool
+
+    def __init__(self, *, support: bool) -> None:
+        """
+        - support: The client has support for the showDocument
+            request.
+        """
+        self.support = support
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowDocumentClientCapabilities":
@@ -7880,6 +10164,28 @@ class WindowClientCapabilities():
     # 
     # @since 3.16.0
     showDocument: Optional["ShowDocumentClientCapabilities"]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, showMessage: Optional["ShowMessageRequestClientCapabilities"] = None, showDocument: Optional["ShowDocumentClientCapabilities"] = None) -> None:
+        """
+        - workDoneProgress: It indicates whether the client supports server initiated
+            progress using the `window/workDoneProgress/create` request.
+            
+            The capability also controls Whether client supports handling
+            of progress notifications. If set servers are allowed to report a
+            `workDoneProgress` property in the request specific server
+            capabilities.
+            
+            @since 3.15.0
+        - showMessage: Capabilities specific to the showMessage request.
+            
+            @since 3.16.0
+        - showDocument: Capabilities specific to the showDocument request.
+            
+            @since 3.16.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.showMessage = showMessage
+        self.showDocument = showDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WindowClientCapabilities":
@@ -7935,6 +10241,14 @@ class RegularExpressionsClientCapabilities():
     # The engine's version.
     version: Optional[str]
 
+    def __init__(self, *, engine: str, version: Optional[str] = None) -> None:
+        """
+        - engine: The engine's name.
+        - version: The engine's version.
+        """
+        self.engine = engine
+        self.version = version
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RegularExpressionsClientCapabilities":
         engine = json_get_string(obj, "engine")
@@ -7969,6 +10283,19 @@ class MarkdownClientCapabilities():
     # 
     # @since 3.17.0
     allowedTags: Optional[List[str]]
+
+    def __init__(self, *, parser: str, version: Optional[str] = None, allowedTags: Optional[List[str]] = None) -> None:
+        """
+        - parser: The name of the parser.
+        - version: The version of the parser.
+        - allowedTags: A list of HTML tags that the client allows / supports in
+            Markdown.
+            
+            @since 3.17.0
+        """
+        self.parser = parser
+        self.version = version
+        self.allowedTags = allowedTags
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MarkdownClientCapabilities":
@@ -8037,6 +10364,44 @@ class GeneralClientCapabilities():
     # @since 3.17.0
     positionEncodings: Optional[List["PositionEncodingKind"]]
 
+    def __init__(self, *, staleRequestSupport: Optional[Dict[AnonymousStructure16Keys, Any]] = None, regularExpressions: Optional["RegularExpressionsClientCapabilities"] = None, markdown: Optional["MarkdownClientCapabilities"] = None, positionEncodings: Optional[List["PositionEncodingKind"]] = None) -> None:
+        """
+        - staleRequestSupport: Client capability that signals how the client
+            handles stale requests (e.g. a request
+            for which the client will not process the response
+            anymore since the information is outdated).
+            
+            @since 3.17.0
+        - regularExpressions: Client capabilities specific to regular expressions.
+            
+            @since 3.16.0
+        - markdown: Client capabilities specific to the client's markdown parser.
+            
+            @since 3.16.0
+        - positionEncodings: The position encodings supported by the client. Client and server
+            have to agree on the same position encoding to ensure that offsets
+            (e.g. character position in a line) are interpreted the same on both
+            sides.
+            
+            To keep the protocol backwards compatible the following applies: if
+            the value 'utf-16' is missing from the array of position encodings
+            servers can assume that the client supports UTF-16. UTF-16 is
+            therefore a mandatory encoding.
+            
+            If omitted it defaults to ['utf-16'].
+            
+            Implementation considerations: since the conversion from one encoding
+            into another requires the content of the file / line the conversion
+            is best done where the file is read which is usually on the server
+            side.
+            
+            @since 3.17.0
+        """
+        self.staleRequestSupport = staleRequestSupport
+        self.regularExpressions = regularExpressions
+        self.markdown = markdown
+        self.positionEncodings = positionEncodings
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "GeneralClientCapabilities":
         if staleRequestSupport_json := json_get_optional_object(obj, "staleRequestSupport"):
@@ -8095,6 +10460,26 @@ class ClientCapabilities():
     
     # Experimental client capabilities.
     experimental: Optional["LSPAny"]
+
+    def __init__(self, *, workspace: Optional["WorkspaceClientCapabilities"] = None, textDocument: Optional["TextDocumentClientCapabilities"] = None, notebookDocument: Optional["NotebookDocumentClientCapabilities"] = None, window: Optional["WindowClientCapabilities"] = None, general: Optional["GeneralClientCapabilities"] = None, experimental: Optional["LSPAny"] = None) -> None:
+        """
+        - workspace: Workspace specific client capabilities.
+        - textDocument: Text document specific client capabilities.
+        - notebookDocument: Capabilities specific to the notebook document support.
+            
+            @since 3.17.0
+        - window: Window specific client capabilities.
+        - general: General client capabilities.
+            
+            @since 3.16.0
+        - experimental: Experimental client capabilities.
+        """
+        self.workspace = workspace
+        self.textDocument = textDocument
+        self.notebookDocument = notebookDocument
+        self.window = window
+        self.general = general
+        self.experimental = experimental
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ClientCapabilities":
@@ -8192,6 +10577,48 @@ class _InitializeParams():
     # The initial trace setting. If omitted trace is disabled ('off').
     trace: Optional[Union[str, str, str, str]]
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, processId: Union[int, None], clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]] = None, locale: Optional[str] = None, rootPath: Optional[Union[str, None]] = None, rootUri: Union[str, None], capabilities: "ClientCapabilities", initializationOptions: Optional["LSPAny"] = None, trace: Optional[Union[str, str, str, str]] = None) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - processId: The process Id of the parent process that started
+            the server.
+            
+            Is `null` if the process has not been started by another process.
+            If the parent process is not alive then the server should exit.
+        - clientInfo: Information about the client
+            
+            @since 3.15.0
+        - locale: The locale the client is currently showing the user interface
+            in. This must not necessarily be the locale of the operating
+            system.
+            
+            Uses IETF language tags as the value's syntax
+            (See https://en.wikipedia.org/wiki/IETF_language_tag)
+            
+            @since 3.16.0
+        - rootPath: The rootPath of the workspace. Is null
+            if no folder is open.
+            
+            @deprecated in favour of rootUri.
+        - rootUri: The rootUri of the workspace. Is null if no
+            folder is open. If both `rootPath` and `rootUri` are set
+            `rootUri` wins.
+            
+            @deprecated in favour of workspaceFolders.
+        - capabilities: The capabilities provided by the client (editor or tool)
+        - initializationOptions: User provided initialization options.
+        - trace: The initial trace setting. If omitted trace is disabled ('off').
+        """
+        self.workDoneToken = workDoneToken
+        self.processId = processId
+        self.clientInfo = clientInfo
+        self.locale = locale
+        self.rootPath = rootPath
+        self.rootUri = rootUri
+        self.capabilities = capabilities
+        self.initializationOptions = initializationOptions
+        self.trace = trace
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "_InitializeParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -8255,6 +10682,18 @@ class WorkspaceFoldersInitializeParams():
     # 
     # @since 3.6.0
     workspaceFolders: Optional[Union[List["WorkspaceFolder"], None]]
+
+    def __init__(self, *, workspaceFolders: Optional[Union[List["WorkspaceFolder"], None]] = None) -> None:
+        """
+        - workspaceFolders: The workspace folders configured in the client when the server starts.
+            
+            This property is only available if the client supports workspace folders.
+            It can be `null` if the client supports workspace folders but none are
+            configured.
+            
+            @since 3.6.0
+        """
+        self.workspaceFolders = workspaceFolders
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersInitializeParams":
@@ -8331,6 +10770,56 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
     # @since 3.6.0
     workspaceFolders: Optional[Union[List["WorkspaceFolder"], None]]
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, processId: Union[int, None], clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]] = None, locale: Optional[str] = None, rootPath: Optional[Union[str, None]] = None, rootUri: Union[str, None], capabilities: "ClientCapabilities", initializationOptions: Optional["LSPAny"] = None, trace: Optional[Union[str, str, str, str]] = None, workspaceFolders: Optional[Union[List["WorkspaceFolder"], None]] = None) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - processId: The process Id of the parent process that started
+            the server.
+            
+            Is `null` if the process has not been started by another process.
+            If the parent process is not alive then the server should exit.
+        - clientInfo: Information about the client
+            
+            @since 3.15.0
+        - locale: The locale the client is currently showing the user interface
+            in. This must not necessarily be the locale of the operating
+            system.
+            
+            Uses IETF language tags as the value's syntax
+            (See https://en.wikipedia.org/wiki/IETF_language_tag)
+            
+            @since 3.16.0
+        - rootPath: The rootPath of the workspace. Is null
+            if no folder is open.
+            
+            @deprecated in favour of rootUri.
+        - rootUri: The rootUri of the workspace. Is null if no
+            folder is open. If both `rootPath` and `rootUri` are set
+            `rootUri` wins.
+            
+            @deprecated in favour of workspaceFolders.
+        - capabilities: The capabilities provided by the client (editor or tool)
+        - initializationOptions: User provided initialization options.
+        - trace: The initial trace setting. If omitted trace is disabled ('off').
+        - workspaceFolders: The workspace folders configured in the client when the server starts.
+            
+            This property is only available if the client supports workspace folders.
+            It can be `null` if the client supports workspace folders but none are
+            configured.
+            
+            @since 3.6.0
+        """
+        self.workDoneToken = workDoneToken
+        self.processId = processId
+        self.clientInfo = clientInfo
+        self.locale = locale
+        self.rootPath = rootPath
+        self.rootUri = rootUri
+        self.capabilities = capabilities
+        self.initializationOptions = initializationOptions
+        self.trace = trace
+        self.workspaceFolders = workspaceFolders
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -8395,6 +10884,12 @@ class SaveOptions():
     # The client is supposed to include the content on save.
     includeText: Optional[bool]
 
+    def __init__(self, *, includeText: Optional[bool] = None) -> None:
+        """
+        - includeText: The client is supposed to include the content on save.
+        """
+        self.includeText = includeText
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SaveOptions":
         if includeText_json := json_get_optional_bool(obj, "includeText"):
@@ -8433,6 +10928,25 @@ class TextDocumentSyncOptions():
     # If present save notifications are sent to the server. If omitted the notification should not be
     # sent.
     save: Optional[Union[bool, "SaveOptions"]]
+
+    def __init__(self, *, openClose: Optional[bool] = None, change: Optional["TextDocumentSyncKind"] = None, willSave: Optional[bool] = None, willSaveWaitUntil: Optional[bool] = None, save: Optional[Union[bool, "SaveOptions"]] = None) -> None:
+        """
+        - openClose: Open and close notifications are sent to the server. If omitted open close notification should not
+            be sent.
+        - change: Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
+            and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
+        - willSave: If present will save notifications are sent to the server. If omitted the notification should not be
+            sent.
+        - willSaveWaitUntil: If present will save wait until requests are sent to the server. If omitted the request should not be
+            sent.
+        - save: If present save notifications are sent to the server. If omitted the notification should not be
+            sent.
+        """
+        self.openClose = openClose
+        self.change = change
+        self.willSave = willSave
+        self.willSaveWaitUntil = willSaveWaitUntil
+        self.save = save
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSyncOptions":
@@ -8547,6 +11061,15 @@ cell will be synced.
     # the server. Will only be honored if mode === `notebook`.
     save: Optional[bool]
 
+    def __init__(self, *, notebookSelector: List[Union[Dict[AnonymousStructure14Keys, Any], Dict[AnonymousStructure15Keys, Any]]], save: Optional[bool] = None) -> None:
+        """
+        - notebookSelector: The notebooks to be synced
+        - save: Whether save notification should be forwarded to
+            the server. Will only be honored if mode === `notebook`.
+        """
+        self.notebookSelector = notebookSelector
+        self.save = save
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncOptions":
         notebookSelector = [parse_or_type((i), (lambda v: parse_AnonymousStructure14(json_assert_type_object(v)), lambda v: parse_AnonymousStructure15(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
@@ -8580,6 +11103,18 @@ class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
     id: Optional[str]
+
+    def __init__(self, *, notebookSelector: List[Union[Dict[AnonymousStructure14Keys, Any], Dict[AnonymousStructure15Keys, Any]]], save: Optional[bool] = None, id: Optional[str] = None) -> None:
+        """
+        - notebookSelector: The notebooks to be synced
+        - save: Whether save notification should be forwarded to
+            the server. Will only be honored if mode === `notebook`.
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.notebookSelector = notebookSelector
+        self.save = save
+        self.id = id
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncRegistrationOptions":
@@ -8657,6 +11192,37 @@ class CompletionOptions():
     # @since 3.17.0
     completionItem: Optional[Dict[AnonymousStructure12Keys, Any]]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, triggerCharacters: Optional[List[str]] = None, allCommitCharacters: Optional[List[str]] = None, resolveProvider: Optional[bool] = None, completionItem: Optional[Dict[AnonymousStructure12Keys, Any]] = None) -> None:
+        """
+        - triggerCharacters: Most tools trigger completion request automatically without explicitly requesting
+            it using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user
+            starts to type an identifier. For example if the user types `c` in a JavaScript file
+            code complete will automatically pop up present `console` besides others as a
+            completion item. Characters that make up identifiers don't need to be listed here.
+            
+            If code complete should automatically be trigger on characters not being valid inside
+            an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.
+        - allCommitCharacters: The list of all possible characters that commit a completion. This field can be used
+            if clients don't support individual commit characters per completion item. See
+            `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
+            
+            If a server provides both `allCommitCharacters` and commit characters on an individual
+            completion item the ones on the completion item win.
+            
+            @since 3.2.0
+        - resolveProvider: The server provides support to resolve additional
+            information for a completion item.
+        - completionItem: The server supports the following `CompletionItem` specific
+            capabilities.
+            
+            @since 3.17.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.triggerCharacters = triggerCharacters
+        self.allCommitCharacters = allCommitCharacters
+        self.resolveProvider = resolveProvider
+        self.completionItem = completionItem
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -8702,6 +11268,12 @@ class HoverOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -8733,6 +11305,20 @@ class SignatureHelpOptions():
     # 
     # @since 3.15.0
     retriggerCharacters: Optional[List[str]]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, triggerCharacters: Optional[List[str]] = None, retriggerCharacters: Optional[List[str]] = None) -> None:
+        """
+        - triggerCharacters: List of characters that trigger signature help automatically.
+        - retriggerCharacters: List of characters that re-trigger signature help.
+            
+            These trigger characters are only active when signature help is already showing. All trigger characters
+            are also counted as re-trigger characters.
+            
+            @since 3.15.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.triggerCharacters = triggerCharacters
+        self.retriggerCharacters = retriggerCharacters
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpOptions":
@@ -8767,6 +11353,12 @@ class DefinitionOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -8788,6 +11380,12 @@ class ReferenceOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -8808,6 +11406,12 @@ class DocumentHighlightOptions():
     """Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest)."""
 
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightOptions":
@@ -8835,6 +11439,16 @@ class DocumentSymbolOptions():
     # 
     # @since 3.16.0
     label: Optional[str]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, label: Optional[str] = None) -> None:
+        """
+        - label: A human-readable string that is shown when multiple outlines trees
+            are shown for the same document.
+            
+            @since 3.16.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.label = label
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolOptions":
@@ -8875,6 +11489,21 @@ class CodeActionOptions():
     # @since 3.16.0
     resolveProvider: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, codeActionKinds: Optional[List["CodeActionKind"]] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - codeActionKinds: CodeActionKinds that this server may return.
+            
+            The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
+            may list out every specific kind they provide.
+        - resolveProvider: The server provides support to resolve additional
+            information for a code action.
+            
+            @since 3.16.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.codeActionKinds = codeActionKinds
+        self.resolveProvider = resolveProvider
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -8911,6 +11540,13 @@ class CodeLensOptions():
     # Code lens has a resolve provider as well.
     resolveProvider: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - resolveProvider: Code lens has a resolve provider as well.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -8940,6 +11576,13 @@ class DocumentLinkOptions():
     
     # Document links have a resolve provider as well.
     resolveProvider: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - resolveProvider: Document links have a resolve provider as well.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkOptions":
@@ -8974,6 +11617,16 @@ class WorkspaceSymbolOptions():
     # @since 3.17.0
     resolveProvider: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - resolveProvider: The server provides support to resolve additional
+            information for a workspace symbol.
+            
+            @since 3.17.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -9001,6 +11654,12 @@ class DocumentFormattingOptions():
 
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -9021,6 +11680,12 @@ class DocumentRangeFormattingOptions():
     """Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."""
 
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None) -> None:
+        """
+    
+        """
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingOptions":
@@ -9046,6 +11711,14 @@ class DocumentOnTypeFormattingOptions():
     
     # More trigger characters.
     moreTriggerCharacter: Optional[List[str]]
+
+    def __init__(self, *, firstTriggerCharacter: str, moreTriggerCharacter: Optional[List[str]] = None) -> None:
+        """
+        - firstTriggerCharacter: A character on which formatting should be triggered, like `{`.
+        - moreTriggerCharacter: More trigger characters.
+        """
+        self.firstTriggerCharacter = firstTriggerCharacter
+        self.moreTriggerCharacter = moreTriggerCharacter
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingOptions":
@@ -9074,6 +11747,15 @@ class RenameOptions():
     # 
     # @since version 3.12.0
     prepareProvider: Optional[bool]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, prepareProvider: Optional[bool] = None) -> None:
+        """
+        - prepareProvider: Renames should be checked and tested before being executed.
+            
+            @since version 3.12.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.prepareProvider = prepareProvider
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameOptions":
@@ -9104,6 +11786,13 @@ class ExecuteCommandOptions():
     
     # The commands to be executed on the server
     commands: List[str]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, commands: List[str]) -> None:
+        """
+        - commands: The commands to be executed on the server
+        """
+        self.workDoneProgress = workDoneProgress
+        self.commands = commands
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandOptions":
@@ -9137,6 +11826,20 @@ class WorkspaceFoldersServerCapabilities():
     # side. The ID can be used to unregister for these events
     # using the `client/unregisterCapability` request.
     changeNotifications: Optional[Union[str, bool]]
+
+    def __init__(self, *, supported: Optional[bool] = None, changeNotifications: Optional[Union[str, bool]] = None) -> None:
+        """
+        - supported: The server has support for workspace folders
+        - changeNotifications: Whether the server wants to receive workspace folder
+            change notifications.
+            
+            If a string is provided the string is treated as an ID
+            under which the notification is registered on the client
+            side. The ID can be used to unregister for these events
+            using the `client/unregisterCapability` request.
+        """
+        self.supported = supported
+        self.changeNotifications = changeNotifications
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersServerCapabilities":
@@ -9182,6 +11885,22 @@ class FileOperationOptions():
     
     # The server is interested in receiving willDeleteFiles file requests.
     willDelete: Optional["FileOperationRegistrationOptions"]
+
+    def __init__(self, *, didCreate: Optional["FileOperationRegistrationOptions"] = None, willCreate: Optional["FileOperationRegistrationOptions"] = None, didRename: Optional["FileOperationRegistrationOptions"] = None, willRename: Optional["FileOperationRegistrationOptions"] = None, didDelete: Optional["FileOperationRegistrationOptions"] = None, willDelete: Optional["FileOperationRegistrationOptions"] = None) -> None:
+        """
+        - didCreate: The server is interested in receiving didCreateFiles notifications.
+        - willCreate: The server is interested in receiving willCreateFiles requests.
+        - didRename: The server is interested in receiving didRenameFiles notifications.
+        - willRename: The server is interested in receiving willRenameFiles requests.
+        - didDelete: The server is interested in receiving didDeleteFiles file notifications.
+        - willDelete: The server is interested in receiving willDeleteFiles file requests.
+        """
+        self.didCreate = didCreate
+        self.willCreate = willCreate
+        self.didRename = didRename
+        self.willRename = willRename
+        self.didDelete = didDelete
+        self.willDelete = willDelete
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationOptions":
@@ -9392,6 +12111,112 @@ server."""
     
     # Experimental server capabilities.
     experimental: Optional["LSPAny"]
+
+    def __init__(self, *, positionEncoding: Optional["PositionEncodingKind"] = None, textDocumentSync: Optional[Union["TextDocumentSyncOptions", "TextDocumentSyncKind"]] = None, notebookDocumentSync: Optional[Union["NotebookDocumentSyncOptions", "NotebookDocumentSyncRegistrationOptions"]] = None, completionProvider: Optional["CompletionOptions"] = None, hoverProvider: Optional[Union[bool, "HoverOptions"]] = None, signatureHelpProvider: Optional["SignatureHelpOptions"] = None, declarationProvider: Optional[Union[bool, "DeclarationOptions", "DeclarationRegistrationOptions"]] = None, definitionProvider: Optional[Union[bool, "DefinitionOptions"]] = None, typeDefinitionProvider: Optional[Union[bool, "TypeDefinitionOptions", "TypeDefinitionRegistrationOptions"]] = None, implementationProvider: Optional[Union[bool, "ImplementationOptions", "ImplementationRegistrationOptions"]] = None, referencesProvider: Optional[Union[bool, "ReferenceOptions"]] = None, documentHighlightProvider: Optional[Union[bool, "DocumentHighlightOptions"]] = None, documentSymbolProvider: Optional[Union[bool, "DocumentSymbolOptions"]] = None, codeActionProvider: Optional[Union[bool, "CodeActionOptions"]] = None, codeLensProvider: Optional["CodeLensOptions"] = None, documentLinkProvider: Optional["DocumentLinkOptions"] = None, colorProvider: Optional[Union[bool, "DocumentColorOptions", "DocumentColorRegistrationOptions"]] = None, workspaceSymbolProvider: Optional[Union[bool, "WorkspaceSymbolOptions"]] = None, documentFormattingProvider: Optional[Union[bool, "DocumentFormattingOptions"]] = None, documentRangeFormattingProvider: Optional[Union[bool, "DocumentRangeFormattingOptions"]] = None, documentOnTypeFormattingProvider: Optional["DocumentOnTypeFormattingOptions"] = None, renameProvider: Optional[Union[bool, "RenameOptions"]] = None, foldingRangeProvider: Optional[Union[bool, "FoldingRangeOptions", "FoldingRangeRegistrationOptions"]] = None, selectionRangeProvider: Optional[Union[bool, "SelectionRangeOptions", "SelectionRangeRegistrationOptions"]] = None, executeCommandProvider: Optional["ExecuteCommandOptions"] = None, callHierarchyProvider: Optional[Union[bool, "CallHierarchyOptions", "CallHierarchyRegistrationOptions"]] = None, linkedEditingRangeProvider: Optional[Union[bool, "LinkedEditingRangeOptions", "LinkedEditingRangeRegistrationOptions"]] = None, semanticTokensProvider: Optional[Union["SemanticTokensOptions", "SemanticTokensRegistrationOptions"]] = None, monikerProvider: Optional[Union[bool, "MonikerOptions", "MonikerRegistrationOptions"]] = None, typeHierarchyProvider: Optional[Union[bool, "TypeHierarchyOptions", "TypeHierarchyRegistrationOptions"]] = None, inlineValueProvider: Optional[Union[bool, "InlineValueOptions", "InlineValueRegistrationOptions"]] = None, inlayHintProvider: Optional[Union[bool, "InlayHintOptions", "InlayHintRegistrationOptions"]] = None, diagnosticProvider: Optional[Union["DiagnosticOptions", "DiagnosticRegistrationOptions"]] = None, workspace: Optional[Dict[AnonymousStructure11Keys, Any]] = None, experimental: Optional["LSPAny"] = None) -> None:
+        """
+        - positionEncoding: The position encoding the server picked from the encodings offered
+            by the client via the client capability `general.positionEncodings`.
+            
+            If the client didn't provide any position encodings the only valid
+            value that a server can return is 'utf-16'.
+            
+            If omitted it defaults to 'utf-16'.
+            
+            @since 3.17.0
+        - textDocumentSync: Defines how text documents are synced. Is either a detailed structure
+            defining each notification or for backwards compatibility the
+            TextDocumentSyncKind number.
+        - notebookDocumentSync: Defines how notebook documents are synced.
+            
+            @since 3.17.0
+        - completionProvider: The server provides completion support.
+        - hoverProvider: The server provides hover support.
+        - signatureHelpProvider: The server provides signature help support.
+        - declarationProvider: The server provides Goto Declaration support.
+        - definitionProvider: The server provides goto definition support.
+        - typeDefinitionProvider: The server provides Goto Type Definition support.
+        - implementationProvider: The server provides Goto Implementation support.
+        - referencesProvider: The server provides find references support.
+        - documentHighlightProvider: The server provides document highlight support.
+        - documentSymbolProvider: The server provides document symbol support.
+        - codeActionProvider: The server provides code actions. CodeActionOptions may only be
+            specified if the client states that it supports
+            `codeActionLiteralSupport` in its initial `initialize` request.
+        - codeLensProvider: The server provides code lens.
+        - documentLinkProvider: The server provides document link support.
+        - colorProvider: The server provides color provider support.
+        - workspaceSymbolProvider: The server provides workspace symbol support.
+        - documentFormattingProvider: The server provides document formatting.
+        - documentRangeFormattingProvider: The server provides document range formatting.
+        - documentOnTypeFormattingProvider: The server provides document formatting on typing.
+        - renameProvider: The server provides rename support. RenameOptions may only be
+            specified if the client states that it supports
+            `prepareSupport` in its initial `initialize` request.
+        - foldingRangeProvider: The server provides folding provider support.
+        - selectionRangeProvider: The server provides selection range support.
+        - executeCommandProvider: The server provides execute command support.
+        - callHierarchyProvider: The server provides call hierarchy support.
+            
+            @since 3.16.0
+        - linkedEditingRangeProvider: The server provides linked editing range support.
+            
+            @since 3.16.0
+        - semanticTokensProvider: The server provides semantic tokens support.
+            
+            @since 3.16.0
+        - monikerProvider: The server provides moniker support.
+            
+            @since 3.16.0
+        - typeHierarchyProvider: The server provides type hierarchy support.
+            
+            @since 3.17.0
+        - inlineValueProvider: The server provides inline values.
+            
+            @since 3.17.0
+        - inlayHintProvider: The server provides inlay hints.
+            
+            @since 3.17.0
+        - diagnosticProvider: The server has support for pull model diagnostics.
+            
+            @since 3.17.0
+        - workspace: Workspace specific server capabilities.
+        - experimental: Experimental server capabilities.
+        """
+        self.positionEncoding = positionEncoding
+        self.textDocumentSync = textDocumentSync
+        self.notebookDocumentSync = notebookDocumentSync
+        self.completionProvider = completionProvider
+        self.hoverProvider = hoverProvider
+        self.signatureHelpProvider = signatureHelpProvider
+        self.declarationProvider = declarationProvider
+        self.definitionProvider = definitionProvider
+        self.typeDefinitionProvider = typeDefinitionProvider
+        self.implementationProvider = implementationProvider
+        self.referencesProvider = referencesProvider
+        self.documentHighlightProvider = documentHighlightProvider
+        self.documentSymbolProvider = documentSymbolProvider
+        self.codeActionProvider = codeActionProvider
+        self.codeLensProvider = codeLensProvider
+        self.documentLinkProvider = documentLinkProvider
+        self.colorProvider = colorProvider
+        self.workspaceSymbolProvider = workspaceSymbolProvider
+        self.documentFormattingProvider = documentFormattingProvider
+        self.documentRangeFormattingProvider = documentRangeFormattingProvider
+        self.documentOnTypeFormattingProvider = documentOnTypeFormattingProvider
+        self.renameProvider = renameProvider
+        self.foldingRangeProvider = foldingRangeProvider
+        self.selectionRangeProvider = selectionRangeProvider
+        self.executeCommandProvider = executeCommandProvider
+        self.callHierarchyProvider = callHierarchyProvider
+        self.linkedEditingRangeProvider = linkedEditingRangeProvider
+        self.semanticTokensProvider = semanticTokensProvider
+        self.monikerProvider = monikerProvider
+        self.typeHierarchyProvider = typeHierarchyProvider
+        self.inlineValueProvider = inlineValueProvider
+        self.inlayHintProvider = inlayHintProvider
+        self.diagnosticProvider = diagnosticProvider
+        self.workspace = workspace
+        self.experimental = experimental
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ServerCapabilities":
@@ -9643,6 +12468,16 @@ class InitializeResult():
     # @since 3.15.0
     serverInfo: Optional[Dict[AnonymousStructure0Keys, Any]]
 
+    def __init__(self, *, capabilities: "ServerCapabilities", serverInfo: Optional[Dict[AnonymousStructure0Keys, Any]] = None) -> None:
+        """
+        - capabilities: The capabilities the language server provides.
+        - serverInfo: Information about the server.
+            
+            @since 3.15.0
+        """
+        self.capabilities = capabilities
+        self.serverInfo = serverInfo
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeResult":
         capabilities = ServerCapabilities.from_json(json_get_object(obj, "capabilities"))
@@ -9671,6 +12506,15 @@ initialize request fails."""
     # (3) if user selected retry the initialize method is sent again.
     retry: bool
 
+    def __init__(self, *, retry: bool) -> None:
+        """
+        - retry: Indicates whether the client execute the following retry logic:
+            (1) show the message provided by the ResponseError to the user
+            (2) user selects retry or cancel
+            (3) if user selected retry the initialize method is sent again.
+        """
+        self.retry = retry
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeError":
         retry = json_get_bool(obj, "retry")
@@ -9685,6 +12529,8 @@ initialize request fails."""
 @dataclass
 class InitializedParams():
     """"""
+
+
 
 
 
@@ -9706,6 +12552,12 @@ class DidChangeConfigurationParams():
     # The actual changed settings
     settings: "LSPAny"
 
+    def __init__(self, *, settings: "LSPAny") -> None:
+        """
+        - settings: The actual changed settings
+        """
+        self.settings = settings
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationParams":
         settings = parse_LSPAny(obj["settings"])
@@ -9722,6 +12574,12 @@ class DidChangeConfigurationRegistrationOptions():
     """"""
 
     section: Optional[Union[str, List[str]]]
+
+    def __init__(self, *, section: Optional[Union[str, List[str]]] = None) -> None:
+        """
+    
+        """
+        self.section = section
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationRegistrationOptions":
@@ -9748,6 +12606,14 @@ class ShowMessageParams():
     # The actual message.
     message: str
 
+    def __init__(self, *, type: "MessageType", message: str) -> None:
+        """
+        - type: The message type. See {@link MessageType}
+        - message: The actual message.
+        """
+        self.type = type
+        self.message = message
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageParams":
         type = MessageType(json_get_int(obj, "type"))
@@ -9767,6 +12633,12 @@ class MessageActionItem():
 
     # A short title like 'Retry', 'Open Log' etc.
     title: str
+
+    def __init__(self, *, title: str) -> None:
+        """
+        - title: A short title like 'Retry', 'Open Log' etc.
+        """
+        self.title = title
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MessageActionItem":
@@ -9791,6 +12663,16 @@ class ShowMessageRequestParams():
     
     # The message action items to present.
     actions: Optional[List["MessageActionItem"]]
+
+    def __init__(self, *, type: "MessageType", message: str, actions: Optional[List["MessageActionItem"]] = None) -> None:
+        """
+        - type: The message type. See {@link MessageType}
+        - message: The actual message.
+        - actions: The message action items to present.
+        """
+        self.type = type
+        self.message = message
+        self.actions = actions
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageRequestParams":
@@ -9821,6 +12703,14 @@ class LogMessageParams():
     # The actual message.
     message: str
 
+    def __init__(self, *, type: "MessageType", message: str) -> None:
+        """
+        - type: The message type. See {@link MessageType}
+        - message: The actual message.
+        """
+        self.type = type
+        self.message = message
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LogMessageParams":
         type = MessageType(json_get_int(obj, "type"))
@@ -9840,6 +12730,12 @@ class DidOpenTextDocumentParams():
 
     # The document that was opened.
     textDocument: "TextDocumentItem"
+
+    def __init__(self, *, textDocument: "TextDocumentItem") -> None:
+        """
+        - textDocument: The document that was opened.
+        """
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidOpenTextDocumentParams":
@@ -9874,6 +12770,26 @@ class DidChangeTextDocumentParams():
     #   you receive them.
     contentChanges: List["TextDocumentContentChangeEvent"]
 
+    def __init__(self, *, textDocument: "VersionedTextDocumentIdentifier", contentChanges: List["TextDocumentContentChangeEvent"]) -> None:
+        """
+        - textDocument: The document that did change. The version number points
+            to the version after all provided content changes have
+            been applied.
+        - contentChanges: The actual content changes. The content changes describe single state changes
+            to the document. So if there are two content changes c1 (at array index 0) and
+            c2 (at array index 1) for a document in state S then c1 moves the document from
+            S to S' and c2 from S' to S''. So c1 is computed on the state S and c2 is computed
+            on the state S'.
+            
+            To mirror the content of a document using change events use the following approach:
+            - start with the same initial content
+            - apply the 'textDocument/didChange' notifications in the order you receive them.
+            - apply the `TextDocumentContentChangeEvent`s in a single notification in the order
+              you receive them.
+        """
+        self.textDocument = textDocument
+        self.contentChanges = contentChanges
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeTextDocumentParams":
         textDocument = VersionedTextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -9898,6 +12814,15 @@ class TextDocumentChangeRegistrationOptions(TextDocumentRegistrationOptions):
     # How documents are synced to the server.
     syncKind: "TextDocumentSyncKind"
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], syncKind: "TextDocumentSyncKind") -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - syncKind: How documents are synced to the server.
+        """
+        self.documentSelector = documentSelector
+        self.syncKind = syncKind
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentChangeRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -9917,6 +12842,12 @@ class DidCloseTextDocumentParams():
 
     # The document that was closed.
     textDocument: "TextDocumentIdentifier"
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier") -> None:
+        """
+        - textDocument: The document that was closed.
+        """
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidCloseTextDocumentParams":
@@ -9939,6 +12870,15 @@ class DidSaveTextDocumentParams():
     # Optional the content when saved. Depends on the includeText value
     # when the save notification was requested.
     text: Optional[str]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", text: Optional[str] = None) -> None:
+        """
+        - textDocument: The document that was saved.
+        - text: Optional the content when saved. Depends on the includeText value
+            when the save notification was requested.
+        """
+        self.textDocument = textDocument
+        self.text = text
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidSaveTextDocumentParams":
@@ -9968,6 +12908,15 @@ class TextDocumentSaveRegistrationOptions(TextDocumentRegistrationOptions, SaveO
     # The client is supposed to include the content on save.
     includeText: Optional[bool]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], includeText: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - includeText: The client is supposed to include the content on save.
+        """
+        self.documentSelector = documentSelector
+        self.includeText = includeText
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSaveRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -9995,6 +12944,14 @@ class WillSaveTextDocumentParams():
     # The 'TextDocumentSaveReason'.
     reason: "TextDocumentSaveReason"
 
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", reason: "TextDocumentSaveReason") -> None:
+        """
+        - textDocument: The document that will be saved.
+        - reason: The 'TextDocumentSaveReason'.
+        """
+        self.textDocument = textDocument
+        self.reason = reason
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WillSaveTextDocumentParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -10018,6 +12975,14 @@ class FileEvent():
     # The change type.
     type: "FileChangeType"
 
+    def __init__(self, *, uri: str, type: "FileChangeType") -> None:
+        """
+        - uri: The file's uri.
+        - type: The change type.
+        """
+        self.uri = uri
+        self.type = type
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileEvent":
         uri = json_get_string(obj, "uri")
@@ -10037,6 +13002,12 @@ class DidChangeWatchedFilesParams():
 
     # The actual file events.
     changes: List["FileEvent"]
+
+    def __init__(self, *, changes: List["FileEvent"]) -> None:
+        """
+        - changes: The actual file events.
+        """
+        self.changes = changes
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWatchedFilesParams":
@@ -10082,6 +13053,15 @@ folder root, but it can be another absolute URI as well.
     # The actual glob pattern;
     pattern: "Pattern"
 
+    def __init__(self, *, baseUri: Union["WorkspaceFolder", str], pattern: "Pattern") -> None:
+        """
+        - baseUri: A workspace folder or a base URI to which this pattern will be matched
+            against relatively.
+        - pattern: The actual glob pattern;
+        """
+        self.baseUri = baseUri
+        self.pattern = pattern
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelativePattern":
         baseUri = parse_or_type(obj["baseUri"], (lambda v: WorkspaceFolder.from_json(json_assert_type_object(v)), lambda v: json_assert_type_string(v)))
@@ -10121,6 +13101,18 @@ class FileSystemWatcher():
     # which is 7.
     kind: Optional["WatchKind"]
 
+    def __init__(self, *, globPattern: "GlobPattern", kind: Optional["WatchKind"] = None) -> None:
+        """
+        - globPattern: The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.
+            
+            @since 3.17.0 support for relative patterns.
+        - kind: The kind of events of interest. If omitted it defaults
+            to WatchKind.Create | WatchKind.Change | WatchKind.Delete
+            which is 7.
+        """
+        self.globPattern = globPattern
+        self.kind = kind
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileSystemWatcher":
         globPattern = parse_GlobPattern(obj["globPattern"])
@@ -10144,6 +13136,12 @@ class DidChangeWatchedFilesRegistrationOptions():
 
     # The watchers to register.
     watchers: List["FileSystemWatcher"]
+
+    def __init__(self, *, watchers: List["FileSystemWatcher"]) -> None:
+        """
+        - watchers: The watchers to register.
+        """
+        self.watchers = watchers
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWatchedFilesRegistrationOptions":
@@ -10170,6 +13168,18 @@ class PublishDiagnosticsParams():
     
     # An array of diagnostic information items.
     diagnostics: List["Diagnostic"]
+
+    def __init__(self, *, uri: str, version: Optional[int] = None, diagnostics: List["Diagnostic"]) -> None:
+        """
+        - uri: The URI for which diagnostic information is reported.
+        - version: Optional the version number of the document the diagnostics are published for.
+            
+            @since 3.15.0
+        - diagnostics: An array of diagnostic information items.
+        """
+        self.uri = uri
+        self.version = version
+        self.diagnostics = diagnostics
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PublishDiagnosticsParams":
@@ -10200,6 +13210,15 @@ class CompletionContext():
     # The trigger character (a single character) that has trigger code complete.
     # Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
     triggerCharacter: Optional[str]
+
+    def __init__(self, *, triggerKind: "CompletionTriggerKind", triggerCharacter: Optional[str] = None) -> None:
+        """
+        - triggerKind: How the completion was triggered.
+        - triggerCharacter: The trigger character (a single character) that has trigger code complete.
+            Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
+        """
+        self.triggerKind = triggerKind
+        self.triggerCharacter = triggerCharacter
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionContext":
@@ -10238,6 +13257,22 @@ class CompletionParams(TextDocumentPositionParams):
     # The completion context. This is only available it the client specifies
     # to send this using the client capability `textDocument.completion.contextSupport === true`
     context: Optional["CompletionContext"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, context: Optional["CompletionContext"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - context: The completion context. This is only available it the client specifies
+            to send this using the client capability `textDocument.completion.contextSupport === true`
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.context = context
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionParams":
@@ -10284,6 +13319,16 @@ class CompletionItemLabelDetails():
     # for fully qualified names and file paths.
     description: Optional[str]
 
+    def __init__(self, *, detail: Optional[str] = None, description: Optional[str] = None) -> None:
+        """
+        - detail: An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
+            without any spacing. Should be used for function signatures and type annotations.
+        - description: An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
+            for fully qualified names and file paths.
+        """
+        self.detail = detail
+        self.description = description
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionItemLabelDetails":
         if detail_json := json_get_optional_string(obj, "detail"):
@@ -10319,6 +13364,16 @@ class InsertReplaceEdit():
     
     # The range if the replace is requested.
     replace: "Range"
+
+    def __init__(self, *, newText: str, insert: "Range", replace: "Range") -> None:
+        """
+        - newText: The string to be inserted.
+        - insert: The range if the insert is requested
+        - replace: The range if the replace is requested.
+        """
+        self.newText = newText
+        self.insert = insert
+        self.replace = replace
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InsertReplaceEdit":
@@ -10475,6 +13530,127 @@ proposed to complete text that is being typed."""
     # A data entry field that is preserved on a completion item between a
     # [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
     data: Optional["LSPAny"]
+
+    def __init__(self, *, label: str, labelDetails: Optional["CompletionItemLabelDetails"] = None, kind: Optional["CompletionItemKind"] = None, tags: Optional[List["CompletionItemTag"]] = None, detail: Optional[str] = None, documentation: Optional[Union[str, "MarkupContent"]] = None, deprecated: Optional[bool] = None, preselect: Optional[bool] = None, sortText: Optional[str] = None, filterText: Optional[str] = None, insertText: Optional[str] = None, insertTextFormat: Optional["InsertTextFormat"] = None, insertTextMode: Optional["InsertTextMode"] = None, textEdit: Optional[Union["TextEdit", "InsertReplaceEdit"]] = None, textEditText: Optional[str] = None, additionalTextEdits: Optional[List["TextEdit"]] = None, commitCharacters: Optional[List[str]] = None, command: Optional["Command"] = None, data: Optional["LSPAny"] = None) -> None:
+        """
+        - label: The label of this completion item.
+            
+            The label property is also by default the text that
+            is inserted when selecting this completion.
+            
+            If label details are provided the label itself should
+            be an unqualified name of the completion item.
+        - labelDetails: Additional details for the label
+            
+            @since 3.17.0
+        - kind: The kind of this completion item. Based of the kind
+            an icon is chosen by the editor.
+        - tags: Tags for this completion item.
+            
+            @since 3.15.0
+        - detail: A human-readable string with additional information
+            about this item, like type or symbol information.
+        - documentation: A human-readable string that represents a doc-comment.
+        - deprecated: Indicates if this item is deprecated.
+            @deprecated Use `tags` instead.
+        - preselect: Select this item when showing.
+            
+            *Note* that only one completion item can be selected and that the
+            tool / client decides which item that is. The rule is that the *first*
+            item of those that match best is selected.
+        - sortText: A string that should be used when comparing this item
+            with other items. When `falsy` the [label](#CompletionItem.label)
+            is used.
+        - filterText: A string that should be used when filtering a set of
+            completion items. When `falsy` the [label](#CompletionItem.label)
+            is used.
+        - insertText: A string that should be inserted into a document when selecting
+            this completion. When `falsy` the [label](#CompletionItem.label)
+            is used.
+            
+            The `insertText` is subject to interpretation by the client side.
+            Some tools might not take the string literally. For example
+            VS Code when code complete is requested in this example
+            `con<cursor position>` and a completion item with an `insertText` of
+            `console` is provided it will only insert `sole`. Therefore it is
+            recommended to use `textEdit` instead since it avoids additional client
+            side interpretation.
+        - insertTextFormat: The format of the insert text. The format applies to both the
+            `insertText` property and the `newText` property of a provided
+            `textEdit`. If omitted defaults to `InsertTextFormat.PlainText`.
+            
+            Please note that the insertTextFormat doesn't apply to
+            `additionalTextEdits`.
+        - insertTextMode: How whitespace and indentation is handled during completion
+            item insertion. If not provided the clients default value depends on
+            the `textDocument.completion.insertTextMode` client capability.
+            
+            @since 3.16.0
+        - textEdit: An [edit](#TextEdit) which is applied to a document when selecting
+            this completion. When an edit is provided the value of
+            [insertText](#CompletionItem.insertText) is ignored.
+            
+            Most editors support two different operations when accepting a completion
+            item. One is to insert a completion text and the other is to replace an
+            existing text with a completion text. Since this can usually not be
+            predetermined by a server it can report both ranges. Clients need to
+            signal support for `InsertReplaceEdits` via the
+            `textDocument.completion.insertReplaceSupport` client capability
+            property.
+            
+            *Note 1:* The text edit's range as well as both ranges from an insert
+            replace edit must be a [single line] and they must contain the position
+            at which completion has been requested.
+            *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
+            must be a prefix of the edit's replace range, that means it must be
+            contained and starting at the same position.
+            
+            @since 3.16.0 additional type `InsertReplaceEdit`
+        - textEditText: The edit text used if the completion item is part of a CompletionList and
+            CompletionList defines an item default for the text edit range.
+            
+            Clients will only honor this property if they opt into completion list
+            item defaults using the capability `completionList.itemDefaults`.
+            
+            If not provided and a list's default range is provided the label
+            property is used as a text.
+            
+            @since 3.17.0
+        - additionalTextEdits: An optional array of additional [text edits](#TextEdit) that are applied when
+            selecting this completion. Edits must not overlap (including the same insert position)
+            with the main [edit](#CompletionItem.textEdit) nor with themselves.
+            
+            Additional text edits should be used to change text unrelated to the current cursor position
+            (for example adding an import statement at the top of the file if the completion item will
+            insert an unqualified type).
+        - commitCharacters: An optional set of characters that when pressed while this completion is active will accept it first and
+            then type that character. *Note* that all commit characters should have `length=1` and that superfluous
+            characters will be ignored.
+        - command: An optional [command](#Command) that is executed *after* inserting this completion. *Note* that
+            additional modifications to the current document should be described with the
+            [additionalTextEdits](#CompletionItem.additionalTextEdits)-property.
+        - data: A data entry field that is preserved on a completion item between a
+            [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
+        """
+        self.label = label
+        self.labelDetails = labelDetails
+        self.kind = kind
+        self.tags = tags
+        self.detail = detail
+        self.documentation = documentation
+        self.deprecated = deprecated
+        self.preselect = preselect
+        self.sortText = sortText
+        self.filterText = filterText
+        self.insertText = insertText
+        self.insertTextFormat = insertTextFormat
+        self.insertTextMode = insertTextMode
+        self.textEdit = textEdit
+        self.textEditText = textEditText
+        self.additionalTextEdits = additionalTextEdits
+        self.commitCharacters = commitCharacters
+        self.command = command
+        self.data = data
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionItem":
@@ -10680,6 +13856,31 @@ in the editor."""
     # The completion items.
     items: List["CompletionItem"]
 
+    def __init__(self, *, isIncomplete: bool, itemDefaults: Optional[Dict[AnonymousStructure2Keys, Any]] = None, items: List["CompletionItem"]) -> None:
+        """
+        - isIncomplete: This list it not complete. Further typing results in recomputing this list.
+            
+            Recomputed lists have all their items replaced (not appended) in the
+            incomplete completion sessions.
+        - itemDefaults: In many cases the items of an actual completion result share the same
+            value for properties like `commitCharacters` or the range of a text
+            edit. A completion list can therefore define item defaults which will
+            be used if a completion item itself doesn't specify the value.
+            
+            If a completion list specifies a default value and a completion item
+            also specifies a corresponding value the one from the item is used.
+            
+            Servers are only allowed to return default values if the client
+            signals support for this via the `completionList.itemDefaults`
+            capability.
+            
+            @since 3.17.0
+        - items: The completion items.
+        """
+        self.isIncomplete = isIncomplete
+        self.itemDefaults = itemDefaults
+        self.items = items
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionList":
         isIncomplete = json_get_bool(obj, "isIncomplete")
@@ -10739,6 +13940,40 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
     # @since 3.17.0
     completionItem: Optional[Dict[AnonymousStructure12Keys, Any]]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, triggerCharacters: Optional[List[str]] = None, allCommitCharacters: Optional[List[str]] = None, resolveProvider: Optional[bool] = None, completionItem: Optional[Dict[AnonymousStructure12Keys, Any]] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - triggerCharacters: Most tools trigger completion request automatically without explicitly requesting
+            it using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user
+            starts to type an identifier. For example if the user types `c` in a JavaScript file
+            code complete will automatically pop up present `console` besides others as a
+            completion item. Characters that make up identifiers don't need to be listed here.
+            
+            If code complete should automatically be trigger on characters not being valid inside
+            an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.
+        - allCommitCharacters: The list of all possible characters that commit a completion. This field can be used
+            if clients don't support individual commit characters per completion item. See
+            `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
+            
+            If a server provides both `allCommitCharacters` and commit characters on an individual
+            completion item the ones on the completion item win.
+            
+            @since 3.2.0
+        - resolveProvider: The server provides support to resolve additional
+            information for a completion item.
+        - completionItem: The server supports the following `CompletionItem` specific
+            capabilities.
+            
+            @since 3.17.0
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.triggerCharacters = triggerCharacters
+        self.allCommitCharacters = allCommitCharacters
+        self.resolveProvider = resolveProvider
+        self.completionItem = completionItem
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -10792,6 +14027,16 @@ class HoverParams(TextDocumentPositionParams):
     
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverParams":
@@ -10859,6 +14104,15 @@ class Hover():
     # visualize the hover, e.g. by changing the background color.
     range: Optional["Range"]
 
+    def __init__(self, *, contents: Union["MarkupContent", "MarkedString", List["MarkedString"]], range: Optional["Range"] = None) -> None:
+        """
+        - contents: The hover's content
+        - range: An optional range inside the text document that is used to
+            visualize the hover, e.g. by changing the background color.
+        """
+        self.contents = contents
+        self.range = range
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Hover":
         contents = parse_or_type(obj["contents"], (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: parse_MarkedString((v)), lambda v: [parse_MarkedString((i)) for i in json_assert_type_array(v)]))
@@ -10885,6 +14139,14 @@ class HoverRegistrationOptions(TextDocumentRegistrationOptions, HoverOptions):
     documentSelector: Union["DocumentSelector", None]
     
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverRegistrationOptions":
@@ -10921,6 +14183,22 @@ have a label and a doc-comment."""
     # The human-readable doc-comment of this parameter. Will be shown
     # in the UI but can be omitted.
     documentation: Optional[Union[str, "MarkupContent"]]
+
+    def __init__(self, *, label: Union[str, Tuple[int, int]], documentation: Optional[Union[str, "MarkupContent"]] = None) -> None:
+        """
+        - label: The label of this parameter information.
+            
+            Either a string or an inclusive start and exclusive end offsets within its containing
+            signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
+            string representation as `Position` and `Range` does.
+            
+            *Note*: a label of type string should be a substring of its containing signature label.
+            Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
+        - documentation: The human-readable doc-comment of this parameter. Will be shown
+            in the UI but can be omitted.
+        """
+        self.label = label
+        self.documentation = documentation
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ParameterInformation":
@@ -10962,6 +14240,24 @@ a set of parameters."""
     # 
     # @since 3.16.0
     activeParameter: Optional[int]
+
+    def __init__(self, *, label: str, documentation: Optional[Union[str, "MarkupContent"]] = None, parameters: Optional[List["ParameterInformation"]] = None, activeParameter: Optional[int] = None) -> None:
+        """
+        - label: The label of this signature. Will be shown in
+            the UI.
+        - documentation: The human-readable doc-comment of this signature. Will be shown
+            in the UI but can be omitted.
+        - parameters: The parameters of this signature.
+        - activeParameter: The index of the active parameter.
+            
+            If provided, this is used in place of `SignatureHelp.activeParameter`.
+            
+            @since 3.16.0
+        """
+        self.label = label
+        self.documentation = documentation
+        self.parameters = parameters
+        self.activeParameter = activeParameter
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureInformation":
@@ -11021,6 +14317,30 @@ active and only one active parameter."""
     # active signature does have any.
     activeParameter: Optional[int]
 
+    def __init__(self, *, signatures: List["SignatureInformation"], activeSignature: Optional[int] = None, activeParameter: Optional[int] = None) -> None:
+        """
+        - signatures: One or more signatures.
+        - activeSignature: The active signature. If omitted or the value lies outside the
+            range of `signatures` the value defaults to zero or is ignored if
+            the `SignatureHelp` has no signatures.
+            
+            Whenever possible implementors should make an active decision about
+            the active signature and shouldn't rely on a default value.
+            
+            In future version of the protocol this property might become
+            mandatory to better express this.
+        - activeParameter: The active parameter of the active signature. If omitted or the value
+            lies outside the range of `signatures[activeSignature].parameters`
+            defaults to 0 if the active signature has parameters. If
+            the active signature has no parameters it is ignored.
+            In future version of the protocol this property might become
+            mandatory to better express the active parameter if the
+            active signature does have any.
+        """
+        self.signatures = signatures
+        self.activeSignature = activeSignature
+        self.activeParameter = activeParameter
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelp":
         signatures = [SignatureInformation.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "signatures")]
@@ -11070,6 +14390,26 @@ class SignatureHelpContext():
     # the user navigating through available signatures.
     activeSignatureHelp: Optional["SignatureHelp"]
 
+    def __init__(self, *, triggerKind: "SignatureHelpTriggerKind", triggerCharacter: Optional[str] = None, isRetrigger: bool, activeSignatureHelp: Optional["SignatureHelp"] = None) -> None:
+        """
+        - triggerKind: Action that caused signature help to be triggered.
+        - triggerCharacter: Character that caused signature help to be triggered.
+            
+            This is undefined when `triggerKind !== SignatureHelpTriggerKind.TriggerCharacter`
+        - isRetrigger: `true` if signature help was already showing when it was triggered.
+            
+            Retriggers occurs when the signature help is already active and can be caused by actions such as
+            typing a trigger character, a cursor move, or document content changes.
+        - activeSignatureHelp: The currently active `SignatureHelp`.
+            
+            The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field updated based on
+            the user navigating through available signatures.
+        """
+        self.triggerKind = triggerKind
+        self.triggerCharacter = triggerCharacter
+        self.isRetrigger = isRetrigger
+        self.activeSignatureHelp = activeSignatureHelp
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpContext":
         triggerKind = SignatureHelpTriggerKind(json_get_int(obj, "triggerKind"))
@@ -11113,6 +14453,21 @@ class SignatureHelpParams(TextDocumentPositionParams):
     # 
     # @since 3.15.0
     context: Optional["SignatureHelpContext"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, context: Optional["SignatureHelpContext"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - context: The signature help context. This is only available if the client specifies
+            to send this using the client capability `textDocument.signatureHelp.contextSupport === true`
+            
+            @since 3.15.0
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.context = context
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpParams":
@@ -11160,6 +14515,23 @@ class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, Signatur
     # @since 3.15.0
     retriggerCharacters: Optional[List[str]]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, triggerCharacters: Optional[List[str]] = None, retriggerCharacters: Optional[List[str]] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - triggerCharacters: List of characters that trigger signature help automatically.
+        - retriggerCharacters: List of characters that re-trigger signature help.
+            
+            These trigger characters are only active when signature help is already showing. All trigger characters
+            are also counted as re-trigger characters.
+            
+            @since 3.15.0
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.triggerCharacters = triggerCharacters
+        self.retriggerCharacters = retriggerCharacters
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -11206,6 +14578,19 @@ class DefinitionParams(TextDocumentPositionParams):
     # the client.
     partialResultToken: Optional["ProgressToken"]
 
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -11241,6 +14626,14 @@ class DefinitionRegistrationOptions(TextDocumentRegistrationOptions, DefinitionO
     
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -11265,6 +14658,12 @@ requesting references."""
 
     # Include the declaration of the current symbol.
     includeDeclaration: bool
+
+    def __init__(self, *, includeDeclaration: bool) -> None:
+        """
+        - includeDeclaration: Include the declaration of the current symbol.
+        """
+        self.includeDeclaration = includeDeclaration
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceContext":
@@ -11295,6 +14694,20 @@ class ReferenceParams(TextDocumentPositionParams):
     partialResultToken: Optional["ProgressToken"]
     
     context: "ReferenceContext"
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, context: "ReferenceContext") -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.context = context
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceParams":
@@ -11333,6 +14746,14 @@ class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOpt
     
     workDoneProgress: Optional[bool]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -11366,6 +14787,19 @@ class DocumentHighlightParams(TextDocumentPositionParams):
     # An optional token that a server can use to report partial results (e.g. streaming) to
     # the client.
     partialResultToken: Optional["ProgressToken"]
+
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightParams":
@@ -11404,6 +14838,14 @@ the background color of its range."""
     # The highlight kind, default is [text](#DocumentHighlightKind.Text).
     kind: Optional["DocumentHighlightKind"]
 
+    def __init__(self, *, range: "Range", kind: Optional["DocumentHighlightKind"] = None) -> None:
+        """
+        - range: The range this highlight applies to.
+        - kind: The highlight kind, default is [text](#DocumentHighlightKind.Text).
+        """
+        self.range = range
+        self.kind = kind
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlight":
         range = Range.from_json(json_get_object(obj, "range"))
@@ -11430,6 +14872,14 @@ class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, Docu
     documentSelector: Union["DocumentSelector", None]
     
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightRegistrationOptions":
@@ -11461,6 +14911,17 @@ class DocumentSymbolParams():
     
     # The text document.
     textDocument: "TextDocumentIdentifier"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The text document.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolParams":
@@ -11505,6 +14966,23 @@ class BaseSymbolInformation():
     # if necessary). It can't be used to re-infer a hierarchy for the document
     # symbols.
     containerName: Optional[str]
+
+    def __init__(self, *, name: str, kind: "SymbolKind", tags: Optional[List["SymbolTag"]] = None, containerName: Optional[str] = None) -> None:
+        """
+        - name: The name of this symbol.
+        - kind: The kind of this symbol.
+        - tags: Tags for this symbol.
+            
+            @since 3.16.0
+        - containerName: The name of the symbol containing this symbol. This information is for
+            user interface purposes (e.g. to render a qualifier in the user interface
+            if necessary). It can't be used to re-infer a hierarchy for the document
+            symbols.
+        """
+        self.name = name
+        self.kind = kind
+        self.tags = tags
+        self.containerName = containerName
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "BaseSymbolInformation":
@@ -11568,6 +15046,37 @@ interfaces etc."""
     # syntax tree. It can therefore not be used to re-construct a hierarchy of
     # the symbols.
     location: "Location"
+
+    def __init__(self, *, name: str, kind: "SymbolKind", tags: Optional[List["SymbolTag"]] = None, containerName: Optional[str] = None, deprecated: Optional[bool] = None, location: "Location") -> None:
+        """
+        - name: The name of this symbol.
+        - kind: The kind of this symbol.
+        - tags: Tags for this symbol.
+            
+            @since 3.16.0
+        - containerName: The name of the symbol containing this symbol. This information is for
+            user interface purposes (e.g. to render a qualifier in the user interface
+            if necessary). It can't be used to re-infer a hierarchy for the document
+            symbols.
+        - deprecated: Indicates if this symbol is deprecated.
+            
+            @deprecated Use tags instead
+        - location: The location of this symbol. The location's range is used by a tool
+            to reveal the location in the editor. If the symbol is selected in the
+            tool the range's start information is used to position the cursor. So
+            the range usually spans more than the actual symbol's name and does
+            normally include things like visibility modifiers.
+            
+            The range doesn't have to denote a node range in the sense of an abstract
+            syntax tree. It can therefore not be used to re-construct a hierarchy of
+            the symbols.
+        """
+        self.name = name
+        self.kind = kind
+        self.tags = tags
+        self.containerName = containerName
+        self.deprecated = deprecated
+        self.location = location
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SymbolInformation":
@@ -11641,6 +15150,34 @@ its most interesting range, e.g. the range of an identifier."""
     # Children of this symbol, e.g. properties of a class.
     children: Optional[List["DocumentSymbol"]]
 
+    def __init__(self, *, name: str, detail: Optional[str] = None, kind: "SymbolKind", tags: Optional[List["SymbolTag"]] = None, deprecated: Optional[bool] = None, range: "Range", selectionRange: "Range", children: Optional[List["DocumentSymbol"]] = None) -> None:
+        """
+        - name: The name of this symbol. Will be displayed in the user interface and therefore must not be
+            an empty string or a string only consisting of white spaces.
+        - detail: More detail for this symbol, e.g the signature of a function.
+        - kind: The kind of this symbol.
+        - tags: Tags for this document symbol.
+            
+            @since 3.16.0
+        - deprecated: Indicates if this symbol is deprecated.
+            
+            @deprecated Use tags instead
+        - range: The range enclosing this symbol not including leading/trailing whitespace but everything else
+            like comments. This information is typically used to determine if the clients cursor is
+            inside the symbol to reveal in the symbol in the UI.
+        - selectionRange: The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
+            Must be contained by the `range`.
+        - children: Children of this symbol, e.g. properties of a class.
+        """
+        self.name = name
+        self.detail = detail
+        self.kind = kind
+        self.tags = tags
+        self.deprecated = deprecated
+        self.range = range
+        self.selectionRange = selectionRange
+        self.children = children
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbol":
         name = json_get_string(obj, "name")
@@ -11698,6 +15235,19 @@ class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, Documen
     # @since 3.16.0
     label: Optional[str]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, label: Optional[str] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - label: A human-readable string that is shown when multiple outlines trees
+            are shown for the same document.
+            
+            @since 3.16.0
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.label = label
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -11744,6 +15294,25 @@ a [code action](#CodeActionProvider.provideCodeActions) is run."""
     # @since 3.17.0
     triggerKind: Optional["CodeActionTriggerKind"]
 
+    def __init__(self, *, diagnostics: List["Diagnostic"], only: Optional[List["CodeActionKind"]] = None, triggerKind: Optional["CodeActionTriggerKind"] = None) -> None:
+        """
+        - diagnostics: An array of diagnostics known on the client side overlapping the range provided to the
+            `textDocument/codeAction` request. They are provided so that the server knows which
+            errors are currently presented to the user for the given range. There is no guarantee
+            that these accurately reflect the error state of the resource. The primary parameter
+            to compute code actions is the provided range.
+        - only: Requested kind of actions to return.
+            
+            Actions not of this kind are filtered out by the client before being shown. So servers
+            can omit computing them.
+        - triggerKind: The reason why code actions were requested.
+            
+            @since 3.17.0
+        """
+        self.diagnostics = diagnostics
+        self.only = only
+        self.triggerKind = triggerKind
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionContext":
         diagnostics = [Diagnostic.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "diagnostics")]
@@ -11786,6 +15355,21 @@ class CodeActionParams():
     
     # Context carrying additional information.
     context: "CodeActionContext"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", range: "Range", context: "CodeActionContext") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The document in which the command was invoked.
+        - range: The range for which the command was invoked.
+        - context: Context carrying additional information.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
+        self.range = range
+        self.context = context
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionParams":
@@ -11885,6 +15469,53 @@ A CodeAction must set either `edit` and/or a `command`. If both are supplied, th
     # @since 3.16.0
     data: Optional["LSPAny"]
 
+    def __init__(self, *, title: str, kind: Optional["CodeActionKind"] = None, diagnostics: Optional[List["Diagnostic"]] = None, isPreferred: Optional[bool] = None, disabled: Optional[Dict[AnonymousStructure3Keys, Any]] = None, edit: Optional["WorkspaceEdit"] = None, command: Optional["Command"] = None, data: Optional["LSPAny"] = None) -> None:
+        """
+        - title: A short, human-readable, title for this code action.
+        - kind: The kind of the code action.
+            
+            Used to filter code actions.
+        - diagnostics: The diagnostics that this code action resolves.
+        - isPreferred: Marks this as a preferred action. Preferred actions are used by the `auto fix` command and can be targeted
+            by keybindings.
+            
+            A quick fix should be marked preferred if it properly addresses the underlying error.
+            A refactoring should be marked preferred if it is the most reasonable choice of actions to take.
+            
+            @since 3.15.0
+        - disabled: Marks that the code action cannot currently be applied.
+            
+            Clients should follow the following guidelines regarding disabled code actions:
+            
+              - Disabled code actions are not shown in automatic [lightbulbs](https://code.visualstudio.com/docs/editor/editingevolved#_code-action)
+                code action menus.
+            
+              - Disabled actions are shown as faded out in the code action menu when the user requests a more specific type
+                of code action, such as refactorings.
+            
+              - If the user has a [keybinding](https://code.visualstudio.com/docs/editor/refactoring#_keybindings-for-code-actions)
+                that auto applies a code action and only disabled code actions are returned, the client should show the user an
+                error message with `reason` in the editor.
+            
+            @since 3.16.0
+        - edit: The workspace edit this code action performs.
+        - command: A command this code action executes. If a code action
+            provides an edit and a command, first the edit is
+            executed and then the command.
+        - data: A data entry field that is preserved on a code action between
+            a `textDocument/codeAction` and a `codeAction/resolve` request.
+            
+            @since 3.16.0
+        """
+        self.title = title
+        self.kind = kind
+        self.diagnostics = diagnostics
+        self.isPreferred = isPreferred
+        self.disabled = disabled
+        self.edit = edit
+        self.command = command
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeAction":
         title = json_get_string(obj, "title")
@@ -11960,6 +15591,24 @@ class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionO
     # @since 3.16.0
     resolveProvider: Optional[bool]
 
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, codeActionKinds: Optional[List["CodeActionKind"]] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - codeActionKinds: CodeActionKinds that this server may return.
+            
+            The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
+            may list out every specific kind they provide.
+        - resolveProvider: The server provides support to resolve additional
+            information for a code action.
+            
+            @since 3.16.0
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.codeActionKinds = codeActionKinds
+        self.resolveProvider = resolveProvider
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
@@ -12003,6 +15652,18 @@ class WorkspaceSymbolParams():
     # A query string to filter symbols by. Clients may send an empty
     # string here to request all symbols.
     query: str
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, query: str) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - query: A query string to filter symbols by. Clients may send an empty
+            string here to request all symbols.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.query = query
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolParams":
@@ -12076,6 +15737,32 @@ See also SymbolInformation.
     # workspace symbol request and a workspace symbol resolve request.
     data: Optional["LSPAny"]
 
+    def __init__(self, *, name: str, kind: "SymbolKind", tags: Optional[List["SymbolTag"]] = None, containerName: Optional[str] = None, location: Union["Location", Dict[AnonymousStructure4Keys, Any]], data: Optional["LSPAny"] = None) -> None:
+        """
+        - name: The name of this symbol.
+        - kind: The kind of this symbol.
+        - tags: Tags for this symbol.
+            
+            @since 3.16.0
+        - containerName: The name of the symbol containing this symbol. This information is for
+            user interface purposes (e.g. to render a qualifier in the user interface
+            if necessary). It can't be used to re-infer a hierarchy for the document
+            symbols.
+        - location: The location of the symbol. Whether a server is allowed to
+            return a location without a range depends on the client
+            capability `workspace.symbol.resolveSupport`.
+            
+            See SymbolInformation#location for more details.
+        - data: A data entry field that is preserved on a workspace symbol between a
+            workspace symbol request and a workspace symbol resolve request.
+        """
+        self.name = name
+        self.kind = kind
+        self.tags = tags
+        self.containerName = containerName
+        self.location = location
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbol":
         name = json_get_string(obj, "name")
@@ -12121,6 +15808,16 @@ class WorkspaceSymbolRegistrationOptions(WorkspaceSymbolOptions):
     # @since 3.17.0
     resolveProvider: Optional[bool]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - resolveProvider: The server provides support to resolve additional
+            information for a workspace symbol.
+            
+            @since 3.17.0
+        """
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolRegistrationOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -12155,6 +15852,17 @@ class CodeLensParams():
     
     # The document to request code lens for.
     textDocument: "TextDocumentIdentifier"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The document to request code lens for.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensParams":
@@ -12198,6 +15906,18 @@ reasons the creation of a code lens and resolving should be done in two stages."
     # (#CodeLensResolveRequest)
     data: Optional["LSPAny"]
 
+    def __init__(self, *, range: "Range", command: Optional["Command"] = None, data: Optional["LSPAny"] = None) -> None:
+        """
+        - range: The range in which this code lens is valid. Should only span a single line.
+        - command: The command this code lens represents.
+        - data: A data entry field that is preserved on a code lens item between
+            a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
+            (#CodeLensResolveRequest)
+        """
+        self.range = range
+        self.command = command
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLens":
         range = Range.from_json(json_get_object(obj, "range"))
@@ -12233,6 +15953,16 @@ class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptio
     
     # Code lens has a resolve provider as well.
     resolveProvider: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - resolveProvider: Code lens has a resolve provider as well.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensRegistrationOptions":
@@ -12270,6 +16000,17 @@ class DocumentLinkParams():
     
     # The document to provide document links for.
     textDocument: "TextDocumentIdentifier"
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, partialResultToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        - textDocument: The document to provide document links for.
+        """
+        self.workDoneToken = workDoneToken
+        self.partialResultToken = partialResultToken
+        self.textDocument = textDocument
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkParams":
@@ -12318,6 +16059,25 @@ text document or a web site."""
     # DocumentLinkRequest and a DocumentLinkResolveRequest.
     data: Optional["LSPAny"]
 
+    def __init__(self, *, range: "Range", target: Optional[str] = None, tooltip: Optional[str] = None, data: Optional["LSPAny"] = None) -> None:
+        """
+        - range: The range this link applies to.
+        - target: The uri this link points to. If missing a resolve request is sent later.
+        - tooltip: The tooltip text when you hover over this link.
+            
+            If a tooltip is provided, is will be displayed in a string that includes instructions on how to
+            trigger the link, such as `{0} (ctrl + click)`. The specific instructions vary depending on OS,
+            user settings, and localization.
+            
+            @since 3.15.0
+        - data: A data entry field that is preserved on a document link between a
+            DocumentLinkRequest and a DocumentLinkResolveRequest.
+        """
+        self.range = range
+        self.target = target
+        self.tooltip = tooltip
+        self.data = data
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLink":
         range = Range.from_json(json_get_object(obj, "range"))
@@ -12359,6 +16119,16 @@ class DocumentLinkRegistrationOptions(TextDocumentRegistrationOptions, DocumentL
     
     # Document links have a resolve provider as well.
     resolveProvider: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, resolveProvider: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - resolveProvider: Document links have a resolve provider as well.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.resolveProvider = resolveProvider
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkRegistrationOptions":
@@ -12408,6 +16178,26 @@ class FormattingOptions():
     # @since 3.15.0
     trimFinalNewlines: Optional[bool]
 
+    def __init__(self, *, tabSize: int, insertSpaces: bool, trimTrailingWhitespace: Optional[bool] = None, insertFinalNewline: Optional[bool] = None, trimFinalNewlines: Optional[bool] = None) -> None:
+        """
+        - tabSize: Size of a tab in spaces.
+        - insertSpaces: Prefer spaces over tabs.
+        - trimTrailingWhitespace: Trim trailing whitespace on a line.
+            
+            @since 3.15.0
+        - insertFinalNewline: Insert a newline character at the end of the file if one does not exist.
+            
+            @since 3.15.0
+        - trimFinalNewlines: Trim all newlines after the final newline at the end of the file.
+            
+            @since 3.15.0
+        """
+        self.tabSize = tabSize
+        self.insertSpaces = insertSpaces
+        self.trimTrailingWhitespace = trimTrailingWhitespace
+        self.insertFinalNewline = insertFinalNewline
+        self.trimFinalNewlines = trimFinalNewlines
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FormattingOptions":
         tabSize = json_get_int(obj, "tabSize")
@@ -12452,6 +16242,16 @@ class DocumentFormattingParams():
     # The format options.
     options: "FormattingOptions"
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", options: "FormattingOptions") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - textDocument: The document to format.
+        - options: The format options.
+        """
+        self.workDoneToken = workDoneToken
+        self.textDocument = textDocument
+        self.options = options
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -12480,6 +16280,14 @@ class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, Doc
     documentSelector: Union["DocumentSelector", None]
     
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingRegistrationOptions":
@@ -12514,6 +16322,18 @@ class DocumentRangeFormattingParams():
     # The format options
     options: "FormattingOptions"
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", range: "Range", options: "FormattingOptions") -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - textDocument: The document to format.
+        - range: The range to format
+        - options: The format options
+        """
+        self.workDoneToken = workDoneToken
+        self.textDocument = textDocument
+        self.range = range
+        self.options = options
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -12544,6 +16364,14 @@ class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions
     documentSelector: Union["DocumentSelector", None]
     
     workDoneProgress: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingRegistrationOptions":
@@ -12583,6 +16411,23 @@ class DocumentOnTypeFormattingParams():
     # The formatting options.
     options: "FormattingOptions"
 
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", ch: str, options: "FormattingOptions") -> None:
+        """
+        - textDocument: The document to format.
+        - position: The position around which the on type formatting should happen.
+            This is not necessarily the exact position where the character denoted
+            by the property `ch` got typed.
+        - ch: The character that has been typed that triggered the formatting
+            on type request. That is not necessarily the last character that
+            got inserted into the document since the client could auto insert
+            characters as well (e.g. like automatic brace completion).
+        - options: The formatting options.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.ch = ch
+        self.options = options
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -12613,6 +16458,17 @@ class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOption
     
     # More trigger characters.
     moreTriggerCharacter: Optional[List[str]]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], firstTriggerCharacter: str, moreTriggerCharacter: Optional[List[str]] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - firstTriggerCharacter: A character on which formatting should be triggered, like `{`.
+        - moreTriggerCharacter: More trigger characters.
+        """
+        self.documentSelector = documentSelector
+        self.firstTriggerCharacter = firstTriggerCharacter
+        self.moreTriggerCharacter = moreTriggerCharacter
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingRegistrationOptions":
@@ -12651,6 +16507,20 @@ class RenameParams():
     # appropriate message set.
     newName: str
 
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, textDocument: "TextDocumentIdentifier", position: "Position", newName: str) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - textDocument: The document to rename.
+        - position: The position at which this request was sent.
+        - newName: The new name of the symbol. If the given name is not valid the
+            request must return a [ResponseError](#ResponseError) with an
+            appropriate message set.
+        """
+        self.workDoneToken = workDoneToken
+        self.textDocument = textDocument
+        self.position = position
+        self.newName = newName
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameParams":
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -12686,6 +16556,18 @@ class RenameRegistrationOptions(TextDocumentRegistrationOptions, RenameOptions):
     # 
     # @since version 3.12.0
     prepareProvider: Optional[bool]
+
+    def __init__(self, *, documentSelector: Union["DocumentSelector", None], workDoneProgress: Optional[bool] = None, prepareProvider: Optional[bool] = None) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        - prepareProvider: Renames should be checked and tested before being executed.
+            
+            @since version 3.12.0
+        """
+        self.documentSelector = documentSelector
+        self.workDoneProgress = workDoneProgress
+        self.prepareProvider = prepareProvider
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameRegistrationOptions":
@@ -12723,6 +16605,16 @@ class PrepareRenameParams(TextDocumentPositionParams):
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
 
+    def __init__(self, *, textDocument: "TextDocumentIdentifier", position: "Position", workDoneToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - textDocument: The text document.
+        - position: The position inside the text document.
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        """
+        self.textDocument = textDocument
+        self.position = position
+        self.workDoneToken = workDoneToken
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PrepareRenameParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
@@ -12754,6 +16646,16 @@ class ExecuteCommandParams():
     
     # Arguments that the command should be invoked with.
     arguments: Optional[List["LSPAny"]]
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, command: str, arguments: Optional[List["LSPAny"]] = None) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        - command: The identifier of the actual command handler.
+        - arguments: Arguments that the command should be invoked with.
+        """
+        self.workDoneToken = workDoneToken
+        self.command = command
+        self.arguments = arguments
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandParams":
@@ -12787,6 +16689,13 @@ class ExecuteCommandRegistrationOptions(ExecuteCommandOptions):
     # The commands to be executed on the server
     commands: List[str]
 
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, commands: List[str]) -> None:
+        """
+        - commands: The commands to be executed on the server
+        """
+        self.workDoneProgress = workDoneProgress
+        self.commands = commands
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandRegistrationOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
@@ -12815,6 +16724,16 @@ class ApplyWorkspaceEditParams():
     
     # The edits to apply.
     edit: "WorkspaceEdit"
+
+    def __init__(self, *, label: Optional[str] = None, edit: "WorkspaceEdit") -> None:
+        """
+        - label: An optional label of the workspace edit. This label is
+            presented in the user interface for example on an undo
+            stack to undo the workspace edit.
+        - edit: The edits to apply.
+        """
+        self.label = label
+        self.edit = edit
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ApplyWorkspaceEditParams":
@@ -12851,6 +16770,20 @@ class ApplyWorkspaceEditResult():
     # contain the index of the change that failed. This property is only available
     # if the client signals a `failureHandlingStrategy` in its client capabilities.
     failedChange: Optional[int]
+
+    def __init__(self, *, applied: bool, failureReason: Optional[str] = None, failedChange: Optional[int] = None) -> None:
+        """
+        - applied: Indicates whether the edit was applied or not.
+        - failureReason: An optional textual description for why the edit was not applied.
+            This may be used by the server for diagnostic logging or to provide
+            a suitable error for a request that triggered the edit.
+        - failedChange: Depending on the client's failure handling strategy `failedChange` might
+            contain the index of the change that failed. This property is only available
+            if the client signals a `failureHandlingStrategy` in its client capabilities.
+        """
+        self.applied = applied
+        self.failureReason = failureReason
+        self.failedChange = failedChange
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ApplyWorkspaceEditResult":
@@ -12906,6 +16839,33 @@ class WorkDoneProgressBegin():
     # The value should be steadily rising. Clients are free to ignore values
     # that are not following this rule. The value range is [0, 100].
     percentage: Optional[int]
+
+    def __init__(self, *, kind: str, title: str, cancellable: Optional[bool] = None, message: Optional[str] = None, percentage: Optional[int] = None) -> None:
+        """
+        - title: Mandatory title of the progress operation. Used to briefly inform about
+            the kind of operation being performed.
+            
+            Examples: "Indexing" or "Linking dependencies".
+        - cancellable: Controls if a cancel button should show to allow the user to cancel the
+            long running operation. Clients that don't support cancellation are allowed
+            to ignore the setting.
+        - message: Optional, more detailed associated progress message. Contains
+            complementary information to the `title`.
+            
+            Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
+            If unset, the previous progress message (if any) is still valid.
+        - percentage: Optional progress percentage to display (value 100 is considered 100%).
+            If not provided infinite progress is assumed and clients are allowed
+            to ignore the `percentage` value in subsequent in report notifications.
+            
+            The value should be steadily rising. Clients are free to ignore values
+            that are not following this rule. The value range is [0, 100].
+        """
+        self.kind = kind
+        self.title = title
+        self.cancellable = cancellable
+        self.message = message
+        self.percentage = percentage
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressBegin":
@@ -12965,6 +16925,29 @@ class WorkDoneProgressReport():
     # that are not following this rule. The value range is [0, 100]
     percentage: Optional[int]
 
+    def __init__(self, *, kind: str, cancellable: Optional[bool] = None, message: Optional[str] = None, percentage: Optional[int] = None) -> None:
+        """
+        - cancellable: Controls enablement state of a cancel button.
+            
+            Clients that don't support cancellation or don't support controlling the button's
+            enablement state are allowed to ignore the property.
+        - message: Optional, more detailed associated progress message. Contains
+            complementary information to the `title`.
+            
+            Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
+            If unset, the previous progress message (if any) is still valid.
+        - percentage: Optional progress percentage to display (value 100 is considered 100%).
+            If not provided infinite progress is assumed and clients are allowed
+            to ignore the `percentage` value in subsequent in report notifications.
+            
+            The value should be steadily rising. Clients are free to ignore values
+            that are not following this rule. The value range is [0, 100]
+        """
+        self.kind = kind
+        self.cancellable = cancellable
+        self.message = message
+        self.percentage = percentage
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressReport":
         kind = match_string(json_get_string(obj, "kind"), "report")
@@ -13004,6 +16987,14 @@ class WorkDoneProgressEnd():
     # of the operation.
     message: Optional[str]
 
+    def __init__(self, *, kind: str, message: Optional[str] = None) -> None:
+        """
+        - message: Optional, a final message indicating to for example indicate the outcome
+            of the operation.
+        """
+        self.kind = kind
+        self.message = message
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressEnd":
         kind = match_string(json_get_string(obj, "kind"), "end")
@@ -13027,6 +17018,12 @@ class SetTraceParams():
 
     value: "TraceValues"
 
+    def __init__(self, *, value: "TraceValues") -> None:
+        """
+    
+        """
+        self.value = value
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SetTraceParams":
         value = TraceValues(json_get_string(obj, "value"))
@@ -13045,6 +17042,13 @@ class LogTraceParams():
     message: str
     
     verbose: Optional[str]
+
+    def __init__(self, *, message: str, verbose: Optional[str] = None) -> None:
+        """
+    
+        """
+        self.message = message
+        self.verbose = verbose
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LogTraceParams":
@@ -13070,6 +17074,12 @@ class CancelParams():
     # The request id to cancel.
     id: Union[int, str]
 
+    def __init__(self, *, id: Union[int, str]) -> None:
+        """
+        - id: The request id to cancel.
+        """
+        self.id = id
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CancelParams":
         id = parse_or_type(obj["id"], (lambda v: json_assert_type_int(v), lambda v: json_assert_type_string(v)))
@@ -13091,6 +17101,14 @@ class ProgressParams():
     # The progress data.
     value: "LSPAny"
 
+    def __init__(self, *, token: "ProgressToken", value: "LSPAny") -> None:
+        """
+        - token: The progress token provided by the client or server.
+        - value: The progress data.
+        """
+        self.token = token
+        self.value = value
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ProgressParams":
         token = parse_ProgressToken(obj["token"])
@@ -13110,6 +17128,12 @@ class WorkDoneProgressParams():
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
+
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - workDoneToken: An optional token that a server can use to report work done progress.
+        """
+        self.workDoneToken = workDoneToken
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressParams":
@@ -13149,6 +17173,24 @@ including an origin range."""
     # Must be contained by the `targetRange`. See also `DocumentSymbol#range`
     targetSelectionRange: "Range"
 
+    def __init__(self, *, originSelectionRange: Optional["Range"] = None, targetUri: str, targetRange: "Range", targetSelectionRange: "Range") -> None:
+        """
+        - originSelectionRange: Span of the origin of this link.
+            
+            Used as the underlined span for mouse interaction. Defaults to the word range at
+            the definition position.
+        - targetUri: The target resource identifier of this link.
+        - targetRange: The full target range of this link. If the target for example is a symbol then target range is the
+            range enclosing this symbol not including leading/trailing whitespace but everything else
+            like comments. This information is typically used to highlight the range in the editor.
+        - targetSelectionRange: The range that should be selected and revealed when this link is being followed, e.g the name of a function.
+            Must be contained by the `targetRange`. See also `DocumentSymbol#range`
+        """
+        self.originSelectionRange = originSelectionRange
+        self.targetUri = targetUri
+        self.targetRange = targetRange
+        self.targetSelectionRange = targetSelectionRange
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LocationLink":
         if originSelectionRange_json := json_get_optional_object(obj, "originSelectionRange"):
@@ -13179,6 +17221,13 @@ request."""
     # the request again. See also Registration#id.
     id: Optional[str]
 
+    def __init__(self, *, id: Optional[str] = None) -> None:
+        """
+        - id: The id used to register the request. The id can be used to deregister
+            the request again. See also Registration#id.
+        """
+        self.id = id
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "StaticRegistrationOptions":
         if id_json := json_get_optional_string(obj, "id"):
@@ -13205,6 +17254,14 @@ class InlineValueText():
     
     # The text of the inline value.
     text: str
+
+    def __init__(self, *, range: "Range", text: str) -> None:
+        """
+        - range: The document range for which the inline value applies.
+        - text: The text of the inline value.
+        """
+        self.range = range
+        self.text = text
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueText":
@@ -13236,6 +17293,17 @@ An optional variable name can be used to override the extracted name.
     
     # How to perform the lookup.
     caseSensitiveLookup: bool
+
+    def __init__(self, *, range: "Range", variableName: Optional[str] = None, caseSensitiveLookup: bool) -> None:
+        """
+        - range: The document range for which the inline value applies.
+            The range is used to extract the variable name from the underlying document.
+        - variableName: If specified the name of the variable to look up.
+        - caseSensitiveLookup: How to perform the lookup.
+        """
+        self.range = range
+        self.variableName = variableName
+        self.caseSensitiveLookup = caseSensitiveLookup
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueVariableLookup":
@@ -13270,6 +17338,15 @@ An optional expression can be used to override the extracted expression.
     
     # If specified the expression overrides the extracted expression.
     expression: Optional[str]
+
+    def __init__(self, *, range: "Range", expression: Optional[str] = None) -> None:
+        """
+        - range: The document range for which the inline value applies.
+            The range is used to extract the evaluatable expression from the underlying document.
+        - expression: If specified the expression overrides the extracted expression.
+        """
+        self.range = range
+        self.expression = expression
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueEvaluatableExpression":
@@ -13313,6 +17390,26 @@ class RelatedFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
     # 
     # @since 3.17.0
     relatedDocuments: Optional[Dict[str, Union["FullDocumentDiagnosticReport", "UnchangedDocumentDiagnosticReport"]]]
+
+    def __init__(self, *, kind: str, resultId: Optional[str] = None, items: List["Diagnostic"], relatedDocuments: Optional[Dict[str, Union["FullDocumentDiagnosticReport", "UnchangedDocumentDiagnosticReport"]]] = None) -> None:
+        """
+        - kind: A full document diagnostic report.
+        - resultId: An optional result id. If provided it will
+            be sent on the next diagnostic request for the
+            same document.
+        - items: The actual items.
+        - relatedDocuments: Diagnostics of related documents. This information is useful
+            in programming languages where code in a file A can generate
+            diagnostics in a file B which A depends on. An example of
+            such a language is C/C++ where marco definitions in a file
+            a.cpp and result in errors in a header file b.hpp.
+            
+            @since 3.17.0
+        """
+        self.kind = kind
+        self.resultId = resultId
+        self.items = items
+        self.relatedDocuments = relatedDocuments
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelatedFullDocumentDiagnosticReport":
@@ -13363,6 +17460,26 @@ class RelatedUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport
     # 
     # @since 3.17.0
     relatedDocuments: Optional[Dict[str, Union["FullDocumentDiagnosticReport", "UnchangedDocumentDiagnosticReport"]]]
+
+    def __init__(self, *, kind: str, resultId: str, relatedDocuments: Optional[Dict[str, Union["FullDocumentDiagnosticReport", "UnchangedDocumentDiagnosticReport"]]] = None) -> None:
+        """
+        - kind: A document diagnostic report indicating
+            no changes to the last result. A server can
+            only return `unchanged` if result ids are
+            provided.
+        - resultId: A result id which will be sent on the next
+            diagnostic request for the same document.
+        - relatedDocuments: Diagnostics of related documents. This information is useful
+            in programming languages where code in a file A can generate
+            diagnostics in a file B which A depends on. An example of
+            such a language is C/C++ where marco definitions in a file
+            a.cpp and result in errors in a header file b.hpp.
+            
+            @since 3.17.0
+        """
+        self.kind = kind
+        self.resultId = resultId
+        self.relatedDocuments = relatedDocuments
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelatedUnchangedDocumentDiagnosticReport":
@@ -13516,6 +17633,14 @@ class AnonymousAndType0():
     # the client.
     partialResultToken: Optional["ProgressToken"]
 
+    def __init__(self, *, items: List["ConfigurationItem"], partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.items = items
+        self.partialResultToken = partialResultToken
+
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousAndType0":
         items = [ConfigurationItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
@@ -13542,6 +17667,14 @@ class AnonymousAndType1():
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
     documentSelector: Union["DocumentSelector", None]
+
+    def __init__(self, *, workDoneProgress: Optional[bool] = None, documentSelector: Union["DocumentSelector", None]) -> None:
+        """
+        - documentSelector: A document selector to identify the scope of the registration. If set to null
+            the document selector provided on the client side will be used.
+        """
+        self.workDoneProgress = workDoneProgress
+        self.documentSelector = documentSelector
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousAndType1":

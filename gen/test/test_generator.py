@@ -532,6 +532,14 @@ def test_generator_generate_structure_definition() -> None:
                             "kind": "base",
                             "name": "string"
                         }
+                    },
+                    {
+                        "name": "testopt",
+                        "type": {
+                            "kind": "base",
+                            "name": "string"
+                        },
+                        "optional": True
                     }
                 ]
             },
@@ -574,11 +582,21 @@ def test_generator_generate_structure_definition() -> None:
 
     assert eval("issubclass(Test1, Test2)", names)
 
-    res = eval("Test1.from_json({ 'test1': 'Hello', 'test2': 10, 'test3': True })", names)
-    assert res.test1 == 'Hello'
-    assert res.test2 == 10
-    assert res.test3 == True
-    assert res.to_json() == { 'test1': 'Hello', 'test2': 10, 'test3': True }
+    res1 = eval("Test1.from_json({ 'test1': 'Hello', 'test2': 10, 'test3': True })", names)
+    assert res1.test1 == 'Hello'
+    assert res1.testopt is None
+    assert res1.test2 == 10
+    assert res1.test3 == True
+    assert res1.to_json() == { 'test1': 'Hello', 'test2': 10, 'test3': True }
+
+    res2 = eval("Test1(test1='Hello', test2=10, test3=True)", names)
+    assert res2.test1 == 'Hello'
+    assert res2.testopt is None
+    assert res2.test2 == 10
+    assert res2.test3 == True
+
+    res3 = eval("Test1(test1='Hello', test2=10, test3=True, testopt='Optional')", names)
+    assert res3.testopt == "Optional"
 
 
 def test_generator_get_referenced_definition_anytype() -> None:

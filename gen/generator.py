@@ -732,6 +732,41 @@ else:
         return write_statement
 
 
+    def _generate_structure_init_method_documentation(self, properties: Tuple[Property, ...]) -> str:
+        docstring_lines: List[str] = []
+        for p in properties:
+            if not p.documentation:
+                continue
+            lines = p.documentation.splitlines()
+            docstring_lines.append(f"- {p.name}: {lines[0]}")
+            docstring_lines += ["    " + l for l in lines[1:]]
+        return "\n".join(docstring_lines)
+
+
+    def _generate_structure_init_method(self, properties: Tuple[Property, ...]) -> str:
+        if len(properties) == 0:
+            return ""
+
+        documentation = self._generate_structure_init_method_documentation(properties)
+
+        parameters: List[str] = []
+        for p in properties:
+            if p.optional:
+                parameters.append(f"{_escape_keyword(p.name)}: Optional[{self._generate_type_annotation(p.type)}] = None")
+            else:
+                parameters.append(f"{_escape_keyword(p.name)}: {self._generate_type_annotation(p.type)}")
+
+        names = [_escape_keyword(p.name) for p in properties]
+        assignments = [f"self.{n} = {n}" for n in names]
+        sep = "\n"
+        return f'''\
+def __init__(self, *, {", ".join(parameters)}) -> None:
+    """
+{indent(documentation)}
+    """
+{indent(sep.join(assignments))}'''
+
+
     def _generate_structure_from_json_method(self, class_name: str, properties: Tuple[Property]) -> str:
         property_read_statements = "\n".join([self._generate_property_read_statement(p, "obj") for p in properties])
         property_names = ", ".join([_escape_keyword(p.name) + "=" + _escape_keyword(p.name) for p in properties])
@@ -761,6 +796,8 @@ class {class_name}({", ".join(superclasses)}):
     """{doc}"""
 
 {indent(property_declarations)}
+
+{indent(self._generate_structure_init_method(properties))}
 
 {indent(self._generate_structure_from_json_method(class_name, properties))}
 
@@ -910,6 +947,9 @@ class {class_name}({", ".join(superclasses)}):
 
     def _generate_anonymous_structure_key_type_alias(self, val: StructureLiteral) -> str:
         name = f"{self._anonymous_structure_names[val]}Keys"
+        if len(val.properties) == 0:
+            return name + " = Literal[None]"
+
         type_names = ['"' + p.name + '"' for p in val.properties]
         return f"{name} = Literal[{','.join(type_names)}]"
 

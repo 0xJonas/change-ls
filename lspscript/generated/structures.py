@@ -2,7 +2,7 @@ from util import *
 from enumerations import *
 
 from dataclasses import dataclass
-from typing import Dict, List, Mapping, Optional, Tuple, Union
+from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 @dataclass
 class TextDocumentIdentifier():
@@ -110,7 +110,7 @@ def parse_ProgressToken(arg: JSON_VALUE) -> ProgressToken:
     return parse_or_type((arg), (lambda v: json_assert_type_int(v), lambda v: json_assert_type_string(v)))
 
 def write_ProgressToken(arg: ProgressToken) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, int), lambda i : isinstance(i, str)), (lambda i: i, lambda i: i))
+    return write_or_type(arg, (lambda i: isinstance(i, int), lambda i: isinstance(i, str)), (lambda i: i, lambda i: i))
 
 
 @dataclass
@@ -210,112 +210,79 @@ inside a text file."""
         return out
 
 
-@dataclass
-class AnonymousStructure42():
-    """"""
+AnonymousStructure42Keys = Literal["language","scheme","pattern"]
 
-    # A language id, like `typescript`.
-    language: str
-    
-    # A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-    scheme: Optional[str]
-    
-    # A glob pattern, like `*.{ts,js}`.
-    pattern: Optional[str]
+def parse_AnonymousStructure42(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure42Keys, Any]:
+    out: Dict[AnonymousStructure42Keys, Any] = {}
+    out["language"] = json_get_string(obj, "language")
+    if scheme_json := json_get_optional_string(obj, "scheme"):
+        out["scheme"] = scheme_json
+    else:
+        out["scheme"] = None
+    if pattern_json := json_get_optional_string(obj, "pattern"):
+        out["pattern"] = pattern_json
+    else:
+        out["pattern"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure42":
-        language = json_get_string(obj, "language")
-        if scheme_json := json_get_optional_string(obj, "scheme"):
-            scheme = scheme_json
-        else:
-            scheme = None
-        if pattern_json := json_get_optional_string(obj, "pattern"):
-            pattern = pattern_json
-        else:
-            pattern = None
-        return cls(language=language, scheme=scheme, pattern=pattern)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["language"] = self.language
-        if self.scheme is not None:
-            out["scheme"] = self.scheme
-        if self.pattern is not None:
-            out["pattern"] = self.pattern
-        return out
+def write_AnonymousStructure42(obj: Dict[AnonymousStructure42Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["language"] = obj["language"]
+    if obj.get("scheme") is not None:
+        out["scheme"] = obj.get("scheme")
+    if obj.get("pattern") is not None:
+        out["pattern"] = obj.get("pattern")
+    return out
 
 
-@dataclass
-class AnonymousStructure43():
-    """"""
+AnonymousStructure43Keys = Literal["language","scheme","pattern"]
 
-    # A language id, like `typescript`.
-    language: Optional[str]
-    
-    # A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-    scheme: str
-    
-    # A glob pattern, like `*.{ts,js}`.
-    pattern: Optional[str]
+def parse_AnonymousStructure43(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure43Keys, Any]:
+    out: Dict[AnonymousStructure43Keys, Any] = {}
+    if language_json := json_get_optional_string(obj, "language"):
+        out["language"] = language_json
+    else:
+        out["language"] = None
+    out["scheme"] = json_get_string(obj, "scheme")
+    if pattern_json := json_get_optional_string(obj, "pattern"):
+        out["pattern"] = pattern_json
+    else:
+        out["pattern"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure43":
-        if language_json := json_get_optional_string(obj, "language"):
-            language = language_json
-        else:
-            language = None
-        scheme = json_get_string(obj, "scheme")
-        if pattern_json := json_get_optional_string(obj, "pattern"):
-            pattern = pattern_json
-        else:
-            pattern = None
-        return cls(language=language, scheme=scheme, pattern=pattern)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.language is not None:
-            out["language"] = self.language
-        out["scheme"] = self.scheme
-        if self.pattern is not None:
-            out["pattern"] = self.pattern
-        return out
+def write_AnonymousStructure43(obj: Dict[AnonymousStructure43Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("language") is not None:
+        out["language"] = obj.get("language")
+    out["scheme"] = obj["scheme"]
+    if obj.get("pattern") is not None:
+        out["pattern"] = obj.get("pattern")
+    return out
 
 
-@dataclass
-class AnonymousStructure44():
-    """"""
+AnonymousStructure44Keys = Literal["language","scheme","pattern"]
 
-    # A language id, like `typescript`.
-    language: Optional[str]
-    
-    # A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-    scheme: Optional[str]
-    
-    # A glob pattern, like `*.{ts,js}`.
-    pattern: str
+def parse_AnonymousStructure44(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure44Keys, Any]:
+    out: Dict[AnonymousStructure44Keys, Any] = {}
+    if language_json := json_get_optional_string(obj, "language"):
+        out["language"] = language_json
+    else:
+        out["language"] = None
+    if scheme_json := json_get_optional_string(obj, "scheme"):
+        out["scheme"] = scheme_json
+    else:
+        out["scheme"] = None
+    out["pattern"] = json_get_string(obj, "pattern")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure44":
-        if language_json := json_get_optional_string(obj, "language"):
-            language = language_json
-        else:
-            language = None
-        if scheme_json := json_get_optional_string(obj, "scheme"):
-            scheme = scheme_json
-        else:
-            scheme = None
-        pattern = json_get_string(obj, "pattern")
-        return cls(language=language, scheme=scheme, pattern=pattern)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.language is not None:
-            out["language"] = self.language
-        if self.scheme is not None:
-            out["scheme"] = self.scheme
-        out["pattern"] = self.pattern
-        return out
+def write_AnonymousStructure44(obj: Dict[AnonymousStructure44Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("language") is not None:
+        out["language"] = obj.get("language")
+    if obj.get("scheme") is not None:
+        out["scheme"] = obj.get("scheme")
+    out["pattern"] = obj["pattern"]
+    return out
 
 
 # A document filter denotes a document by different properties like
@@ -334,121 +301,88 @@ class AnonymousStructure44():
 # @sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
 # 
 # @since 3.17.0
-TextDocumentFilter = Union[AnonymousStructure42, AnonymousStructure43, AnonymousStructure44]
+TextDocumentFilter = Union[Dict[AnonymousStructure42Keys, Any], Dict[AnonymousStructure43Keys, Any], Dict[AnonymousStructure44Keys, Any]]
 
 def parse_TextDocumentFilter(arg: JSON_VALUE) -> TextDocumentFilter:
-    return parse_or_type((arg), (lambda v: AnonymousStructure42.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure43.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure44.from_json(json_assert_type_object(v))))
+    return parse_or_type((arg), (lambda v: parse_AnonymousStructure42(json_assert_type_object(v)), lambda v: parse_AnonymousStructure43(json_assert_type_object(v)), lambda v: parse_AnonymousStructure44(json_assert_type_object(v))))
 
 def write_TextDocumentFilter(arg: TextDocumentFilter) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, AnonymousStructure42), lambda i : isinstance(i, AnonymousStructure43), lambda i : isinstance(i, AnonymousStructure44)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, Dict) and "language" in i.keys(), lambda i: isinstance(i, Dict) and "scheme" in i.keys(), lambda i: isinstance(i, Dict) and "pattern" in i.keys()), (lambda i: write_AnonymousStructure42(i), lambda i: write_AnonymousStructure43(i), lambda i: write_AnonymousStructure44(i)))
 
 
-@dataclass
-class AnonymousStructure45():
-    """"""
+AnonymousStructure45Keys = Literal["notebookType","scheme","pattern"]
 
-    # The type of the enclosing notebook.
-    notebookType: str
-    
-    # A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-    scheme: Optional[str]
-    
-    # A glob pattern.
-    pattern: Optional[str]
+def parse_AnonymousStructure45(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure45Keys, Any]:
+    out: Dict[AnonymousStructure45Keys, Any] = {}
+    out["notebookType"] = json_get_string(obj, "notebookType")
+    if scheme_json := json_get_optional_string(obj, "scheme"):
+        out["scheme"] = scheme_json
+    else:
+        out["scheme"] = None
+    if pattern_json := json_get_optional_string(obj, "pattern"):
+        out["pattern"] = pattern_json
+    else:
+        out["pattern"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure45":
-        notebookType = json_get_string(obj, "notebookType")
-        if scheme_json := json_get_optional_string(obj, "scheme"):
-            scheme = scheme_json
-        else:
-            scheme = None
-        if pattern_json := json_get_optional_string(obj, "pattern"):
-            pattern = pattern_json
-        else:
-            pattern = None
-        return cls(notebookType=notebookType, scheme=scheme, pattern=pattern)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["notebookType"] = self.notebookType
-        if self.scheme is not None:
-            out["scheme"] = self.scheme
-        if self.pattern is not None:
-            out["pattern"] = self.pattern
-        return out
+def write_AnonymousStructure45(obj: Dict[AnonymousStructure45Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["notebookType"] = obj["notebookType"]
+    if obj.get("scheme") is not None:
+        out["scheme"] = obj.get("scheme")
+    if obj.get("pattern") is not None:
+        out["pattern"] = obj.get("pattern")
+    return out
 
 
-@dataclass
-class AnonymousStructure46():
-    """"""
+AnonymousStructure46Keys = Literal["notebookType","scheme","pattern"]
 
-    # The type of the enclosing notebook.
-    notebookType: Optional[str]
-    
-    # A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-    scheme: str
-    
-    # A glob pattern.
-    pattern: Optional[str]
+def parse_AnonymousStructure46(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure46Keys, Any]:
+    out: Dict[AnonymousStructure46Keys, Any] = {}
+    if notebookType_json := json_get_optional_string(obj, "notebookType"):
+        out["notebookType"] = notebookType_json
+    else:
+        out["notebookType"] = None
+    out["scheme"] = json_get_string(obj, "scheme")
+    if pattern_json := json_get_optional_string(obj, "pattern"):
+        out["pattern"] = pattern_json
+    else:
+        out["pattern"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure46":
-        if notebookType_json := json_get_optional_string(obj, "notebookType"):
-            notebookType = notebookType_json
-        else:
-            notebookType = None
-        scheme = json_get_string(obj, "scheme")
-        if pattern_json := json_get_optional_string(obj, "pattern"):
-            pattern = pattern_json
-        else:
-            pattern = None
-        return cls(notebookType=notebookType, scheme=scheme, pattern=pattern)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.notebookType is not None:
-            out["notebookType"] = self.notebookType
-        out["scheme"] = self.scheme
-        if self.pattern is not None:
-            out["pattern"] = self.pattern
-        return out
+def write_AnonymousStructure46(obj: Dict[AnonymousStructure46Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("notebookType") is not None:
+        out["notebookType"] = obj.get("notebookType")
+    out["scheme"] = obj["scheme"]
+    if obj.get("pattern") is not None:
+        out["pattern"] = obj.get("pattern")
+    return out
 
 
-@dataclass
-class AnonymousStructure47():
-    """"""
+AnonymousStructure47Keys = Literal["notebookType","scheme","pattern"]
 
-    # The type of the enclosing notebook.
-    notebookType: Optional[str]
-    
-    # A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-    scheme: Optional[str]
-    
-    # A glob pattern.
-    pattern: str
+def parse_AnonymousStructure47(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure47Keys, Any]:
+    out: Dict[AnonymousStructure47Keys, Any] = {}
+    if notebookType_json := json_get_optional_string(obj, "notebookType"):
+        out["notebookType"] = notebookType_json
+    else:
+        out["notebookType"] = None
+    if scheme_json := json_get_optional_string(obj, "scheme"):
+        out["scheme"] = scheme_json
+    else:
+        out["scheme"] = None
+    out["pattern"] = json_get_string(obj, "pattern")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure47":
-        if notebookType_json := json_get_optional_string(obj, "notebookType"):
-            notebookType = notebookType_json
-        else:
-            notebookType = None
-        if scheme_json := json_get_optional_string(obj, "scheme"):
-            scheme = scheme_json
-        else:
-            scheme = None
-        pattern = json_get_string(obj, "pattern")
-        return cls(notebookType=notebookType, scheme=scheme, pattern=pattern)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.notebookType is not None:
-            out["notebookType"] = self.notebookType
-        if self.scheme is not None:
-            out["scheme"] = self.scheme
-        out["pattern"] = self.pattern
-        return out
+def write_AnonymousStructure47(obj: Dict[AnonymousStructure47Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("notebookType") is not None:
+        out["notebookType"] = obj.get("notebookType")
+    if obj.get("scheme") is not None:
+        out["scheme"] = obj.get("scheme")
+    out["pattern"] = obj["pattern"]
+    return out
 
 
 # A notebook document filter denotes a notebook document by
@@ -456,13 +390,13 @@ class AnonymousStructure47():
 # against the notebook's URI (same as with documents)
 # 
 # @since 3.17.0
-NotebookDocumentFilter = Union[AnonymousStructure45, AnonymousStructure46, AnonymousStructure47]
+NotebookDocumentFilter = Union[Dict[AnonymousStructure45Keys, Any], Dict[AnonymousStructure46Keys, Any], Dict[AnonymousStructure47Keys, Any]]
 
 def parse_NotebookDocumentFilter(arg: JSON_VALUE) -> NotebookDocumentFilter:
-    return parse_or_type((arg), (lambda v: AnonymousStructure45.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure46.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure47.from_json(json_assert_type_object(v))))
+    return parse_or_type((arg), (lambda v: parse_AnonymousStructure45(json_assert_type_object(v)), lambda v: parse_AnonymousStructure46(json_assert_type_object(v)), lambda v: parse_AnonymousStructure47(json_assert_type_object(v))))
 
 def write_NotebookDocumentFilter(arg: NotebookDocumentFilter) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, AnonymousStructure45), lambda i : isinstance(i, AnonymousStructure46), lambda i : isinstance(i, AnonymousStructure47)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, Dict) and "notebookType" in i.keys(), lambda i: isinstance(i, Dict) and "scheme" in i.keys(), lambda i: isinstance(i, Dict) and "pattern" in i.keys()), (lambda i: write_AnonymousStructure45(i), lambda i: write_AnonymousStructure46(i), lambda i: write_AnonymousStructure47(i)))
 
 
 @dataclass
@@ -495,7 +429,7 @@ document by different properties.
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["notebook"] = write_or_type(self.notebook, (lambda i : isinstance(i, str), lambda i : (isinstance(i, AnonymousStructure45)) or (isinstance(i, AnonymousStructure46)) or (isinstance(i, AnonymousStructure47))), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
+        out["notebook"] = write_or_type(self.notebook, (lambda i: isinstance(i, str), lambda i: (isinstance(i, Dict) and "notebookType" in i.keys()) or (isinstance(i, Dict) and "scheme" in i.keys()) or (isinstance(i, Dict) and "pattern" in i.keys())), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
         if self.language is not None:
             out["language"] = self.language
         return out
@@ -511,7 +445,7 @@ def parse_DocumentFilter(arg: JSON_VALUE) -> DocumentFilter:
     return parse_or_type((arg), (lambda v: parse_TextDocumentFilter((v)), lambda v: NotebookCellTextDocumentFilter.from_json(json_assert_type_object(v))))
 
 def write_DocumentFilter(arg: DocumentFilter) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : (isinstance(i, AnonymousStructure42)) or (isinstance(i, AnonymousStructure43)) or (isinstance(i, AnonymousStructure44)), lambda i : isinstance(i, NotebookCellTextDocumentFilter)), (lambda i: write_TextDocumentFilter(i), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: (isinstance(i, Dict) and "language" in i.keys()) or (isinstance(i, Dict) and "scheme" in i.keys()) or (isinstance(i, Dict) and "pattern" in i.keys()), lambda i: isinstance(i, NotebookCellTextDocumentFilter)), (lambda i: write_TextDocumentFilter(i), lambda i: i.to_json()))
 
 
 # A document selector is the combination of one or many document filters.
@@ -543,7 +477,7 @@ class TextDocumentRegistrationOptions():
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         return out
 
 
@@ -597,7 +531,7 @@ class ImplementationRegistrationOptions(TextDocumentRegistrationOptions, Impleme
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.id is not None:
@@ -697,7 +631,7 @@ class TypeDefinitionRegistrationOptions(TextDocumentRegistrationOptions, TypeDef
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.id is not None:
@@ -984,7 +918,7 @@ class DocumentColorRegistrationOptions(TextDocumentRegistrationOptions, Document
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.id is not None:
@@ -1281,7 +1215,7 @@ class FoldingRangeRegistrationOptions(TextDocumentRegistrationOptions, FoldingRa
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.id is not None:
@@ -1383,7 +1317,7 @@ class DeclarationRegistrationOptions(DeclarationOptions, TextDocumentRegistratio
         out: Dict[str, JSON_VALUE] = {}
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.id is not None:
             out["id"] = self.id
         return out
@@ -1511,7 +1445,7 @@ class SelectionRangeRegistrationOptions(SelectionRangeOptions, TextDocumentRegis
         out: Dict[str, JSON_VALUE] = {}
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.id is not None:
             out["id"] = self.id
         return out
@@ -1628,7 +1562,7 @@ def parse_LSPAny(arg: JSON_VALUE) -> LSPAny:
     return parse_or_type((arg), (lambda v: LSPObject.from_json(json_assert_type_object(v)), lambda v: parse_LSPArray(json_assert_type_array(v)), lambda v: json_assert_type_string(v), lambda v: json_assert_type_int(v), lambda v: json_assert_type_int(v), lambda v: json_assert_type_float(v), lambda v: json_assert_type_bool(v), lambda v: json_assert_type_null(v)))
 
 def write_LSPAny(arg: LSPAny) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, LSPObject), lambda i : isinstance(i, List) and (len(i) == 0 or (True)), lambda i : isinstance(i, str), lambda i : isinstance(i, int), lambda i : isinstance(i, int), lambda i : isinstance(i, float), lambda i : isinstance(i, bool), lambda i : i is None), (lambda i: i.to_json(), lambda i: write_LSPArray(i), lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i))
+    return write_or_type(arg, (lambda i: isinstance(i, LSPObject), lambda i: isinstance(i, List) and (len(i) == 0 or (True)), lambda i: isinstance(i, str), lambda i: isinstance(i, int), lambda i: isinstance(i, int), lambda i: isinstance(i, float), lambda i: isinstance(i, bool), lambda i: i is None), (lambda i: i.to_json(), lambda i: write_LSPArray(i), lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i))
 
 
 @dataclass
@@ -1755,7 +1689,7 @@ class CallHierarchyRegistrationOptions(TextDocumentRegistrationOptions, CallHier
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.id is not None:
@@ -1816,7 +1750,7 @@ class CallHierarchyIncomingCall():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyIncomingCall":
-        from_ = CallHierarchyItem.from_json(json_get_object(obj, "from_"))
+        from_ = CallHierarchyItem.from_json(json_get_object(obj, "from"))
         fromRanges = [Range.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "fromRanges")]
         return cls(from_=from_, fromRanges=fromRanges)
 
@@ -1999,43 +1933,34 @@ class SemanticTokensLegend():
         return out
 
 
-@dataclass
-class AnonymousStructure5():
-    """"""
+AnonymousStructure5Keys = Literal[]
+
+def parse_AnonymousStructure5(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure5Keys, Any]:
+    out: Dict[AnonymousStructure5Keys, Any] = {}
+
+    return out
+
+def write_AnonymousStructure5(obj: Dict[AnonymousStructure5Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+
+    return out
 
 
+AnonymousStructure6Keys = Literal["delta"]
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure5":
-    
-        return cls()
+def parse_AnonymousStructure6(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure6Keys, Any]:
+    out: Dict[AnonymousStructure6Keys, Any] = {}
+    if delta_json := json_get_optional_bool(obj, "delta"):
+        out["delta"] = delta_json
+    else:
+        out["delta"] = None
+    return out
 
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-    
-        return out
-
-
-@dataclass
-class AnonymousStructure6():
-    """"""
-
-    # The server supports deltas for full documents.
-    delta: Optional[bool]
-
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure6":
-        if delta_json := json_get_optional_bool(obj, "delta"):
-            delta = delta_json
-        else:
-            delta = None
-        return cls(delta=delta)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.delta is not None:
-            out["delta"] = self.delta
-        return out
+def write_AnonymousStructure6(obj: Dict[AnonymousStructure6Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("delta") is not None:
+        out["delta"] = obj.get("delta")
+    return out
 
 
 @dataclass
@@ -2049,10 +1974,10 @@ class SemanticTokensOptions():
     
     # Server supports providing semantic tokens for a specific range
     # of a document.
-    range: Optional[Union[bool, AnonymousStructure5]]
+    range: Optional[Union[bool, Dict[AnonymousStructure5Keys, Any]]]
     
     # Server supports providing semantic tokens for a full document.
-    full: Optional[Union[bool, AnonymousStructure6]]
+    full: Optional[Union[bool, Dict[AnonymousStructure6Keys, Any]]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensOptions":
@@ -2062,11 +1987,11 @@ class SemanticTokensOptions():
             workDoneProgress = None
         legend = SemanticTokensLegend.from_json(json_get_object(obj, "legend"))
         if range_json := obj.get("range"):
-            range = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: AnonymousStructure5.from_json(json_assert_type_object(v))))
+            range = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure5(json_assert_type_object(v))))
         else:
             range = None
         if full_json := obj.get("full"):
-            full = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: AnonymousStructure6.from_json(json_assert_type_object(v))))
+            full = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure6(json_assert_type_object(v))))
         else:
             full = None
         return cls(workDoneProgress=workDoneProgress, legend=legend, range=range, full=full)
@@ -2077,9 +2002,9 @@ class SemanticTokensOptions():
             out["workDoneProgress"] = self.workDoneProgress
         out["legend"] = self.legend.to_json()
         if self.range is not None:
-            out["range"] = write_or_type(self.range, (lambda i : isinstance(i, bool), lambda i : isinstance(i, AnonymousStructure5)), (lambda i: i, lambda i: i.to_json()))
+            out["range"] = write_or_type(self.range, (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: write_AnonymousStructure5(i)))
         if self.full is not None:
-            out["full"] = write_or_type(self.full, (lambda i : isinstance(i, bool), lambda i : isinstance(i, AnonymousStructure6)), (lambda i: i, lambda i: i.to_json()))
+            out["full"] = write_or_type(self.full, (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: write_AnonymousStructure6(i)))
         return out
 
 
@@ -2098,10 +2023,10 @@ class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, Semanti
     
     # Server supports providing semantic tokens for a specific range
     # of a document.
-    range: Optional[Union[bool, AnonymousStructure5]]
+    range: Optional[Union[bool, Dict[AnonymousStructure5Keys, Any]]]
     
     # Server supports providing semantic tokens for a full document.
-    full: Optional[Union[bool, AnonymousStructure6]]
+    full: Optional[Union[bool, Dict[AnonymousStructure6Keys, Any]]]
     
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
@@ -2116,11 +2041,11 @@ class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, Semanti
             workDoneProgress = None
         legend = SemanticTokensLegend.from_json(json_get_object(obj, "legend"))
         if range_json := obj.get("range"):
-            range = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: AnonymousStructure5.from_json(json_assert_type_object(v))))
+            range = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure5(json_assert_type_object(v))))
         else:
             range = None
         if full_json := obj.get("full"):
-            full = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: AnonymousStructure6.from_json(json_assert_type_object(v))))
+            full = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure6(json_assert_type_object(v))))
         else:
             full = None
         if id_json := json_get_optional_string(obj, "id"):
@@ -2131,14 +2056,14 @@ class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, Semanti
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         out["legend"] = self.legend.to_json()
         if self.range is not None:
-            out["range"] = write_or_type(self.range, (lambda i : isinstance(i, bool), lambda i : isinstance(i, AnonymousStructure5)), (lambda i: i, lambda i: i.to_json()))
+            out["range"] = write_or_type(self.range, (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: write_AnonymousStructure5(i)))
         if self.full is not None:
-            out["full"] = write_or_type(self.full, (lambda i : isinstance(i, bool), lambda i : isinstance(i, AnonymousStructure6)), (lambda i: i, lambda i: i.to_json()))
+            out["full"] = write_or_type(self.full, (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: write_AnonymousStructure6(i)))
         if self.id is not None:
             out["id"] = self.id
         return out
@@ -2493,7 +2418,7 @@ class LinkedEditingRangeRegistrationOptions(TextDocumentRegistrationOptions, Lin
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.id is not None:
@@ -2565,7 +2490,7 @@ class OptionalVersionedTextDocumentIdentifier(TextDocumentIdentifier):
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         out["uri"] = self.uri
-        out["version"] = write_or_type(self.version, (lambda i : isinstance(i, int), lambda i : i is None), (lambda i: i, lambda i: i))
+        out["version"] = write_or_type(self.version, (lambda i: isinstance(i, int), lambda i: i is None), (lambda i: i, lambda i: i))
         return out
 
 
@@ -2636,7 +2561,7 @@ kind of ordering. However the edits must be non overlapping."""
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         out["textDocument"] = self.textDocument.to_json()
-        out["edits"] = [write_or_type(i, (lambda i : isinstance(i, TextEdit), lambda i : isinstance(i, AnnotatedTextEdit)), (lambda i: i.to_json(), lambda i: i.to_json())) for i in self.edits]
+        out["edits"] = [write_or_type(i, (lambda i: isinstance(i, TextEdit), lambda i: isinstance(i, AnnotatedTextEdit)), (lambda i: i.to_json(), lambda i: i.to_json())) for i in self.edits]
         return out
 
 
@@ -2996,7 +2921,7 @@ the client capability: `workspace.workspaceEdit.failureHandling`"""
         if self.changes is not None:
             out["changes"] = { key: [i.to_json() for i in val] for key, val in self.changes.items() }
         if self.documentChanges is not None:
-            out["documentChanges"] = [write_or_type(i, (lambda i : isinstance(i, TextDocumentEdit), lambda i : isinstance(i, CreateFile), lambda i : isinstance(i, RenameFile), lambda i : isinstance(i, DeleteFile)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json())) for i in self.documentChanges]
+            out["documentChanges"] = [write_or_type(i, (lambda i: isinstance(i, TextDocumentEdit), lambda i: isinstance(i, CreateFile), lambda i: isinstance(i, RenameFile), lambda i: isinstance(i, DeleteFile)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json())) for i in self.documentChanges]
         if self.changeAnnotations is not None:
             out["changeAnnotations"] = { write_ChangeAnnotationIdentifier(key): val.to_json() for key, val in self.changeAnnotations.items() }
         return out
@@ -3335,7 +3260,7 @@ class MonikerRegistrationOptions(TextDocumentRegistrationOptions, MonikerOptions
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         return out
@@ -3500,7 +3425,7 @@ class TypeHierarchyRegistrationOptions(TextDocumentRegistrationOptions, TypeHier
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.id is not None:
@@ -3704,7 +3629,7 @@ class InlineValueRegistrationOptions(InlineValueOptions, TextDocumentRegistratio
         out: Dict[str, JSON_VALUE] = {}
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.id is not None:
             out["id"] = self.id
         return out
@@ -3879,7 +3804,7 @@ of inlay hints.
         out: Dict[str, JSON_VALUE] = {}
         out["value"] = self.value
         if self.tooltip is not None:
-            out["tooltip"] = write_or_type(self.tooltip, (lambda i : isinstance(i, str), lambda i : isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
+            out["tooltip"] = write_or_type(self.tooltip, (lambda i: isinstance(i, str), lambda i: isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
         if self.location is not None:
             out["location"] = self.location.to_json()
         if self.command is not None:
@@ -3967,13 +3892,13 @@ class InlayHint():
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         out["position"] = self.position.to_json()
-        out["label"] = write_or_type(self.label, (lambda i : isinstance(i, str), lambda i : isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], InlayHintLabelPart)))), (lambda i: i, lambda i: [i.to_json() for i in i]))
+        out["label"] = write_or_type(self.label, (lambda i: isinstance(i, str), lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], InlayHintLabelPart)))), (lambda i: i, lambda i: [i.to_json() for i in i]))
         if self.kind is not None:
             out["kind"] = self.kind.value
         if self.textEdits is not None:
             out["textEdits"] = [i.to_json() for i in self.textEdits]
         if self.tooltip is not None:
-            out["tooltip"] = write_or_type(self.tooltip, (lambda i : isinstance(i, str), lambda i : isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
+            out["tooltip"] = write_or_type(self.tooltip, (lambda i: isinstance(i, str), lambda i: isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
         if self.paddingLeft is not None:
             out["paddingLeft"] = self.paddingLeft
         if self.paddingRight is not None:
@@ -4059,7 +3984,7 @@ class InlayHintRegistrationOptions(InlayHintOptions, TextDocumentRegistrationOpt
             out["workDoneProgress"] = self.workDoneProgress
         if self.resolveProvider is not None:
             out["resolveProvider"] = self.resolveProvider
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.id is not None:
             out["id"] = self.id
         return out
@@ -4137,7 +4062,7 @@ class DocumentDiagnosticReportPartialResult():
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["relatedDocuments"] = { key: write_or_type(val, (lambda i : isinstance(i, FullDocumentDiagnosticReport), lambda i : isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
+        out["relatedDocuments"] = { key: write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
         return out
 
 
@@ -4256,7 +4181,7 @@ class DiagnosticRegistrationOptions(TextDocumentRegistrationOptions, DiagnosticO
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.identifier is not None:
@@ -4472,7 +4397,7 @@ are only valid in the scope of a resource."""
         if self.severity is not None:
             out["severity"] = self.severity.value
         if self.code is not None:
-            out["code"] = write_or_type(self.code, (lambda i : isinstance(i, int), lambda i : isinstance(i, str)), (lambda i: i, lambda i: i))
+            out["code"] = write_or_type(self.code, (lambda i: isinstance(i, int), lambda i: isinstance(i, str)), (lambda i: i, lambda i: i))
         if self.codeDescription is not None:
             out["codeDescription"] = self.codeDescription.to_json()
         if self.source is not None:
@@ -4566,7 +4491,7 @@ class WorkspaceFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
             out["resultId"] = self.resultId
         out["items"] = [i.to_json() for i in self.items]
         out["uri"] = self.uri
-        out["version"] = write_or_type(self.version, (lambda i : isinstance(i, int), lambda i : i is None), (lambda i: i, lambda i: i))
+        out["version"] = write_or_type(self.version, (lambda i: isinstance(i, int), lambda i: i is None), (lambda i: i, lambda i: i))
         return out
 
 
@@ -4636,7 +4561,7 @@ class WorkspaceUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticRepo
         out["kind"] = "unchanged"
         out["resultId"] = self.resultId
         out["uri"] = self.uri
-        out["version"] = write_or_type(self.version, (lambda i : isinstance(i, int), lambda i : i is None), (lambda i: i, lambda i: i))
+        out["version"] = write_or_type(self.version, (lambda i: isinstance(i, int), lambda i: i is None), (lambda i: i, lambda i: i))
         return out
 
 
@@ -4649,7 +4574,7 @@ def parse_WorkspaceDocumentDiagnosticReport(arg: JSON_VALUE) -> WorkspaceDocumen
     return parse_or_type((arg), (lambda v: WorkspaceFullDocumentDiagnosticReport.from_json(json_assert_type_object(v)), lambda v: WorkspaceUnchangedDocumentDiagnosticReport.from_json(json_assert_type_object(v))))
 
 def write_WorkspaceDocumentDiagnosticReport(arg: WorkspaceDocumentDiagnosticReport) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, WorkspaceFullDocumentDiagnosticReport), lambda i : isinstance(i, WorkspaceUnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, WorkspaceFullDocumentDiagnosticReport), lambda i: isinstance(i, WorkspaceUnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json()))
 
 
 @dataclass
@@ -4940,40 +4865,29 @@ array from state S to S'.
         return out
 
 
-@dataclass
-class AnonymousStructure7():
-    """"""
+AnonymousStructure7Keys = Literal["array","didOpen","didClose"]
 
-    # The change to the cell array.
-    array: "NotebookCellArrayChange"
-    
-    # Additional opened cell text documents.
-    didOpen: Optional[List["TextDocumentItem"]]
-    
-    # Additional closed cell text documents.
-    didClose: Optional[List["TextDocumentIdentifier"]]
+def parse_AnonymousStructure7(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure7Keys, Any]:
+    out: Dict[AnonymousStructure7Keys, Any] = {}
+    out["array"] = NotebookCellArrayChange.from_json(json_get_object(obj, "array"))
+    if didOpen_json := json_get_optional_array(obj, "didOpen"):
+        out["didOpen"] = [TextDocumentItem.from_json(json_assert_type_object(i)) for i in didOpen_json]
+    else:
+        out["didOpen"] = None
+    if didClose_json := json_get_optional_array(obj, "didClose"):
+        out["didClose"] = [TextDocumentIdentifier.from_json(json_assert_type_object(i)) for i in didClose_json]
+    else:
+        out["didClose"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure7":
-        array = NotebookCellArrayChange.from_json(json_get_object(obj, "array"))
-        if didOpen_json := json_get_optional_array(obj, "didOpen"):
-            didOpen = [TextDocumentItem.from_json(json_assert_type_object(i)) for i in didOpen_json]
-        else:
-            didOpen = None
-        if didClose_json := json_get_optional_array(obj, "didClose"):
-            didClose = [TextDocumentIdentifier.from_json(json_assert_type_object(i)) for i in didClose_json]
-        else:
-            didClose = None
-        return cls(array=array, didOpen=didOpen, didClose=didClose)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["array"] = self.array.to_json()
-        if self.didOpen is not None:
-            out["didOpen"] = [i.to_json() for i in self.didOpen]
-        if self.didClose is not None:
-            out["didClose"] = [i.to_json() for i in self.didClose]
-        return out
+def write_AnonymousStructure7(obj: Dict[AnonymousStructure7Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["array"] = obj["array"].to_json()
+    if obj.get("didOpen") is not None:
+        out["didOpen"] = [i.to_json() for i in obj.get("didOpen")]
+    if obj.get("didClose") is not None:
+        out["didClose"] = [i.to_json() for i in obj.get("didClose")]
+    return out
 
 
 @dataclass
@@ -4999,130 +4913,93 @@ class VersionedTextDocumentIdentifier(TextDocumentIdentifier):
         return out
 
 
-@dataclass
-class AnonymousStructure39():
-    """"""
+AnonymousStructure39Keys = Literal["range","rangeLength","text"]
 
-    # The range of the document that changed.
-    range: "Range"
-    
-    # The optional length of the range that got replaced.
-    # 
-    # @deprecated use range instead.
-    rangeLength: Optional[int]
-    
-    # The new text for the provided range.
-    text: str
+def parse_AnonymousStructure39(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure39Keys, Any]:
+    out: Dict[AnonymousStructure39Keys, Any] = {}
+    out["range"] = Range.from_json(json_get_object(obj, "range"))
+    if rangeLength_json := json_get_optional_int(obj, "rangeLength"):
+        out["rangeLength"] = rangeLength_json
+    else:
+        out["rangeLength"] = None
+    out["text"] = json_get_string(obj, "text")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure39":
-        range = Range.from_json(json_get_object(obj, "range"))
-        if rangeLength_json := json_get_optional_int(obj, "rangeLength"):
-            rangeLength = rangeLength_json
-        else:
-            rangeLength = None
-        text = json_get_string(obj, "text")
-        return cls(range=range, rangeLength=rangeLength, text=text)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["range"] = self.range.to_json()
-        if self.rangeLength is not None:
-            out["rangeLength"] = self.rangeLength
-        out["text"] = self.text
-        return out
+def write_AnonymousStructure39(obj: Dict[AnonymousStructure39Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["range"] = obj["range"].to_json()
+    if obj.get("rangeLength") is not None:
+        out["rangeLength"] = obj.get("rangeLength")
+    out["text"] = obj["text"]
+    return out
 
 
-@dataclass
-class AnonymousStructure40():
-    """"""
+AnonymousStructure40Keys = Literal["text"]
 
-    # The new text of the whole document.
-    text: str
+def parse_AnonymousStructure40(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure40Keys, Any]:
+    out: Dict[AnonymousStructure40Keys, Any] = {}
+    out["text"] = json_get_string(obj, "text")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure40":
-        text = json_get_string(obj, "text")
-        return cls(text=text)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["text"] = self.text
-        return out
+def write_AnonymousStructure40(obj: Dict[AnonymousStructure40Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["text"] = obj["text"]
+    return out
 
 
 # An event describing a change to a text document. If only a text is provided
 # it is considered to be the full content of the document.
-TextDocumentContentChangeEvent = Union[AnonymousStructure39, AnonymousStructure40]
+TextDocumentContentChangeEvent = Union[Dict[AnonymousStructure39Keys, Any], Dict[AnonymousStructure40Keys, Any]]
 
 def parse_TextDocumentContentChangeEvent(arg: JSON_VALUE) -> TextDocumentContentChangeEvent:
-    return parse_or_type((arg), (lambda v: AnonymousStructure39.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure40.from_json(json_assert_type_object(v))))
+    return parse_or_type((arg), (lambda v: parse_AnonymousStructure39(json_assert_type_object(v)), lambda v: parse_AnonymousStructure40(json_assert_type_object(v))))
 
 def write_TextDocumentContentChangeEvent(arg: TextDocumentContentChangeEvent) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, AnonymousStructure39), lambda i : isinstance(i, AnonymousStructure40)), (lambda i: i.to_json(), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, Dict) and "range" in i.keys() and "text" in i.keys(), lambda i: isinstance(i, Dict) and "text" in i.keys()), (lambda i: write_AnonymousStructure39(i), lambda i: write_AnonymousStructure40(i)))
 
 
-@dataclass
-class AnonymousStructure8():
-    """"""
+AnonymousStructure8Keys = Literal["document","changes"]
 
-    document: "VersionedTextDocumentIdentifier"
-    
-    changes: List["TextDocumentContentChangeEvent"]
+def parse_AnonymousStructure8(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure8Keys, Any]:
+    out: Dict[AnonymousStructure8Keys, Any] = {}
+    out["document"] = VersionedTextDocumentIdentifier.from_json(json_get_object(obj, "document"))
+    out["changes"] = [parse_TextDocumentContentChangeEvent((i)) for i in json_get_array(obj, "changes")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure8":
-        document = VersionedTextDocumentIdentifier.from_json(json_get_object(obj, "document"))
-        changes = [parse_TextDocumentContentChangeEvent((i)) for i in json_get_array(obj, "changes")]
-        return cls(document=document, changes=changes)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["document"] = self.document.to_json()
-        out["changes"] = [write_TextDocumentContentChangeEvent(i) for i in self.changes]
-        return out
+def write_AnonymousStructure8(obj: Dict[AnonymousStructure8Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["document"] = obj["document"].to_json()
+    out["changes"] = [write_TextDocumentContentChangeEvent(i) for i in obj["changes"]]
+    return out
 
 
-@dataclass
-class AnonymousStructure9():
-    """"""
+AnonymousStructure9Keys = Literal["structure","data","textContent"]
 
-    # Changes to the cell structure to add or
-    # remove cells.
-    structure: Optional[AnonymousStructure7]
-    
-    # Changes to notebook cells properties like its
-    # kind, execution summary or metadata.
-    data: Optional[List["NotebookCell"]]
-    
-    # Changes to the text content of notebook cells.
-    textContent: Optional[List[AnonymousStructure8]]
+def parse_AnonymousStructure9(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure9Keys, Any]:
+    out: Dict[AnonymousStructure9Keys, Any] = {}
+    if structure_json := json_get_optional_object(obj, "structure"):
+        out["structure"] = parse_AnonymousStructure7(structure_json)
+    else:
+        out["structure"] = None
+    if data_json := json_get_optional_array(obj, "data"):
+        out["data"] = [NotebookCell.from_json(json_assert_type_object(i)) for i in data_json]
+    else:
+        out["data"] = None
+    if textContent_json := json_get_optional_array(obj, "textContent"):
+        out["textContent"] = [parse_AnonymousStructure8(json_assert_type_object(i)) for i in textContent_json]
+    else:
+        out["textContent"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure9":
-        if structure_json := json_get_optional_object(obj, "structure"):
-            structure = AnonymousStructure7.from_json(structure_json)
-        else:
-            structure = None
-        if data_json := json_get_optional_array(obj, "data"):
-            data = [NotebookCell.from_json(json_assert_type_object(i)) for i in data_json]
-        else:
-            data = None
-        if textContent_json := json_get_optional_array(obj, "textContent"):
-            textContent = [AnonymousStructure8.from_json(json_assert_type_object(i)) for i in textContent_json]
-        else:
-            textContent = None
-        return cls(structure=structure, data=data, textContent=textContent)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.structure is not None:
-            out["structure"] = self.structure.to_json()
-        if self.data is not None:
-            out["data"] = [i.to_json() for i in self.data]
-        if self.textContent is not None:
-            out["textContent"] = [i.to_json() for i in self.textContent]
-        return out
+def write_AnonymousStructure9(obj: Dict[AnonymousStructure9Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("structure") is not None:
+        out["structure"] = write_AnonymousStructure7(obj.get("structure"))
+    if obj.get("data") is not None:
+        out["data"] = [i.to_json() for i in obj.get("data")]
+    if obj.get("textContent") is not None:
+        out["textContent"] = [write_AnonymousStructure8(i) for i in obj.get("textContent")]
+    return out
 
 
 @dataclass
@@ -5137,7 +5014,7 @@ class NotebookDocumentChangeEvent():
     metadata: Optional["LSPObject"]
     
     # Changes to cells
-    cells: Optional[AnonymousStructure9]
+    cells: Optional[Dict[AnonymousStructure9Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentChangeEvent":
@@ -5146,7 +5023,7 @@ class NotebookDocumentChangeEvent():
         else:
             metadata = None
         if cells_json := json_get_optional_object(obj, "cells"):
-            cells = AnonymousStructure9.from_json(cells_json)
+            cells = parse_AnonymousStructure9(cells_json)
         else:
             cells = None
         return cls(metadata=metadata, cells=cells)
@@ -5156,7 +5033,7 @@ class NotebookDocumentChangeEvent():
         if self.metadata is not None:
             out["metadata"] = self.metadata.to_json()
         if self.cells is not None:
-            out["cells"] = self.cells.to_json()
+            out["cells"] = write_AnonymousStructure9(self.cells)
         return out
 
 
@@ -5357,55 +5234,40 @@ class UnregistrationParams():
         return out
 
 
-@dataclass
-class AnonymousStructure10():
-    """"""
+AnonymousStructure10Keys = Literal["name","version"]
 
-    # The name of the client as defined by the client.
-    name: str
-    
-    # The client's version as defined by the client.
-    version: Optional[str]
+def parse_AnonymousStructure10(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure10Keys, Any]:
+    out: Dict[AnonymousStructure10Keys, Any] = {}
+    out["name"] = json_get_string(obj, "name")
+    if version_json := json_get_optional_string(obj, "version"):
+        out["version"] = version_json
+    else:
+        out["version"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure10":
-        name = json_get_string(obj, "name")
-        if version_json := json_get_optional_string(obj, "version"):
-            version = version_json
-        else:
-            version = None
-        return cls(name=name, version=version)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["name"] = self.name
-        if self.version is not None:
-            out["version"] = self.version
-        return out
+def write_AnonymousStructure10(obj: Dict[AnonymousStructure10Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["name"] = obj["name"]
+    if obj.get("version") is not None:
+        out["version"] = obj.get("version")
+    return out
 
 
-@dataclass
-class AnonymousStructure17():
-    """"""
+AnonymousStructure17Keys = Literal["groupsOnLabel"]
 
-    # Whether the client groups edits with equal labels into tree nodes,
-    # for instance all edits labelled with "Changes in Strings" would
-    # be a tree node.
-    groupsOnLabel: Optional[bool]
+def parse_AnonymousStructure17(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure17Keys, Any]:
+    out: Dict[AnonymousStructure17Keys, Any] = {}
+    if groupsOnLabel_json := json_get_optional_bool(obj, "groupsOnLabel"):
+        out["groupsOnLabel"] = groupsOnLabel_json
+    else:
+        out["groupsOnLabel"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure17":
-        if groupsOnLabel_json := json_get_optional_bool(obj, "groupsOnLabel"):
-            groupsOnLabel = groupsOnLabel_json
-        else:
-            groupsOnLabel = None
-        return cls(groupsOnLabel=groupsOnLabel)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.groupsOnLabel is not None:
-            out["groupsOnLabel"] = self.groupsOnLabel
-        return out
+def write_AnonymousStructure17(obj: Dict[AnonymousStructure17Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("groupsOnLabel") is not None:
+        out["groupsOnLabel"] = obj.get("groupsOnLabel")
+    return out
 
 
 @dataclass
@@ -5440,7 +5302,7 @@ class WorkspaceEditClientCapabilities():
     # create file, rename file and delete file changes.
     # 
     # @since 3.16.0
-    changeAnnotationSupport: Optional[AnonymousStructure17]
+    changeAnnotationSupport: Optional[Dict[AnonymousStructure17Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceEditClientCapabilities":
@@ -5461,7 +5323,7 @@ class WorkspaceEditClientCapabilities():
         else:
             normalizesLineEndings = None
         if changeAnnotationSupport_json := json_get_optional_object(obj, "changeAnnotationSupport"):
-            changeAnnotationSupport = AnonymousStructure17.from_json(changeAnnotationSupport_json)
+            changeAnnotationSupport = parse_AnonymousStructure17(changeAnnotationSupport_json)
         else:
             changeAnnotationSupport = None
         return cls(documentChanges=documentChanges, resourceOperations=resourceOperations, failureHandling=failureHandling, normalizesLineEndings=normalizesLineEndings, changeAnnotationSupport=changeAnnotationSupport)
@@ -5477,7 +5339,7 @@ class WorkspaceEditClientCapabilities():
         if self.normalizesLineEndings is not None:
             out["normalizesLineEndings"] = self.normalizesLineEndings
         if self.changeAnnotationSupport is not None:
-            out["changeAnnotationSupport"] = self.changeAnnotationSupport.to_json()
+            out["changeAnnotationSupport"] = write_AnonymousStructure17(self.changeAnnotationSupport)
         return out
 
 
@@ -5539,70 +5401,47 @@ class DidChangeWatchedFilesClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure18():
-    """"""
+AnonymousStructure18Keys = Literal["valueSet"]
 
-    # The symbol kind values the client supports. When this
-    # property exists the client also guarantees that it will
-    # handle values outside its set gracefully and falls back
-    # to a default value when unknown.
-    # 
-    # If this property is not present the client only supports
-    # the symbol kinds from `File` to `Array` as defined in
-    # the initial version of the protocol.
-    valueSet: Optional[List["SymbolKind"]]
+def parse_AnonymousStructure18(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure18Keys, Any]:
+    out: Dict[AnonymousStructure18Keys, Any] = {}
+    if valueSet_json := json_get_optional_array(obj, "valueSet"):
+        out["valueSet"] = [SymbolKind(json_assert_type_int(i)) for i in valueSet_json]
+    else:
+        out["valueSet"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure18":
-        if valueSet_json := json_get_optional_array(obj, "valueSet"):
-            valueSet = [SymbolKind(json_assert_type_int(i)) for i in valueSet_json]
-        else:
-            valueSet = None
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.valueSet is not None:
-            out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure18(obj: Dict[AnonymousStructure18Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("valueSet") is not None:
+        out["valueSet"] = [i.value for i in obj.get("valueSet")]
+    return out
 
 
-@dataclass
-class AnonymousStructure19():
-    """"""
+AnonymousStructure19Keys = Literal["valueSet"]
 
-    # The tags supported by the client.
-    valueSet: List["SymbolTag"]
+def parse_AnonymousStructure19(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure19Keys, Any]:
+    out: Dict[AnonymousStructure19Keys, Any] = {}
+    out["valueSet"] = [SymbolTag(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure19":
-        valueSet = [SymbolTag(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure19(obj: Dict[AnonymousStructure19Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["valueSet"] = [i.value for i in obj["valueSet"]]
+    return out
 
 
-@dataclass
-class AnonymousStructure20():
-    """"""
+AnonymousStructure20Keys = Literal["properties"]
 
-    # The properties that a client can resolve lazily. Usually
-    # `location.range`
-    properties: List[str]
+def parse_AnonymousStructure20(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure20Keys, Any]:
+    out: Dict[AnonymousStructure20Keys, Any] = {}
+    out["properties"] = [json_assert_type_string(i) for i in json_get_array(obj, "properties")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure20":
-        properties = [json_assert_type_string(i) for i in json_get_array(obj, "properties")]
-        return cls(properties=properties)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["properties"] = [i for i in self.properties]
-        return out
+def write_AnonymousStructure20(obj: Dict[AnonymousStructure20Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["properties"] = [i for i in obj["properties"]]
+    return out
 
 
 @dataclass
@@ -5613,20 +5452,20 @@ class WorkspaceSymbolClientCapabilities():
     dynamicRegistration: Optional[bool]
     
     # Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
-    symbolKind: Optional[AnonymousStructure18]
+    symbolKind: Optional[Dict[AnonymousStructure18Keys, Any]]
     
     # The client supports tags on `SymbolInformation`.
     # Clients supporting tags have to handle unknown tags gracefully.
     # 
     # @since 3.16.0
-    tagSupport: Optional[AnonymousStructure19]
+    tagSupport: Optional[Dict[AnonymousStructure19Keys, Any]]
     
     # The client support partial workspace symbols. The client will send the
     # request `workspaceSymbol/resolve` to the server to resolve additional
     # properties.
     # 
     # @since 3.17.0
-    resolveSupport: Optional[AnonymousStructure20]
+    resolveSupport: Optional[Dict[AnonymousStructure20Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolClientCapabilities":
@@ -5635,15 +5474,15 @@ class WorkspaceSymbolClientCapabilities():
         else:
             dynamicRegistration = None
         if symbolKind_json := json_get_optional_object(obj, "symbolKind"):
-            symbolKind = AnonymousStructure18.from_json(symbolKind_json)
+            symbolKind = parse_AnonymousStructure18(symbolKind_json)
         else:
             symbolKind = None
         if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
-            tagSupport = AnonymousStructure19.from_json(tagSupport_json)
+            tagSupport = parse_AnonymousStructure19(tagSupport_json)
         else:
             tagSupport = None
         if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
-            resolveSupport = AnonymousStructure20.from_json(resolveSupport_json)
+            resolveSupport = parse_AnonymousStructure20(resolveSupport_json)
         else:
             resolveSupport = None
         return cls(dynamicRegistration=dynamicRegistration, symbolKind=symbolKind, tagSupport=tagSupport, resolveSupport=resolveSupport)
@@ -5653,11 +5492,11 @@ class WorkspaceSymbolClientCapabilities():
         if self.dynamicRegistration is not None:
             out["dynamicRegistration"] = self.dynamicRegistration
         if self.symbolKind is not None:
-            out["symbolKind"] = self.symbolKind.to_json()
+            out["symbolKind"] = write_AnonymousStructure18(self.symbolKind)
         if self.tagSupport is not None:
-            out["tagSupport"] = self.tagSupport.to_json()
+            out["tagSupport"] = write_AnonymousStructure19(self.tagSupport)
         if self.resolveSupport is not None:
-            out["resolveSupport"] = self.resolveSupport.to_json()
+            out["resolveSupport"] = write_AnonymousStructure20(self.resolveSupport)
         return out
 
 
@@ -6123,243 +5962,148 @@ class TextDocumentSyncClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure21():
-    """"""
+AnonymousStructure21Keys = Literal["valueSet"]
 
-    # The tags supported by the client.
-    valueSet: List["CompletionItemTag"]
+def parse_AnonymousStructure21(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure21Keys, Any]:
+    out: Dict[AnonymousStructure21Keys, Any] = {}
+    out["valueSet"] = [CompletionItemTag(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure21":
-        valueSet = [CompletionItemTag(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure21(obj: Dict[AnonymousStructure21Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["valueSet"] = [i.value for i in obj["valueSet"]]
+    return out
 
 
-@dataclass
-class AnonymousStructure22():
-    """"""
+AnonymousStructure22Keys = Literal["properties"]
 
-    # The properties that a client can resolve lazily.
-    properties: List[str]
+def parse_AnonymousStructure22(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure22Keys, Any]:
+    out: Dict[AnonymousStructure22Keys, Any] = {}
+    out["properties"] = [json_assert_type_string(i) for i in json_get_array(obj, "properties")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure22":
-        properties = [json_assert_type_string(i) for i in json_get_array(obj, "properties")]
-        return cls(properties=properties)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["properties"] = [i for i in self.properties]
-        return out
+def write_AnonymousStructure22(obj: Dict[AnonymousStructure22Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["properties"] = [i for i in obj["properties"]]
+    return out
 
 
-@dataclass
-class AnonymousStructure23():
-    """"""
+AnonymousStructure23Keys = Literal["valueSet"]
 
-    valueSet: List["InsertTextMode"]
+def parse_AnonymousStructure23(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure23Keys, Any]:
+    out: Dict[AnonymousStructure23Keys, Any] = {}
+    out["valueSet"] = [InsertTextMode(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure23":
-        valueSet = [InsertTextMode(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure23(obj: Dict[AnonymousStructure23Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["valueSet"] = [i.value for i in obj["valueSet"]]
+    return out
 
 
-@dataclass
-class AnonymousStructure24():
-    """"""
+AnonymousStructure24Keys = Literal["snippetSupport","commitCharactersSupport","documentationFormat","deprecatedSupport","preselectSupport","tagSupport","insertReplaceSupport","resolveSupport","insertTextModeSupport","labelDetailsSupport"]
 
-    # Client supports snippets as insert text.
-    # 
-    # A snippet can define tab stops and placeholders with `$1`, `$2`
-    # and `${3:foo}`. `$0` defines the final tab stop, it defaults to
-    # the end of the snippet. Placeholders with equal identifiers are linked,
-    # that is typing in one will update others too.
-    snippetSupport: Optional[bool]
-    
-    # Client supports commit characters on a completion item.
-    commitCharactersSupport: Optional[bool]
-    
-    # Client supports the following content formats for the documentation
-    # property. The order describes the preferred format of the client.
-    documentationFormat: Optional[List["MarkupKind"]]
-    
-    # Client supports the deprecated property on a completion item.
-    deprecatedSupport: Optional[bool]
-    
-    # Client supports the preselect property on a completion item.
-    preselectSupport: Optional[bool]
-    
-    # Client supports the tag property on a completion item. Clients supporting
-    # tags have to handle unknown tags gracefully. Clients especially need to
-    # preserve unknown tags when sending a completion item back to the server in
-    # a resolve call.
-    # 
-    # @since 3.15.0
-    tagSupport: Optional[AnonymousStructure21]
-    
-    # Client support insert replace edit to control different behavior if a
-    # completion item is inserted in the text or should replace text.
-    # 
-    # @since 3.16.0
-    insertReplaceSupport: Optional[bool]
-    
-    # Indicates which properties a client can resolve lazily on a completion
-    # item. Before version 3.16.0 only the predefined properties `documentation`
-    # and `details` could be resolved lazily.
-    # 
-    # @since 3.16.0
-    resolveSupport: Optional[AnonymousStructure22]
-    
-    # The client supports the `insertTextMode` property on
-    # a completion item to override the whitespace handling mode
-    # as defined by the client (see `insertTextMode`).
-    # 
-    # @since 3.16.0
-    insertTextModeSupport: Optional[AnonymousStructure23]
-    
-    # The client has support for completion item label
-    # details (see also `CompletionItemLabelDetails`).
-    # 
-    # @since 3.17.0
-    labelDetailsSupport: Optional[bool]
+def parse_AnonymousStructure24(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure24Keys, Any]:
+    out: Dict[AnonymousStructure24Keys, Any] = {}
+    if snippetSupport_json := json_get_optional_bool(obj, "snippetSupport"):
+        out["snippetSupport"] = snippetSupport_json
+    else:
+        out["snippetSupport"] = None
+    if commitCharactersSupport_json := json_get_optional_bool(obj, "commitCharactersSupport"):
+        out["commitCharactersSupport"] = commitCharactersSupport_json
+    else:
+        out["commitCharactersSupport"] = None
+    if documentationFormat_json := json_get_optional_array(obj, "documentationFormat"):
+        out["documentationFormat"] = [MarkupKind(json_assert_type_string(i)) for i in documentationFormat_json]
+    else:
+        out["documentationFormat"] = None
+    if deprecatedSupport_json := json_get_optional_bool(obj, "deprecatedSupport"):
+        out["deprecatedSupport"] = deprecatedSupport_json
+    else:
+        out["deprecatedSupport"] = None
+    if preselectSupport_json := json_get_optional_bool(obj, "preselectSupport"):
+        out["preselectSupport"] = preselectSupport_json
+    else:
+        out["preselectSupport"] = None
+    if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
+        out["tagSupport"] = parse_AnonymousStructure21(tagSupport_json)
+    else:
+        out["tagSupport"] = None
+    if insertReplaceSupport_json := json_get_optional_bool(obj, "insertReplaceSupport"):
+        out["insertReplaceSupport"] = insertReplaceSupport_json
+    else:
+        out["insertReplaceSupport"] = None
+    if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
+        out["resolveSupport"] = parse_AnonymousStructure22(resolveSupport_json)
+    else:
+        out["resolveSupport"] = None
+    if insertTextModeSupport_json := json_get_optional_object(obj, "insertTextModeSupport"):
+        out["insertTextModeSupport"] = parse_AnonymousStructure23(insertTextModeSupport_json)
+    else:
+        out["insertTextModeSupport"] = None
+    if labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport"):
+        out["labelDetailsSupport"] = labelDetailsSupport_json
+    else:
+        out["labelDetailsSupport"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure24":
-        if snippetSupport_json := json_get_optional_bool(obj, "snippetSupport"):
-            snippetSupport = snippetSupport_json
-        else:
-            snippetSupport = None
-        if commitCharactersSupport_json := json_get_optional_bool(obj, "commitCharactersSupport"):
-            commitCharactersSupport = commitCharactersSupport_json
-        else:
-            commitCharactersSupport = None
-        if documentationFormat_json := json_get_optional_array(obj, "documentationFormat"):
-            documentationFormat = [MarkupKind(json_assert_type_string(i)) for i in documentationFormat_json]
-        else:
-            documentationFormat = None
-        if deprecatedSupport_json := json_get_optional_bool(obj, "deprecatedSupport"):
-            deprecatedSupport = deprecatedSupport_json
-        else:
-            deprecatedSupport = None
-        if preselectSupport_json := json_get_optional_bool(obj, "preselectSupport"):
-            preselectSupport = preselectSupport_json
-        else:
-            preselectSupport = None
-        if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
-            tagSupport = AnonymousStructure21.from_json(tagSupport_json)
-        else:
-            tagSupport = None
-        if insertReplaceSupport_json := json_get_optional_bool(obj, "insertReplaceSupport"):
-            insertReplaceSupport = insertReplaceSupport_json
-        else:
-            insertReplaceSupport = None
-        if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
-            resolveSupport = AnonymousStructure22.from_json(resolveSupport_json)
-        else:
-            resolveSupport = None
-        if insertTextModeSupport_json := json_get_optional_object(obj, "insertTextModeSupport"):
-            insertTextModeSupport = AnonymousStructure23.from_json(insertTextModeSupport_json)
-        else:
-            insertTextModeSupport = None
-        if labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport"):
-            labelDetailsSupport = labelDetailsSupport_json
-        else:
-            labelDetailsSupport = None
-        return cls(snippetSupport=snippetSupport, commitCharactersSupport=commitCharactersSupport, documentationFormat=documentationFormat, deprecatedSupport=deprecatedSupport, preselectSupport=preselectSupport, tagSupport=tagSupport, insertReplaceSupport=insertReplaceSupport, resolveSupport=resolveSupport, insertTextModeSupport=insertTextModeSupport, labelDetailsSupport=labelDetailsSupport)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.snippetSupport is not None:
-            out["snippetSupport"] = self.snippetSupport
-        if self.commitCharactersSupport is not None:
-            out["commitCharactersSupport"] = self.commitCharactersSupport
-        if self.documentationFormat is not None:
-            out["documentationFormat"] = [i.value for i in self.documentationFormat]
-        if self.deprecatedSupport is not None:
-            out["deprecatedSupport"] = self.deprecatedSupport
-        if self.preselectSupport is not None:
-            out["preselectSupport"] = self.preselectSupport
-        if self.tagSupport is not None:
-            out["tagSupport"] = self.tagSupport.to_json()
-        if self.insertReplaceSupport is not None:
-            out["insertReplaceSupport"] = self.insertReplaceSupport
-        if self.resolveSupport is not None:
-            out["resolveSupport"] = self.resolveSupport.to_json()
-        if self.insertTextModeSupport is not None:
-            out["insertTextModeSupport"] = self.insertTextModeSupport.to_json()
-        if self.labelDetailsSupport is not None:
-            out["labelDetailsSupport"] = self.labelDetailsSupport
-        return out
+def write_AnonymousStructure24(obj: Dict[AnonymousStructure24Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("snippetSupport") is not None:
+        out["snippetSupport"] = obj.get("snippetSupport")
+    if obj.get("commitCharactersSupport") is not None:
+        out["commitCharactersSupport"] = obj.get("commitCharactersSupport")
+    if obj.get("documentationFormat") is not None:
+        out["documentationFormat"] = [i.value for i in obj.get("documentationFormat")]
+    if obj.get("deprecatedSupport") is not None:
+        out["deprecatedSupport"] = obj.get("deprecatedSupport")
+    if obj.get("preselectSupport") is not None:
+        out["preselectSupport"] = obj.get("preselectSupport")
+    if obj.get("tagSupport") is not None:
+        out["tagSupport"] = write_AnonymousStructure21(obj.get("tagSupport"))
+    if obj.get("insertReplaceSupport") is not None:
+        out["insertReplaceSupport"] = obj.get("insertReplaceSupport")
+    if obj.get("resolveSupport") is not None:
+        out["resolveSupport"] = write_AnonymousStructure22(obj.get("resolveSupport"))
+    if obj.get("insertTextModeSupport") is not None:
+        out["insertTextModeSupport"] = write_AnonymousStructure23(obj.get("insertTextModeSupport"))
+    if obj.get("labelDetailsSupport") is not None:
+        out["labelDetailsSupport"] = obj.get("labelDetailsSupport")
+    return out
 
 
-@dataclass
-class AnonymousStructure25():
-    """"""
+AnonymousStructure25Keys = Literal["valueSet"]
 
-    # The completion item kind values the client supports. When this
-    # property exists the client also guarantees that it will
-    # handle values outside its set gracefully and falls back
-    # to a default value when unknown.
-    # 
-    # If this property is not present the client only supports
-    # the completion items kinds from `Text` to `Reference` as defined in
-    # the initial version of the protocol.
-    valueSet: Optional[List["CompletionItemKind"]]
+def parse_AnonymousStructure25(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure25Keys, Any]:
+    out: Dict[AnonymousStructure25Keys, Any] = {}
+    if valueSet_json := json_get_optional_array(obj, "valueSet"):
+        out["valueSet"] = [CompletionItemKind(json_assert_type_int(i)) for i in valueSet_json]
+    else:
+        out["valueSet"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure25":
-        if valueSet_json := json_get_optional_array(obj, "valueSet"):
-            valueSet = [CompletionItemKind(json_assert_type_int(i)) for i in valueSet_json]
-        else:
-            valueSet = None
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.valueSet is not None:
-            out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure25(obj: Dict[AnonymousStructure25Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("valueSet") is not None:
+        out["valueSet"] = [i.value for i in obj.get("valueSet")]
+    return out
 
 
-@dataclass
-class AnonymousStructure26():
-    """"""
+AnonymousStructure26Keys = Literal["itemDefaults"]
 
-    # The client supports the following itemDefaults on
-    # a completion list.
-    # 
-    # The value lists the supported property names of the
-    # `CompletionList.itemDefaults` object. If omitted
-    # no properties are supported.
-    # 
-    # @since 3.17.0
-    itemDefaults: Optional[List[str]]
+def parse_AnonymousStructure26(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure26Keys, Any]:
+    out: Dict[AnonymousStructure26Keys, Any] = {}
+    if itemDefaults_json := json_get_optional_array(obj, "itemDefaults"):
+        out["itemDefaults"] = [json_assert_type_string(i) for i in itemDefaults_json]
+    else:
+        out["itemDefaults"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure26":
-        if itemDefaults_json := json_get_optional_array(obj, "itemDefaults"):
-            itemDefaults = [json_assert_type_string(i) for i in itemDefaults_json]
-        else:
-            itemDefaults = None
-        return cls(itemDefaults=itemDefaults)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.itemDefaults is not None:
-            out["itemDefaults"] = [i for i in self.itemDefaults]
-        return out
+def write_AnonymousStructure26(obj: Dict[AnonymousStructure26Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("itemDefaults") is not None:
+        out["itemDefaults"] = [i for i in obj.get("itemDefaults")]
+    return out
 
 
 @dataclass
@@ -6371,9 +6115,9 @@ class CompletionClientCapabilities():
     
     # The client supports the following `CompletionItem` specific
     # capabilities.
-    completionItem: Optional[AnonymousStructure24]
+    completionItem: Optional[Dict[AnonymousStructure24Keys, Any]]
     
-    completionItemKind: Optional[AnonymousStructure25]
+    completionItemKind: Optional[Dict[AnonymousStructure25Keys, Any]]
     
     # Defines how the client handles whitespace and indentation
     # when accepting a completion item that uses multi line
@@ -6390,7 +6134,7 @@ class CompletionClientCapabilities():
     # capabilities.
     # 
     # @since 3.17.0
-    completionList: Optional[AnonymousStructure26]
+    completionList: Optional[Dict[AnonymousStructure26Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionClientCapabilities":
@@ -6399,11 +6143,11 @@ class CompletionClientCapabilities():
         else:
             dynamicRegistration = None
         if completionItem_json := json_get_optional_object(obj, "completionItem"):
-            completionItem = AnonymousStructure24.from_json(completionItem_json)
+            completionItem = parse_AnonymousStructure24(completionItem_json)
         else:
             completionItem = None
         if completionItemKind_json := json_get_optional_object(obj, "completionItemKind"):
-            completionItemKind = AnonymousStructure25.from_json(completionItemKind_json)
+            completionItemKind = parse_AnonymousStructure25(completionItemKind_json)
         else:
             completionItemKind = None
         if insertTextMode_json := json_get_optional_int(obj, "insertTextMode"):
@@ -6415,7 +6159,7 @@ class CompletionClientCapabilities():
         else:
             contextSupport = None
         if completionList_json := json_get_optional_object(obj, "completionList"):
-            completionList = AnonymousStructure26.from_json(completionList_json)
+            completionList = parse_AnonymousStructure26(completionList_json)
         else:
             completionList = None
         return cls(dynamicRegistration=dynamicRegistration, completionItem=completionItem, completionItemKind=completionItemKind, insertTextMode=insertTextMode, contextSupport=contextSupport, completionList=completionList)
@@ -6425,15 +6169,15 @@ class CompletionClientCapabilities():
         if self.dynamicRegistration is not None:
             out["dynamicRegistration"] = self.dynamicRegistration
         if self.completionItem is not None:
-            out["completionItem"] = self.completionItem.to_json()
+            out["completionItem"] = write_AnonymousStructure24(self.completionItem)
         if self.completionItemKind is not None:
-            out["completionItemKind"] = self.completionItemKind.to_json()
+            out["completionItemKind"] = write_AnonymousStructure25(self.completionItemKind)
         if self.insertTextMode is not None:
             out["insertTextMode"] = self.insertTextMode.value
         if self.contextSupport is not None:
             out["contextSupport"] = self.contextSupport
         if self.completionList is not None:
-            out["completionList"] = self.completionList.to_json()
+            out["completionList"] = write_AnonymousStructure26(self.completionList)
         return out
 
 
@@ -6469,73 +6213,50 @@ class HoverClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure27():
-    """"""
+AnonymousStructure27Keys = Literal["labelOffsetSupport"]
 
-    # The client supports processing label offsets instead of a
-    # simple label string.
-    # 
-    # @since 3.14.0
-    labelOffsetSupport: Optional[bool]
+def parse_AnonymousStructure27(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure27Keys, Any]:
+    out: Dict[AnonymousStructure27Keys, Any] = {}
+    if labelOffsetSupport_json := json_get_optional_bool(obj, "labelOffsetSupport"):
+        out["labelOffsetSupport"] = labelOffsetSupport_json
+    else:
+        out["labelOffsetSupport"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure27":
-        if labelOffsetSupport_json := json_get_optional_bool(obj, "labelOffsetSupport"):
-            labelOffsetSupport = labelOffsetSupport_json
-        else:
-            labelOffsetSupport = None
-        return cls(labelOffsetSupport=labelOffsetSupport)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.labelOffsetSupport is not None:
-            out["labelOffsetSupport"] = self.labelOffsetSupport
-        return out
+def write_AnonymousStructure27(obj: Dict[AnonymousStructure27Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("labelOffsetSupport") is not None:
+        out["labelOffsetSupport"] = obj.get("labelOffsetSupport")
+    return out
 
 
-@dataclass
-class AnonymousStructure28():
-    """"""
+AnonymousStructure28Keys = Literal["documentationFormat","parameterInformation","activeParameterSupport"]
 
-    # Client supports the following content formats for the documentation
-    # property. The order describes the preferred format of the client.
-    documentationFormat: Optional[List["MarkupKind"]]
-    
-    # Client capabilities specific to parameter information.
-    parameterInformation: Optional[AnonymousStructure27]
-    
-    # The client supports the `activeParameter` property on `SignatureInformation`
-    # literal.
-    # 
-    # @since 3.16.0
-    activeParameterSupport: Optional[bool]
+def parse_AnonymousStructure28(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure28Keys, Any]:
+    out: Dict[AnonymousStructure28Keys, Any] = {}
+    if documentationFormat_json := json_get_optional_array(obj, "documentationFormat"):
+        out["documentationFormat"] = [MarkupKind(json_assert_type_string(i)) for i in documentationFormat_json]
+    else:
+        out["documentationFormat"] = None
+    if parameterInformation_json := json_get_optional_object(obj, "parameterInformation"):
+        out["parameterInformation"] = parse_AnonymousStructure27(parameterInformation_json)
+    else:
+        out["parameterInformation"] = None
+    if activeParameterSupport_json := json_get_optional_bool(obj, "activeParameterSupport"):
+        out["activeParameterSupport"] = activeParameterSupport_json
+    else:
+        out["activeParameterSupport"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure28":
-        if documentationFormat_json := json_get_optional_array(obj, "documentationFormat"):
-            documentationFormat = [MarkupKind(json_assert_type_string(i)) for i in documentationFormat_json]
-        else:
-            documentationFormat = None
-        if parameterInformation_json := json_get_optional_object(obj, "parameterInformation"):
-            parameterInformation = AnonymousStructure27.from_json(parameterInformation_json)
-        else:
-            parameterInformation = None
-        if activeParameterSupport_json := json_get_optional_bool(obj, "activeParameterSupport"):
-            activeParameterSupport = activeParameterSupport_json
-        else:
-            activeParameterSupport = None
-        return cls(documentationFormat=documentationFormat, parameterInformation=parameterInformation, activeParameterSupport=activeParameterSupport)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.documentationFormat is not None:
-            out["documentationFormat"] = [i.value for i in self.documentationFormat]
-        if self.parameterInformation is not None:
-            out["parameterInformation"] = self.parameterInformation.to_json()
-        if self.activeParameterSupport is not None:
-            out["activeParameterSupport"] = self.activeParameterSupport
-        return out
+def write_AnonymousStructure28(obj: Dict[AnonymousStructure28Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("documentationFormat") is not None:
+        out["documentationFormat"] = [i.value for i in obj.get("documentationFormat")]
+    if obj.get("parameterInformation") is not None:
+        out["parameterInformation"] = write_AnonymousStructure27(obj.get("parameterInformation"))
+    if obj.get("activeParameterSupport") is not None:
+        out["activeParameterSupport"] = obj.get("activeParameterSupport")
+    return out
 
 
 @dataclass
@@ -6547,7 +6268,7 @@ class SignatureHelpClientCapabilities():
     
     # The client supports the following `SignatureInformation`
     # specific properties.
-    signatureInformation: Optional[AnonymousStructure28]
+    signatureInformation: Optional[Dict[AnonymousStructure28Keys, Any]]
     
     # The client supports to send additional context information for a
     # `textDocument/signatureHelp` request. A client that opts into
@@ -6564,7 +6285,7 @@ class SignatureHelpClientCapabilities():
         else:
             dynamicRegistration = None
         if signatureInformation_json := json_get_optional_object(obj, "signatureInformation"):
-            signatureInformation = AnonymousStructure28.from_json(signatureInformation_json)
+            signatureInformation = parse_AnonymousStructure28(signatureInformation_json)
         else:
             signatureInformation = None
         if contextSupport_json := json_get_optional_bool(obj, "contextSupport"):
@@ -6578,7 +6299,7 @@ class SignatureHelpClientCapabilities():
         if self.dynamicRegistration is not None:
             out["dynamicRegistration"] = self.dynamicRegistration
         if self.signatureInformation is not None:
-            out["signatureInformation"] = self.signatureInformation.to_json()
+            out["signatureInformation"] = write_AnonymousStructure28(self.signatureInformation)
         if self.contextSupport is not None:
             out["contextSupport"] = self.contextSupport
         return out
@@ -6773,7 +6494,7 @@ class DocumentSymbolClientCapabilities():
     
     # Specific capabilities for the `SymbolKind` in the
     # `textDocument/documentSymbol` request.
-    symbolKind: Optional[AnonymousStructure18]
+    symbolKind: Optional[Dict[AnonymousStructure18Keys, Any]]
     
     # The client supports hierarchical document symbols.
     hierarchicalDocumentSymbolSupport: Optional[bool]
@@ -6783,7 +6504,7 @@ class DocumentSymbolClientCapabilities():
     # Clients supporting tags have to handle unknown tags gracefully.
     # 
     # @since 3.16.0
-    tagSupport: Optional[AnonymousStructure19]
+    tagSupport: Optional[Dict[AnonymousStructure19Keys, Any]]
     
     # The client supports an additional label presented in the UI when
     # registering a document symbol provider.
@@ -6798,7 +6519,7 @@ class DocumentSymbolClientCapabilities():
         else:
             dynamicRegistration = None
         if symbolKind_json := json_get_optional_object(obj, "symbolKind"):
-            symbolKind = AnonymousStructure18.from_json(symbolKind_json)
+            symbolKind = parse_AnonymousStructure18(symbolKind_json)
         else:
             symbolKind = None
         if hierarchicalDocumentSymbolSupport_json := json_get_optional_bool(obj, "hierarchicalDocumentSymbolSupport"):
@@ -6806,7 +6527,7 @@ class DocumentSymbolClientCapabilities():
         else:
             hierarchicalDocumentSymbolSupport = None
         if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
-            tagSupport = AnonymousStructure19.from_json(tagSupport_json)
+            tagSupport = parse_AnonymousStructure19(tagSupport_json)
         else:
             tagSupport = None
         if labelSupport_json := json_get_optional_bool(obj, "labelSupport"):
@@ -6820,54 +6541,40 @@ class DocumentSymbolClientCapabilities():
         if self.dynamicRegistration is not None:
             out["dynamicRegistration"] = self.dynamicRegistration
         if self.symbolKind is not None:
-            out["symbolKind"] = self.symbolKind.to_json()
+            out["symbolKind"] = write_AnonymousStructure18(self.symbolKind)
         if self.hierarchicalDocumentSymbolSupport is not None:
             out["hierarchicalDocumentSymbolSupport"] = self.hierarchicalDocumentSymbolSupport
         if self.tagSupport is not None:
-            out["tagSupport"] = self.tagSupport.to_json()
+            out["tagSupport"] = write_AnonymousStructure19(self.tagSupport)
         if self.labelSupport is not None:
             out["labelSupport"] = self.labelSupport
         return out
 
 
-@dataclass
-class AnonymousStructure29():
-    """"""
+AnonymousStructure29Keys = Literal["valueSet"]
 
-    # The code action kind values the client supports. When this
-    # property exists the client also guarantees that it will
-    # handle values outside its set gracefully and falls back
-    # to a default value when unknown.
-    valueSet: List["CodeActionKind"]
+def parse_AnonymousStructure29(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure29Keys, Any]:
+    out: Dict[AnonymousStructure29Keys, Any] = {}
+    out["valueSet"] = [CodeActionKind(json_assert_type_string(i)) for i in json_get_array(obj, "valueSet")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure29":
-        valueSet = [CodeActionKind(json_assert_type_string(i)) for i in json_get_array(obj, "valueSet")]
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure29(obj: Dict[AnonymousStructure29Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["valueSet"] = [i.value for i in obj["valueSet"]]
+    return out
 
 
-@dataclass
-class AnonymousStructure30():
-    """"""
+AnonymousStructure30Keys = Literal["codeActionKind"]
 
-    # The code action kind is support with the following value
-    # set.
-    codeActionKind: AnonymousStructure29
+def parse_AnonymousStructure30(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure30Keys, Any]:
+    out: Dict[AnonymousStructure30Keys, Any] = {}
+    out["codeActionKind"] = parse_AnonymousStructure29(json_get_object(obj, "codeActionKind"))
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure30":
-        codeActionKind = AnonymousStructure29.from_json(json_get_object(obj, "codeActionKind"))
-        return cls(codeActionKind=codeActionKind)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["codeActionKind"] = self.codeActionKind.to_json()
-        return out
+def write_AnonymousStructure30(obj: Dict[AnonymousStructure30Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["codeActionKind"] = write_AnonymousStructure29(obj["codeActionKind"])
+    return out
 
 
 @dataclass
@@ -6882,7 +6589,7 @@ class CodeActionClientCapabilities():
     # set the request can only return `Command` literals.
     # 
     # @since 3.8.0
-    codeActionLiteralSupport: Optional[AnonymousStructure30]
+    codeActionLiteralSupport: Optional[Dict[AnonymousStructure30Keys, Any]]
     
     # Whether code action supports the `isPreferred` property.
     # 
@@ -6905,7 +6612,7 @@ class CodeActionClientCapabilities():
     # properties via a separate `codeAction/resolve` request.
     # 
     # @since 3.16.0
-    resolveSupport: Optional[AnonymousStructure22]
+    resolveSupport: Optional[Dict[AnonymousStructure22Keys, Any]]
     
     # Whether the client honors the change annotations in
     # text edits and resource operations returned via the
@@ -6923,7 +6630,7 @@ class CodeActionClientCapabilities():
         else:
             dynamicRegistration = None
         if codeActionLiteralSupport_json := json_get_optional_object(obj, "codeActionLiteralSupport"):
-            codeActionLiteralSupport = AnonymousStructure30.from_json(codeActionLiteralSupport_json)
+            codeActionLiteralSupport = parse_AnonymousStructure30(codeActionLiteralSupport_json)
         else:
             codeActionLiteralSupport = None
         if isPreferredSupport_json := json_get_optional_bool(obj, "isPreferredSupport"):
@@ -6939,7 +6646,7 @@ class CodeActionClientCapabilities():
         else:
             dataSupport = None
         if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
-            resolveSupport = AnonymousStructure22.from_json(resolveSupport_json)
+            resolveSupport = parse_AnonymousStructure22(resolveSupport_json)
         else:
             resolveSupport = None
         if honorsChangeAnnotations_json := json_get_optional_bool(obj, "honorsChangeAnnotations"):
@@ -6953,7 +6660,7 @@ class CodeActionClientCapabilities():
         if self.dynamicRegistration is not None:
             out["dynamicRegistration"] = self.dynamicRegistration
         if self.codeActionLiteralSupport is not None:
-            out["codeActionLiteralSupport"] = self.codeActionLiteralSupport.to_json()
+            out["codeActionLiteralSupport"] = write_AnonymousStructure30(self.codeActionLiteralSupport)
         if self.isPreferredSupport is not None:
             out["isPreferredSupport"] = self.isPreferredSupport
         if self.disabledSupport is not None:
@@ -6961,7 +6668,7 @@ class CodeActionClientCapabilities():
         if self.dataSupport is not None:
             out["dataSupport"] = self.dataSupport
         if self.resolveSupport is not None:
-            out["resolveSupport"] = self.resolveSupport.to_json()
+            out["resolveSupport"] = write_AnonymousStructure22(self.resolveSupport)
         if self.honorsChangeAnnotations is not None:
             out["honorsChangeAnnotations"] = self.honorsChangeAnnotations
         return out
@@ -7175,54 +6882,38 @@ class RenameClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure31():
-    """"""
+AnonymousStructure31Keys = Literal["valueSet"]
 
-    # The folding range kind values the client supports. When this
-    # property exists the client also guarantees that it will
-    # handle values outside its set gracefully and falls back
-    # to a default value when unknown.
-    valueSet: Optional[List["FoldingRangeKind"]]
+def parse_AnonymousStructure31(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure31Keys, Any]:
+    out: Dict[AnonymousStructure31Keys, Any] = {}
+    if valueSet_json := json_get_optional_array(obj, "valueSet"):
+        out["valueSet"] = [FoldingRangeKind(json_assert_type_string(i)) for i in valueSet_json]
+    else:
+        out["valueSet"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure31":
-        if valueSet_json := json_get_optional_array(obj, "valueSet"):
-            valueSet = [FoldingRangeKind(json_assert_type_string(i)) for i in valueSet_json]
-        else:
-            valueSet = None
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.valueSet is not None:
-            out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure31(obj: Dict[AnonymousStructure31Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("valueSet") is not None:
+        out["valueSet"] = [i.value for i in obj.get("valueSet")]
+    return out
 
 
-@dataclass
-class AnonymousStructure32():
-    """"""
+AnonymousStructure32Keys = Literal["collapsedText"]
 
-    # If set, the client signals that it supports setting collapsedText on
-    # folding ranges to display custom labels instead of the default text.
-    # 
-    # @since 3.17.0
-    collapsedText: Optional[bool]
+def parse_AnonymousStructure32(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure32Keys, Any]:
+    out: Dict[AnonymousStructure32Keys, Any] = {}
+    if collapsedText_json := json_get_optional_bool(obj, "collapsedText"):
+        out["collapsedText"] = collapsedText_json
+    else:
+        out["collapsedText"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure32":
-        if collapsedText_json := json_get_optional_bool(obj, "collapsedText"):
-            collapsedText = collapsedText_json
-        else:
-            collapsedText = None
-        return cls(collapsedText=collapsedText)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.collapsedText is not None:
-            out["collapsedText"] = self.collapsedText
-        return out
+def write_AnonymousStructure32(obj: Dict[AnonymousStructure32Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("collapsedText") is not None:
+        out["collapsedText"] = obj.get("collapsedText")
+    return out
 
 
 @dataclass
@@ -7248,12 +6939,12 @@ class FoldingRangeClientCapabilities():
     # Specific options for the folding range kind.
     # 
     # @since 3.17.0
-    foldingRangeKind: Optional[AnonymousStructure31]
+    foldingRangeKind: Optional[Dict[AnonymousStructure31Keys, Any]]
     
     # Specific options for the folding range.
     # 
     # @since 3.17.0
-    foldingRange: Optional[AnonymousStructure32]
+    foldingRange: Optional[Dict[AnonymousStructure32Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeClientCapabilities":
@@ -7270,11 +6961,11 @@ class FoldingRangeClientCapabilities():
         else:
             lineFoldingOnly = None
         if foldingRangeKind_json := json_get_optional_object(obj, "foldingRangeKind"):
-            foldingRangeKind = AnonymousStructure31.from_json(foldingRangeKind_json)
+            foldingRangeKind = parse_AnonymousStructure31(foldingRangeKind_json)
         else:
             foldingRangeKind = None
         if foldingRange_json := json_get_optional_object(obj, "foldingRange"):
-            foldingRange = AnonymousStructure32.from_json(foldingRange_json)
+            foldingRange = parse_AnonymousStructure32(foldingRange_json)
         else:
             foldingRange = None
         return cls(dynamicRegistration=dynamicRegistration, rangeLimit=rangeLimit, lineFoldingOnly=lineFoldingOnly, foldingRangeKind=foldingRangeKind, foldingRange=foldingRange)
@@ -7288,9 +6979,9 @@ class FoldingRangeClientCapabilities():
         if self.lineFoldingOnly is not None:
             out["lineFoldingOnly"] = self.lineFoldingOnly
         if self.foldingRangeKind is not None:
-            out["foldingRangeKind"] = self.foldingRangeKind.to_json()
+            out["foldingRangeKind"] = write_AnonymousStructure31(self.foldingRangeKind)
         if self.foldingRange is not None:
-            out["foldingRange"] = self.foldingRange.to_json()
+            out["foldingRange"] = write_AnonymousStructure32(self.foldingRange)
         return out
 
 
@@ -7318,22 +7009,17 @@ class SelectionRangeClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure33():
-    """"""
+AnonymousStructure33Keys = Literal["valueSet"]
 
-    # The tags supported by the client.
-    valueSet: List["DiagnosticTag"]
+def parse_AnonymousStructure33(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure33Keys, Any]:
+    out: Dict[AnonymousStructure33Keys, Any] = {}
+    out["valueSet"] = [DiagnosticTag(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure33":
-        valueSet = [DiagnosticTag(json_assert_type_int(i)) for i in json_get_array(obj, "valueSet")]
-        return cls(valueSet=valueSet)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["valueSet"] = [i.value for i in self.valueSet]
-        return out
+def write_AnonymousStructure33(obj: Dict[AnonymousStructure33Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["valueSet"] = [i.value for i in obj["valueSet"]]
+    return out
 
 
 @dataclass
@@ -7347,7 +7033,7 @@ class PublishDiagnosticsClientCapabilities():
     # Clients supporting tags have to handle unknown tags gracefully.
     # 
     # @since 3.15.0
-    tagSupport: Optional[AnonymousStructure33]
+    tagSupport: Optional[Dict[AnonymousStructure33Keys, Any]]
     
     # Whether the client interprets the version property of the
     # `textDocument/publishDiagnostics` notification's parameter.
@@ -7374,7 +7060,7 @@ class PublishDiagnosticsClientCapabilities():
         else:
             relatedInformation = None
         if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
-            tagSupport = AnonymousStructure33.from_json(tagSupport_json)
+            tagSupport = parse_AnonymousStructure33(tagSupport_json)
         else:
             tagSupport = None
         if versionSupport_json := json_get_optional_bool(obj, "versionSupport"):
@@ -7396,7 +7082,7 @@ class PublishDiagnosticsClientCapabilities():
         if self.relatedInformation is not None:
             out["relatedInformation"] = self.relatedInformation
         if self.tagSupport is not None:
-            out["tagSupport"] = self.tagSupport.to_json()
+            out["tagSupport"] = write_AnonymousStructure33(self.tagSupport)
         if self.versionSupport is not None:
             out["versionSupport"] = self.versionSupport
         if self.codeDescriptionSupport is not None:
@@ -7430,60 +7116,44 @@ class CallHierarchyClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure34():
-    """"""
+AnonymousStructure34Keys = Literal["delta"]
 
-    # The client will send the `textDocument/semanticTokens/full/delta` request if
-    # the server provides a corresponding handler.
-    delta: Optional[bool]
+def parse_AnonymousStructure34(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure34Keys, Any]:
+    out: Dict[AnonymousStructure34Keys, Any] = {}
+    if delta_json := json_get_optional_bool(obj, "delta"):
+        out["delta"] = delta_json
+    else:
+        out["delta"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure34":
-        if delta_json := json_get_optional_bool(obj, "delta"):
-            delta = delta_json
-        else:
-            delta = None
-        return cls(delta=delta)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.delta is not None:
-            out["delta"] = self.delta
-        return out
+def write_AnonymousStructure34(obj: Dict[AnonymousStructure34Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("delta") is not None:
+        out["delta"] = obj.get("delta")
+    return out
 
 
-@dataclass
-class AnonymousStructure35():
-    """"""
+AnonymousStructure35Keys = Literal["range","full"]
 
-    # The client will send the `textDocument/semanticTokens/range` request if
-    # the server provides a corresponding handler.
-    range: Optional[Union[bool, AnonymousStructure5]]
-    
-    # The client will send the `textDocument/semanticTokens/full` request if
-    # the server provides a corresponding handler.
-    full: Optional[Union[bool, AnonymousStructure34]]
+def parse_AnonymousStructure35(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure35Keys, Any]:
+    out: Dict[AnonymousStructure35Keys, Any] = {}
+    if range_json := obj.get("range"):
+        out["range"] = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure5(json_assert_type_object(v))))
+    else:
+        out["range"] = None
+    if full_json := obj.get("full"):
+        out["full"] = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure34(json_assert_type_object(v))))
+    else:
+        out["full"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure35":
-        if range_json := obj.get("range"):
-            range = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: AnonymousStructure5.from_json(json_assert_type_object(v))))
-        else:
-            range = None
-        if full_json := obj.get("full"):
-            full = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: AnonymousStructure34.from_json(json_assert_type_object(v))))
-        else:
-            full = None
-        return cls(range=range, full=full)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.range is not None:
-            out["range"] = write_or_type(self.range, (lambda i : isinstance(i, bool), lambda i : isinstance(i, AnonymousStructure5)), (lambda i: i, lambda i: i.to_json()))
-        if self.full is not None:
-            out["full"] = write_or_type(self.full, (lambda i : isinstance(i, bool), lambda i : isinstance(i, AnonymousStructure34)), (lambda i: i, lambda i: i.to_json()))
-        return out
+def write_AnonymousStructure35(obj: Dict[AnonymousStructure35Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("range") is not None:
+        out["range"] = write_or_type(obj.get("range"), (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: write_AnonymousStructure5(i)))
+    if obj.get("full") is not None:
+        out["full"] = write_or_type(obj.get("full"), (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: write_AnonymousStructure34(i)))
+    return out
 
 
 @dataclass
@@ -7503,7 +7173,7 @@ class SemanticTokensClientCapabilities():
     # `request.range` are both set to true but the server only provides a
     # range provider the client might not render a minimap correctly or might
     # even decide to not show any semantic tokens at all.
-    requests: AnonymousStructure35
+    requests: Dict[AnonymousStructure35Keys, Any]
     
     # The token types that the client supports.
     tokenTypes: List[str]
@@ -7546,7 +7216,7 @@ class SemanticTokensClientCapabilities():
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        requests = AnonymousStructure35.from_json(json_get_object(obj, "requests"))
+        requests = parse_AnonymousStructure35(json_get_object(obj, "requests"))
         tokenTypes = [json_assert_type_string(i) for i in json_get_array(obj, "tokenTypes")]
         tokenModifiers = [json_assert_type_string(i) for i in json_get_array(obj, "tokenModifiers")]
         formats = [TokenFormat(json_assert_type_string(i)) for i in json_get_array(obj, "formats")]
@@ -7572,7 +7242,7 @@ class SemanticTokensClientCapabilities():
         out: Dict[str, JSON_VALUE] = {}
         if self.dynamicRegistration is not None:
             out["dynamicRegistration"] = self.dynamicRegistration
-        out["requests"] = self.requests.to_json()
+        out["requests"] = write_AnonymousStructure35(self.requests)
         out["tokenTypes"] = [i for i in self.tokenTypes]
         out["tokenModifiers"] = [i for i in self.tokenModifiers]
         out["formats"] = [i.value for i in self.formats]
@@ -7698,7 +7368,7 @@ class InlayHintClientCapabilities():
     
     # Indicates which properties a client can resolve lazily on an inlay
     # hint.
-    resolveSupport: Optional[AnonymousStructure22]
+    resolveSupport: Optional[Dict[AnonymousStructure22Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintClientCapabilities":
@@ -7707,7 +7377,7 @@ class InlayHintClientCapabilities():
         else:
             dynamicRegistration = None
         if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
-            resolveSupport = AnonymousStructure22.from_json(resolveSupport_json)
+            resolveSupport = parse_AnonymousStructure22(resolveSupport_json)
         else:
             resolveSupport = None
         return cls(dynamicRegistration=dynamicRegistration, resolveSupport=resolveSupport)
@@ -7717,7 +7387,7 @@ class InlayHintClientCapabilities():
         if self.dynamicRegistration is not None:
             out["dynamicRegistration"] = self.dynamicRegistration
         if self.resolveSupport is not None:
-            out["resolveSupport"] = self.resolveSupport.to_json()
+            out["resolveSupport"] = write_AnonymousStructure22(self.resolveSupport)
         return out
 
 
@@ -8126,28 +7796,21 @@ class NotebookDocumentClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure36():
-    """"""
+AnonymousStructure36Keys = Literal["additionalPropertiesSupport"]
 
-    # Whether the client supports additional attributes which
-    # are preserved and send back to the server in the
-    # request's response.
-    additionalPropertiesSupport: Optional[bool]
+def parse_AnonymousStructure36(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure36Keys, Any]:
+    out: Dict[AnonymousStructure36Keys, Any] = {}
+    if additionalPropertiesSupport_json := json_get_optional_bool(obj, "additionalPropertiesSupport"):
+        out["additionalPropertiesSupport"] = additionalPropertiesSupport_json
+    else:
+        out["additionalPropertiesSupport"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure36":
-        if additionalPropertiesSupport_json := json_get_optional_bool(obj, "additionalPropertiesSupport"):
-            additionalPropertiesSupport = additionalPropertiesSupport_json
-        else:
-            additionalPropertiesSupport = None
-        return cls(additionalPropertiesSupport=additionalPropertiesSupport)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.additionalPropertiesSupport is not None:
-            out["additionalPropertiesSupport"] = self.additionalPropertiesSupport
-        return out
+def write_AnonymousStructure36(obj: Dict[AnonymousStructure36Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("additionalPropertiesSupport") is not None:
+        out["additionalPropertiesSupport"] = obj.get("additionalPropertiesSupport")
+    return out
 
 
 @dataclass
@@ -8155,12 +7818,12 @@ class ShowMessageRequestClientCapabilities():
     """Show message request client capabilities"""
 
     # Capabilities specific to the `MessageActionItem` type.
-    messageActionItem: Optional[AnonymousStructure36]
+    messageActionItem: Optional[Dict[AnonymousStructure36Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageRequestClientCapabilities":
         if messageActionItem_json := json_get_optional_object(obj, "messageActionItem"):
-            messageActionItem = AnonymousStructure36.from_json(messageActionItem_json)
+            messageActionItem = parse_AnonymousStructure36(messageActionItem_json)
         else:
             messageActionItem = None
         return cls(messageActionItem=messageActionItem)
@@ -8168,7 +7831,7 @@ class ShowMessageRequestClientCapabilities():
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         if self.messageActionItem is not None:
-            out["messageActionItem"] = self.messageActionItem.to_json()
+            out["messageActionItem"] = write_AnonymousStructure36(self.messageActionItem)
         return out
 
 
@@ -8245,29 +7908,19 @@ class WindowClientCapabilities():
         return out
 
 
-@dataclass
-class AnonymousStructure16():
-    """"""
+AnonymousStructure16Keys = Literal["cancel","retryOnContentModified"]
 
-    # The client will actively cancel the request.
-    cancel: bool
-    
-    # The list of requests for which the client
-    # will retry the request if it receives a
-    # response with error code `ContentModified`
-    retryOnContentModified: List[str]
+def parse_AnonymousStructure16(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure16Keys, Any]:
+    out: Dict[AnonymousStructure16Keys, Any] = {}
+    out["cancel"] = json_get_bool(obj, "cancel")
+    out["retryOnContentModified"] = [json_assert_type_string(i) for i in json_get_array(obj, "retryOnContentModified")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure16":
-        cancel = json_get_bool(obj, "cancel")
-        retryOnContentModified = [json_assert_type_string(i) for i in json_get_array(obj, "retryOnContentModified")]
-        return cls(cancel=cancel, retryOnContentModified=retryOnContentModified)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["cancel"] = self.cancel
-        out["retryOnContentModified"] = [i for i in self.retryOnContentModified]
-        return out
+def write_AnonymousStructure16(obj: Dict[AnonymousStructure16Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["cancel"] = obj["cancel"]
+    out["retryOnContentModified"] = [i for i in obj["retryOnContentModified"]]
+    return out
 
 
 @dataclass
@@ -8352,7 +8005,7 @@ class GeneralClientCapabilities():
     # anymore since the information is outdated).
     # 
     # @since 3.17.0
-    staleRequestSupport: Optional[AnonymousStructure16]
+    staleRequestSupport: Optional[Dict[AnonymousStructure16Keys, Any]]
     
     # Client capabilities specific to regular expressions.
     # 
@@ -8387,7 +8040,7 @@ class GeneralClientCapabilities():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "GeneralClientCapabilities":
         if staleRequestSupport_json := json_get_optional_object(obj, "staleRequestSupport"):
-            staleRequestSupport = AnonymousStructure16.from_json(staleRequestSupport_json)
+            staleRequestSupport = parse_AnonymousStructure16(staleRequestSupport_json)
         else:
             staleRequestSupport = None
         if regularExpressions_json := json_get_optional_object(obj, "regularExpressions"):
@@ -8407,7 +8060,7 @@ class GeneralClientCapabilities():
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         if self.staleRequestSupport is not None:
-            out["staleRequestSupport"] = self.staleRequestSupport.to_json()
+            out["staleRequestSupport"] = write_AnonymousStructure16(self.staleRequestSupport)
         if self.regularExpressions is not None:
             out["regularExpressions"] = self.regularExpressions.to_json()
         if self.markdown is not None:
@@ -8505,7 +8158,7 @@ class _InitializeParams():
     # Information about the client
     # 
     # @since 3.15.0
-    clientInfo: Optional[AnonymousStructure10]
+    clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]]
     
     # The locale the client is currently showing the user interface
     # in. This must not necessarily be the locale of the operating
@@ -8547,7 +8200,7 @@ class _InitializeParams():
             workDoneToken = None
         processId = parse_or_type(obj["processId"], (lambda v: json_assert_type_int(v), lambda v: json_assert_type_null(v)))
         if clientInfo_json := json_get_optional_object(obj, "clientInfo"):
-            clientInfo = AnonymousStructure10.from_json(clientInfo_json)
+            clientInfo = parse_AnonymousStructure10(clientInfo_json)
         else:
             clientInfo = None
         if locale_json := json_get_optional_string(obj, "locale"):
@@ -8574,19 +8227,19 @@ class _InitializeParams():
         out: Dict[str, JSON_VALUE] = {}
         if self.workDoneToken is not None:
             out["workDoneToken"] = write_ProgressToken(self.workDoneToken)
-        out["processId"] = write_or_type(self.processId, (lambda i : isinstance(i, int), lambda i : i is None), (lambda i: i, lambda i: i))
+        out["processId"] = write_or_type(self.processId, (lambda i: isinstance(i, int), lambda i: i is None), (lambda i: i, lambda i: i))
         if self.clientInfo is not None:
-            out["clientInfo"] = self.clientInfo.to_json()
+            out["clientInfo"] = write_AnonymousStructure10(self.clientInfo)
         if self.locale is not None:
             out["locale"] = self.locale
         if self.rootPath is not None:
-            out["rootPath"] = write_or_type(self.rootPath, (lambda i : isinstance(i, str), lambda i : i is None), (lambda i: i, lambda i: i))
-        out["rootUri"] = write_or_type(self.rootUri, (lambda i : isinstance(i, str), lambda i : i is None), (lambda i: i, lambda i: i))
+            out["rootPath"] = write_or_type(self.rootPath, (lambda i: isinstance(i, str), lambda i: i is None), (lambda i: i, lambda i: i))
+        out["rootUri"] = write_or_type(self.rootUri, (lambda i: isinstance(i, str), lambda i: i is None), (lambda i: i, lambda i: i))
         out["capabilities"] = self.capabilities.to_json()
         if self.initializationOptions is not None:
             out["initializationOptions"] = write_LSPAny(self.initializationOptions)
         if self.trace is not None:
-            out["trace"] = write_or_type(self.trace, (lambda i : i == "off", lambda i : i == "messages", lambda i : i == "compact", lambda i : i == "verbose"), (lambda i: "off", lambda i: "messages", lambda i: "compact", lambda i: "verbose"))
+            out["trace"] = write_or_type(self.trace, (lambda i: i == "off", lambda i: i == "messages", lambda i: i == "compact", lambda i: i == "verbose"), (lambda i: "off", lambda i: "messages", lambda i: "compact", lambda i: "verbose"))
         return out
 
 
@@ -8614,7 +8267,7 @@ class WorkspaceFoldersInitializeParams():
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         if self.workspaceFolders is not None:
-            out["workspaceFolders"] = write_or_type(self.workspaceFolders, (lambda i : isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i : i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
+            out["workspaceFolders"] = write_or_type(self.workspaceFolders, (lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i: i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
         return out
 
 
@@ -8635,7 +8288,7 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
     # Information about the client
     # 
     # @since 3.15.0
-    clientInfo: Optional[AnonymousStructure10]
+    clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]]
     
     # The locale the client is currently showing the user interface
     # in. This must not necessarily be the locale of the operating
@@ -8686,7 +8339,7 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
             workDoneToken = None
         processId = parse_or_type(obj["processId"], (lambda v: json_assert_type_int(v), lambda v: json_assert_type_null(v)))
         if clientInfo_json := json_get_optional_object(obj, "clientInfo"):
-            clientInfo = AnonymousStructure10.from_json(clientInfo_json)
+            clientInfo = parse_AnonymousStructure10(clientInfo_json)
         else:
             clientInfo = None
         if locale_json := json_get_optional_string(obj, "locale"):
@@ -8717,21 +8370,21 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
         out: Dict[str, JSON_VALUE] = {}
         if self.workDoneToken is not None:
             out["workDoneToken"] = write_ProgressToken(self.workDoneToken)
-        out["processId"] = write_or_type(self.processId, (lambda i : isinstance(i, int), lambda i : i is None), (lambda i: i, lambda i: i))
+        out["processId"] = write_or_type(self.processId, (lambda i: isinstance(i, int), lambda i: i is None), (lambda i: i, lambda i: i))
         if self.clientInfo is not None:
-            out["clientInfo"] = self.clientInfo.to_json()
+            out["clientInfo"] = write_AnonymousStructure10(self.clientInfo)
         if self.locale is not None:
             out["locale"] = self.locale
         if self.rootPath is not None:
-            out["rootPath"] = write_or_type(self.rootPath, (lambda i : isinstance(i, str), lambda i : i is None), (lambda i: i, lambda i: i))
-        out["rootUri"] = write_or_type(self.rootUri, (lambda i : isinstance(i, str), lambda i : i is None), (lambda i: i, lambda i: i))
+            out["rootPath"] = write_or_type(self.rootPath, (lambda i: isinstance(i, str), lambda i: i is None), (lambda i: i, lambda i: i))
+        out["rootUri"] = write_or_type(self.rootUri, (lambda i: isinstance(i, str), lambda i: i is None), (lambda i: i, lambda i: i))
         out["capabilities"] = self.capabilities.to_json()
         if self.initializationOptions is not None:
             out["initializationOptions"] = write_LSPAny(self.initializationOptions)
         if self.trace is not None:
-            out["trace"] = write_or_type(self.trace, (lambda i : i == "off", lambda i : i == "messages", lambda i : i == "compact", lambda i : i == "verbose"), (lambda i: "off", lambda i: "messages", lambda i: "compact", lambda i: "verbose"))
+            out["trace"] = write_or_type(self.trace, (lambda i: i == "off", lambda i: i == "messages", lambda i: i == "compact", lambda i: i == "verbose"), (lambda i: "off", lambda i: "messages", lambda i: "compact", lambda i: "verbose"))
         if self.workspaceFolders is not None:
-            out["workspaceFolders"] = write_or_type(self.workspaceFolders, (lambda i : isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i : i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
+            out["workspaceFolders"] = write_or_type(self.workspaceFolders, (lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i: i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
         return out
 
 
@@ -8816,83 +8469,59 @@ class TextDocumentSyncOptions():
         if self.willSaveWaitUntil is not None:
             out["willSaveWaitUntil"] = self.willSaveWaitUntil
         if self.save is not None:
-            out["save"] = write_or_type(self.save, (lambda i : isinstance(i, bool), lambda i : isinstance(i, SaveOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["save"] = write_or_type(self.save, (lambda i: isinstance(i, bool), lambda i: isinstance(i, SaveOptions)), (lambda i: i, lambda i: i.to_json()))
         return out
 
 
-@dataclass
-class AnonymousStructure13():
-    """"""
+AnonymousStructure13Keys = Literal["language"]
 
-    language: str
+def parse_AnonymousStructure13(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure13Keys, Any]:
+    out: Dict[AnonymousStructure13Keys, Any] = {}
+    out["language"] = json_get_string(obj, "language")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure13":
-        language = json_get_string(obj, "language")
-        return cls(language=language)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["language"] = self.language
-        return out
+def write_AnonymousStructure13(obj: Dict[AnonymousStructure13Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["language"] = obj["language"]
+    return out
 
 
-@dataclass
-class AnonymousStructure14():
-    """"""
+AnonymousStructure14Keys = Literal["notebook","cells"]
 
-    # The notebook to be synced If a string
-    # value is provided it matches against the
-    # notebook type. '*' matches every notebook.
-    notebook: Union[str, "NotebookDocumentFilter"]
-    
-    # The cells of the matching notebook to be synced.
-    cells: Optional[List[AnonymousStructure13]]
+def parse_AnonymousStructure14(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure14Keys, Any]:
+    out: Dict[AnonymousStructure14Keys, Any] = {}
+    out["notebook"] = parse_or_type(obj["notebook"], (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
+    if cells_json := json_get_optional_array(obj, "cells"):
+        out["cells"] = [parse_AnonymousStructure13(json_assert_type_object(i)) for i in cells_json]
+    else:
+        out["cells"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure14":
-        notebook = parse_or_type(obj["notebook"], (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
-        if cells_json := json_get_optional_array(obj, "cells"):
-            cells = [AnonymousStructure13.from_json(json_assert_type_object(i)) for i in cells_json]
-        else:
-            cells = None
-        return cls(notebook=notebook, cells=cells)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["notebook"] = write_or_type(self.notebook, (lambda i : isinstance(i, str), lambda i : (isinstance(i, AnonymousStructure45)) or (isinstance(i, AnonymousStructure46)) or (isinstance(i, AnonymousStructure47))), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
-        if self.cells is not None:
-            out["cells"] = [i.to_json() for i in self.cells]
-        return out
+def write_AnonymousStructure14(obj: Dict[AnonymousStructure14Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["notebook"] = write_or_type(obj["notebook"], (lambda i: isinstance(i, str), lambda i: (isinstance(i, Dict) and "notebookType" in i.keys()) or (isinstance(i, Dict) and "scheme" in i.keys()) or (isinstance(i, Dict) and "pattern" in i.keys())), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
+    if obj.get("cells") is not None:
+        out["cells"] = [write_AnonymousStructure13(i) for i in obj.get("cells")]
+    return out
 
 
-@dataclass
-class AnonymousStructure15():
-    """"""
+AnonymousStructure15Keys = Literal["notebook","cells"]
 
-    # The notebook to be synced If a string
-    # value is provided it matches against the
-    # notebook type. '*' matches every notebook.
-    notebook: Optional[Union[str, "NotebookDocumentFilter"]]
-    
-    # The cells of the matching notebook to be synced.
-    cells: List[AnonymousStructure13]
+def parse_AnonymousStructure15(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure15Keys, Any]:
+    out: Dict[AnonymousStructure15Keys, Any] = {}
+    if notebook_json := obj.get("notebook"):
+        out["notebook"] = parse_or_type(notebook_json, (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
+    else:
+        out["notebook"] = None
+    out["cells"] = [parse_AnonymousStructure13(json_assert_type_object(i)) for i in json_get_array(obj, "cells")]
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure15":
-        if notebook_json := obj.get("notebook"):
-            notebook = parse_or_type(notebook_json, (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
-        else:
-            notebook = None
-        cells = [AnonymousStructure13.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "cells")]
-        return cls(notebook=notebook, cells=cells)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.notebook is not None:
-            out["notebook"] = write_or_type(self.notebook, (lambda i : isinstance(i, str), lambda i : (isinstance(i, AnonymousStructure45)) or (isinstance(i, AnonymousStructure46)) or (isinstance(i, AnonymousStructure47))), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
-        out["cells"] = [i.to_json() for i in self.cells]
-        return out
+def write_AnonymousStructure15(obj: Dict[AnonymousStructure15Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("notebook") is not None:
+        out["notebook"] = write_or_type(obj.get("notebook"), (lambda i: isinstance(i, str), lambda i: (isinstance(i, Dict) and "notebookType" in i.keys()) or (isinstance(i, Dict) and "scheme" in i.keys()) or (isinstance(i, Dict) and "pattern" in i.keys())), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
+    out["cells"] = [write_AnonymousStructure13(i) for i in obj["cells"]]
+    return out
 
 
 @dataclass
@@ -8912,7 +8541,7 @@ cell will be synced.
 @since 3.17.0"""
 
     # The notebooks to be synced
-    notebookSelector: List[Union[AnonymousStructure14, AnonymousStructure15]]
+    notebookSelector: List[Union[Dict[AnonymousStructure14Keys, Any], Dict[AnonymousStructure15Keys, Any]]]
     
     # Whether save notification should be forwarded to
     # the server. Will only be honored if mode === `notebook`.
@@ -8920,7 +8549,7 @@ cell will be synced.
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncOptions":
-        notebookSelector = [parse_or_type((i), (lambda v: AnonymousStructure14.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure15.from_json(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
+        notebookSelector = [parse_or_type((i), (lambda v: parse_AnonymousStructure14(json_assert_type_object(v)), lambda v: parse_AnonymousStructure15(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
         if save_json := json_get_optional_bool(obj, "save"):
             save = save_json
         else:
@@ -8929,7 +8558,7 @@ cell will be synced.
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["notebookSelector"] = [write_or_type(i, (lambda i : isinstance(i, AnonymousStructure14), lambda i : isinstance(i, AnonymousStructure15)), (lambda i: i.to_json(), lambda i: i.to_json())) for i in self.notebookSelector]
+        out["notebookSelector"] = [write_or_type(i, (lambda i: isinstance(i, Dict) and "notebook" in i.keys(), lambda i: isinstance(i, Dict) and "cells" in i.keys()), (lambda i: write_AnonymousStructure14(i), lambda i: write_AnonymousStructure15(i))) for i in self.notebookSelector]
         if self.save is not None:
             out["save"] = self.save
         return out
@@ -8942,7 +8571,7 @@ class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
 @since 3.17.0"""
 
     # The notebooks to be synced
-    notebookSelector: List[Union[AnonymousStructure14, AnonymousStructure15]]
+    notebookSelector: List[Union[Dict[AnonymousStructure14Keys, Any], Dict[AnonymousStructure15Keys, Any]]]
     
     # Whether save notification should be forwarded to
     # the server. Will only be honored if mode === `notebook`.
@@ -8954,7 +8583,7 @@ class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncRegistrationOptions":
-        notebookSelector = [parse_or_type((i), (lambda v: AnonymousStructure14.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure15.from_json(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
+        notebookSelector = [parse_or_type((i), (lambda v: parse_AnonymousStructure14(json_assert_type_object(v)), lambda v: parse_AnonymousStructure15(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
         if save_json := json_get_optional_bool(obj, "save"):
             save = save_json
         else:
@@ -8967,7 +8596,7 @@ class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["notebookSelector"] = [write_or_type(i, (lambda i : isinstance(i, AnonymousStructure14), lambda i : isinstance(i, AnonymousStructure15)), (lambda i: i.to_json(), lambda i: i.to_json())) for i in self.notebookSelector]
+        out["notebookSelector"] = [write_or_type(i, (lambda i: isinstance(i, Dict) and "notebook" in i.keys(), lambda i: isinstance(i, Dict) and "cells" in i.keys()), (lambda i: write_AnonymousStructure14(i), lambda i: write_AnonymousStructure15(i))) for i in self.notebookSelector]
         if self.save is not None:
             out["save"] = self.save
         if self.id is not None:
@@ -8975,30 +8604,21 @@ class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
         return out
 
 
-@dataclass
-class AnonymousStructure12():
-    """"""
+AnonymousStructure12Keys = Literal["labelDetailsSupport"]
 
-    # The server has support for completion item label
-    # details (see also `CompletionItemLabelDetails`) when
-    # receiving a completion item in a resolve call.
-    # 
-    # @since 3.17.0
-    labelDetailsSupport: Optional[bool]
+def parse_AnonymousStructure12(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure12Keys, Any]:
+    out: Dict[AnonymousStructure12Keys, Any] = {}
+    if labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport"):
+        out["labelDetailsSupport"] = labelDetailsSupport_json
+    else:
+        out["labelDetailsSupport"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure12":
-        if labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport"):
-            labelDetailsSupport = labelDetailsSupport_json
-        else:
-            labelDetailsSupport = None
-        return cls(labelDetailsSupport=labelDetailsSupport)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.labelDetailsSupport is not None:
-            out["labelDetailsSupport"] = self.labelDetailsSupport
-        return out
+def write_AnonymousStructure12(obj: Dict[AnonymousStructure12Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("labelDetailsSupport") is not None:
+        out["labelDetailsSupport"] = obj.get("labelDetailsSupport")
+    return out
 
 
 @dataclass
@@ -9035,7 +8655,7 @@ class CompletionOptions():
     # capabilities.
     # 
     # @since 3.17.0
-    completionItem: Optional[AnonymousStructure12]
+    completionItem: Optional[Dict[AnonymousStructure12Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionOptions":
@@ -9056,7 +8676,7 @@ class CompletionOptions():
         else:
             resolveProvider = None
         if completionItem_json := json_get_optional_object(obj, "completionItem"):
-            completionItem = AnonymousStructure12.from_json(completionItem_json)
+            completionItem = parse_AnonymousStructure12(completionItem_json)
         else:
             completionItem = None
         return cls(workDoneProgress=workDoneProgress, triggerCharacters=triggerCharacters, allCommitCharacters=allCommitCharacters, resolveProvider=resolveProvider, completionItem=completionItem)
@@ -9072,7 +8692,7 @@ class CompletionOptions():
         if self.resolveProvider is not None:
             out["resolveProvider"] = self.resolveProvider
         if self.completionItem is not None:
-            out["completionItem"] = self.completionItem.to_json()
+            out["completionItem"] = write_AnonymousStructure12(self.completionItem)
         return out
 
 
@@ -9535,7 +9155,7 @@ class WorkspaceFoldersServerCapabilities():
         if self.supported is not None:
             out["supported"] = self.supported
         if self.changeNotifications is not None:
-            out["changeNotifications"] = write_or_type(self.changeNotifications, (lambda i : isinstance(i, str), lambda i : isinstance(i, bool)), (lambda i: i, lambda i: i))
+            out["changeNotifications"] = write_or_type(self.changeNotifications, (lambda i: isinstance(i, str), lambda i: isinstance(i, bool)), (lambda i: i, lambda i: i))
         return out
 
 
@@ -9608,39 +9228,27 @@ class FileOperationOptions():
         return out
 
 
-@dataclass
-class AnonymousStructure11():
-    """"""
+AnonymousStructure11Keys = Literal["workspaceFolders","fileOperations"]
 
-    # The server supports workspace folder.
-    # 
-    # @since 3.6.0
-    workspaceFolders: Optional["WorkspaceFoldersServerCapabilities"]
-    
-    # The server is interested in notifications/requests for operations on files.
-    # 
-    # @since 3.16.0
-    fileOperations: Optional["FileOperationOptions"]
+def parse_AnonymousStructure11(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure11Keys, Any]:
+    out: Dict[AnonymousStructure11Keys, Any] = {}
+    if workspaceFolders_json := json_get_optional_object(obj, "workspaceFolders"):
+        out["workspaceFolders"] = WorkspaceFoldersServerCapabilities.from_json(workspaceFolders_json)
+    else:
+        out["workspaceFolders"] = None
+    if fileOperations_json := json_get_optional_object(obj, "fileOperations"):
+        out["fileOperations"] = FileOperationOptions.from_json(fileOperations_json)
+    else:
+        out["fileOperations"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure11":
-        if workspaceFolders_json := json_get_optional_object(obj, "workspaceFolders"):
-            workspaceFolders = WorkspaceFoldersServerCapabilities.from_json(workspaceFolders_json)
-        else:
-            workspaceFolders = None
-        if fileOperations_json := json_get_optional_object(obj, "fileOperations"):
-            fileOperations = FileOperationOptions.from_json(fileOperations_json)
-        else:
-            fileOperations = None
-        return cls(workspaceFolders=workspaceFolders, fileOperations=fileOperations)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.workspaceFolders is not None:
-            out["workspaceFolders"] = self.workspaceFolders.to_json()
-        if self.fileOperations is not None:
-            out["fileOperations"] = self.fileOperations.to_json()
-        return out
+def write_AnonymousStructure11(obj: Dict[AnonymousStructure11Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("workspaceFolders") is not None:
+        out["workspaceFolders"] = obj.get("workspaceFolders").to_json()
+    if obj.get("fileOperations") is not None:
+        out["fileOperations"] = obj.get("fileOperations").to_json()
+    return out
 
 
 @dataclass
@@ -9780,7 +9388,7 @@ server."""
     diagnosticProvider: Optional[Union["DiagnosticOptions", "DiagnosticRegistrationOptions"]]
     
     # Workspace specific server capabilities.
-    workspace: Optional[AnonymousStructure11]
+    workspace: Optional[Dict[AnonymousStructure11Keys, Any]]
     
     # Experimental server capabilities.
     experimental: Optional["LSPAny"]
@@ -9920,7 +9528,7 @@ server."""
         else:
             diagnosticProvider = None
         if workspace_json := json_get_optional_object(obj, "workspace"):
-            workspace = AnonymousStructure11.from_json(workspace_json)
+            workspace = parse_AnonymousStructure11(workspace_json)
         else:
             workspace = None
         if experimental_json := obj.get("experimental"):
@@ -9934,101 +9542,93 @@ server."""
         if self.positionEncoding is not None:
             out["positionEncoding"] = self.positionEncoding.value
         if self.textDocumentSync is not None:
-            out["textDocumentSync"] = write_or_type(self.textDocumentSync, (lambda i : isinstance(i, TextDocumentSyncOptions), lambda i : isinstance(i, TextDocumentSyncKind)), (lambda i: i.to_json(), lambda i: i.value))
+            out["textDocumentSync"] = write_or_type(self.textDocumentSync, (lambda i: isinstance(i, TextDocumentSyncOptions), lambda i: isinstance(i, TextDocumentSyncKind)), (lambda i: i.to_json(), lambda i: i.value))
         if self.notebookDocumentSync is not None:
-            out["notebookDocumentSync"] = write_or_type(self.notebookDocumentSync, (lambda i : isinstance(i, NotebookDocumentSyncOptions), lambda i : isinstance(i, NotebookDocumentSyncRegistrationOptions)), (lambda i: i.to_json(), lambda i: i.to_json()))
+            out["notebookDocumentSync"] = write_or_type(self.notebookDocumentSync, (lambda i: isinstance(i, NotebookDocumentSyncOptions), lambda i: isinstance(i, NotebookDocumentSyncRegistrationOptions)), (lambda i: i.to_json(), lambda i: i.to_json()))
         if self.completionProvider is not None:
             out["completionProvider"] = self.completionProvider.to_json()
         if self.hoverProvider is not None:
-            out["hoverProvider"] = write_or_type(self.hoverProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, HoverOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["hoverProvider"] = write_or_type(self.hoverProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, HoverOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.signatureHelpProvider is not None:
             out["signatureHelpProvider"] = self.signatureHelpProvider.to_json()
         if self.declarationProvider is not None:
-            out["declarationProvider"] = write_or_type(self.declarationProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, DeclarationOptions), lambda i : isinstance(i, DeclarationRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["declarationProvider"] = write_or_type(self.declarationProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, DeclarationOptions), lambda i: isinstance(i, DeclarationRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.definitionProvider is not None:
-            out["definitionProvider"] = write_or_type(self.definitionProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, DefinitionOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["definitionProvider"] = write_or_type(self.definitionProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, DefinitionOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.typeDefinitionProvider is not None:
-            out["typeDefinitionProvider"] = write_or_type(self.typeDefinitionProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, TypeDefinitionOptions), lambda i : isinstance(i, TypeDefinitionRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["typeDefinitionProvider"] = write_or_type(self.typeDefinitionProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, TypeDefinitionOptions), lambda i: isinstance(i, TypeDefinitionRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.implementationProvider is not None:
-            out["implementationProvider"] = write_or_type(self.implementationProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, ImplementationOptions), lambda i : isinstance(i, ImplementationRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["implementationProvider"] = write_or_type(self.implementationProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, ImplementationOptions), lambda i: isinstance(i, ImplementationRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.referencesProvider is not None:
-            out["referencesProvider"] = write_or_type(self.referencesProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, ReferenceOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["referencesProvider"] = write_or_type(self.referencesProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, ReferenceOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.documentHighlightProvider is not None:
-            out["documentHighlightProvider"] = write_or_type(self.documentHighlightProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, DocumentHighlightOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["documentHighlightProvider"] = write_or_type(self.documentHighlightProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, DocumentHighlightOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.documentSymbolProvider is not None:
-            out["documentSymbolProvider"] = write_or_type(self.documentSymbolProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, DocumentSymbolOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["documentSymbolProvider"] = write_or_type(self.documentSymbolProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, DocumentSymbolOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.codeActionProvider is not None:
-            out["codeActionProvider"] = write_or_type(self.codeActionProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, CodeActionOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["codeActionProvider"] = write_or_type(self.codeActionProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, CodeActionOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.codeLensProvider is not None:
             out["codeLensProvider"] = self.codeLensProvider.to_json()
         if self.documentLinkProvider is not None:
             out["documentLinkProvider"] = self.documentLinkProvider.to_json()
         if self.colorProvider is not None:
-            out["colorProvider"] = write_or_type(self.colorProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, DocumentColorOptions), lambda i : isinstance(i, DocumentColorRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["colorProvider"] = write_or_type(self.colorProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, DocumentColorOptions), lambda i: isinstance(i, DocumentColorRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.workspaceSymbolProvider is not None:
-            out["workspaceSymbolProvider"] = write_or_type(self.workspaceSymbolProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, WorkspaceSymbolOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["workspaceSymbolProvider"] = write_or_type(self.workspaceSymbolProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, WorkspaceSymbolOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.documentFormattingProvider is not None:
-            out["documentFormattingProvider"] = write_or_type(self.documentFormattingProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, DocumentFormattingOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["documentFormattingProvider"] = write_or_type(self.documentFormattingProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, DocumentFormattingOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.documentRangeFormattingProvider is not None:
-            out["documentRangeFormattingProvider"] = write_or_type(self.documentRangeFormattingProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, DocumentRangeFormattingOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["documentRangeFormattingProvider"] = write_or_type(self.documentRangeFormattingProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, DocumentRangeFormattingOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.documentOnTypeFormattingProvider is not None:
             out["documentOnTypeFormattingProvider"] = self.documentOnTypeFormattingProvider.to_json()
         if self.renameProvider is not None:
-            out["renameProvider"] = write_or_type(self.renameProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, RenameOptions)), (lambda i: i, lambda i: i.to_json()))
+            out["renameProvider"] = write_or_type(self.renameProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, RenameOptions)), (lambda i: i, lambda i: i.to_json()))
         if self.foldingRangeProvider is not None:
-            out["foldingRangeProvider"] = write_or_type(self.foldingRangeProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, FoldingRangeOptions), lambda i : isinstance(i, FoldingRangeRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["foldingRangeProvider"] = write_or_type(self.foldingRangeProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, FoldingRangeOptions), lambda i: isinstance(i, FoldingRangeRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.selectionRangeProvider is not None:
-            out["selectionRangeProvider"] = write_or_type(self.selectionRangeProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, SelectionRangeOptions), lambda i : isinstance(i, SelectionRangeRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["selectionRangeProvider"] = write_or_type(self.selectionRangeProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, SelectionRangeOptions), lambda i: isinstance(i, SelectionRangeRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.executeCommandProvider is not None:
             out["executeCommandProvider"] = self.executeCommandProvider.to_json()
         if self.callHierarchyProvider is not None:
-            out["callHierarchyProvider"] = write_or_type(self.callHierarchyProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, CallHierarchyOptions), lambda i : isinstance(i, CallHierarchyRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["callHierarchyProvider"] = write_or_type(self.callHierarchyProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, CallHierarchyOptions), lambda i: isinstance(i, CallHierarchyRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.linkedEditingRangeProvider is not None:
-            out["linkedEditingRangeProvider"] = write_or_type(self.linkedEditingRangeProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, LinkedEditingRangeOptions), lambda i : isinstance(i, LinkedEditingRangeRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["linkedEditingRangeProvider"] = write_or_type(self.linkedEditingRangeProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, LinkedEditingRangeOptions), lambda i: isinstance(i, LinkedEditingRangeRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.semanticTokensProvider is not None:
-            out["semanticTokensProvider"] = write_or_type(self.semanticTokensProvider, (lambda i : isinstance(i, SemanticTokensOptions), lambda i : isinstance(i, SemanticTokensRegistrationOptions)), (lambda i: i.to_json(), lambda i: i.to_json()))
+            out["semanticTokensProvider"] = write_or_type(self.semanticTokensProvider, (lambda i: isinstance(i, SemanticTokensOptions), lambda i: isinstance(i, SemanticTokensRegistrationOptions)), (lambda i: i.to_json(), lambda i: i.to_json()))
         if self.monikerProvider is not None:
-            out["monikerProvider"] = write_or_type(self.monikerProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, MonikerOptions), lambda i : isinstance(i, MonikerRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["monikerProvider"] = write_or_type(self.monikerProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, MonikerOptions), lambda i: isinstance(i, MonikerRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.typeHierarchyProvider is not None:
-            out["typeHierarchyProvider"] = write_or_type(self.typeHierarchyProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, TypeHierarchyOptions), lambda i : isinstance(i, TypeHierarchyRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["typeHierarchyProvider"] = write_or_type(self.typeHierarchyProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, TypeHierarchyOptions), lambda i: isinstance(i, TypeHierarchyRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.inlineValueProvider is not None:
-            out["inlineValueProvider"] = write_or_type(self.inlineValueProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, InlineValueOptions), lambda i : isinstance(i, InlineValueRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["inlineValueProvider"] = write_or_type(self.inlineValueProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, InlineValueOptions), lambda i: isinstance(i, InlineValueRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.inlayHintProvider is not None:
-            out["inlayHintProvider"] = write_or_type(self.inlayHintProvider, (lambda i : isinstance(i, bool), lambda i : isinstance(i, InlayHintOptions), lambda i : isinstance(i, InlayHintRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
+            out["inlayHintProvider"] = write_or_type(self.inlayHintProvider, (lambda i: isinstance(i, bool), lambda i: isinstance(i, InlayHintOptions), lambda i: isinstance(i, InlayHintRegistrationOptions)), (lambda i: i, lambda i: i.to_json(), lambda i: i.to_json()))
         if self.diagnosticProvider is not None:
-            out["diagnosticProvider"] = write_or_type(self.diagnosticProvider, (lambda i : isinstance(i, DiagnosticOptions), lambda i : isinstance(i, DiagnosticRegistrationOptions)), (lambda i: i.to_json(), lambda i: i.to_json()))
+            out["diagnosticProvider"] = write_or_type(self.diagnosticProvider, (lambda i: isinstance(i, DiagnosticOptions), lambda i: isinstance(i, DiagnosticRegistrationOptions)), (lambda i: i.to_json(), lambda i: i.to_json()))
         if self.workspace is not None:
-            out["workspace"] = self.workspace.to_json()
+            out["workspace"] = write_AnonymousStructure11(self.workspace)
         if self.experimental is not None:
             out["experimental"] = write_LSPAny(self.experimental)
         return out
 
 
-@dataclass
-class AnonymousStructure0():
-    """"""
+AnonymousStructure0Keys = Literal["name","version"]
 
-    # The name of the server as defined by the server.
-    name: str
-    
-    # The server's version as defined by the server.
-    version: Optional[str]
+def parse_AnonymousStructure0(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure0Keys, Any]:
+    out: Dict[AnonymousStructure0Keys, Any] = {}
+    out["name"] = json_get_string(obj, "name")
+    if version_json := json_get_optional_string(obj, "version"):
+        out["version"] = version_json
+    else:
+        out["version"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure0":
-        name = json_get_string(obj, "name")
-        if version_json := json_get_optional_string(obj, "version"):
-            version = version_json
-        else:
-            version = None
-        return cls(name=name, version=version)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["name"] = self.name
-        if self.version is not None:
-            out["version"] = self.version
-        return out
+def write_AnonymousStructure0(obj: Dict[AnonymousStructure0Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["name"] = obj["name"]
+    if obj.get("version") is not None:
+        out["version"] = obj.get("version")
+    return out
 
 
 @dataclass
@@ -10041,13 +9641,13 @@ class InitializeResult():
     # Information about the server.
     # 
     # @since 3.15.0
-    serverInfo: Optional[AnonymousStructure0]
+    serverInfo: Optional[Dict[AnonymousStructure0Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeResult":
         capabilities = ServerCapabilities.from_json(json_get_object(obj, "capabilities"))
         if serverInfo_json := json_get_optional_object(obj, "serverInfo"):
-            serverInfo = AnonymousStructure0.from_json(serverInfo_json)
+            serverInfo = parse_AnonymousStructure0(serverInfo_json)
         else:
             serverInfo = None
         return cls(capabilities=capabilities, serverInfo=serverInfo)
@@ -10056,7 +9656,7 @@ class InitializeResult():
         out: Dict[str, JSON_VALUE] = {}
         out["capabilities"] = self.capabilities.to_json()
         if self.serverInfo is not None:
-            out["serverInfo"] = self.serverInfo.to_json()
+            out["serverInfo"] = write_AnonymousStructure0(self.serverInfo)
         return out
 
 
@@ -10134,7 +9734,7 @@ class DidChangeConfigurationRegistrationOptions():
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         if self.section is not None:
-            out["section"] = write_or_type(self.section, (lambda i : isinstance(i, str), lambda i : isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], str)))), (lambda i: i, lambda i: [i for i in i]))
+            out["section"] = write_or_type(self.section, (lambda i: isinstance(i, str), lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], str)))), (lambda i: i, lambda i: [i for i in i]))
         return out
 
 
@@ -10306,7 +9906,7 @@ class TextDocumentChangeRegistrationOptions(TextDocumentRegistrationOptions):
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         out["syncKind"] = self.syncKind.value
         return out
 
@@ -10379,7 +9979,7 @@ class TextDocumentSaveRegistrationOptions(TextDocumentRegistrationOptions, SaveO
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.includeText is not None:
             out["includeText"] = self.includeText
         return out
@@ -10490,7 +10090,7 @@ folder root, but it can be another absolute URI as well.
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["baseUri"] = write_or_type(self.baseUri, (lambda i : isinstance(i, WorkspaceFolder), lambda i : isinstance(i, str)), (lambda i: i.to_json(), lambda i: i))
+        out["baseUri"] = write_or_type(self.baseUri, (lambda i: isinstance(i, WorkspaceFolder), lambda i: isinstance(i, str)), (lambda i: i.to_json(), lambda i: i))
         out["pattern"] = write_Pattern(self.pattern)
         return out
 
@@ -10504,7 +10104,7 @@ def parse_GlobPattern(arg: JSON_VALUE) -> GlobPattern:
     return parse_or_type((arg), (lambda v: parse_Pattern(json_assert_type_string(v)), lambda v: RelativePattern.from_json(json_assert_type_object(v))))
 
 def write_GlobPattern(arg: GlobPattern) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, str), lambda i : isinstance(i, RelativePattern)), (lambda i: write_Pattern(i), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, str), lambda i: isinstance(i, RelativePattern)), (lambda i: write_Pattern(i), lambda i: i.to_json()))
 
 
 @dataclass
@@ -10965,7 +10565,7 @@ proposed to complete text that is being typed."""
         if self.detail is not None:
             out["detail"] = self.detail
         if self.documentation is not None:
-            out["documentation"] = write_or_type(self.documentation, (lambda i : isinstance(i, str), lambda i : isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
+            out["documentation"] = write_or_type(self.documentation, (lambda i: isinstance(i, str), lambda i: isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
         if self.deprecated is not None:
             out["deprecated"] = self.deprecated
         if self.preselect is not None:
@@ -10981,7 +10581,7 @@ proposed to complete text that is being typed."""
         if self.insertTextMode is not None:
             out["insertTextMode"] = self.insertTextMode.value
         if self.textEdit is not None:
-            out["textEdit"] = write_or_type(self.textEdit, (lambda i : isinstance(i, TextEdit), lambda i : isinstance(i, InsertReplaceEdit)), (lambda i: i.to_json(), lambda i: i.to_json()))
+            out["textEdit"] = write_or_type(self.textEdit, (lambda i: isinstance(i, TextEdit), lambda i: isinstance(i, InsertReplaceEdit)), (lambda i: i.to_json(), lambda i: i.to_json()))
         if self.textEditText is not None:
             out["textEditText"] = self.textEditText
         if self.additionalTextEdits is not None:
@@ -10995,93 +10595,60 @@ proposed to complete text that is being typed."""
         return out
 
 
-@dataclass
-class AnonymousStructure1():
-    """"""
+AnonymousStructure1Keys = Literal["insert","replace"]
 
-    insert: "Range"
-    
-    replace: "Range"
+def parse_AnonymousStructure1(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure1Keys, Any]:
+    out: Dict[AnonymousStructure1Keys, Any] = {}
+    out["insert"] = Range.from_json(json_get_object(obj, "insert"))
+    out["replace"] = Range.from_json(json_get_object(obj, "replace"))
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure1":
-        insert = Range.from_json(json_get_object(obj, "insert"))
-        replace = Range.from_json(json_get_object(obj, "replace"))
-        return cls(insert=insert, replace=replace)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["insert"] = self.insert.to_json()
-        out["replace"] = self.replace.to_json()
-        return out
+def write_AnonymousStructure1(obj: Dict[AnonymousStructure1Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["insert"] = obj["insert"].to_json()
+    out["replace"] = obj["replace"].to_json()
+    return out
 
 
-@dataclass
-class AnonymousStructure2():
-    """"""
+AnonymousStructure2Keys = Literal["commitCharacters","editRange","insertTextFormat","insertTextMode","data"]
 
-    # A default commit character set.
-    # 
-    # @since 3.17.0
-    commitCharacters: Optional[List[str]]
-    
-    # A default edit range.
-    # 
-    # @since 3.17.0
-    editRange: Optional[Union["Range", AnonymousStructure1]]
-    
-    # A default insert text format.
-    # 
-    # @since 3.17.0
-    insertTextFormat: Optional["InsertTextFormat"]
-    
-    # A default insert text mode.
-    # 
-    # @since 3.17.0
-    insertTextMode: Optional["InsertTextMode"]
-    
-    # A default data value.
-    # 
-    # @since 3.17.0
-    data: Optional["LSPAny"]
+def parse_AnonymousStructure2(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure2Keys, Any]:
+    out: Dict[AnonymousStructure2Keys, Any] = {}
+    if commitCharacters_json := json_get_optional_array(obj, "commitCharacters"):
+        out["commitCharacters"] = [json_assert_type_string(i) for i in commitCharacters_json]
+    else:
+        out["commitCharacters"] = None
+    if editRange_json := obj.get("editRange"):
+        out["editRange"] = parse_or_type(editRange_json, (lambda v: Range.from_json(json_assert_type_object(v)), lambda v: parse_AnonymousStructure1(json_assert_type_object(v))))
+    else:
+        out["editRange"] = None
+    if insertTextFormat_json := json_get_optional_int(obj, "insertTextFormat"):
+        out["insertTextFormat"] = InsertTextFormat(insertTextFormat_json)
+    else:
+        out["insertTextFormat"] = None
+    if insertTextMode_json := json_get_optional_int(obj, "insertTextMode"):
+        out["insertTextMode"] = InsertTextMode(insertTextMode_json)
+    else:
+        out["insertTextMode"] = None
+    if data_json := obj.get("data"):
+        out["data"] = parse_LSPAny(data_json)
+    else:
+        out["data"] = None
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure2":
-        if commitCharacters_json := json_get_optional_array(obj, "commitCharacters"):
-            commitCharacters = [json_assert_type_string(i) for i in commitCharacters_json]
-        else:
-            commitCharacters = None
-        if editRange_json := obj.get("editRange"):
-            editRange = parse_or_type(editRange_json, (lambda v: Range.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure1.from_json(json_assert_type_object(v))))
-        else:
-            editRange = None
-        if insertTextFormat_json := json_get_optional_int(obj, "insertTextFormat"):
-            insertTextFormat = InsertTextFormat(insertTextFormat_json)
-        else:
-            insertTextFormat = None
-        if insertTextMode_json := json_get_optional_int(obj, "insertTextMode"):
-            insertTextMode = InsertTextMode(insertTextMode_json)
-        else:
-            insertTextMode = None
-        if data_json := obj.get("data"):
-            data = parse_LSPAny(data_json)
-        else:
-            data = None
-        return cls(commitCharacters=commitCharacters, editRange=editRange, insertTextFormat=insertTextFormat, insertTextMode=insertTextMode, data=data)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.commitCharacters is not None:
-            out["commitCharacters"] = [i for i in self.commitCharacters]
-        if self.editRange is not None:
-            out["editRange"] = write_or_type(self.editRange, (lambda i : isinstance(i, Range), lambda i : isinstance(i, AnonymousStructure1)), (lambda i: i.to_json(), lambda i: i.to_json()))
-        if self.insertTextFormat is not None:
-            out["insertTextFormat"] = self.insertTextFormat.value
-        if self.insertTextMode is not None:
-            out["insertTextMode"] = self.insertTextMode.value
-        if self.data is not None:
-            out["data"] = write_LSPAny(self.data)
-        return out
+def write_AnonymousStructure2(obj: Dict[AnonymousStructure2Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    if obj.get("commitCharacters") is not None:
+        out["commitCharacters"] = [i for i in obj.get("commitCharacters")]
+    if obj.get("editRange") is not None:
+        out["editRange"] = write_or_type(obj.get("editRange"), (lambda i: isinstance(i, Range), lambda i: isinstance(i, Dict) and "insert" in i.keys() and "replace" in i.keys()), (lambda i: i.to_json(), lambda i: write_AnonymousStructure1(i)))
+    if obj.get("insertTextFormat") is not None:
+        out["insertTextFormat"] = obj.get("insertTextFormat").value
+    if obj.get("insertTextMode") is not None:
+        out["insertTextMode"] = obj.get("insertTextMode").value
+    if obj.get("data") is not None:
+        out["data"] = write_LSPAny(obj.get("data"))
+    return out
 
 
 @dataclass
@@ -11108,7 +10675,7 @@ in the editor."""
     # capability.
     # 
     # @since 3.17.0
-    itemDefaults: Optional[AnonymousStructure2]
+    itemDefaults: Optional[Dict[AnonymousStructure2Keys, Any]]
     
     # The completion items.
     items: List["CompletionItem"]
@@ -11117,7 +10684,7 @@ in the editor."""
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionList":
         isIncomplete = json_get_bool(obj, "isIncomplete")
         if itemDefaults_json := json_get_optional_object(obj, "itemDefaults"):
-            itemDefaults = AnonymousStructure2.from_json(itemDefaults_json)
+            itemDefaults = parse_AnonymousStructure2(itemDefaults_json)
         else:
             itemDefaults = None
         items = [CompletionItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
@@ -11127,7 +10694,7 @@ in the editor."""
         out: Dict[str, JSON_VALUE] = {}
         out["isIncomplete"] = self.isIncomplete
         if self.itemDefaults is not None:
-            out["itemDefaults"] = self.itemDefaults.to_json()
+            out["itemDefaults"] = write_AnonymousStructure2(self.itemDefaults)
         out["items"] = [i.to_json() for i in self.items]
         return out
 
@@ -11170,7 +10737,7 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
     # capabilities.
     # 
     # @since 3.17.0
-    completionItem: Optional[AnonymousStructure12]
+    completionItem: Optional[Dict[AnonymousStructure12Keys, Any]]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionRegistrationOptions":
@@ -11192,14 +10759,14 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
         else:
             resolveProvider = None
         if completionItem_json := json_get_optional_object(obj, "completionItem"):
-            completionItem = AnonymousStructure12.from_json(completionItem_json)
+            completionItem = parse_AnonymousStructure12(completionItem_json)
         else:
             completionItem = None
         return cls(documentSelector=documentSelector, workDoneProgress=workDoneProgress, triggerCharacters=triggerCharacters, allCommitCharacters=allCommitCharacters, resolveProvider=resolveProvider, completionItem=completionItem)
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.triggerCharacters is not None:
@@ -11209,7 +10776,7 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
         if self.resolveProvider is not None:
             out["resolveProvider"] = self.resolveProvider
         if self.completionItem is not None:
-            out["completionItem"] = self.completionItem.to_json()
+            out["completionItem"] = write_AnonymousStructure12(self.completionItem)
         return out
 
 
@@ -11245,25 +10812,19 @@ class HoverParams(TextDocumentPositionParams):
         return out
 
 
-@dataclass
-class AnonymousStructure41():
-    """"""
+AnonymousStructure41Keys = Literal["language","value"]
 
-    language: str
-    
-    value: str
+def parse_AnonymousStructure41(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure41Keys, Any]:
+    out: Dict[AnonymousStructure41Keys, Any] = {}
+    out["language"] = json_get_string(obj, "language")
+    out["value"] = json_get_string(obj, "value")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure41":
-        language = json_get_string(obj, "language")
-        value = json_get_string(obj, "value")
-        return cls(language=language, value=value)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["language"] = self.language
-        out["value"] = self.value
-        return out
+def write_AnonymousStructure41(obj: Dict[AnonymousStructure41Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["language"] = obj["language"]
+    out["value"] = obj["value"]
+    return out
 
 
 # MarkedString can be used to render human readable text. It is either a markdown string
@@ -11278,13 +10839,13 @@ class AnonymousStructure41():
 # 
 # Note that markdown strings will be sanitized - that means html will be escaped.
 # @deprecated use MarkupContent instead.
-MarkedString = Union[str, AnonymousStructure41]
+MarkedString = Union[str, Dict[AnonymousStructure41Keys, Any]]
 
 def parse_MarkedString(arg: JSON_VALUE) -> MarkedString:
-    return parse_or_type((arg), (lambda v: json_assert_type_string(v), lambda v: AnonymousStructure41.from_json(json_assert_type_object(v))))
+    return parse_or_type((arg), (lambda v: json_assert_type_string(v), lambda v: parse_AnonymousStructure41(json_assert_type_object(v))))
 
 def write_MarkedString(arg: MarkedString) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, str), lambda i : isinstance(i, AnonymousStructure41)), (lambda i: i, lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, str), lambda i: isinstance(i, Dict) and "language" in i.keys() and "value" in i.keys()), (lambda i: i, lambda i: write_AnonymousStructure41(i)))
 
 
 @dataclass
@@ -11309,7 +10870,7 @@ class Hover():
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["contents"] = write_or_type(self.contents, (lambda i : isinstance(i, MarkupContent), lambda i : (isinstance(i, str)) or (isinstance(i, AnonymousStructure41)), lambda i : isinstance(i, List) and (len(i) == 0 or ((isinstance(i[0], str)) or (isinstance(i[0], AnonymousStructure41))))), (lambda i: i.to_json(), lambda i: write_MarkedString(i), lambda i: [write_MarkedString(i) for i in i]))
+        out["contents"] = write_or_type(self.contents, (lambda i: isinstance(i, MarkupContent), lambda i: (isinstance(i, str)) or (isinstance(i, Dict) and "language" in i.keys() and "value" in i.keys()), lambda i: isinstance(i, List) and (len(i) == 0 or ((isinstance(i[0], str)) or (isinstance(i[0], Dict) and "language" in i[0].keys() and "value" in i[0].keys())))), (lambda i: i.to_json(), lambda i: write_MarkedString(i), lambda i: [write_MarkedString(i) for i in i]))
         if self.range is not None:
             out["range"] = self.range.to_json()
         return out
@@ -11336,7 +10897,7 @@ class HoverRegistrationOptions(TextDocumentRegistrationOptions, HoverOptions):
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         return out
@@ -11372,9 +10933,9 @@ have a label and a doc-comment."""
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["label"] = write_or_type(self.label, (lambda i : isinstance(i, str), lambda i : isinstance(i, Tuple)), (lambda i: i, lambda i: list(i)))
+        out["label"] = write_or_type(self.label, (lambda i: isinstance(i, str), lambda i: isinstance(i, Tuple)), (lambda i: i, lambda i: list(i)))
         if self.documentation is not None:
-            out["documentation"] = write_or_type(self.documentation, (lambda i : isinstance(i, str), lambda i : isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
+            out["documentation"] = write_or_type(self.documentation, (lambda i: isinstance(i, str), lambda i: isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
         return out
 
 
@@ -11423,7 +10984,7 @@ a set of parameters."""
         out: Dict[str, JSON_VALUE] = {}
         out["label"] = self.label
         if self.documentation is not None:
-            out["documentation"] = write_or_type(self.documentation, (lambda i : isinstance(i, str), lambda i : isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
+            out["documentation"] = write_or_type(self.documentation, (lambda i: isinstance(i, str), lambda i: isinstance(i, MarkupContent)), (lambda i: i, lambda i: i.to_json()))
         if self.parameters is not None:
             out["parameters"] = [i.to_json() for i in self.parameters]
         if self.activeParameter is not None:
@@ -11618,7 +11179,7 @@ class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, Signatur
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.triggerCharacters is not None:
@@ -11691,7 +11252,7 @@ class DefinitionRegistrationOptions(TextDocumentRegistrationOptions, DefinitionO
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         return out
@@ -11783,7 +11344,7 @@ class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOpt
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         return out
@@ -11881,7 +11442,7 @@ class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, Docu
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         return out
@@ -12152,7 +11713,7 @@ class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, Documen
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.label is not None:
@@ -12253,24 +11814,17 @@ class CodeActionParams():
         return out
 
 
-@dataclass
-class AnonymousStructure3():
-    """"""
+AnonymousStructure3Keys = Literal["reason"]
 
-    # Human readable description of why the code action is currently disabled.
-    # 
-    # This is displayed in the code actions UI.
-    reason: str
+def parse_AnonymousStructure3(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure3Keys, Any]:
+    out: Dict[AnonymousStructure3Keys, Any] = {}
+    out["reason"] = json_get_string(obj, "reason")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure3":
-        reason = json_get_string(obj, "reason")
-        return cls(reason=reason)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["reason"] = self.reason
-        return out
+def write_AnonymousStructure3(obj: Dict[AnonymousStructure3Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["reason"] = obj["reason"]
+    return out
 
 
 @dataclass
@@ -12315,7 +11869,7 @@ A CodeAction must set either `edit` and/or a `command`. If both are supplied, th
     #     error message with `reason` in the editor.
     # 
     # @since 3.16.0
-    disabled: Optional[AnonymousStructure3]
+    disabled: Optional[Dict[AnonymousStructure3Keys, Any]]
     
     # The workspace edit this code action performs.
     edit: Optional["WorkspaceEdit"]
@@ -12347,7 +11901,7 @@ A CodeAction must set either `edit` and/or a `command`. If both are supplied, th
         else:
             isPreferred = None
         if disabled_json := json_get_optional_object(obj, "disabled"):
-            disabled = AnonymousStructure3.from_json(disabled_json)
+            disabled = parse_AnonymousStructure3(disabled_json)
         else:
             disabled = None
         if edit_json := json_get_optional_object(obj, "edit"):
@@ -12374,7 +11928,7 @@ A CodeAction must set either `edit` and/or a `command`. If both are supplied, th
         if self.isPreferred is not None:
             out["isPreferred"] = self.isPreferred
         if self.disabled is not None:
-            out["disabled"] = self.disabled.to_json()
+            out["disabled"] = write_AnonymousStructure3(self.disabled)
         if self.edit is not None:
             out["edit"] = self.edit.to_json()
         if self.command is not None:
@@ -12425,7 +11979,7 @@ class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionO
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.codeActionKinds is not None:
@@ -12473,21 +12027,17 @@ class WorkspaceSymbolParams():
         return out
 
 
-@dataclass
-class AnonymousStructure4():
-    """"""
+AnonymousStructure4Keys = Literal["uri"]
 
-    uri: str
+def parse_AnonymousStructure4(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure4Keys, Any]:
+    out: Dict[AnonymousStructure4Keys, Any] = {}
+    out["uri"] = json_get_string(obj, "uri")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure4":
-        uri = json_get_string(obj, "uri")
-        return cls(uri=uri)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["uri"] = self.uri
-        return out
+def write_AnonymousStructure4(obj: Dict[AnonymousStructure4Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["uri"] = obj["uri"]
+    return out
 
 
 @dataclass
@@ -12520,7 +12070,7 @@ See also SymbolInformation.
     # capability `workspace.symbol.resolveSupport`.
     # 
     # See SymbolInformation#location for more details.
-    location: Union["Location", AnonymousStructure4]
+    location: Union["Location", Dict[AnonymousStructure4Keys, Any]]
     
     # A data entry field that is preserved on a workspace symbol between a
     # workspace symbol request and a workspace symbol resolve request.
@@ -12538,7 +12088,7 @@ See also SymbolInformation.
             containerName = containerName_json
         else:
             containerName = None
-        location = parse_or_type(obj["location"], (lambda v: Location.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure4.from_json(json_assert_type_object(v))))
+        location = parse_or_type(obj["location"], (lambda v: Location.from_json(json_assert_type_object(v)), lambda v: parse_AnonymousStructure4(json_assert_type_object(v))))
         if data_json := obj.get("data"):
             data = parse_LSPAny(data_json)
         else:
@@ -12553,7 +12103,7 @@ See also SymbolInformation.
             out["tags"] = [i.value for i in self.tags]
         if self.containerName is not None:
             out["containerName"] = self.containerName
-        out["location"] = write_or_type(self.location, (lambda i : isinstance(i, Location), lambda i : isinstance(i, AnonymousStructure4)), (lambda i: i.to_json(), lambda i: i.to_json()))
+        out["location"] = write_or_type(self.location, (lambda i: isinstance(i, Location), lambda i: isinstance(i, Dict) and "uri" in i.keys()), (lambda i: i.to_json(), lambda i: write_AnonymousStructure4(i)))
         if self.data is not None:
             out["data"] = write_LSPAny(self.data)
         return out
@@ -12699,7 +12249,7 @@ class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptio
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.resolveProvider is not None:
@@ -12825,7 +12375,7 @@ class DocumentLinkRegistrationOptions(TextDocumentRegistrationOptions, DocumentL
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.resolveProvider is not None:
@@ -12942,7 +12492,7 @@ class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, Doc
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         return out
@@ -13006,7 +12556,7 @@ class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         return out
@@ -13076,7 +12626,7 @@ class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOption
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         out["firstTriggerCharacter"] = self.firstTriggerCharacter
         if self.moreTriggerCharacter is not None:
             out["moreTriggerCharacter"] = [i for i in self.moreTriggerCharacter]
@@ -13152,7 +12702,7 @@ class RenameRegistrationOptions(TextDocumentRegistrationOptions, RenameOptions):
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
         if self.prepareProvider is not None:
@@ -13527,7 +13077,7 @@ class CancelParams():
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["id"] = write_or_type(self.id, (lambda i : isinstance(i, int), lambda i : isinstance(i, str)), (lambda i: i, lambda i: i))
+        out["id"] = write_or_type(self.id, (lambda i: isinstance(i, int), lambda i: isinstance(i, str)), (lambda i: i, lambda i: i))
         return out
 
 
@@ -13785,7 +13335,7 @@ class RelatedFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
             out["resultId"] = self.resultId
         out["items"] = [i.to_json() for i in self.items]
         if self.relatedDocuments is not None:
-            out["relatedDocuments"] = { key: write_or_type(val, (lambda i : isinstance(i, FullDocumentDiagnosticReport), lambda i : isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
+            out["relatedDocuments"] = { key: write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
         return out
 
 
@@ -13829,7 +13379,7 @@ class RelatedUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport
         out["kind"] = "unchanged"
         out["resultId"] = self.resultId
         if self.relatedDocuments is not None:
-            out["relatedDocuments"] = { key: write_or_type(val, (lambda i : isinstance(i, FullDocumentDiagnosticReport), lambda i : isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
+            out["relatedDocuments"] = { key: write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
         return out
 
 
@@ -13845,7 +13395,7 @@ def parse_Definition(arg: JSON_VALUE) -> Definition:
     return parse_or_type((arg), (lambda v: Location.from_json(json_assert_type_object(v)), lambda v: [Location.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)]))
 
 def write_Definition(arg: Definition) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, Location), lambda i : isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], Location)))), (lambda i: i.to_json(), lambda i: [i.to_json() for i in i]))
+    return write_or_type(arg, (lambda i: isinstance(i, Location), lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], Location)))), (lambda i: i.to_json(), lambda i: [i.to_json() for i in i]))
 
 
 # Information about where a symbol is defined.
@@ -13868,7 +13418,7 @@ def parse_Declaration(arg: JSON_VALUE) -> Declaration:
     return parse_or_type((arg), (lambda v: Location.from_json(json_assert_type_object(v)), lambda v: [Location.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)]))
 
 def write_Declaration(arg: Declaration) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, Location), lambda i : isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], Location)))), (lambda i: i.to_json(), lambda i: [i.to_json() for i in i]))
+    return write_or_type(arg, (lambda i: isinstance(i, Location), lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], Location)))), (lambda i: i.to_json(), lambda i: [i.to_json() for i in i]))
 
 
 # Information about where a symbol is declared.
@@ -13900,7 +13450,7 @@ def parse_InlineValue(arg: JSON_VALUE) -> InlineValue:
     return parse_or_type((arg), (lambda v: InlineValueText.from_json(json_assert_type_object(v)), lambda v: InlineValueVariableLookup.from_json(json_assert_type_object(v)), lambda v: InlineValueEvaluatableExpression.from_json(json_assert_type_object(v))))
 
 def write_InlineValue(arg: InlineValue) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, InlineValueText), lambda i : isinstance(i, InlineValueVariableLookup), lambda i : isinstance(i, InlineValueEvaluatableExpression)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, InlineValueText), lambda i: isinstance(i, InlineValueVariableLookup), lambda i: isinstance(i, InlineValueEvaluatableExpression)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json()))
 
 
 # The result of a document diagnostic pull request. A report can
@@ -13916,54 +13466,44 @@ def parse_DocumentDiagnosticReport(arg: JSON_VALUE) -> DocumentDiagnosticReport:
     return parse_or_type((arg), (lambda v: RelatedFullDocumentDiagnosticReport.from_json(json_assert_type_object(v)), lambda v: RelatedUnchangedDocumentDiagnosticReport.from_json(json_assert_type_object(v))))
 
 def write_DocumentDiagnosticReport(arg: DocumentDiagnosticReport) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, RelatedFullDocumentDiagnosticReport), lambda i : isinstance(i, RelatedUnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, RelatedFullDocumentDiagnosticReport), lambda i: isinstance(i, RelatedUnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json()))
 
 
-@dataclass
-class AnonymousStructure37():
-    """"""
+AnonymousStructure37Keys = Literal["range","placeholder"]
 
-    range: "Range"
-    
-    placeholder: str
+def parse_AnonymousStructure37(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure37Keys, Any]:
+    out: Dict[AnonymousStructure37Keys, Any] = {}
+    out["range"] = Range.from_json(json_get_object(obj, "range"))
+    out["placeholder"] = json_get_string(obj, "placeholder")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure37":
-        range = Range.from_json(json_get_object(obj, "range"))
-        placeholder = json_get_string(obj, "placeholder")
-        return cls(range=range, placeholder=placeholder)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["range"] = self.range.to_json()
-        out["placeholder"] = self.placeholder
-        return out
+def write_AnonymousStructure37(obj: Dict[AnonymousStructure37Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["range"] = obj["range"].to_json()
+    out["placeholder"] = obj["placeholder"]
+    return out
 
 
-@dataclass
-class AnonymousStructure38():
-    """"""
+AnonymousStructure38Keys = Literal["defaultBehavior"]
 
-    defaultBehavior: bool
+def parse_AnonymousStructure38(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure38Keys, Any]:
+    out: Dict[AnonymousStructure38Keys, Any] = {}
+    out["defaultBehavior"] = json_get_bool(obj, "defaultBehavior")
+    return out
 
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousStructure38":
-        defaultBehavior = json_get_bool(obj, "defaultBehavior")
-        return cls(defaultBehavior=defaultBehavior)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["defaultBehavior"] = self.defaultBehavior
-        return out
+def write_AnonymousStructure38(obj: Dict[AnonymousStructure38Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {}
+    out["defaultBehavior"] = obj["defaultBehavior"]
+    return out
 
 
-PrepareRenameResult = Union["Range", AnonymousStructure37, AnonymousStructure38]
+PrepareRenameResult = Union["Range", Dict[AnonymousStructure37Keys, Any], Dict[AnonymousStructure38Keys, Any]]
 
 def parse_PrepareRenameResult(arg: JSON_VALUE) -> PrepareRenameResult:
-    return parse_or_type((arg), (lambda v: Range.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure37.from_json(json_assert_type_object(v)), lambda v: AnonymousStructure38.from_json(json_assert_type_object(v))))
+    return parse_or_type((arg), (lambda v: Range.from_json(json_assert_type_object(v)), lambda v: parse_AnonymousStructure37(json_assert_type_object(v)), lambda v: parse_AnonymousStructure38(json_assert_type_object(v))))
 
 def write_PrepareRenameResult(arg: PrepareRenameResult) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i : isinstance(i, Range), lambda i : isinstance(i, AnonymousStructure37), lambda i : isinstance(i, AnonymousStructure38)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json()))
+    return write_or_type(arg, (lambda i: isinstance(i, Range), lambda i: isinstance(i, Dict) and "range" in i.keys() and "placeholder" in i.keys(), lambda i: isinstance(i, Dict) and "defaultBehavior" in i.keys()), (lambda i: i.to_json(), lambda i: write_AnonymousStructure37(i), lambda i: write_AnonymousStructure38(i)))
 
 
 @dataclass
@@ -14016,5 +13556,5 @@ class AnonymousAndType1():
         out: Dict[str, JSON_VALUE] = {}
         if self.workDoneProgress is not None:
             out["workDoneProgress"] = self.workDoneProgress
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i : isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], AnonymousStructure42)) or (isinstance(i[0], AnonymousStructure43)) or (isinstance(i[0], AnonymousStructure44))) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i : i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
+        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
         return out

@@ -279,7 +279,7 @@ class Generator:
             return self._generate_parse_expression_tuple(val.content, arg)
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return f"{self._anonymous_structure_names[val.content.value]}.from_json({arg})"
+            return f"parse_{self._anonymous_structure_names[val.content.value]}({arg})"
         elif val.kind == "stringLiteral":
             assert isinstance(val.content, StringLiteralType)
             return f'match_string({arg}, "{val.content.value}")'
@@ -355,8 +355,9 @@ class Generator:
             return f"isinstance({name}, Tuple)"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            structure_name = self._anonymous_structure_names[val.content.value]
-            return f"isinstance({name}, {structure_name})"
+            required_keys = [p.name for p in val.content.value.properties if not p.optional]
+            key_checks = [f'"{key}" in {name}.keys()' for key in required_keys]
+            return " and ".join([f"isinstance({name}, Dict)"] + key_checks)
         elif val.kind == "stringLiteral":
             assert isinstance(val.content, StringLiteralType)
             return f'{name} == "{val.content.value}"'
@@ -381,7 +382,7 @@ class Generator:
         assert kinds.count("map") <= 1
         assert kinds.count("tuple") <= 1
 
-        type_tests = [f"lambda i : {self._generate_type_test(i, 'i')}" for i in val.items]
+        type_tests = [f"lambda i: {self._generate_type_test(i, 'i')}" for i in val.items]
         writers = [f"lambda i: {self.generate_write_expression(i, 'i')}" for i in val.items]
 
         return f"write_or_type({name}, ({', '.join(type_tests)}), ({', '.join(writers)}))"
@@ -415,7 +416,7 @@ class Generator:
             return f"list({name})"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return f"{name}.to_json()"
+            return f"write_{self._anonymous_structure_names[val.content.value]}({name})"
         elif val.kind == "stringLiteral":
             assert isinstance(val.content, StringLiteralType)
             return '"' + val.content.value + '"'
@@ -491,7 +492,7 @@ class Generator:
             return f"Tuple[{', '.join(item_annotations)}]"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return self._anonymous_structure_names[val.content.value]
+            return f"Dict[{self._anonymous_structure_names[val.content.value]}Keys, Any]"
         elif val.kind == "stringLiteral":
             return "str"
         elif val.kind == "integerLiteral":
@@ -686,37 +687,48 @@ class Generator:
         return f"{documentation}{_escape_keyword(prop.name)}: {type_annotation}"
 
 
-    def _generate_property_read_statement(self, prop: Property, obj_name: str) -> str:
+    def _generate_property_read_statement(self, prop: Property, obj_name: str, anonymous_struct: bool = False, dest_name: str = "") -> str:
         """Generates a statement that reads the given `Property` from the JSON object `obj_name`."""
-        name = _escape_keyword(prop.name)
+        if anonymous_struct:
+            dest = f'{dest_name}["{prop.name}"]'
+        else:
+            dest = _escape_keyword(prop.name)
+
         if prop.optional:
             if expected_json_type := self._get_expected_json_type(prop.type):
                 get_json_expr = self._json_type_to_get_optional_function[expected_json_type] + f'({obj_name}, "{prop.name}")'
             else:
                 get_json_expr = f'{obj_name}.get("{prop.name}")'
 
-            parse_expression = self.generate_parse_expression(prop.type, f"{name}_json")
+            parse_expression = self.generate_parse_expression(prop.type, f"{prop.name}_json")
             return f"""\
-if {name}_json := {get_json_expr}:
-    {name} = {parse_expression}
+if {prop.name}_json := {get_json_expr}:
+    {dest} = {parse_expression}
 else:
-    {name} = None"""
+    {dest} = None"""
 
         else:
             if expected_json_type := self._get_expected_json_type(prop.type):
-                get_json_expr = self._json_type_to_get_function[expected_json_type] + f'({obj_name}, "{name}")'
+                get_json_expr = self._json_type_to_get_function[expected_json_type] + f'({obj_name}, "{prop.name}")'
             else:
-                get_json_expr = f'{obj_name}["{name}"]'
+                get_json_expr = f'{obj_name}["{prop.name}"]'
 
             parse_expression = self.generate_parse_expression(prop.type, get_json_expr)
-            return f"{name} = {parse_expression}"
+            return f"{dest} = {parse_expression}"
 
 
-    def _generate_property_write_statement(self, prop: Property, obj_name: str) -> str:
-        name = _escape_keyword(prop.name)
-        write_statement = f'{obj_name}["{prop.name}"] = {self.generate_write_expression(prop.type, "self." + name)}'
+    def _generate_property_write_statement(self, prop: Property, obj_name: str, anonymous_structure: bool = False, source_name: str = "") -> str:
+        if anonymous_structure:
+            if prop.optional:
+                source = f'{source_name}.get("{prop.name}")'
+            else:
+                source = f'{source_name}["{prop.name}"]'
+        else:
+            source = "self." + _escape_keyword(prop.name)
+
+        write_statement = f'{obj_name}["{prop.name}"] = {self.generate_write_expression(prop.type, source)}'
         if prop.optional:
-            write_statement = f"if self.{name} is not None:\n    " + write_statement
+            write_statement = f"if {source} is not None:\n    " + write_statement
         return write_statement
 
 
@@ -756,10 +768,10 @@ class {class_name}({", ".join(superclasses)}):
 
 
     def _add_anonymous_definitions_from_anytype(self, val: AnyType) -> None:
-        """Adds a definition to the list of anonymus definitions for the given anytype.
+        """Adds a definition to the list of anonymous definitions for the given anytype.
         If `val` is an aggregate type, definitions are created recursively for all
-        encountered anonymus types (literal, and). Recursion stops if a type is not an
-        anonymus structure."""
+        encountered anonymous types (literal, and). Recursion stops if a type is not an
+        anonymous structure."""
 
         if val.kind in ["base", "reference", "stringLiteral", "integerLiteral", "booleanLiteral"]:
             return
@@ -802,7 +814,7 @@ class {class_name}({", ".join(superclasses)}):
             self._anonymous_structure_names[val.content.value] = class_name
 
 
-    def generate_anonymous_structure_definitions(self) -> None:
+    def generate_anonymous_structure_names(self) -> None:
         """Traverses the `MetaModel` and generates definitions for all
         anonymus types used"""
 
@@ -896,6 +908,44 @@ class {class_name}({", ".join(superclasses)}):
         return self._generate_structure_definition_generic(name, None, tuple(properties), ())
 
 
+    def _generate_anonymous_structure_key_type_alias(self, val: StructureLiteral) -> str:
+        name = f"{self._anonymous_structure_names[val]}Keys"
+        type_names = ['"' + p.name + '"' for p in val.properties]
+        return f"{name} = Literal[{','.join(type_names)}]"
+
+
+    def _generate_anonymous_structure_read_fun(self, val: StructureLiteral) -> str:
+        name = self._anonymous_structure_names[val]
+        read_statements = [self._generate_property_read_statement(p, "obj", True, "out") for p in val.properties]
+        sep = "\n"
+        return f"""\
+def parse_{name}(obj: Mapping[str, JSON_VALUE]) -> Dict[{name}Keys, Any]:
+    out: Dict[{name}Keys, Any] = {{}}
+{indent(sep.join(read_statements))}
+    return out"""
+
+
+    def _generate_anonymous_structure_write_fun(self, val: StructureLiteral) -> str:
+        name = self._anonymous_structure_names[val]
+        write_statements = [self._generate_property_write_statement(p, "out", True, "obj") for p in val.properties]
+        sep = "\n"
+        return f"""\
+def write_{name}(obj: Dict[{name}Keys, Any]) -> JSON_VALUE:
+    out: JSON_VALUE = {{}}
+{indent(sep.join(write_statements))}
+    return out"""
+
+
+    def generate_anonymous_structure_definition(self, val: StructureLiteral) -> str:
+        return f"""\
+{self._generate_anonymous_structure_key_type_alias(val)}
+
+{self._generate_anonymous_structure_read_fun(val)}
+
+{self._generate_anonymous_structure_write_fun(val)}"""
+
+
+
     def generate_structure_definition(self, struct: Structure) -> str:
         superclasses: List[str] = []
         if struct.extends:
@@ -980,7 +1030,7 @@ from lsp_enum import AllowCustomValues, TypedLSPEnum
 
 
     def generate_structures_py(self) -> str:
-        self.generate_anonymous_structure_definitions()
+        self.generate_anonymous_structure_names()
         sorted_types = self.sort_structures_and_typealiases()
 
         definitions: List[str] = []
@@ -991,8 +1041,7 @@ from lsp_enum import AllowCustomValues, TypedLSPEnum
             elif isinstance(t, Structure):
                 definitions.append(self.generate_structure_definition(t))
             elif isinstance(t, StructureLiteral):
-                name = self._anonymous_structure_names[t]
-                definitions.append(self._generate_structure_definition_generic(name, None, t.properties, ()))
+                definitions.append(self.generate_anonymous_structure_definition(t))
             else: # isinstance(t, AndType)
                 definitions.append(self.generate_andtype_definition(t))
 
@@ -1002,7 +1051,7 @@ from util import *
 from enumerations import *
 
 from dataclasses import dataclass
-from typing import Dict, List, Mapping, Optional, Tuple, Union
+from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 {sep.join(definitions)}
 """

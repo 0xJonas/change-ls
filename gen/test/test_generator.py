@@ -450,7 +450,7 @@ def test_generator_parse_anytypes() -> None:
     assert res8.to_json() == { 'test': ['test', [5, 10]] }
 
     res9 = eval("TestLiteral.from_json({ 'test': { 'sub': 'Nested struct' } })", names)
-    assert res9.test.sub == 'Nested struct'
+    assert res9.test["sub"] == 'Nested struct'
     assert res9.to_json() == { 'test': { 'sub': 'Nested struct' } }
 
     res10 = eval("TestStringLiteral.from_json({ 'test': 'test123' })", names)

@@ -804,6 +804,15 @@ class {class_name}({", ".join(superclasses)}):
 {indent(self._generate_structure_to_json_method(properties))}'''
 
 
+    def _generate_and_type_name(self, val: AndType) -> str:
+        item_names: List[str] = []
+        for i in val.items:
+            assert isinstance(i.content, ReferenceType)
+            item_names.append(i.content.name)
+        item_names.sort()
+        return "And".join(item_names)
+
+
     def _add_anonymous_definitions_from_anytype(self, val: AnyType) -> None:
         """Adds a definition to the list of anonymous definitions for the given anytype.
         If `val` is an aggregate type, definitions are created recursively for all
@@ -823,8 +832,7 @@ class {class_name}({", ".join(superclasses)}):
             for i in val.content.items:
                 self._add_anonymous_definitions_from_anytype(i)
 
-            class_name = "AnonymousAndType" + str(len(self._anonymous_andtype_names))
-            self._anonymous_andtype_names[val.content] = class_name
+            self._anonymous_andtype_names[val.content] = self._generate_and_type_name(val.content)
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
             for i in val.content.items:

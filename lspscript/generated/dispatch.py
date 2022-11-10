@@ -5,7 +5,7 @@ from structures import *
 parse_request_params: Dict[str, Callable[[JSON_VALUE], Any]] = {
     "textDocument/implementation": lambda p: ImplementationParams.from_json(json_assert_type_object(p)),
     "textDocument/typeDefinition": lambda p: TypeDefinitionParams.from_json(json_assert_type_object(p)),
-    "workspace/configuration": lambda p: AnonymousAndType0.from_json(json_assert_type_object(p)),
+    "workspace/configuration": lambda p: ConfigurationParamsAndPartialResultParams.from_json(json_assert_type_object(p)),
     "textDocument/documentColor": lambda p: DocumentColorParams.from_json(json_assert_type_object(p)),
     "textDocument/colorPresentation": lambda p: ColorPresentationParams.from_json(json_assert_type_object(p)),
     "textDocument/foldingRange": lambda p: FoldingRangeParams.from_json(json_assert_type_object(p)),

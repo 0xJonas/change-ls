@@ -17624,7 +17624,7 @@ def write_PrepareRenameResult(arg: PrepareRenameResult) -> JSON_VALUE:
 
 
 @dataclass
-class AnonymousAndType0():
+class ConfigurationParamsAndPartialResultParams():
     """"""
 
     items: List["ConfigurationItem"]
@@ -17642,7 +17642,7 @@ class AnonymousAndType0():
         self.partialResultToken = partialResultToken
 
     @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousAndType0":
+    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationParamsAndPartialResultParams":
         items = [ConfigurationItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
         if partialResultToken_json := obj.get("partialResultToken"):
             partialResultToken = parse_ProgressToken(partialResultToken_json)
@@ -17659,7 +17659,7 @@ class AnonymousAndType0():
 
 
 @dataclass
-class AnonymousAndType1():
+class TextDocumentRegistrationOptionsAndWorkDoneProgressOptions():
     """"""
 
     workDoneProgress: Optional[bool]
@@ -17677,7 +17677,7 @@ class AnonymousAndType1():
         self.documentSelector = documentSelector
 
     @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnonymousAndType1":
+    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentRegistrationOptionsAndWorkDoneProgressOptions":
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:

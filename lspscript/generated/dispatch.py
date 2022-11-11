@@ -1,6 +1,6 @@
-from util import *
-from enumerations import *
-from structures import *
+from .util import *
+from .enumerations import *
+from .structures import *
 
 parse_request_params: Dict[str, Callable[[JSON_VALUE], Any]] = {
     "textDocument/implementation": lambda p: ImplementationParams.from_json(json_assert_type_object(p)),

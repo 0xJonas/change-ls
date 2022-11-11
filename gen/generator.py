@@ -1070,7 +1070,8 @@ def write_{typealias.name}(arg: {typealias.name}) -> JSON_VALUE:
     def generate_enumerations_py(self) -> str:
         definitions: List[str] = [self.generate_enumeration_definition(e) for e in self._meta_model.enumerations]
         imports = """\
-from lsp_enum import AllowCustomValues, TypedLSPEnum
+from typing import ClassVar
+from .lsp_enum import AllowCustomValues, TypedLSPEnum
 
 
 """
@@ -1095,11 +1096,12 @@ from lsp_enum import AllowCustomValues, TypedLSPEnum
 
         sep = "\n\n\n"
         return f"""\
-from util import *
-from enumerations import *
+from .util import *
+from .enumerations import *
 
 from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
+
 
 {sep.join(definitions)}
 """
@@ -1147,9 +1149,10 @@ from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
         sep = ",\n"
         return f"""\
-from util import *
-from enumerations import *
-from structures import *
+from .util import *
+from .enumerations import *
+from .structures import *
+
 
 parse_request_params: Dict[str, Callable[[JSON_VALUE], Any]] = {{
 {indent(sep.join(parse_request_params))}

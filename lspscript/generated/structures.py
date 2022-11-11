@@ -1,5 +1,5 @@
-from util import *
-from enumerations import *
+from .util import *
+from .enumerations import *
 
 from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union

@@ -1,4 +1,5 @@
-from lsp_enum import AllowCustomValues, TypedLSPEnum
+from typing import ClassVar
+from .lsp_enum import AllowCustomValues, TypedLSPEnum
 
 
 class SemanticTokenTypes(TypedLSPEnum[str], AllowCustomValues):

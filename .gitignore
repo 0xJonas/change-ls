@@ -5,3 +5,6 @@ dist
 build
 **/*.egg-info
 **/__pycache__
+
+mock-server/out
+mock-server/node_modules

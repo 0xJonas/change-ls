@@ -65,6 +65,7 @@ def test_parse_enumeration() -> None:
 def test_parse_notification() -> None:
     test_json1 = {
         "documentation": "A test Notification",
+        "messageDirection": "clientToServer",
         "method": "test/test",
         "params": {
             "kind": "base",
@@ -81,6 +82,7 @@ def test_parse_notification() -> None:
     res1 = Notification.from_json(test_json1)
     assert res1 == Notification(
         "A test Notification",
+        "clientToServer",
         "test/test",
         AnyType("base", BaseType("string")),
         True,
@@ -89,13 +91,15 @@ def test_parse_notification() -> None:
     )
 
     test_json2 = {
-        "method": "test/test"
+        "method": "test/test",
+        "messageDirection": "serverToClient"
     }
     res2 = Notification.from_json(test_json2)
-    assert res2 == Notification(None, "test/test", None, None, None, None)
+    assert res2 == Notification(None, "serverToClient", "test/test", None, None, None, None)
 
     test_json3 = {
         "method": "test/test",
+        "messageDirection": "both",
         "params": [
             {
                 "kind": "base",
@@ -109,7 +113,7 @@ def test_parse_notification() -> None:
     }
 
     res3 = Notification.from_json(test_json3)
-    assert res3 == Notification(None, "test/test", (AnyType("base", BaseType("string")), AnyType("base", BaseType("integer"))), None, None, None)
+    assert res3 == Notification(None, "both", "test/test", (AnyType("base", BaseType("string")), AnyType("base", BaseType("integer"))), None, None, None)
 
 
 def test_parse_request() -> None:
@@ -119,6 +123,7 @@ def test_parse_request() -> None:
             "kind": "base",
             "name": "string"
         },
+        "messageDirection": "clientToServer",
         "method": "test/test",
         "params": {
             "kind": "base",
@@ -144,6 +149,7 @@ def test_parse_request() -> None:
     assert res1 == Request(
         "A test Request",
         AnyType("base", BaseType("string")),
+        "clientToServer",
         "test/test",
         AnyType("base", BaseType("string")),
         AnyType("base", BaseType("integer")),
@@ -155,6 +161,7 @@ def test_parse_request() -> None:
 
     test_json2 = {
         "method": "test/test",
+        "messageDirection": "serverToClient",
         "result": {
             "kind": "base",
             "name": "boolean"
@@ -162,10 +169,11 @@ def test_parse_request() -> None:
     }
 
     res2 = Request.from_json(test_json2)
-    assert res2 == Request(None, None, "test/test", None, None, None, None, AnyType("base", BaseType("boolean")), None)
+    assert res2 == Request(None, None, "serverToClient", "test/test", None, None, None, None, AnyType("base", BaseType("boolean")), None)
 
     test_json3 = {
         "method": "test/test",
+        "messageDirection": "both",
         "params": [
             {
                 "kind": "base",
@@ -186,6 +194,7 @@ def test_parse_request() -> None:
     assert res3 == Request(
         None,
         None,
+        "both",
         "test/test",
         (AnyType("base", BaseType("string")), AnyType("base", BaseType("integer"))),
         None,

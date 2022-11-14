@@ -5,6 +5,8 @@ from .util import *
 from .anytype import *
 
 
+MessageDirection = Literal["clientToServer", "serverToClient", "both"]
+
 @dataclass(frozen=True)
 class EnumerationEntry:
     """Defines an enumeration entry"""
@@ -76,6 +78,7 @@ class Notification:
     """Represents an LSP notification"""
 
     documentation: Optional[str]
+    message_direction: MessageDirection
     method: str
     params: Optional[Union[AnyType, Tuple[AnyType, ...]]]
     proposed: Optional[bool]
@@ -85,6 +88,15 @@ class Notification:
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Notification":
         documentation = json_get_optional_string(obj, "documentation")
+        message_direction_json = json_get_string(obj, "messageDirection")
+        if message_direction_json == "clientToServer":
+            message_direction = "clientToServer"
+        elif message_direction_json == "serverToClient":
+            message_direction = "serverToClient"
+        elif message_direction_json == "both":
+            message_direction = "both"
+        else:
+            raise LSPMetaModelException("Invalid value for messageDirection: " + message_direction_json)
         method = json_get_string(obj, "method")
         proposed = json_get_optional_bool(obj, "proposed")
         registration_options_json = json_get_optional_object(obj, "registrationOptions")
@@ -102,7 +114,7 @@ class Notification:
 
         registration_options = AnyType.from_json(registration_options_json) if registration_options_json else None
 
-        return cls(documentation, method, params, proposed, registration_options, since)
+        return cls(documentation, message_direction, method, params, proposed, registration_options, since)
 
 
 @dataclass(frozen=True)
@@ -111,6 +123,7 @@ class Request:
 
     documentation: Optional[str]
     error_data: Optional[AnyType]
+    message_direction: MessageDirection
     method: str
     params: Optional[Union[AnyType, Tuple[AnyType, ...]]]
     partial_result: Optional[AnyType]
@@ -122,7 +135,16 @@ class Request:
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Request":
         documentation = json_get_optional_string(obj, "documentation")
+        message_direction_json = json_get_string(obj, "messageDirection")
         error_data_json = json_get_optional_object(obj, "errorData")
+        if message_direction_json == "clientToServer":
+            message_direction = "clientToServer"
+        elif message_direction_json == "serverToClient":
+            message_direction = "serverToClient"
+        elif message_direction_json == "both":
+            message_direction = "both"
+        else:
+            raise LSPMetaModelException("Invalid value for messageDirection: " + message_direction_json)
         method = json_get_string(obj, "method")
         partial_result_json = json_get_optional_object(obj, "partialResult")
         proposed = json_get_optional_bool(obj, "proposed")
@@ -145,7 +167,7 @@ class Request:
         registration_options = AnyType.from_json(registration_options_json) if registration_options_json else None
         results = AnyType.from_json(result_json)
 
-        return cls(documentation, error_data, method, params, partial_result, proposed, registration_options, results, since)
+        return cls(documentation, error_data, message_direction, method, params, partial_result, proposed, registration_options, results, since)
 
 
 @dataclass(frozen=True)

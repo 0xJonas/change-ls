@@ -28,5 +28,5 @@ if __name__ == "__main__":
             file.write(generator.generate_enumerations_py())
         with open("lspscript/generated/structures.py", "w", encoding="utf-8") as file:
             file.write(generator.generate_structures_py())
-        with open("lspscript/generated/dispatch.py", "w", encoding="utf-8") as file:
-            file.write(generator.generate_dispatch_py())
+        with open("lspscript/generated/client_requests.py", "w", encoding="utf-8") as file:
+            file.write(generator.generate_client_requests_py())

@@ -7,9 +7,7 @@ from socket import AF_INET
 from threading import Thread
 from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
-from lspscript.generated.dispatch import (write_notification_params,
-                                          write_request_params,
-                                          parse_request_result)
+from lspscript.generated.client_requests import ClientRequestsMixin
 from lspscript.generated.util import JSON_VALUE
 from lspscript.protocol import (LSPException, LSProtocol, LSStreamingProtocol,
                                 LSSubprocessProtocol)
@@ -134,7 +132,7 @@ class PipeConnectionParams(_ServerLaunchParams):
     pipename: str
 
 
-class Client:
+class Client(ClientRequestsMixin):
     # Manages capabilities (client and server).
     # Handles dispatching requests/responses/notifications.
 
@@ -147,6 +145,7 @@ class Client:
         self._launch_params = launch_params
 
     async def _launch_internal(self) -> None:
+        # TODO add callback
         (_, self._protocol) = await self._launch_params.launch_server_from_event_loop(lambda _1, _2: None)
 
     def _client_loop(self, server_ready: "Future[None]") -> None:
@@ -162,20 +161,20 @@ class Client:
         self._comm_thread.start()
         await server_ready
 
-    async def send_request(self, method: str, params: Any) -> Union[Any, LSPException]:
+    async def send_request(self, method: str, params: JSON_VALUE) -> Union[JSON_VALUE, LSPException]:
         """
         Sends a request to the server. If the server returns an error, the resulting
         exception is returned, but not raised.
         """
 
-        json_data = write_request_params[method](params)
         future = get_running_loop().create_future()
-        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol.send_request(method, json_data, future))
+        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol.send_request(method, params, future))
         await future
 
         if result := future.result():
-            return parse_request_result[method](result)
+            return result
         elif exception := future.exception():
+            assert isinstance(exception, LSPException)
             return exception
         else:
             assert False # Future was cancelled # TODO raise something
@@ -186,5 +185,4 @@ class Client:
         pass
 
     async def send_notification(self, method: str, params: Any) -> None:
-        json_data = write_notification_params[method](params)
-        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol.send_notification(method, json_data))
+        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol.send_notification(method, params))

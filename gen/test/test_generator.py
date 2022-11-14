@@ -774,3 +774,61 @@ def test_generator_generate_enum_definition() -> None:
 
     with pytest.raises(LSPEnumException):
         eval("TestEnum1('Error')", names)
+
+
+async def test_generator_client_requests() -> None:
+    model = MetaModel.from_json({
+        "enumerations": [],
+        "notifications": [],
+        "requests": [
+            {
+                "method": "test/clientRequest",
+                "messageDirection": "clientToServer",
+                "params": {
+                    "kind": "base",
+                    "name": "string"
+                },
+                "result": {
+                    "kind": "base",
+                    "name": "string"
+                }
+            },
+            {
+                "method": "test/serverRequest",
+                "messageDirection": "serverToClient",
+                "params": {
+                    "kind": "base",
+                    "name": "string"
+                },
+                "result": {
+                    "kind": "base",
+                    "name": "string"
+                }
+            }
+        ],
+        "structures": [],
+        "typeAliases": []
+    })
+    generator = Generator(model)
+
+    names = get_test_default_names()
+
+
+    client_requests_py = generator.generate_client_requests_py()
+    client_requests_py = client_requests_py[client_requests_py.index("class"):] # Skip imports
+
+    exec(client_requests_py, names)
+    exec("""\
+class TestClient(ClientRequestsMixin):
+
+    async def send_request(self, method, params):
+        return "Request Ok!: " + params
+""", names)
+
+    test_client = names["TestClient"]()
+    assert "send_test_client_request" in dir(test_client)
+
+    res = await test_client.send_test_client_request("Hello")
+    assert res == "Request Ok!: Hello"
+
+    assert "send_test_server_request" not in dir(test_client) # server requests should not generate methods in the client.

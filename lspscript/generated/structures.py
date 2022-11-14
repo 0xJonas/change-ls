@@ -4,9 +4,14 @@ from .enumerations import *
 from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
+
 @dataclass
 class TextDocumentIdentifier():
-    """A literal to identify a text document in the client."""
+    """
+    A literal to identify a text document in the client.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document's uri.
     uri: str
@@ -30,33 +35,37 @@ class TextDocumentIdentifier():
 
 @dataclass
 class Position():
-    """Position in a text document expressed as zero-based line and character
-offset. Prior to 3.17 the offsets were always based on a UTF-16 string
-representation. So a string of the form `a𐐀b` the character offset of the
-character `a` is 0, the character offset of `𐐀` is 1 and the character
-offset of b is 3 since `𐐀` is represented using two code units in UTF-16.
-Since 3.17 clients and servers can agree on a different string encoding
-representation (e.g. UTF-8). The client announces it's supported encoding
-via the client capability [`general.positionEncodings`](#clientCapabilities).
-The value is an array of position encodings the client supports, with
-decreasing preference (e.g. the encoding at index `0` is the most preferred
-one). To stay backwards compatible the only mandatory encoding is UTF-16
-represented via the string `utf-16`. The server can pick one of the
-encodings offered by the client and signals that encoding back to the
-client via the initialize result's property
-[`capabilities.positionEncoding`](#serverCapabilities). If the string value
-`utf-16` is missing from the client's capability `general.positionEncodings`
-servers can safely assume that the client supports UTF-16. If the server
-omits the position encoding in its initialize result the encoding defaults
-to the string value `utf-16`. Implementation considerations: since the
-conversion from one encoding into another requires the content of the
-file / line the conversion is best done where the file is read which is
-usually on the server side.
+    """
+    Position in a text document expressed as zero-based line and character
+    offset. Prior to 3.17 the offsets were always based on a UTF-16 string
+    representation. So a string of the form `a𐐀b` the character offset of the
+    character `a` is 0, the character offset of `𐐀` is 1 and the character
+    offset of b is 3 since `𐐀` is represented using two code units in UTF-16.
+    Since 3.17 clients and servers can agree on a different string encoding
+    representation (e.g. UTF-8). The client announces it's supported encoding
+    via the client capability [`general.positionEncodings`](#clientCapabilities).
+    The value is an array of position encodings the client supports, with
+    decreasing preference (e.g. the encoding at index `0` is the most preferred
+    one). To stay backwards compatible the only mandatory encoding is UTF-16
+    represented via the string `utf-16`. The server can pick one of the
+    encodings offered by the client and signals that encoding back to the
+    client via the initialize result's property
+    [`capabilities.positionEncoding`](#serverCapabilities). If the string value
+    `utf-16` is missing from the client's capability `general.positionEncodings`
+    servers can safely assume that the client supports UTF-16. If the server
+    omits the position encoding in its initialize result the encoding defaults
+    to the string value `utf-16`. Implementation considerations: since the
+    conversion from one encoding into another requires the content of the
+    file / line the conversion is best done where the file is read which is
+    usually on the server side.
+    
+    Positions are line end character agnostic. So you can not specify a position
+    that denotes `\r|\n` or `\n|` where `|` represents the character offset.
+    
+    @since 3.17.0 - support for negotiated position encoding.
 
-Positions are line end character agnostic. So you can not specify a position
-that denotes `\r|\n` or `\n|` where `|` represents the character offset.
-
-@since 3.17.0 - support for negotiated position encoding."""
+    *Generated from the TypeScript documentation*
+    """
 
     # Line position in a document (zero-based).
     # 
@@ -105,8 +114,12 @@ that denotes `\r|\n` or `\n|` where `|` represents the character offset.
 
 @dataclass
 class TextDocumentPositionParams():
-    """A parameter literal used in requests to pass a text document and a position inside that
-document."""
+    """
+    A parameter literal used in requests to pass a text document and a position inside that
+    document.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -146,7 +159,11 @@ def write_ProgressToken(arg: ProgressToken) -> JSON_VALUE:
 
 @dataclass
 class ImplementationParams(TextDocumentPositionParams):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -201,17 +218,21 @@ class ImplementationParams(TextDocumentPositionParams):
 
 @dataclass
 class Range():
-    """A range in a text document expressed as (zero-based) start and end positions.
+    """
+    A range in a text document expressed as (zero-based) start and end positions.
+    
+    If you want to specify a range that contains a line including the line ending
+    character(s) then use an end position denoting the start of the next line.
+    For example:
+    ```ts
+    {
+        start: { line: 5, character: 23 }
+        end : { line 6, character : 0 }
+    }
+    ```
 
-If you want to specify a range that contains a line including the line ending
-character(s) then use an end position denoting the start of the next line.
-For example:
-```ts
-{
-    start: { line: 5, character: 23 }
-    end : { line 6, character : 0 }
-}
-```"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The range's start position.
     start: "Position"
@@ -242,8 +263,12 @@ For example:
 
 @dataclass
 class Location():
-    """Represents a location inside a resource, such as a line
-inside a text file."""
+    """
+    Represents a location inside a resource, such as a line
+    inside a text file.
+
+    *Generated from the TypeScript documentation*
+    """
 
     uri: str
     
@@ -460,10 +485,14 @@ def write_NotebookDocumentFilter(arg: NotebookDocumentFilter) -> JSON_VALUE:
 
 @dataclass
 class NotebookCellTextDocumentFilter():
-    """A notebook cell text document filter denotes a cell text
-document by different properties.
+    """
+    A notebook cell text document filter denotes a cell text
+    document by different properties.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A filter that matches against the notebook
     # containing the notebook cell. If a string
@@ -537,7 +566,11 @@ def write_DocumentSelector(arg: DocumentSelector) -> JSON_VALUE:
 
 @dataclass
 class TextDocumentRegistrationOptions():
-    """General text document registration options."""
+    """
+    General text document registration options.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -563,7 +596,11 @@ class TextDocumentRegistrationOptions():
 
 @dataclass
 class ImplementationOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -590,7 +627,11 @@ class ImplementationOptions():
 
 @dataclass
 class ImplementationRegistrationOptions(TextDocumentRegistrationOptions, ImplementationOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -638,7 +679,11 @@ class ImplementationRegistrationOptions(TextDocumentRegistrationOptions, Impleme
 
 @dataclass
 class TypeDefinitionParams(TextDocumentPositionParams):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -693,7 +738,11 @@ class TypeDefinitionParams(TextDocumentPositionParams):
 
 @dataclass
 class TypeDefinitionOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -720,7 +769,11 @@ class TypeDefinitionOptions():
 
 @dataclass
 class TypeDefinitionRegistrationOptions(TextDocumentRegistrationOptions, TypeDefinitionOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -768,7 +821,11 @@ class TypeDefinitionRegistrationOptions(TextDocumentRegistrationOptions, TypeDef
 
 @dataclass
 class WorkspaceFolder():
-    """A workspace folder inside a client."""
+    """
+    A workspace folder inside a client.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The associated URI for this workspace folder.
     uri: str
@@ -801,7 +858,11 @@ class WorkspaceFolder():
 
 @dataclass
 class WorkspaceFoldersChangeEvent():
-    """The workspace folder change event."""
+    """
+    The workspace folder change event.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The array of added workspace folders
     added: List["WorkspaceFolder"]
@@ -832,7 +893,11 @@ class WorkspaceFoldersChangeEvent():
 
 @dataclass
 class DidChangeWorkspaceFoldersParams():
-    """The parameters of a `workspace/didChangeWorkspaceFolders` notification."""
+    """
+    The parameters of a `workspace/didChangeWorkspaceFolders` notification.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The actual workspace folder change event.
     event: "WorkspaceFoldersChangeEvent"
@@ -856,7 +921,11 @@ class DidChangeWorkspaceFoldersParams():
 
 @dataclass
 class ConfigurationItem():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The scope to get the configuration section for.
     scopeUri: Optional[str]
@@ -895,7 +964,11 @@ class ConfigurationItem():
 
 @dataclass
 class ConfigurationParams():
-    """The parameters of a configuration request."""
+    """
+    The parameters of a configuration request.
+
+    *Generated from the TypeScript documentation*
+    """
 
     items: List["ConfigurationItem"]
 
@@ -918,7 +991,11 @@ class ConfigurationParams():
 
 @dataclass
 class PartialResultParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report partial results (e.g. streaming) to
     # the client.
@@ -948,7 +1025,11 @@ class PartialResultParams():
 
 @dataclass
 class DocumentColorParams():
-    """Parameters for a [DocumentColorRequest](#DocumentColorRequest)."""
+    """
+    Parameters for a [DocumentColorRequest](#DocumentColorRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -996,7 +1077,11 @@ class DocumentColorParams():
 
 @dataclass
 class Color():
-    """Represents a color in RGBA space."""
+    """
+    Represents a color in RGBA space.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The red component of this color in the range [0-1].
     red: float
@@ -1041,7 +1126,11 @@ class Color():
 
 @dataclass
 class ColorInformation():
-    """Represents a color range from a document."""
+    """
+    Represents a color range from a document.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The range in the document where this color appears.
     range: "Range"
@@ -1072,7 +1161,11 @@ class ColorInformation():
 
 @dataclass
 class DocumentColorOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -1099,7 +1192,11 @@ class DocumentColorOptions():
 
 @dataclass
 class DocumentColorRegistrationOptions(TextDocumentRegistrationOptions, DocumentColorOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -1147,7 +1244,11 @@ class DocumentColorRegistrationOptions(TextDocumentRegistrationOptions, Document
 
 @dataclass
 class ColorPresentationParams():
-    """Parameters for a [ColorPresentationRequest](#ColorPresentationRequest)."""
+    """
+    Parameters for a [ColorPresentationRequest](#ColorPresentationRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -1209,7 +1310,11 @@ class ColorPresentationParams():
 
 @dataclass
 class TextEdit():
-    """A text edit applicable to a text document."""
+    """
+    A text edit applicable to a text document.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The range of the text document to be manipulated. To insert
     # text into a document create a range where start === end.
@@ -1244,7 +1349,11 @@ class TextEdit():
 
 @dataclass
 class ColorPresentation():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The label of this color presentation. It will be shown on the color
     # picker header. By default this is also the text that is inserted when selecting
@@ -1300,7 +1409,11 @@ class ColorPresentation():
 
 @dataclass
 class WorkDoneProgressOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -1327,7 +1440,11 @@ class WorkDoneProgressOptions():
 
 @dataclass
 class FoldingRangeParams():
-    """Parameters for a [FoldingRangeRequest](#FoldingRangeRequest)."""
+    """
+    Parameters for a [FoldingRangeRequest](#FoldingRangeRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -1375,8 +1492,12 @@ class FoldingRangeParams():
 
 @dataclass
 class FoldingRange():
-    """Represents a folding range. To be valid, start and end line must be bigger than zero and smaller
-than the number of lines in the document. Clients are free to ignore invalid ranges."""
+    """
+    Represents a folding range. To be valid, start and end line must be bigger than zero and smaller
+    than the number of lines in the document. Clients are free to ignore invalid ranges.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The zero-based start line of the range to fold. The folded area starts after the line's last character.
     # To be valid, the end must be zero or larger and smaller than the number of lines in the document.
@@ -1467,7 +1588,11 @@ than the number of lines in the document. Clients are free to ignore invalid ran
 
 @dataclass
 class FoldingRangeOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -1494,7 +1619,11 @@ class FoldingRangeOptions():
 
 @dataclass
 class FoldingRangeRegistrationOptions(TextDocumentRegistrationOptions, FoldingRangeOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -1542,7 +1671,11 @@ class FoldingRangeRegistrationOptions(TextDocumentRegistrationOptions, FoldingRa
 
 @dataclass
 class DeclarationParams(TextDocumentPositionParams):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -1597,7 +1730,11 @@ class DeclarationParams(TextDocumentPositionParams):
 
 @dataclass
 class DeclarationOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -1624,7 +1761,11 @@ class DeclarationOptions():
 
 @dataclass
 class DeclarationRegistrationOptions(DeclarationOptions, TextDocumentRegistrationOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -1672,7 +1813,11 @@ class DeclarationRegistrationOptions(DeclarationOptions, TextDocumentRegistratio
 
 @dataclass
 class SelectionRangeParams():
-    """A parameter literal used in selection range requests."""
+    """
+    A parameter literal used in selection range requests.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -1727,8 +1872,12 @@ class SelectionRangeParams():
 
 @dataclass
 class SelectionRange():
-    """A selection range represents a part of a selection hierarchy. A selection range
-may have a parent selection range that contains it."""
+    """
+    A selection range represents a part of a selection hierarchy. A selection range
+    may have a parent selection range that contains it.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The [range](#Range) of this selection range.
     range: "Range"
@@ -1763,7 +1912,11 @@ may have a parent selection range that contains it."""
 
 @dataclass
 class SelectionRangeOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -1790,7 +1943,11 @@ class SelectionRangeOptions():
 
 @dataclass
 class SelectionRangeRegistrationOptions(SelectionRangeOptions, TextDocumentRegistrationOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -1838,7 +1995,11 @@ class SelectionRangeRegistrationOptions(SelectionRangeOptions, TextDocumentRegis
 
 @dataclass
 class WorkDoneProgressCreateParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The token to be used to report progress.
     token: "ProgressToken"
@@ -1862,7 +2023,11 @@ class WorkDoneProgressCreateParams():
 
 @dataclass
 class WorkDoneProgressCancelParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The token to be used to report progress.
     token: "ProgressToken"
@@ -1886,9 +2051,13 @@ class WorkDoneProgressCancelParams():
 
 @dataclass
 class CallHierarchyPrepareParams(TextDocumentPositionParams):
-    """The parameter of a `textDocument/prepareCallHierarchy` request.
+    """
+    The parameter of a `textDocument/prepareCallHierarchy` request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -1930,8 +2099,12 @@ class CallHierarchyPrepareParams(TextDocumentPositionParams):
 
 @dataclass
 class LSPObject():
-    """LSP object definition.
-@since 3.17.0"""
+    """
+    LSP object definition.
+    @since 3.17.0
+
+    *Generated from the TypeScript documentation*
+    """
 
 
 
@@ -1976,10 +2149,14 @@ def write_LSPAny(arg: LSPAny) -> JSON_VALUE:
 
 @dataclass
 class CallHierarchyItem():
-    """Represents programming constructs like functions or constructors in the context
-of call hierarchy.
+    """
+    Represents programming constructs like functions or constructors in the context
+    of call hierarchy.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The name of this item.
     name: str
@@ -2068,9 +2245,13 @@ of call hierarchy.
 
 @dataclass
 class CallHierarchyOptions():
-    """Call hierarchy options used during static registration.
+    """
+    Call hierarchy options used during static registration.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -2097,9 +2278,13 @@ class CallHierarchyOptions():
 
 @dataclass
 class CallHierarchyRegistrationOptions(TextDocumentRegistrationOptions, CallHierarchyOptions):
-    """Call hierarchy options used during static or dynamic registration.
+    """
+    Call hierarchy options used during static or dynamic registration.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -2147,9 +2332,13 @@ class CallHierarchyRegistrationOptions(TextDocumentRegistrationOptions, CallHier
 
 @dataclass
 class CallHierarchyIncomingCallsParams():
-    """The parameter of a `callHierarchy/incomingCalls` request.
+    """
+    The parameter of a `callHierarchy/incomingCalls` request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -2195,9 +2384,13 @@ class CallHierarchyIncomingCallsParams():
 
 @dataclass
 class CallHierarchyIncomingCall():
-    """Represents an incoming call, e.g. a caller of a method or constructor.
+    """
+    Represents an incoming call, e.g. a caller of a method or constructor.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The item that makes the call.
     from_: "CallHierarchyItem"
@@ -2230,9 +2423,13 @@ class CallHierarchyIncomingCall():
 
 @dataclass
 class CallHierarchyOutgoingCallsParams():
-    """The parameter of a `callHierarchy/outgoingCalls` request.
+    """
+    The parameter of a `callHierarchy/outgoingCalls` request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -2278,9 +2475,13 @@ class CallHierarchyOutgoingCallsParams():
 
 @dataclass
 class CallHierarchyOutgoingCall():
-    """Represents an outgoing call, e.g. calling a getter from a method or a method from a constructor etc.
+    """
+    Represents an outgoing call, e.g. calling a getter from a method or a method from a constructor etc.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The item that is called.
     to: "CallHierarchyItem"
@@ -2315,7 +2516,11 @@ class CallHierarchyOutgoingCall():
 
 @dataclass
 class SemanticTokensParams():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -2363,7 +2568,11 @@ class SemanticTokensParams():
 
 @dataclass
 class SemanticTokens():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional result id. If provided and clients support delta updating
     # the client will include the result id in the next semantic token request.
@@ -2404,7 +2613,11 @@ class SemanticTokens():
 
 @dataclass
 class SemanticTokensPartialResult():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     data: List[int]
 
@@ -2427,7 +2640,11 @@ class SemanticTokensPartialResult():
 
 @dataclass
 class SemanticTokensLegend():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The token types a server uses.
     tokenTypes: List[str]
@@ -2488,7 +2705,11 @@ def write_AnonymousStructure6(obj: Dict[AnonymousStructure6Keys, Any]) -> JSON_V
 
 @dataclass
 class SemanticTokensOptions():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -2545,7 +2766,11 @@ class SemanticTokensOptions():
 
 @dataclass
 class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, SemanticTokensOptions):
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -2624,7 +2849,11 @@ class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, Semanti
 
 @dataclass
 class SemanticTokensDeltaParams():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -2681,7 +2910,11 @@ class SemanticTokensDeltaParams():
 
 @dataclass
 class SemanticTokensEdit():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The start offset of the edit.
     start: int
@@ -2723,7 +2956,11 @@ class SemanticTokensEdit():
 
 @dataclass
 class SemanticTokensDelta():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     resultId: Optional[str]
     
@@ -2756,7 +2993,11 @@ class SemanticTokensDelta():
 
 @dataclass
 class SemanticTokensDeltaPartialResult():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     edits: List["SemanticTokensEdit"]
 
@@ -2779,7 +3020,11 @@ class SemanticTokensDeltaPartialResult():
 
 @dataclass
 class SemanticTokensRangeParams():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -2834,9 +3079,13 @@ class SemanticTokensRangeParams():
 
 @dataclass
 class ShowDocumentParams():
-    """Params to show a document.
+    """
+    Params to show a document.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The document uri to show.
     uri: str
@@ -2909,9 +3158,13 @@ class ShowDocumentParams():
 
 @dataclass
 class ShowDocumentResult():
-    """The result of a showDocument request.
+    """
+    The result of a showDocument request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A boolean indicating if the show was successful.
     success: bool
@@ -2935,7 +3188,11 @@ class ShowDocumentResult():
 
 @dataclass
 class LinkedEditingRangeParams(TextDocumentPositionParams):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -2977,9 +3234,13 @@ class LinkedEditingRangeParams(TextDocumentPositionParams):
 
 @dataclass
 class LinkedEditingRanges():
-    """The result of a linked editing range request.
+    """
+    The result of a linked editing range request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A list of ranges that can be edited together. The ranges must have
     # identical length and contain identical text content. The ranges cannot overlap.
@@ -3020,7 +3281,11 @@ class LinkedEditingRanges():
 
 @dataclass
 class LinkedEditingRangeOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -3047,7 +3312,11 @@ class LinkedEditingRangeOptions():
 
 @dataclass
 class LinkedEditingRangeRegistrationOptions(TextDocumentRegistrationOptions, LinkedEditingRangeOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -3095,9 +3364,13 @@ class LinkedEditingRangeRegistrationOptions(TextDocumentRegistrationOptions, Lin
 
 @dataclass
 class FileCreate():
-    """Represents information on a file/folder create.
+    """
+    Represents information on a file/folder create.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A file:// URI for the location of the file/folder being created.
     uri: str
@@ -3121,10 +3394,14 @@ class FileCreate():
 
 @dataclass
 class CreateFilesParams():
-    """The parameters sent in notifications/requests for user-initiated creation of
-files.
+    """
+    The parameters sent in notifications/requests for user-initiated creation of
+    files.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An array of all files/folders created in this operation.
     files: List["FileCreate"]
@@ -3148,7 +3425,11 @@ files.
 
 @dataclass
 class OptionalVersionedTextDocumentIdentifier(TextDocumentIdentifier):
-    """A text document identifier to optionally denote a specific version of a text document."""
+    """
+    A text document identifier to optionally denote a specific version of a text document.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document's uri.
     uri: str
@@ -3197,9 +3478,13 @@ def write_ChangeAnnotationIdentifier(arg: ChangeAnnotationIdentifier) -> JSON_VA
 
 @dataclass
 class AnnotatedTextEdit(TextEdit):
-    """A special text edit with an additional change annotation.
+    """
+    A special text edit with an additional change annotation.
+    
+    @since 3.16.0.
 
-@since 3.16.0."""
+    *Generated from the TypeScript documentation*
+    """
 
     # The range of the text document to be manipulated. To insert
     # text into a document create a range where start === end.
@@ -3241,10 +3526,14 @@ class AnnotatedTextEdit(TextEdit):
 
 @dataclass
 class TextDocumentEdit():
-    """Describes textual changes on a text document. A TextDocumentEdit describes all changes
-on a document version Si and after they are applied move the document to version Si+1.
-So the creator of a TextDocumentEdit doesn't need to sort the array of edits or do any
-kind of ordering. However the edits must be non overlapping."""
+    """
+    Describes textual changes on a text document. A TextDocumentEdit describes all changes
+    on a document version Si and after they are applied move the document to version Si+1.
+    So the creator of a TextDocumentEdit doesn't need to sort the array of edits or do any
+    kind of ordering. However the edits must be non overlapping.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document to change.
     textDocument: "OptionalVersionedTextDocumentIdentifier"
@@ -3281,7 +3570,11 @@ kind of ordering. However the edits must be non overlapping."""
 
 @dataclass
 class ResourceOperation():
-    """A generic resource operation."""
+    """
+    A generic resource operation.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The resource operation kind.
     kind: str
@@ -3320,7 +3613,11 @@ class ResourceOperation():
 
 @dataclass
 class CreateFileOptions():
-    """Options to create a file."""
+    """
+    Options to create a file.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Overwrite existing file. Overwrite wins over `ignoreIfExists`
     overwrite: Optional[bool]
@@ -3359,7 +3656,11 @@ class CreateFileOptions():
 
 @dataclass
 class CreateFile(ResourceOperation):
-    """Create file operation."""
+    """
+    Create file operation.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A create
     kind: str
@@ -3416,7 +3717,11 @@ class CreateFile(ResourceOperation):
 
 @dataclass
 class RenameFileOptions():
-    """Rename file options"""
+    """
+    Rename file options
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Overwrite target if existing. Overwrite wins over `ignoreIfExists`
     overwrite: Optional[bool]
@@ -3455,7 +3760,11 @@ class RenameFileOptions():
 
 @dataclass
 class RenameFile(ResourceOperation):
-    """Rename file operation"""
+    """
+    Rename file operation
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A rename
     kind: str
@@ -3519,7 +3828,11 @@ class RenameFile(ResourceOperation):
 
 @dataclass
 class DeleteFileOptions():
-    """Delete file options"""
+    """
+    Delete file options
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Delete the content recursively if a folder is denoted.
     recursive: Optional[bool]
@@ -3558,7 +3871,11 @@ class DeleteFileOptions():
 
 @dataclass
 class DeleteFile(ResourceOperation):
-    """Delete file operation"""
+    """
+    Delete file operation
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A delete
     kind: str
@@ -3615,9 +3932,13 @@ class DeleteFile(ResourceOperation):
 
 @dataclass
 class ChangeAnnotation():
-    """Additional information that describes document changes.
+    """
+    Additional information that describes document changes.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A human-readable string describing the actual change. The string
     # is rendered prominent in the user interface.
@@ -3669,18 +3990,22 @@ class ChangeAnnotation():
 
 @dataclass
 class WorkspaceEdit():
-    """A workspace edit represents changes to many resources managed in the workspace. The edit
-should either provide `changes` or `documentChanges`. If documentChanges are present
-they are preferred over `changes` if the client can handle versioned document edits.
+    """
+    A workspace edit represents changes to many resources managed in the workspace. The edit
+    should either provide `changes` or `documentChanges`. If documentChanges are present
+    they are preferred over `changes` if the client can handle versioned document edits.
+    
+    Since version 3.13.0 a workspace edit can contain resource operations as well. If resource
+    operations are present clients need to execute the operations in the order in which they
+    are provided. So a workspace edit for example can consist of the following two changes:
+    (1) a create file a.txt and (2) a text document edit which insert text into file a.txt.
+    
+    An invalid sequence (e.g. (1) delete file a.txt and (2) insert text into file a.txt) will
+    cause failure of the operation. How the client recovers from the failure is described by
+    the client capability: `workspace.workspaceEdit.failureHandling`
 
-Since version 3.13.0 a workspace edit can contain resource operations as well. If resource
-operations are present clients need to execute the operations in the order in which they
-are provided. So a workspace edit for example can consist of the following two changes:
-(1) a create file a.txt and (2) a text document edit which insert text into file a.txt.
-
-An invalid sequence (e.g. (1) delete file a.txt and (2) insert text into file a.txt) will
-cause failure of the operation. How the client recovers from the failure is described by
-the client capability: `workspace.workspaceEdit.failureHandling`"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Holds changes to existing resources.
     changes: Optional[Dict[str, List["TextEdit"]]]
@@ -3758,9 +4083,13 @@ the client capability: `workspace.workspaceEdit.failureHandling`"""
 
 @dataclass
 class FileOperationPatternOptions():
-    """Matching options for the file operation pattern.
+    """
+    Matching options for the file operation pattern.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The pattern should be matched ignoring casing.
     ignoreCase: Optional[bool]
@@ -3788,10 +4117,14 @@ class FileOperationPatternOptions():
 
 @dataclass
 class FileOperationPattern():
-    """A pattern to describe in which file operation requests or notifications
-the server is interested in receiving.
+    """
+    A pattern to describe in which file operation requests or notifications
+    the server is interested in receiving.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The glob pattern to match. Glob patterns can have the following syntax:
     # - `*` to match one or more characters in a path segment
@@ -3853,10 +4186,14 @@ the server is interested in receiving.
 
 @dataclass
 class FileOperationFilter():
-    """A filter to describe in which file operation requests or notifications
-the server is interested in receiving.
+    """
+    A filter to describe in which file operation requests or notifications
+    the server is interested in receiving.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A Uri scheme like `file` or `untitled`.
     scheme: Optional[str]
@@ -3891,9 +4228,13 @@ the server is interested in receiving.
 
 @dataclass
 class FileOperationRegistrationOptions():
-    """The options to register for file operations.
+    """
+    The options to register for file operations.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The actual filters.
     filters: List["FileOperationFilter"]
@@ -3917,9 +4258,13 @@ class FileOperationRegistrationOptions():
 
 @dataclass
 class FileRename():
-    """Represents information on a file/folder rename.
+    """
+    Represents information on a file/folder rename.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A file:// URI for the original location of the file/folder being renamed.
     oldUri: str
@@ -3950,10 +4295,14 @@ class FileRename():
 
 @dataclass
 class RenameFilesParams():
-    """The parameters sent in notifications/requests for user-initiated renames of
-files.
+    """
+    The parameters sent in notifications/requests for user-initiated renames of
+    files.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An array of all files/folders renamed in this operation. When a folder is renamed, only
     # the folder will be included, and not its children.
@@ -3979,9 +4328,13 @@ files.
 
 @dataclass
 class FileDelete():
-    """Represents information on a file/folder delete.
+    """
+    Represents information on a file/folder delete.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A file:// URI for the location of the file/folder being deleted.
     uri: str
@@ -4005,10 +4358,14 @@ class FileDelete():
 
 @dataclass
 class DeleteFilesParams():
-    """The parameters sent in notifications/requests for user-initiated deletes of
-files.
+    """
+    The parameters sent in notifications/requests for user-initiated deletes of
+    files.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An array of all files/folders deleted in this operation.
     files: List["FileDelete"]
@@ -4032,7 +4389,11 @@ files.
 
 @dataclass
 class MonikerParams(TextDocumentPositionParams):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -4087,9 +4448,13 @@ class MonikerParams(TextDocumentPositionParams):
 
 @dataclass
 class Moniker():
-    """Moniker definition to match LSIF 0.5 moniker definition.
+    """
+    Moniker definition to match LSIF 0.5 moniker definition.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The scheme of the moniker. For example tsc or .Net
     scheme: str
@@ -4140,7 +4505,11 @@ class Moniker():
 
 @dataclass
 class MonikerOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -4167,7 +4536,11 @@ class MonikerOptions():
 
 @dataclass
 class MonikerRegistrationOptions(TextDocumentRegistrationOptions, MonikerOptions):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -4202,9 +4575,13 @@ class MonikerRegistrationOptions(TextDocumentRegistrationOptions, MonikerOptions
 
 @dataclass
 class TypeHierarchyPrepareParams(TextDocumentPositionParams):
-    """The parameter of a `textDocument/prepareTypeHierarchy` request.
+    """
+    The parameter of a `textDocument/prepareTypeHierarchy` request.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -4246,7 +4623,11 @@ class TypeHierarchyPrepareParams(TextDocumentPositionParams):
 
 @dataclass
 class TypeHierarchyItem():
-    """@since 3.17.0"""
+    """
+    @since 3.17.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The name of this item.
     name: str
@@ -4343,9 +4724,13 @@ class TypeHierarchyItem():
 
 @dataclass
 class TypeHierarchyOptions():
-    """Type hierarchy options used during static registration.
+    """
+    Type hierarchy options used during static registration.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -4372,9 +4757,13 @@ class TypeHierarchyOptions():
 
 @dataclass
 class TypeHierarchyRegistrationOptions(TextDocumentRegistrationOptions, TypeHierarchyOptions):
-    """Type hierarchy options used during static or dynamic registration.
+    """
+    Type hierarchy options used during static or dynamic registration.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -4422,9 +4811,13 @@ class TypeHierarchyRegistrationOptions(TextDocumentRegistrationOptions, TypeHier
 
 @dataclass
 class TypeHierarchySupertypesParams():
-    """The parameter of a `typeHierarchy/supertypes` request.
+    """
+    The parameter of a `typeHierarchy/supertypes` request.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -4470,9 +4863,13 @@ class TypeHierarchySupertypesParams():
 
 @dataclass
 class TypeHierarchySubtypesParams():
-    """The parameter of a `typeHierarchy/subtypes` request.
+    """
+    The parameter of a `typeHierarchy/subtypes` request.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -4518,7 +4915,11 @@ class TypeHierarchySubtypesParams():
 
 @dataclass
 class InlineValueContext():
-    """@since 3.17.0"""
+    """
+    @since 3.17.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The stack frame (as a DAP Id) where the execution has stopped.
     frameId: int
@@ -4551,9 +4952,13 @@ class InlineValueContext():
 
 @dataclass
 class InlineValueParams():
-    """A parameter literal used in inline value requests.
+    """
+    A parameter literal used in inline value requests.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -4604,9 +5009,13 @@ class InlineValueParams():
 
 @dataclass
 class InlineValueOptions():
-    """Inline value options used during static registration.
+    """
+    Inline value options used during static registration.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -4633,9 +5042,13 @@ class InlineValueOptions():
 
 @dataclass
 class InlineValueRegistrationOptions(InlineValueOptions, TextDocumentRegistrationOptions):
-    """Inline value options used during static or dynamic registration.
+    """
+    Inline value options used during static or dynamic registration.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -4683,9 +5096,13 @@ class InlineValueRegistrationOptions(InlineValueOptions, TextDocumentRegistratio
 
 @dataclass
 class InlayHintParams():
-    """A parameter literal used in inlay hint requests.
+    """
+    A parameter literal used in inlay hint requests.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -4727,28 +5144,32 @@ class InlayHintParams():
 
 @dataclass
 class MarkupContent():
-    """A `MarkupContent` literal represents a string value which content is interpreted base on its
-kind flag. Currently the protocol supports `plaintext` and `markdown` as markup kinds.
+    """
+    A `MarkupContent` literal represents a string value which content is interpreted base on its
+    kind flag. Currently the protocol supports `plaintext` and `markdown` as markup kinds.
+    
+    If the kind is `markdown` then the value can contain fenced code blocks like in GitHub issues.
+    See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
+    
+    Here is an example how such a string can be constructed using JavaScript / TypeScript:
+    ```ts
+    let markdown: MarkdownContent = {
+     kind: MarkupKind.Markdown,
+     value: [
+       '# Header',
+       'Some text',
+       '```typescript',
+       'someCode();',
+       '```'
+     ].join('\n')
+    };
+    ```
+    
+    *Please Note* that clients might sanitize the return markdown. A client could decide to
+    remove HTML from the markdown to avoid script execution.
 
-If the kind is `markdown` then the value can contain fenced code blocks like in GitHub issues.
-See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
-
-Here is an example how such a string can be constructed using JavaScript / TypeScript:
-```ts
-let markdown: MarkdownContent = {
- kind: MarkupKind.Markdown,
- value: [
-   '# Header',
-   'Some text',
-   '```typescript',
-   'someCode();',
-   '```'
- ].join('\n')
-};
-```
-
-*Please Note* that clients might sanitize the return markdown. A client could decide to
-remove HTML from the markdown to avoid script execution."""
+    *Generated from the TypeScript documentation*
+    """
 
     # The type of the Markup
     kind: "MarkupKind"
@@ -4779,10 +5200,14 @@ remove HTML from the markdown to avoid script execution."""
 
 @dataclass
 class Command():
-    """Represents a reference to a command. Provides a title which
-will be used to represent a command in the UI and, optionally,
-an array of arguments which will be passed to the command handler
-function when invoked."""
+    """
+    Represents a reference to a command. Provides a title which
+    will be used to represent a command in the UI and, optionally,
+    an array of arguments which will be passed to the command handler
+    function when invoked.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Title of the command, like `save`.
     title: str
@@ -4826,10 +5251,14 @@ function when invoked."""
 
 @dataclass
 class InlayHintLabelPart():
-    """An inlay hint label part allows for interactive and composite labels
-of inlay hints.
+    """
+    An inlay hint label part allows for interactive and composite labels
+    of inlay hints.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The value of this label part.
     value: str
@@ -4916,9 +5345,13 @@ of inlay hints.
 
 @dataclass
 class InlayHint():
-    """Inlay hint information.
+    """
+    Inlay hint information.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The position of this hint.
     position: "Position"
@@ -5049,9 +5482,13 @@ class InlayHint():
 
 @dataclass
 class InlayHintOptions():
-    """Inlay hint options used during static registration.
+    """
+    Inlay hint options used during static registration.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -5090,9 +5527,13 @@ class InlayHintOptions():
 
 @dataclass
 class InlayHintRegistrationOptions(InlayHintOptions, TextDocumentRegistrationOptions):
-    """Inlay hint options used during static or dynamic registration.
+    """
+    Inlay hint options used during static or dynamic registration.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -5153,9 +5594,13 @@ class InlayHintRegistrationOptions(InlayHintOptions, TextDocumentRegistrationOpt
 
 @dataclass
 class DocumentDiagnosticParams():
-    """Parameters of the document diagnostic request.
+    """
+    Parameters of the document diagnostic request.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -5225,9 +5670,13 @@ class DocumentDiagnosticParams():
 
 @dataclass
 class DocumentDiagnosticReportPartialResult():
-    """A partial result for a document diagnostic report.
+    """
+    A partial result for a document diagnostic report.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     relatedDocuments: Dict[str, Union["FullDocumentDiagnosticReport", "UnchangedDocumentDiagnosticReport"]]
 
@@ -5250,9 +5699,13 @@ class DocumentDiagnosticReportPartialResult():
 
 @dataclass
 class DiagnosticServerCancellationData():
-    """Cancellation data returned from a diagnostic request.
+    """
+    Cancellation data returned from a diagnostic request.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     retriggerRequest: bool
 
@@ -5275,9 +5728,13 @@ class DiagnosticServerCancellationData():
 
 @dataclass
 class DiagnosticOptions():
-    """Diagnostic options.
+    """
+    Diagnostic options.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -5336,9 +5793,13 @@ class DiagnosticOptions():
 
 @dataclass
 class DiagnosticRegistrationOptions(TextDocumentRegistrationOptions, DiagnosticOptions):
-    """Diagnostic registration options.
+    """
+    Diagnostic registration options.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -5419,9 +5880,13 @@ class DiagnosticRegistrationOptions(TextDocumentRegistrationOptions, DiagnosticO
 
 @dataclass
 class PreviousResultId():
-    """A previous result id in a workspace pull request.
+    """
+    A previous result id in a workspace pull request.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The URI for which the client knowns a
     # result id.
@@ -5454,9 +5919,13 @@ class PreviousResultId():
 
 @dataclass
 class WorkspaceDiagnosticParams():
-    """Parameters of the workspace diagnostic request.
+    """
+    Parameters of the workspace diagnostic request.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -5517,9 +5986,13 @@ class WorkspaceDiagnosticParams():
 
 @dataclass
 class CodeDescription():
-    """Structure to capture a description for an error code.
+    """
+    Structure to capture a description for an error code.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An URI to open with more information about the diagnostic error.
     href: str
@@ -5543,9 +6016,13 @@ class CodeDescription():
 
 @dataclass
 class DiagnosticRelatedInformation():
-    """Represents a related message and source code location for a diagnostic. This should be
-used to point to code locations that cause or related to a diagnostics, e.g when duplicating
-a symbol in a scope."""
+    """
+    Represents a related message and source code location for a diagnostic. This should be
+    used to point to code locations that cause or related to a diagnostics, e.g when duplicating
+    a symbol in a scope.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The location of this related diagnostic information.
     location: "Location"
@@ -5576,8 +6053,12 @@ a symbol in a scope."""
 
 @dataclass
 class Diagnostic():
-    """Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
-are only valid in the scope of a resource."""
+    """
+    Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
+    are only valid in the scope of a resource.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The range at which the message applies
     range: "Range"
@@ -5709,9 +6190,13 @@ are only valid in the scope of a resource."""
 
 @dataclass
 class FullDocumentDiagnosticReport():
-    """A diagnostic report with a full set of problems.
+    """
+    A diagnostic report with a full set of problems.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A full document diagnostic report.
     kind: str
@@ -5757,9 +6242,13 @@ class FullDocumentDiagnosticReport():
 
 @dataclass
 class WorkspaceFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
-    """A full document diagnostic report for a workspace diagnostic result.
+    """
+    A full document diagnostic report for a workspace diagnostic result.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A full document diagnostic report.
     kind: str
@@ -5821,10 +6310,14 @@ class WorkspaceFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
 
 @dataclass
 class UnchangedDocumentDiagnosticReport():
-    """A diagnostic report indicating that the last returned
-report is still accurate.
+    """
+    A diagnostic report indicating that the last returned
+    report is still accurate.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A document diagnostic report indicating
     # no changes to the last result. A server can
@@ -5863,9 +6356,13 @@ report is still accurate.
 
 @dataclass
 class WorkspaceUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport):
-    """An unchanged document diagnostic report for a workspace diagnostic result.
+    """
+    An unchanged document diagnostic report for a workspace diagnostic result.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A document diagnostic report indicating
     # no changes to the last result. A server can
@@ -5932,9 +6429,13 @@ def write_WorkspaceDocumentDiagnosticReport(arg: WorkspaceDocumentDiagnosticRepo
 
 @dataclass
 class WorkspaceDiagnosticReport():
-    """A workspace diagnostic report.
+    """
+    A workspace diagnostic report.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     items: List["WorkspaceDocumentDiagnosticReport"]
 
@@ -5957,9 +6458,13 @@ class WorkspaceDiagnosticReport():
 
 @dataclass
 class WorkspaceDiagnosticReportPartialResult():
-    """A partial result for a workspace diagnostic report.
+    """
+    A partial result for a workspace diagnostic report.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     items: List["WorkspaceDocumentDiagnosticReport"]
 
@@ -5982,7 +6487,11 @@ class WorkspaceDiagnosticReportPartialResult():
 
 @dataclass
 class ExecutionSummary():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A strict monotonically increasing value
     # indicating the execution order of a cell
@@ -6023,13 +6532,17 @@ class ExecutionSummary():
 
 @dataclass
 class NotebookCell():
-    """A notebook cell.
+    """
+    A notebook cell.
+    
+    A cell's document URI must be unique across ALL notebook
+    cells and can therefore be used to uniquely identify a
+    notebook cell or the cell's text document.
+    
+    @since 3.17.0
 
-A cell's document URI must be unique across ALL notebook
-cells and can therefore be used to uniquely identify a
-notebook cell or the cell's text document.
-
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The cell's kind
     kind: "NotebookCellKind"
@@ -6090,9 +6603,13 @@ notebook cell or the cell's text document.
 
 @dataclass
 class NotebookDocument():
-    """A notebook document.
+    """
+    A notebook document.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebook document's uri.
     uri: str
@@ -6156,8 +6673,12 @@ class NotebookDocument():
 
 @dataclass
 class TextDocumentItem():
-    """An item to transfer a text document from the client to the
-server."""
+    """
+    An item to transfer a text document from the client to the
+    server.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document's uri.
     uri: str
@@ -6204,9 +6725,13 @@ server."""
 
 @dataclass
 class DidOpenNotebookDocumentParams():
-    """The params sent in an open notebook document notification.
+    """
+    The params sent in an open notebook document notification.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebook document that got opened.
     notebookDocument: "NotebookDocument"
@@ -6239,9 +6764,13 @@ class DidOpenNotebookDocumentParams():
 
 @dataclass
 class VersionedNotebookDocumentIdentifier():
-    """A versioned notebook document identifier.
+    """
+    A versioned notebook document identifier.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The version number of this notebook document.
     version: int
@@ -6272,10 +6801,14 @@ class VersionedNotebookDocumentIdentifier():
 
 @dataclass
 class NotebookCellArrayChange():
-    """A change describing how to move a `NotebookCell`
-array from state S to S'.
+    """
+    A change describing how to move a `NotebookCell`
+    array from state S to S'.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The start oftest of the cell that changed.
     start: int
@@ -6342,7 +6875,11 @@ def write_AnonymousStructure7(obj: Dict[AnonymousStructure7Keys, Any]) -> JSON_V
 
 @dataclass
 class VersionedTextDocumentIdentifier(TextDocumentIdentifier):
-    """A text document identifier to denote a specific version of a text document."""
+    """
+    A text document identifier to denote a specific version of a text document.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document's uri.
     uri: str
@@ -6462,9 +6999,13 @@ def write_AnonymousStructure9(obj: Dict[AnonymousStructure9Keys, Any]) -> JSON_V
 
 @dataclass
 class NotebookDocumentChangeEvent():
-    """A change event for a notebook document.
+    """
+    A change event for a notebook document.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The changed meta data if any.
     # 
@@ -6507,9 +7048,13 @@ class NotebookDocumentChangeEvent():
 
 @dataclass
 class DidChangeNotebookDocumentParams():
-    """The params sent in a change notebook document notification.
+    """
+    The params sent in a change notebook document notification.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebook document that did change. The version number points
     # to the version after all provided changes have been applied. If
@@ -6570,9 +7115,13 @@ class DidChangeNotebookDocumentParams():
 
 @dataclass
 class NotebookDocumentIdentifier():
-    """A literal to identify a notebook document in the client.
+    """
+    A literal to identify a notebook document in the client.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebook document's uri.
     uri: str
@@ -6596,9 +7145,13 @@ class NotebookDocumentIdentifier():
 
 @dataclass
 class DidSaveNotebookDocumentParams():
-    """The params sent in a save notebook document notification.
+    """
+    The params sent in a save notebook document notification.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebook document that got saved.
     notebookDocument: "NotebookDocumentIdentifier"
@@ -6622,9 +7175,13 @@ class DidSaveNotebookDocumentParams():
 
 @dataclass
 class DidCloseNotebookDocumentParams():
-    """The params sent in a close notebook document notification.
+    """
+    The params sent in a close notebook document notification.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebook document that got closed.
     notebookDocument: "NotebookDocumentIdentifier"
@@ -6657,7 +7214,11 @@ class DidCloseNotebookDocumentParams():
 
 @dataclass
 class Registration():
-    """General parameters to to register for an notification or to register a provider."""
+    """
+    General parameters to to register for an notification or to register a provider.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The id used to register the request. The id can be used to deregister
     # the request again.
@@ -6701,7 +7262,11 @@ class Registration():
 
 @dataclass
 class RegistrationParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     registrations: List["Registration"]
 
@@ -6724,7 +7289,11 @@ class RegistrationParams():
 
 @dataclass
 class Unregistration():
-    """General parameters to unregister a request or notification."""
+    """
+    General parameters to unregister a request or notification.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The id used to unregister the request or notification. Usually an id
     # provided during the register request.
@@ -6757,7 +7326,11 @@ class Unregistration():
 
 @dataclass
 class UnregistrationParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     unregisterations: List["Unregistration"]
 
@@ -6816,7 +7389,11 @@ def write_AnonymousStructure17(obj: Dict[AnonymousStructure17Keys, Any]) -> JSON
 
 @dataclass
 class WorkspaceEditClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The client supports versioned document changes in `WorkspaceEdit`s
     documentChanges: Optional[bool]
@@ -6918,7 +7495,11 @@ class WorkspaceEditClientCapabilities():
 
 @dataclass
 class DidChangeConfigurationClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Did change configuration notification supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -6946,7 +7527,11 @@ class DidChangeConfigurationClientCapabilities():
 
 @dataclass
 class DidChangeWatchedFilesClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Did change watched files notification supports dynamic registration. Please note
     # that the current protocol doesn't support static configuration for file changes
@@ -7038,7 +7623,11 @@ def write_AnonymousStructure20(obj: Dict[AnonymousStructure20Keys, Any]) -> JSON
 
 @dataclass
 class WorkspaceSymbolClientCapabilities():
-    """Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."""
+    """
+    Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Symbol request supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -7113,7 +7702,11 @@ class WorkspaceSymbolClientCapabilities():
 
 @dataclass
 class ExecuteCommandClientCapabilities():
-    """The client capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest)."""
+    """
+    The client capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Execute command supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -7141,7 +7734,11 @@ class ExecuteCommandClientCapabilities():
 
 @dataclass
 class SemanticTokensWorkspaceClientCapabilities():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether the client implementation supports a refresh request sent from
     # the server to the client.
@@ -7181,7 +7778,11 @@ class SemanticTokensWorkspaceClientCapabilities():
 
 @dataclass
 class CodeLensWorkspaceClientCapabilities():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether the client implementation supports a refresh request sent from the
     # server to the client.
@@ -7221,12 +7822,16 @@ class CodeLensWorkspaceClientCapabilities():
 
 @dataclass
 class FileOperationClientCapabilities():
-    """Capabilities relating to events from file operations by the user in the client.
+    """
+    Capabilities relating to events from file operations by the user in the client.
+    
+    These events do not come from the file system, they come from user operations
+    like renaming a file in the UI.
+    
+    @since 3.16.0
 
-These events do not come from the file system, they come from user operations
-like renaming a file in the UI.
-
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether the client supports dynamic registration for file requests/notifications.
     dynamicRegistration: Optional[bool]
@@ -7320,9 +7925,13 @@ like renaming a file in the UI.
 
 @dataclass
 class InlineValueWorkspaceClientCapabilities():
-    """Client workspace capabilities specific to inline values.
+    """
+    Client workspace capabilities specific to inline values.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether the client implementation supports a refresh request sent from the
     # server to the client.
@@ -7362,9 +7971,13 @@ class InlineValueWorkspaceClientCapabilities():
 
 @dataclass
 class InlayHintWorkspaceClientCapabilities():
-    """Client workspace capabilities specific to inlay hints.
+    """
+    Client workspace capabilities specific to inlay hints.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether the client implementation supports a refresh request sent from
     # the server to the client.
@@ -7404,9 +8017,13 @@ class InlayHintWorkspaceClientCapabilities():
 
 @dataclass
 class DiagnosticWorkspaceClientCapabilities():
-    """Workspace client capabilities specific to diagnostic pull requests.
+    """
+    Workspace client capabilities specific to diagnostic pull requests.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether the client implementation supports a refresh request sent from
     # the server to the client.
@@ -7446,7 +8063,11 @@ class DiagnosticWorkspaceClientCapabilities():
 
 @dataclass
 class WorkspaceClientCapabilities():
-    """Workspace specific client capabilities."""
+    """
+    Workspace specific client capabilities.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The client supports applying batch edits
     # to the workspace by supporting the request
@@ -7663,7 +8284,11 @@ class WorkspaceClientCapabilities():
 
 @dataclass
 class TextDocumentSyncClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether text document synchronization supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -7872,7 +8497,11 @@ def write_AnonymousStructure26(obj: Dict[AnonymousStructure26Keys, Any]) -> JSON
 
 @dataclass
 class CompletionClientCapabilities():
-    """Completion client capabilities"""
+    """
+    Completion client capabilities
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether completion supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -7971,7 +8600,11 @@ class CompletionClientCapabilities():
 
 @dataclass
 class HoverClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether hover supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8058,7 +8691,11 @@ def write_AnonymousStructure28(obj: Dict[AnonymousStructure28Keys, Any]) -> JSON
 
 @dataclass
 class SignatureHelpClientCapabilities():
-    """Client Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest)."""
+    """
+    Client Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether signature help supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8120,7 +8757,11 @@ class SignatureHelpClientCapabilities():
 
 @dataclass
 class DeclarationClientCapabilities():
-    """@since 3.14.0"""
+    """
+    @since 3.14.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether declaration supports dynamic registration. If this is set to `true`
     # the client supports the new `DeclarationRegistrationOptions` return value
@@ -8163,7 +8804,11 @@ class DeclarationClientCapabilities():
 
 @dataclass
 class DefinitionClientCapabilities():
-    """Client Capabilities for a [DefinitionRequest](#DefinitionRequest)."""
+    """
+    Client Capabilities for a [DefinitionRequest](#DefinitionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether definition supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8206,7 +8851,11 @@ class DefinitionClientCapabilities():
 
 @dataclass
 class TypeDefinitionClientCapabilities():
-    """Since 3.6.0"""
+    """
+    Since 3.6.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `TypeDefinitionRegistrationOptions` return value
@@ -8253,7 +8902,11 @@ class TypeDefinitionClientCapabilities():
 
 @dataclass
 class ImplementationClientCapabilities():
-    """@since 3.6.0"""
+    """
+    @since 3.6.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `ImplementationRegistrationOptions` return value
@@ -8300,7 +8953,11 @@ class ImplementationClientCapabilities():
 
 @dataclass
 class ReferenceClientCapabilities():
-    """Client Capabilities for a [ReferencesRequest](#ReferencesRequest)."""
+    """
+    Client Capabilities for a [ReferencesRequest](#ReferencesRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether references supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8328,7 +8985,11 @@ class ReferenceClientCapabilities():
 
 @dataclass
 class DocumentHighlightClientCapabilities():
-    """Client Capabilities for a [DocumentHighlightRequest](#DocumentHighlightRequest)."""
+    """
+    Client Capabilities for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether document highlight supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8356,7 +9017,11 @@ class DocumentHighlightClientCapabilities():
 
 @dataclass
 class DocumentSymbolClientCapabilities():
-    """Client Capabilities for a [DocumentSymbolRequest](#DocumentSymbolRequest)."""
+    """
+    Client Capabilities for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether document symbol supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8470,7 +9135,11 @@ def write_AnonymousStructure30(obj: Dict[AnonymousStructure30Keys, Any]) -> JSON
 
 @dataclass
 class CodeActionClientCapabilities():
-    """The Client Capabilities of a [CodeActionRequest](#CodeActionRequest)."""
+    """
+    The Client Capabilities of a [CodeActionRequest](#CodeActionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether code action supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8606,7 +9275,11 @@ class CodeActionClientCapabilities():
 
 @dataclass
 class CodeLensClientCapabilities():
-    """The client capabilities  of a [CodeLensRequest](#CodeLensRequest)."""
+    """
+    The client capabilities  of a [CodeLensRequest](#CodeLensRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether code lens supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8634,7 +9307,11 @@ class CodeLensClientCapabilities():
 
 @dataclass
 class DocumentLinkClientCapabilities():
-    """The client capabilities of a [DocumentLinkRequest](#DocumentLinkRequest)."""
+    """
+    The client capabilities of a [DocumentLinkRequest](#DocumentLinkRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether document link supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8677,7 +9354,11 @@ class DocumentLinkClientCapabilities():
 
 @dataclass
 class DocumentColorClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `DocumentColorRegistrationOptions` return value
@@ -8709,7 +9390,11 @@ class DocumentColorClientCapabilities():
 
 @dataclass
 class DocumentFormattingClientCapabilities():
-    """Client capabilities of a [DocumentFormattingRequest](#DocumentFormattingRequest)."""
+    """
+    Client capabilities of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether formatting supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8737,7 +9422,11 @@ class DocumentFormattingClientCapabilities():
 
 @dataclass
 class DocumentRangeFormattingClientCapabilities():
-    """Client capabilities of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."""
+    """
+    Client capabilities of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether range formatting supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8765,7 +9454,11 @@ class DocumentRangeFormattingClientCapabilities():
 
 @dataclass
 class DocumentOnTypeFormattingClientCapabilities():
-    """Client capabilities of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."""
+    """
+    Client capabilities of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether on type formatting supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8793,7 +9486,11 @@ class DocumentOnTypeFormattingClientCapabilities():
 
 @dataclass
 class RenameClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether rename supports dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -8916,7 +9613,11 @@ def write_AnonymousStructure32(obj: Dict[AnonymousStructure32Keys, Any]) -> JSON
 
 @dataclass
 class FoldingRangeClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration for folding range
     # providers. If this is set to `true` the client supports the new
@@ -9010,7 +9711,11 @@ class FoldingRangeClientCapabilities():
 
 @dataclass
 class SelectionRangeClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
     # the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
@@ -9055,7 +9760,11 @@ def write_AnonymousStructure33(obj: Dict[AnonymousStructure33Keys, Any]) -> JSON
 
 @dataclass
 class PublishDiagnosticsClientCapabilities():
-    """The publish diagnostic client capabilities."""
+    """
+    The publish diagnostic client capabilities.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether the clients accepts diagnostics with related information.
     relatedInformation: Optional[bool]
@@ -9151,7 +9860,11 @@ class PublishDiagnosticsClientCapabilities():
 
 @dataclass
 class CallHierarchyClientCapabilities():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
@@ -9223,7 +9936,11 @@ def write_AnonymousStructure35(obj: Dict[AnonymousStructure35Keys, Any]) -> JSON
 
 @dataclass
 class SemanticTokensClientCapabilities():
-    """@since 3.16.0"""
+    """
+    @since 3.16.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
@@ -9369,9 +10086,13 @@ class SemanticTokensClientCapabilities():
 
 @dataclass
 class LinkedEditingRangeClientCapabilities():
-    """Client capabilities for the linked editing range request.
+    """
+    Client capabilities for the linked editing range request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
@@ -9403,9 +10124,13 @@ class LinkedEditingRangeClientCapabilities():
 
 @dataclass
 class MonikerClientCapabilities():
-    """Client capabilities specific to the moniker request.
+    """
+    Client capabilities specific to the moniker request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether moniker supports dynamic registration. If this is set to `true`
     # the client supports the new `MonikerRegistrationOptions` return value
@@ -9437,7 +10162,11 @@ class MonikerClientCapabilities():
 
 @dataclass
 class TypeHierarchyClientCapabilities():
-    """@since 3.17.0"""
+    """
+    @since 3.17.0
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
@@ -9469,9 +10198,13 @@ class TypeHierarchyClientCapabilities():
 
 @dataclass
 class InlineValueClientCapabilities():
-    """Client capabilities specific to inline values.
+    """
+    Client capabilities specific to inline values.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration for inline value providers.
     dynamicRegistration: Optional[bool]
@@ -9499,9 +10232,13 @@ class InlineValueClientCapabilities():
 
 @dataclass
 class InlayHintClientCapabilities():
-    """Inlay hint client capabilities.
+    """
+    Inlay hint client capabilities.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether inlay hints support dynamic registration.
     dynamicRegistration: Optional[bool]
@@ -9542,9 +10279,13 @@ class InlayHintClientCapabilities():
 
 @dataclass
 class DiagnosticClientCapabilities():
-    """Client capabilities specific to diagnostic pull requests.
+    """
+    Client capabilities specific to diagnostic pull requests.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is set to `true`
     # the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
@@ -9587,7 +10328,11 @@ class DiagnosticClientCapabilities():
 
 @dataclass
 class TextDocumentClientCapabilities():
-    """Text document specific client capabilities."""
+    """
+    Text document specific client capabilities.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Defines which synchronization capabilities the client supports.
     synchronization: Optional["TextDocumentSyncClientCapabilities"]
@@ -9992,9 +10737,13 @@ class TextDocumentClientCapabilities():
 
 @dataclass
 class NotebookDocumentSyncClientCapabilities():
-    """Notebook specific client capabilities.
+    """
+    Notebook specific client capabilities.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Whether implementation supports dynamic registration. If this is
     # set to `true` the client supports the new
@@ -10039,9 +10788,13 @@ class NotebookDocumentSyncClientCapabilities():
 
 @dataclass
 class NotebookDocumentClientCapabilities():
-    """Capabilities specific to the notebook document support.
+    """
+    Capabilities specific to the notebook document support.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Capabilities specific to notebook document synchronization
     # 
@@ -10086,7 +10839,11 @@ def write_AnonymousStructure36(obj: Dict[AnonymousStructure36Keys, Any]) -> JSON
 
 @dataclass
 class ShowMessageRequestClientCapabilities():
-    """Show message request client capabilities"""
+    """
+    Show message request client capabilities
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Capabilities specific to the `MessageActionItem` type.
     messageActionItem: Optional[Dict[AnonymousStructure36Keys, Any]]
@@ -10114,9 +10871,13 @@ class ShowMessageRequestClientCapabilities():
 
 @dataclass
 class ShowDocumentClientCapabilities():
-    """Client capabilities for the showDocument request.
+    """
+    Client capabilities for the showDocument request.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The client has support for the showDocument
     # request.
@@ -10142,7 +10903,11 @@ class ShowDocumentClientCapabilities():
 
 @dataclass
 class WindowClientCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # It indicates whether the client supports server initiated
     # progress using the `window/workDoneProgress/create` request.
@@ -10231,9 +10996,13 @@ def write_AnonymousStructure16(obj: Dict[AnonymousStructure16Keys, Any]) -> JSON
 
 @dataclass
 class RegularExpressionsClientCapabilities():
-    """Client capabilities specific to regular expressions.
+    """
+    Client capabilities specific to regular expressions.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The engine's name.
     engine: str
@@ -10268,9 +11037,13 @@ class RegularExpressionsClientCapabilities():
 
 @dataclass
 class MarkdownClientCapabilities():
-    """Client capabilities specific to the used markdown parser.
+    """
+    Client capabilities specific to the used markdown parser.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The name of the parser.
     parser: str
@@ -10322,9 +11095,13 @@ class MarkdownClientCapabilities():
 
 @dataclass
 class GeneralClientCapabilities():
-    """General client capabilities.
+    """
+    General client capabilities.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Client capability that signals how the client
     # handles stale requests (e.g. a request
@@ -10437,7 +11214,11 @@ class GeneralClientCapabilities():
 
 @dataclass
 class ClientCapabilities():
-    """Defines the capabilities provided by the client."""
+    """
+    Defines the capabilities provided by the client.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Workspace specific client capabilities.
     workspace: Optional["WorkspaceClientCapabilities"]
@@ -10528,7 +11309,11 @@ class ClientCapabilities():
 
 @dataclass
 class _InitializeParams():
-    """The initialize parameters"""
+    """
+    The initialize parameters
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -10672,7 +11457,11 @@ class _InitializeParams():
 
 @dataclass
 class WorkspaceFoldersInitializeParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The workspace folders configured in the client when the server starts.
     # 
@@ -10712,7 +11501,11 @@ class WorkspaceFoldersInitializeParams():
 
 @dataclass
 class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -10879,7 +11672,11 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
 
 @dataclass
 class SaveOptions():
-    """Save options."""
+    """
+    Save options.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The client is supposed to include the content on save.
     includeText: Optional[bool]
@@ -10907,7 +11704,11 @@ class SaveOptions():
 
 @dataclass
 class TextDocumentSyncOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Open and close notifications are sent to the server. If omitted open close notification should not
     # be sent.
@@ -11040,19 +11841,23 @@ def write_AnonymousStructure15(obj: Dict[AnonymousStructure15Keys, Any]) -> JSON
 
 @dataclass
 class NotebookDocumentSyncOptions():
-    """Options specific to a notebook plus its cells
-to be synced to the server.
+    """
+    Options specific to a notebook plus its cells
+    to be synced to the server.
+    
+    If a selector provides a notebook document
+    filter but no cell selector all cells of a
+    matching notebook document will be synced.
+    
+    If a selector provides no notebook document
+    filter but only a cell selector all notebook
+    document that contain at least one matching
+    cell will be synced.
+    
+    @since 3.17.0
 
-If a selector provides a notebook document
-filter but no cell selector all cells of a
-matching notebook document will be synced.
-
-If a selector provides no notebook document
-filter but only a cell selector all notebook
-document that contain at least one matching
-cell will be synced.
-
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebooks to be synced
     notebookSelector: List[Union[Dict[AnonymousStructure14Keys, Any], Dict[AnonymousStructure15Keys, Any]]]
@@ -11089,9 +11894,13 @@ cell will be synced.
 
 @dataclass
 class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
-    """Registration options specific to a notebook.
+    """
+    Registration options specific to a notebook.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The notebooks to be synced
     notebookSelector: List[Union[Dict[AnonymousStructure14Keys, Any], Dict[AnonymousStructure15Keys, Any]]]
@@ -11158,7 +11967,11 @@ def write_AnonymousStructure12(obj: Dict[AnonymousStructure12Keys, Any]) -> JSON
 
 @dataclass
 class CompletionOptions():
-    """Completion options."""
+    """
+    Completion options.
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11264,7 +12077,11 @@ class CompletionOptions():
 
 @dataclass
 class HoverOptions():
-    """Hover options."""
+    """
+    Hover options.
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -11291,7 +12108,11 @@ class HoverOptions():
 
 @dataclass
 class SignatureHelpOptions():
-    """Server Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest)."""
+    """
+    Server Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11349,7 +12170,11 @@ class SignatureHelpOptions():
 
 @dataclass
 class DefinitionOptions():
-    """Server Capabilities for a [DefinitionRequest](#DefinitionRequest)."""
+    """
+    Server Capabilities for a [DefinitionRequest](#DefinitionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -11376,7 +12201,11 @@ class DefinitionOptions():
 
 @dataclass
 class ReferenceOptions():
-    """Reference options."""
+    """
+    Reference options.
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -11403,7 +12232,11 @@ class ReferenceOptions():
 
 @dataclass
 class DocumentHighlightOptions():
-    """Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest)."""
+    """
+    Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -11430,7 +12263,11 @@ class DocumentHighlightOptions():
 
 @dataclass
 class DocumentSymbolOptions():
-    """Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest)."""
+    """
+    Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11473,7 +12310,11 @@ class DocumentSymbolOptions():
 
 @dataclass
 class CodeActionOptions():
-    """Provider options for a [CodeActionRequest](#CodeActionRequest)."""
+    """
+    Provider options for a [CodeActionRequest](#CodeActionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11533,7 +12374,11 @@ class CodeActionOptions():
 
 @dataclass
 class CodeLensOptions():
-    """Code Lens provider options of a [CodeLensRequest](#CodeLensRequest)."""
+    """
+    Code Lens provider options of a [CodeLensRequest](#CodeLensRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11570,7 +12415,11 @@ class CodeLensOptions():
 
 @dataclass
 class DocumentLinkOptions():
-    """Provider options for a [DocumentLinkRequest](#DocumentLinkRequest)."""
+    """
+    Provider options for a [DocumentLinkRequest](#DocumentLinkRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11607,7 +12456,11 @@ class DocumentLinkOptions():
 
 @dataclass
 class WorkspaceSymbolOptions():
-    """Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."""
+    """
+    Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11650,7 +12503,11 @@ class WorkspaceSymbolOptions():
 
 @dataclass
 class DocumentFormattingOptions():
-    """Provider options for a [DocumentFormattingRequest](#DocumentFormattingRequest)."""
+    """
+    Provider options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -11677,7 +12534,11 @@ class DocumentFormattingOptions():
 
 @dataclass
 class DocumentRangeFormattingOptions():
-    """Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."""
+    """
+    Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
 
@@ -11704,7 +12565,11 @@ class DocumentRangeFormattingOptions():
 
 @dataclass
 class DocumentOnTypeFormattingOptions():
-    """Provider options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."""
+    """
+    Provider options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A character on which formatting should be triggered, like `{`.
     firstTriggerCharacter: str
@@ -11739,7 +12604,11 @@ class DocumentOnTypeFormattingOptions():
 
 @dataclass
 class RenameOptions():
-    """Provider options for a [RenameRequest](#RenameRequest)."""
+    """
+    Provider options for a [RenameRequest](#RenameRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11780,7 +12649,11 @@ class RenameOptions():
 
 @dataclass
 class ExecuteCommandOptions():
-    """The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest)."""
+    """
+    The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -11813,7 +12686,11 @@ class ExecuteCommandOptions():
 
 @dataclass
 class WorkspaceFoldersServerCapabilities():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The server has support for workspace folders
     supported: Optional[bool]
@@ -11864,9 +12741,13 @@ class WorkspaceFoldersServerCapabilities():
 
 @dataclass
 class FileOperationOptions():
-    """Options for notifications/requests for user operations on files.
+    """
+    Options for notifications/requests for user operations on files.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The server is interested in receiving didCreateFiles notifications.
     didCreate: Optional["FileOperationRegistrationOptions"]
@@ -11972,8 +12853,12 @@ def write_AnonymousStructure11(obj: Dict[AnonymousStructure11Keys, Any]) -> JSON
 
 @dataclass
 class ServerCapabilities():
-    """Defines the capabilities provided by a language
-server."""
+    """
+    Defines the capabilities provided by a language
+    server.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The position encoding the server picked from the encodings offered
     # by the client via the client capability `general.positionEncodings`.
@@ -12458,7 +13343,11 @@ def write_AnonymousStructure0(obj: Dict[AnonymousStructure0Keys, Any]) -> JSON_V
 
 @dataclass
 class InitializeResult():
-    """The result returned from an initialize request."""
+    """
+    The result returned from an initialize request.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The capabilities the language server provides.
     capabilities: "ServerCapabilities"
@@ -12497,8 +13386,12 @@ class InitializeResult():
 
 @dataclass
 class InitializeError():
-    """The data type of the ResponseError if the
-initialize request fails."""
+    """
+    The data type of the ResponseError if the
+    initialize request fails.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Indicates whether the client execute the following retry logic:
     # (1) show the message provided by the ResponseError to the user
@@ -12528,7 +13421,11 @@ initialize request fails."""
 
 @dataclass
 class InitializedParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
 
 
@@ -12547,7 +13444,11 @@ class InitializedParams():
 
 @dataclass
 class DidChangeConfigurationParams():
-    """The parameters of a change configuration notification."""
+    """
+    The parameters of a change configuration notification.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The actual changed settings
     settings: "LSPAny"
@@ -12571,7 +13472,11 @@ class DidChangeConfigurationParams():
 
 @dataclass
 class DidChangeConfigurationRegistrationOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     section: Optional[Union[str, List[str]]]
 
@@ -12598,7 +13503,11 @@ class DidChangeConfigurationRegistrationOptions():
 
 @dataclass
 class ShowMessageParams():
-    """The parameters of a notification message."""
+    """
+    The parameters of a notification message.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The message type. See {@link MessageType}
     type: "MessageType"
@@ -12629,7 +13538,11 @@ class ShowMessageParams():
 
 @dataclass
 class MessageActionItem():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A short title like 'Retry', 'Open Log' etc.
     title: str
@@ -12653,7 +13566,11 @@ class MessageActionItem():
 
 @dataclass
 class ShowMessageRequestParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The message type. See {@link MessageType}
     type: "MessageType"
@@ -12695,7 +13612,11 @@ class ShowMessageRequestParams():
 
 @dataclass
 class LogMessageParams():
-    """The log message parameters."""
+    """
+    The log message parameters.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The message type. See {@link MessageType}
     type: "MessageType"
@@ -12726,7 +13647,11 @@ class LogMessageParams():
 
 @dataclass
 class DidOpenTextDocumentParams():
-    """The parameters sent in an open text document notification"""
+    """
+    The parameters sent in an open text document notification
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The document that was opened.
     textDocument: "TextDocumentItem"
@@ -12750,7 +13675,11 @@ class DidOpenTextDocumentParams():
 
 @dataclass
 class DidChangeTextDocumentParams():
-    """The change text document notification's parameters."""
+    """
+    The change text document notification's parameters.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The document that did change. The version number points
     # to the version after all provided content changes have
@@ -12805,7 +13734,11 @@ class DidChangeTextDocumentParams():
 
 @dataclass
 class TextDocumentChangeRegistrationOptions(TextDocumentRegistrationOptions):
-    """Describe options to be used when registered for text document change events."""
+    """
+    Describe options to be used when registered for text document change events.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -12838,7 +13771,11 @@ class TextDocumentChangeRegistrationOptions(TextDocumentRegistrationOptions):
 
 @dataclass
 class DidCloseTextDocumentParams():
-    """The parameters sent in a close text document notification"""
+    """
+    The parameters sent in a close text document notification
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The document that was closed.
     textDocument: "TextDocumentIdentifier"
@@ -12862,7 +13799,11 @@ class DidCloseTextDocumentParams():
 
 @dataclass
 class DidSaveTextDocumentParams():
-    """The parameters sent in a save text document notification"""
+    """
+    The parameters sent in a save text document notification
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The document that was saved.
     textDocument: "TextDocumentIdentifier"
@@ -12899,7 +13840,11 @@ class DidSaveTextDocumentParams():
 
 @dataclass
 class TextDocumentSaveRegistrationOptions(TextDocumentRegistrationOptions, SaveOptions):
-    """Save registration options."""
+    """
+    Save registration options.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -12936,7 +13881,11 @@ class TextDocumentSaveRegistrationOptions(TextDocumentRegistrationOptions, SaveO
 
 @dataclass
 class WillSaveTextDocumentParams():
-    """The parameters sent in a will save text document notification."""
+    """
+    The parameters sent in a will save text document notification.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The document that will be saved.
     textDocument: "TextDocumentIdentifier"
@@ -12967,7 +13916,11 @@ class WillSaveTextDocumentParams():
 
 @dataclass
 class FileEvent():
-    """An event describing a file change."""
+    """
+    An event describing a file change.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The file's uri.
     uri: str
@@ -12998,7 +13951,11 @@ class FileEvent():
 
 @dataclass
 class DidChangeWatchedFilesParams():
-    """The watched files change notification's parameters."""
+    """
+    The watched files change notification's parameters.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The actual file events.
     changes: List["FileEvent"]
@@ -13040,11 +13997,15 @@ def write_Pattern(arg: Pattern) -> JSON_VALUE:
 
 @dataclass
 class RelativePattern():
-    """A relative pattern is a helper to construct glob patterns that are matched
-relatively to a base URI. The common value for a `baseUri` is a workspace
-folder root, but it can be another absolute URI as well.
+    """
+    A relative pattern is a helper to construct glob patterns that are matched
+    relatively to a base URI. The common value for a `baseUri` is a workspace
+    folder root, but it can be another absolute URI as well.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A workspace folder or a base URI to which this pattern will be matched
     # against relatively.
@@ -13089,7 +14050,11 @@ def write_GlobPattern(arg: GlobPattern) -> JSON_VALUE:
 
 @dataclass
 class FileSystemWatcher():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.
     # 
@@ -13132,7 +14097,11 @@ class FileSystemWatcher():
 
 @dataclass
 class DidChangeWatchedFilesRegistrationOptions():
-    """Describe options to be used when registered for text document change events."""
+    """
+    Describe options to be used when registered for text document change events.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The watchers to register.
     watchers: List["FileSystemWatcher"]
@@ -13156,7 +14125,11 @@ class DidChangeWatchedFilesRegistrationOptions():
 
 @dataclass
 class PublishDiagnosticsParams():
-    """The publish diagnostic notification's parameters."""
+    """
+    The publish diagnostic notification's parameters.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The URI for which diagnostic information is reported.
     uri: str
@@ -13202,7 +14175,11 @@ class PublishDiagnosticsParams():
 
 @dataclass
 class CompletionContext():
-    """Contains additional information about the context in which a completion request is triggered."""
+    """
+    Contains additional information about the context in which a completion request is triggered.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # How the completion was triggered.
     triggerKind: "CompletionTriggerKind"
@@ -13239,7 +14216,11 @@ class CompletionContext():
 
 @dataclass
 class CompletionParams(TextDocumentPositionParams):
-    """Completion parameters"""
+    """
+    Completion parameters
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -13307,9 +14288,13 @@ class CompletionParams(TextDocumentPositionParams):
 
 @dataclass
 class CompletionItemLabelDetails():
-    """Additional details for a completion item label.
+    """
+    Additional details for a completion item label.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
     # without any spacing. Should be used for function signatures and type annotations.
@@ -13352,9 +14337,13 @@ class CompletionItemLabelDetails():
 
 @dataclass
 class InsertReplaceEdit():
-    """A special text edit to provide an insert and a replace operation.
+    """
+    A special text edit to provide an insert and a replace operation.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The string to be inserted.
     newText: str
@@ -13392,8 +14381,12 @@ class InsertReplaceEdit():
 
 @dataclass
 class CompletionItem():
-    """A completion item represents a text snippet that is
-proposed to complete text that is being typed."""
+    """
+    A completion item represents a text snippet that is
+    proposed to complete text that is being typed.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The label of this completion item.
     # 
@@ -13829,8 +14822,12 @@ def write_AnonymousStructure2(obj: Dict[AnonymousStructure2Keys, Any]) -> JSON_V
 
 @dataclass
 class CompletionList():
-    """Represents a collection of [completion items](#CompletionItem) to be presented
-in the editor."""
+    """
+    Represents a collection of [completion items](#CompletionItem) to be presented
+    in the editor.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # This list it not complete. Further typing results in recomputing this list.
     # 
@@ -13902,7 +14899,11 @@ in the editor."""
 
 @dataclass
 class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionOptions):
-    """Registration options for a [CompletionRequest](#CompletionRequest)."""
+    """
+    Registration options for a [CompletionRequest](#CompletionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -14017,7 +15018,11 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
 
 @dataclass
 class HoverParams(TextDocumentPositionParams):
-    """Parameters for a [HoverRequest](#HoverRequest)."""
+    """
+    Parameters for a [HoverRequest](#HoverRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -14095,7 +15100,11 @@ def write_MarkedString(arg: MarkedString) -> JSON_VALUE:
 
 @dataclass
 class Hover():
-    """The result of a hover request."""
+    """
+    The result of a hover request.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The hover's content
     contents: Union["MarkupContent", "MarkedString", List["MarkedString"]]
@@ -14132,7 +15141,11 @@ class Hover():
 
 @dataclass
 class HoverRegistrationOptions(TextDocumentRegistrationOptions, HoverOptions):
-    """Registration options for a [HoverRequest](#HoverRequest)."""
+    """
+    Registration options for a [HoverRequest](#HoverRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -14167,8 +15180,12 @@ class HoverRegistrationOptions(TextDocumentRegistrationOptions, HoverOptions):
 
 @dataclass
 class ParameterInformation():
-    """Represents a parameter of a callable-signature. A parameter can
-have a label and a doc-comment."""
+    """
+    Represents a parameter of a callable-signature. A parameter can
+    have a label and a doc-comment.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The label of this parameter information.
     # 
@@ -14219,9 +15236,13 @@ have a label and a doc-comment."""
 
 @dataclass
 class SignatureInformation():
-    """Represents the signature of something callable. A signature
-can have a label, like a function-name, a doc-comment, and
-a set of parameters."""
+    """
+    Represents the signature of something callable. A signature
+    can have a label, like a function-name, a doc-comment, and
+    a set of parameters.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The label of this signature. Will be shown in
     # the UI.
@@ -14290,9 +15311,13 @@ a set of parameters."""
 
 @dataclass
 class SignatureHelp():
-    """Signature help represents the signature of something
-callable. There can be multiple signature but only one
-active and only one active parameter."""
+    """
+    Signature help represents the signature of something
+    callable. There can be multiple signature but only one
+    active and only one active parameter.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # One or more signatures.
     signatures: List["SignatureInformation"]
@@ -14366,9 +15391,13 @@ active and only one active parameter."""
 
 @dataclass
 class SignatureHelpContext():
-    """Additional information about the context in which a signature help request was triggered.
+    """
+    Additional information about the context in which a signature help request was triggered.
+    
+    @since 3.15.0
 
-@since 3.15.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Action that caused signature help to be triggered.
     triggerKind: "SignatureHelpTriggerKind"
@@ -14437,7 +15466,11 @@ class SignatureHelpContext():
 
 @dataclass
 class SignatureHelpParams(TextDocumentPositionParams):
-    """Parameters for a [SignatureHelpRequest](#SignatureHelpRequest)."""
+    """
+    Parameters for a [SignatureHelpRequest](#SignatureHelpRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -14496,7 +15529,11 @@ class SignatureHelpParams(TextDocumentPositionParams):
 
 @dataclass
 class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, SignatureHelpOptions):
-    """Registration options for a [SignatureHelpRequest](#SignatureHelpRequest)."""
+    """
+    Registration options for a [SignatureHelpRequest](#SignatureHelpRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -14563,7 +15600,11 @@ class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, Signatur
 
 @dataclass
 class DefinitionParams(TextDocumentPositionParams):
-    """Parameters for a [DefinitionRequest](#DefinitionRequest)."""
+    """
+    Parameters for a [DefinitionRequest](#DefinitionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -14618,7 +15659,11 @@ class DefinitionParams(TextDocumentPositionParams):
 
 @dataclass
 class DefinitionRegistrationOptions(TextDocumentRegistrationOptions, DefinitionOptions):
-    """Registration options for a [DefinitionRequest](#DefinitionRequest)."""
+    """
+    Registration options for a [DefinitionRequest](#DefinitionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -14653,8 +15698,12 @@ class DefinitionRegistrationOptions(TextDocumentRegistrationOptions, DefinitionO
 
 @dataclass
 class ReferenceContext():
-    """Value-object that contains additional information when
-requesting references."""
+    """
+    Value-object that contains additional information when
+    requesting references.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Include the declaration of the current symbol.
     includeDeclaration: bool
@@ -14678,7 +15727,11 @@ requesting references."""
 
 @dataclass
 class ReferenceParams(TextDocumentPositionParams):
-    """Parameters for a [ReferencesRequest](#ReferencesRequest)."""
+    """
+    Parameters for a [ReferencesRequest](#ReferencesRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -14738,7 +15791,11 @@ class ReferenceParams(TextDocumentPositionParams):
 
 @dataclass
 class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOptions):
-    """Registration options for a [ReferencesRequest](#ReferencesRequest)."""
+    """
+    Registration options for a [ReferencesRequest](#ReferencesRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -14773,7 +15830,11 @@ class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOpt
 
 @dataclass
 class DocumentHighlightParams(TextDocumentPositionParams):
-    """Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest)."""
+    """
+    Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -14828,9 +15889,13 @@ class DocumentHighlightParams(TextDocumentPositionParams):
 
 @dataclass
 class DocumentHighlight():
-    """A document highlight is a range inside a text document which deserves
-special attention. Usually a document highlight is visualized by changing
-the background color of its range."""
+    """
+    A document highlight is a range inside a text document which deserves
+    special attention. Usually a document highlight is visualized by changing
+    the background color of its range.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The range this highlight applies to.
     range: "Range"
@@ -14865,7 +15930,11 @@ the background color of its range."""
 
 @dataclass
 class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, DocumentHighlightOptions):
-    """Registration options for a [DocumentHighlightRequest](#DocumentHighlightRequest)."""
+    """
+    Registration options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -14900,7 +15969,11 @@ class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, Docu
 
 @dataclass
 class DocumentSymbolParams():
-    """Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest)."""
+    """
+    Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -14948,7 +16021,11 @@ class DocumentSymbolParams():
 
 @dataclass
 class BaseSymbolInformation():
-    """A base for all symbol information."""
+    """
+    A base for all symbol information.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The name of this symbol.
     name: str
@@ -15011,8 +16088,12 @@ class BaseSymbolInformation():
 
 @dataclass
 class SymbolInformation(BaseSymbolInformation):
-    """Represents information about programming constructs like variables, classes,
-interfaces etc."""
+    """
+    Represents information about programming constructs like variables, classes,
+    interfaces etc.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The name of this symbol.
     name: str
@@ -15113,10 +16194,14 @@ interfaces etc."""
 
 @dataclass
 class DocumentSymbol():
-    """Represents programming constructs like variables, classes, interfaces etc.
-that appear in a document. Document symbols can be hierarchical and they
-have two ranges: one that encloses its definition and one that points to
-its most interesting range, e.g. the range of an identifier."""
+    """
+    Represents programming constructs like variables, classes, interfaces etc.
+    that appear in a document. Document symbols can be hierarchical and they
+    have two ranges: one that encloses its definition and one that points to
+    its most interesting range, e.g. the range of an identifier.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The name of this symbol. Will be displayed in the user interface and therefore must not be
     # an empty string or a string only consisting of white spaces.
@@ -15221,7 +16306,11 @@ its most interesting range, e.g. the range of an identifier."""
 
 @dataclass
 class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, DocumentSymbolOptions):
-    """Registration options for a [DocumentSymbolRequest](#DocumentSymbolRequest)."""
+    """
+    Registration options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -15273,8 +16362,12 @@ class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, Documen
 
 @dataclass
 class CodeActionContext():
-    """Contains additional diagnostic information about the context in which
-a [code action](#CodeActionProvider.provideCodeActions) is run."""
+    """
+    Contains additional diagnostic information about the context in which
+    a [code action](#CodeActionProvider.provideCodeActions) is run.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An array of diagnostics known on the client side overlapping the range provided to the
     # `textDocument/codeAction` request. They are provided so that the server knows which
@@ -15338,7 +16431,11 @@ a [code action](#CodeActionProvider.provideCodeActions) is run."""
 
 @dataclass
 class CodeActionParams():
-    """The parameters of a [CodeActionRequest](#CodeActionRequest)."""
+    """
+    The parameters of a [CodeActionRequest](#CodeActionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -15413,10 +16510,14 @@ def write_AnonymousStructure3(obj: Dict[AnonymousStructure3Keys, Any]) -> JSON_V
 
 @dataclass
 class CodeAction():
-    """A code action represents a change that can be performed in code, e.g. to fix a problem or
-to refactor code.
+    """
+    A code action represents a change that can be performed in code, e.g. to fix a problem or
+    to refactor code.
+    
+    A CodeAction must set either `edit` and/or a `command`. If both are supplied, the `edit` is applied first, then the `command` is executed.
 
-A CodeAction must set either `edit` and/or a `command`. If both are supplied, the `edit` is applied first, then the `command` is executed."""
+    *Generated from the TypeScript documentation*
+    """
 
     # A short, human-readable, title for this code action.
     title: str
@@ -15571,7 +16672,11 @@ A CodeAction must set either `edit` and/or a `command`. If both are supplied, th
 
 @dataclass
 class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionOptions):
-    """Registration options for a [CodeActionRequest](#CodeActionRequest)."""
+    """
+    Registration options for a [CodeActionRequest](#CodeActionRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -15640,7 +16745,11 @@ class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionO
 
 @dataclass
 class WorkspaceSymbolParams():
-    """The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."""
+    """
+    The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -15703,11 +16812,15 @@ def write_AnonymousStructure4(obj: Dict[AnonymousStructure4Keys, Any]) -> JSON_V
 
 @dataclass
 class WorkspaceSymbol(BaseSymbolInformation):
-    """A special workspace symbol that supports locations without a range.
+    """
+    A special workspace symbol that supports locations without a range.
+    
+    See also SymbolInformation.
+    
+    @since 3.17.0
 
-See also SymbolInformation.
-
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The name of this symbol.
     name: str
@@ -15798,7 +16911,11 @@ See also SymbolInformation.
 
 @dataclass
 class WorkspaceSymbolRegistrationOptions(WorkspaceSymbolOptions):
-    """Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."""
+    """
+    Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -15841,7 +16958,11 @@ class WorkspaceSymbolRegistrationOptions(WorkspaceSymbolOptions):
 
 @dataclass
 class CodeLensParams():
-    """The parameters of a [CodeLensRequest](#CodeLensRequest)."""
+    """
+    The parameters of a [CodeLensRequest](#CodeLensRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -15889,11 +17010,15 @@ class CodeLensParams():
 
 @dataclass
 class CodeLens():
-    """A code lens represents a [command](#Command) that should be shown along with
-source text, like the number of references, a way to run tests, etc.
+    """
+    A code lens represents a [command](#Command) that should be shown along with
+    source text, like the number of references, a way to run tests, etc.
+    
+    A code lens is _unresolved_ when no command is associated to it. For performance
+    reasons the creation of a code lens and resolving should be done in two stages.
 
-A code lens is _unresolved_ when no command is associated to it. For performance
-reasons the creation of a code lens and resolving should be done in two stages."""
+    *Generated from the TypeScript documentation*
+    """
 
     # The range in which this code lens is valid. Should only span a single line.
     range: "Range"
@@ -15943,7 +17068,11 @@ reasons the creation of a code lens and resolving should be done in two stages."
 
 @dataclass
 class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptions):
-    """Registration options for a [CodeLensRequest](#CodeLensRequest)."""
+    """
+    Registration options for a [CodeLensRequest](#CodeLensRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -15989,7 +17118,11 @@ class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptio
 
 @dataclass
 class DocumentLinkParams():
-    """The parameters of a [DocumentLinkRequest](#DocumentLinkRequest)."""
+    """
+    The parameters of a [DocumentLinkRequest](#DocumentLinkRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -16037,8 +17170,12 @@ class DocumentLinkParams():
 
 @dataclass
 class DocumentLink():
-    """A document link is a range in a text document that links to an internal or external resource, like another
-text document or a web site."""
+    """
+    A document link is a range in a text document that links to an internal or external resource, like another
+    text document or a web site.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The range this link applies to.
     range: "Range"
@@ -16109,7 +17246,11 @@ text document or a web site."""
 
 @dataclass
 class DocumentLinkRegistrationOptions(TextDocumentRegistrationOptions, DocumentLinkOptions):
-    """Registration options for a [DocumentLinkRequest](#DocumentLinkRequest)."""
+    """
+    Registration options for a [DocumentLinkRequest](#DocumentLinkRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -16155,7 +17296,11 @@ class DocumentLinkRegistrationOptions(TextDocumentRegistrationOptions, DocumentL
 
 @dataclass
 class FormattingOptions():
-    """Value-object describing what options formatting should use."""
+    """
+    Value-object describing what options formatting should use.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Size of a tab in spaces.
     tabSize: int
@@ -16231,7 +17376,11 @@ class FormattingOptions():
 
 @dataclass
 class DocumentFormattingParams():
-    """The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest)."""
+    """
+    The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -16273,7 +17422,11 @@ class DocumentFormattingParams():
 
 @dataclass
 class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, DocumentFormattingOptions):
-    """Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest)."""
+    """
+    Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -16308,7 +17461,11 @@ class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, Doc
 
 @dataclass
 class DocumentRangeFormattingParams():
-    """The parameters of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."""
+    """
+    The parameters of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -16357,7 +17514,11 @@ class DocumentRangeFormattingParams():
 
 @dataclass
 class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions, DocumentRangeFormattingOptions):
-    """Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."""
+    """
+    Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -16392,7 +17553,11 @@ class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions
 
 @dataclass
 class DocumentOnTypeFormattingParams():
-    """The parameters of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."""
+    """
+    The parameters of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The document to format.
     textDocument: "TextDocumentIdentifier"
@@ -16447,7 +17612,11 @@ class DocumentOnTypeFormattingParams():
 
 @dataclass
 class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOptions, DocumentOnTypeFormattingOptions):
-    """Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."""
+    """
+    Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -16491,7 +17660,11 @@ class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOption
 
 @dataclass
 class RenameParams():
-    """The parameters of a [RenameRequest](#RenameRequest)."""
+    """
+    The parameters of a [RenameRequest](#RenameRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -16544,7 +17717,11 @@ class RenameParams():
 
 @dataclass
 class RenameRegistrationOptions(TextDocumentRegistrationOptions, RenameOptions):
-    """Registration options for a [RenameRequest](#RenameRequest)."""
+    """
+    Registration options for a [RenameRequest](#RenameRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A document selector to identify the scope of the registration. If set to null
     # the document selector provided on the client side will be used.
@@ -16594,7 +17771,11 @@ class RenameRegistrationOptions(TextDocumentRegistrationOptions, RenameOptions):
 
 @dataclass
 class PrepareRenameParams(TextDocumentPositionParams):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The text document.
     textDocument: "TextDocumentIdentifier"
@@ -16636,7 +17817,11 @@ class PrepareRenameParams(TextDocumentPositionParams):
 
 @dataclass
 class ExecuteCommandParams():
-    """The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest)."""
+    """
+    The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -16682,7 +17867,11 @@ class ExecuteCommandParams():
 
 @dataclass
 class ExecuteCommandRegistrationOptions(ExecuteCommandOptions):
-    """Registration options for a [ExecuteCommandRequest](#ExecuteCommandRequest)."""
+    """
+    Registration options for a [ExecuteCommandRequest](#ExecuteCommandRequest).
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     
@@ -16715,7 +17904,11 @@ class ExecuteCommandRegistrationOptions(ExecuteCommandOptions):
 
 @dataclass
 class ApplyWorkspaceEditParams():
-    """The parameters passed via a apply workspace edit request."""
+    """
+    The parameters passed via a apply workspace edit request.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional label of the workspace edit. This label is
     # presented in the user interface for example on an undo
@@ -16754,9 +17947,13 @@ class ApplyWorkspaceEditParams():
 
 @dataclass
 class ApplyWorkspaceEditResult():
-    """The result returned from the apply workspace edit request.
+    """
+    The result returned from the apply workspace edit request.
+    
+    @since 3.17 renamed from ApplyWorkspaceEditResponse
 
-@since 3.17 renamed from ApplyWorkspaceEditResponse"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Indicates whether the edit was applied or not.
     applied: bool
@@ -16810,7 +18007,11 @@ class ApplyWorkspaceEditResult():
 
 @dataclass
 class WorkDoneProgressBegin():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     kind: str
     
@@ -16900,7 +18101,11 @@ class WorkDoneProgressBegin():
 
 @dataclass
 class WorkDoneProgressReport():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     kind: str
     
@@ -16979,7 +18184,11 @@ class WorkDoneProgressReport():
 
 @dataclass
 class WorkDoneProgressEnd():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     kind: str
     
@@ -17014,7 +18223,11 @@ class WorkDoneProgressEnd():
 
 @dataclass
 class SetTraceParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     value: "TraceValues"
 
@@ -17037,7 +18250,11 @@ class SetTraceParams():
 
 @dataclass
 class LogTraceParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     message: str
     
@@ -17069,7 +18286,11 @@ class LogTraceParams():
 
 @dataclass
 class CancelParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The request id to cancel.
     id: Union[int, str]
@@ -17093,7 +18314,11 @@ class CancelParams():
 
 @dataclass
 class ProgressParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The progress token provided by the client or server.
     token: "ProgressToken"
@@ -17124,7 +18349,11 @@ class ProgressParams():
 
 @dataclass
 class WorkDoneProgressParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An optional token that a server can use to report work done progress.
     workDoneToken: Optional["ProgressToken"]
@@ -17152,8 +18381,12 @@ class WorkDoneProgressParams():
 
 @dataclass
 class LocationLink():
-    """Represents the connection of two locations. Provides additional metadata over normal [locations](#Location),
-including an origin range."""
+    """
+    Represents the connection of two locations. Provides additional metadata over normal [locations](#Location),
+    including an origin range.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Span of the origin of this link.
     # 
@@ -17214,8 +18447,12 @@ including an origin range."""
 
 @dataclass
 class StaticRegistrationOptions():
-    """Static registration options to be returned in the initialize
-request."""
+    """
+    Static registration options to be returned in the initialize
+    request.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The id used to register the request. The id can be used to deregister
     # the request again. See also Registration#id.
@@ -17245,9 +18482,13 @@ request."""
 
 @dataclass
 class InlineValueText():
-    """Provide inline value as text.
+    """
+    Provide inline value as text.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The document range for which the inline value applies.
     range: "Range"
@@ -17278,11 +18519,15 @@ class InlineValueText():
 
 @dataclass
 class InlineValueVariableLookup():
-    """Provide inline value through a variable lookup.
-If only a range is specified, the variable name will be extracted from the underlying document.
-An optional variable name can be used to override the extracted name.
+    """
+    Provide inline value through a variable lookup.
+    If only a range is specified, the variable name will be extracted from the underlying document.
+    An optional variable name can be used to override the extracted name.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The document range for which the inline value applies.
     # The range is used to extract the variable name from the underlying document.
@@ -17326,11 +18571,15 @@ An optional variable name can be used to override the extracted name.
 
 @dataclass
 class InlineValueEvaluatableExpression():
-    """Provide an inline value through an expression evaluation.
-If only a range is specified, the expression will be extracted from the underlying document.
-An optional expression can be used to override the extracted expression.
+    """
+    Provide an inline value through an expression evaluation.
+    If only a range is specified, the expression will be extracted from the underlying document.
+    An optional expression can be used to override the extracted expression.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The document range for which the inline value applies.
     # The range is used to extract the evaluatable expression from the underlying document.
@@ -17367,9 +18616,13 @@ An optional expression can be used to override the extracted expression.
 
 @dataclass
 class RelatedFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
-    """A full diagnostic report with a set of related documents.
+    """
+    A full diagnostic report with a set of related documents.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A full document diagnostic report.
     kind: str
@@ -17438,9 +18691,13 @@ class RelatedFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
 
 @dataclass
 class RelatedUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport):
-    """An unchanged diagnostic report with a set of related documents.
+    """
+    An unchanged diagnostic report with a set of related documents.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A document diagnostic report indicating
     # no changes to the last result. A server can
@@ -17625,7 +18882,11 @@ def write_PrepareRenameResult(arg: PrepareRenameResult) -> JSON_VALUE:
 
 @dataclass
 class ConfigurationParamsAndPartialResultParams():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     items: List["ConfigurationItem"]
     
@@ -17660,7 +18921,11 @@ class ConfigurationParamsAndPartialResultParams():
 
 @dataclass
 class TextDocumentRegistrationOptionsAndWorkDoneProgressOptions():
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     workDoneProgress: Optional[bool]
     

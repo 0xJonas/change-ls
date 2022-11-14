@@ -37,6 +37,17 @@ def _escape_keyword(name: str) -> str:
         return name
 
 
+def _create_message_translation_table() -> Any:
+    table: Dict[str, str] = {}
+    for i in range(ord("A"), ord("Z") + 1):
+        table[chr(i)] = "_" + chr(i + 32)
+    table["/"] = "_"
+    table["$"] = "s"
+    return str.maketrans(table)
+
+_message_translation_table = _create_message_translation_table()
+
+
 ref_target = Union[Enumeration, Structure, TypeAlias]
 
 class ReferenceResolver:
@@ -793,7 +804,11 @@ def to_json(self) -> Dict[str, JSON_VALUE]:
         return f'''\
 @dataclass
 class {class_name}({", ".join(superclasses)}):
-    """{doc}"""
+    """
+{indent(doc)}
+
+    *Generated from the TypeScript documentation*
+    """
 
 {indent(property_declarations)}
 
@@ -1034,7 +1049,11 @@ def write_{name}(obj: Dict[{name}Keys, Any]) -> JSON_VALUE:
 
         return f'''\
 class {enum.name}({", ".join(superclasses)}):
-    """{enum.documentation if enum.documentation else ""}"""
+    """
+{indent(enum.documentation if enum.documentation else "")}
+
+    *Generated from the TypeScript documentation*
+    """
 
 {indent(body)}'''
 
@@ -1106,86 +1125,77 @@ from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 {sep.join(definitions)}
 """
 
+    def _generate_send_request_method(self, request: Request) -> str:
+        name = "send_" + request.method.translate(_message_translation_table)
 
-    def _generate_parse_lambda(self, val: AnyType) -> str:
-        expected_json_type = self._get_expected_json_type(val)
-        if expected_json_type:
-            assert_fun = self._json_type_to_assert_function[expected_json_type]
+        assert not isinstance(request.params, Tuple) # TODO implement
+        if request.params is None:
+            param_type = "None"
+            param_write_expression = "None"
         else:
-            assert_fun = ""
-        return f'lambda p: {self.generate_parse_expression(val, f"{assert_fun}(p)")}'
+            param_type = self._generate_type_annotation(request.params)
+            param_write_expression = self.generate_write_expression(request.params, "params")
 
+        result_json_type = self._get_expected_json_type(request.result)
+        if result_json_type:
+            result_type_assert = self._json_type_to_assert_function[result_json_type]
+        else:
+            result_type_assert = ""
 
-    def generate_dispatch_py(self) -> str:
-        parse_request_params: List[str] = []
-        parse_request_result: List[str] = []
-        parse_request_partial_result: List[str] = []
-        write_request_params: List[str] = []
-        write_request_result: List[str] = []
-        write_request_partial_result: List[str] = []
+        return f'''\
+async def {name}(self, params: {param_type}) -> {self._generate_type_annotation(request.result)}:
+    """
+{indent(request.documentation if request.documentation else "")}
 
-        for r in self._meta_model.requests:
-            # print(r)
-            if r.params:
-                assert not isinstance(r.params, Tuple)  # TODO implement
-                parse_request_params.append(f'"{r.method}": {self._generate_parse_lambda(r.params)}')
-                write_request_params.append(f'"{r.method}": lambda p: {self.generate_write_expression(r.params, "p")}')
+    *Generated from the TypeScript documentation*
+    """
+    params_json = {param_write_expression}
+    result_json = await self.send_request("{request.method}", params_json)
+    return {self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")}'''
 
-            parse_request_result.append(f'"{r.method}": {self._generate_parse_lambda(r.result)}')
-            write_request_result.append(f'"{r.method}": lambda p: {self.generate_write_expression(r.result, "p")}')
+    def _generate_send_notification_method(self, notification: Notification) -> str:
+        name = "send_" + notification.method.translate(_message_translation_table)
 
-            if r.partial_result:
-                parse_request_partial_result.append(f'"{r.method}": {self._generate_parse_lambda(r.partial_result)}')
-                write_request_partial_result.append(f'"{r.method}": lambda p: {self.generate_write_expression(r.partial_result, "p")}')
+        assert not isinstance(notification.params, Tuple) # TODO implement
+        if notification.params is None:
+            param_type = "None"
+            param_write_expression = "None"
+        else:
+            param_type = self._generate_type_annotation(notification.params)
+            param_write_expression = self.generate_write_expression(notification.params, "params")
 
-        parse_notification_params: List[str] = []
-        write_notification_params: List[str] = []
+        return f'''\
+async def {name}(self, params: {param_type}) -> None:
+    """
+{indent(notification.documentation if notification.documentation else "")}
 
-        for n in self._meta_model.notifications:
-            if n.params:
-                assert not isinstance(n.params, Tuple)  # TODO implement
-                parse_notification_params.append(f'"{n.method}": {self._generate_parse_lambda(n.params)}')
-                write_notification_params.append(f'"{n.method}": lambda p: {self.generate_write_expression(n.params, "p")}')
+    *Generated from the TypeScript documentation*
+    """
+    params_json = {param_write_expression}
+    await self.send_notification("{notification.method}", params_json)'''
 
-        sep = ",\n"
+    def generate_client_requests_py(self) -> str:
+        client_requests = filter(lambda r: r.message_direction == "clientToServer" or r.message_direction == "both",  self._meta_model.requests)
+        client_notifications = filter(lambda n: n.message_direction == "clientToServer" or n.message_direction == "both",  self._meta_model.notifications)
+
+        request_methods = map(lambda r: self._generate_send_request_method(r), client_requests)
+        notification_methods = map(lambda n: self._generate_send_notification_method(n), client_notifications)
+
+        sep = "\n\n"
         return f"""\
 from .util import *
 from .enumerations import *
 from .structures import *
 
+class ClientRequestsMixin:
 
-parse_request_params: Dict[str, Callable[[JSON_VALUE], Any]] = {{
-{indent(sep.join(parse_request_params))}
-}}
+    async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+        return NotImplemented
 
-write_request_params: Dict[str, Callable[[Any], JSON_VALUE]] = {{
-{indent(sep.join(write_request_params))}
-}}
+    async def send_notification(self, method: str, params: JSON_VALUE) -> None:
+        pass
 
+{indent(sep.join(request_methods))}
 
-parse_request_result: Dict[str, Callable[[JSON_VALUE], Any]] = {{
-{indent(sep.join(parse_request_result))}
-}}
-
-write_request_result: Dict[str, Callable[[Any], JSON_VALUE]] = {{
-{indent(sep.join(write_request_result))}
-}}
-
-
-parse_request_partial_result: Dict[str, Callable[[JSON_VALUE], Any]] = {{
-{indent(sep.join(parse_request_partial_result))}
-}}
-
-write_request_partial_result: Dict[str, Callable[[Any], JSON_VALUE]] = {{
-{indent(sep.join(write_request_partial_result))}
-}}
-
-
-parse_notification_params: Dict[str, Callable[[JSON_VALUE], Any]] = {{
-{indent(sep.join(parse_notification_params))}
-}}
-
-write_notification_params: Dict[str, Callable[[Any], JSON_VALUE]] = {{
-{indent(sep.join(write_notification_params))}
-}}
+{indent(sep.join(notification_methods))}
 """

@@ -3,11 +3,15 @@ from .lsp_enum import AllowCustomValues, TypedLSPEnum
 
 
 class SemanticTokenTypes(TypedLSPEnum[str], AllowCustomValues):
-    """A set of predefined token types. This set is not fixed
-an clients can specify additional token types via the
-corresponding client capabilities.
+    """
+    A set of predefined token types. This set is not fixed
+    an clients can specify additional token types via the
+    corresponding client capabilities.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     namespace: ClassVar["SemanticTokenTypes"] = "namespace" # type: ignore
     
@@ -60,11 +64,15 @@ corresponding client capabilities.
 
 
 class SemanticTokenModifiers(TypedLSPEnum[str], AllowCustomValues):
-    """A set of predefined token modifiers. This set is not fixed
-an clients can specify additional token types via the
-corresponding client capabilities.
+    """
+    A set of predefined token modifiers. This set is not fixed
+    an clients can specify additional token types via the
+    corresponding client capabilities.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     declaration: ClassVar["SemanticTokenModifiers"] = "declaration" # type: ignore
     
@@ -88,9 +96,13 @@ corresponding client capabilities.
 
 
 class DocumentDiagnosticReportKind(TypedLSPEnum[str]):
-    """The document diagnostic report kinds.
+    """
+    The document diagnostic report kinds.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A diagnostic report with a full
     # set of problems.
@@ -102,7 +114,11 @@ class DocumentDiagnosticReportKind(TypedLSPEnum[str]):
 
 
 class ErrorCodes(TypedLSPEnum[int], AllowCustomValues):
-    """Predefined error codes."""
+    """
+    Predefined error codes.
+
+    *Generated from the TypeScript documentation*
+    """
 
     ParseError: ClassVar["ErrorCodes"] = -32700 # type: ignore
     
@@ -122,7 +138,11 @@ class ErrorCodes(TypedLSPEnum[int], AllowCustomValues):
 
 
 class LSPErrorCodes(TypedLSPEnum[int], AllowCustomValues):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A request failed but it was syntactically correct, e.g the
     # method name was known and the parameters were valid. The error
@@ -155,7 +175,11 @@ class LSPErrorCodes(TypedLSPEnum[int], AllowCustomValues):
 
 
 class FoldingRangeKind(TypedLSPEnum[str], AllowCustomValues):
-    """A set of predefined range kinds."""
+    """
+    A set of predefined range kinds.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Folding range for a comment
     Comment: ClassVar["FoldingRangeKind"] = "comment" # type: ignore
@@ -168,7 +192,11 @@ class FoldingRangeKind(TypedLSPEnum[str], AllowCustomValues):
 
 
 class SymbolKind(TypedLSPEnum[int]):
-    """A symbol kind."""
+    """
+    A symbol kind.
+
+    *Generated from the TypeScript documentation*
+    """
 
     File: ClassVar["SymbolKind"] = 1 # type: ignore
     
@@ -224,18 +252,26 @@ class SymbolKind(TypedLSPEnum[int]):
 
 
 class SymbolTag(TypedLSPEnum[int]):
-    """Symbol tags are extra annotations that tweak the rendering of a symbol.
+    """
+    Symbol tags are extra annotations that tweak the rendering of a symbol.
+    
+    @since 3.16
 
-@since 3.16"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Render a symbol as obsolete, usually using a strike-out.
     Deprecated: ClassVar["SymbolTag"] = 1 # type: ignore
 
 
 class UniquenessLevel(TypedLSPEnum[str]):
-    """Moniker uniqueness level to define scope of the moniker.
+    """
+    Moniker uniqueness level to define scope of the moniker.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The moniker is only unique inside a document
     document: ClassVar["UniquenessLevel"] = "document" # type: ignore
@@ -254,9 +290,13 @@ class UniquenessLevel(TypedLSPEnum[str]):
 
 
 class MonikerKind(TypedLSPEnum[str]):
-    """The moniker kind.
+    """
+    The moniker kind.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The moniker represent a symbol that is imported into a project
     import_: ClassVar["MonikerKind"] = "import" # type: ignore
@@ -270,9 +310,13 @@ class MonikerKind(TypedLSPEnum[str]):
 
 
 class InlayHintKind(TypedLSPEnum[int]):
-    """Inlay hint kinds.
+    """
+    Inlay hint kinds.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # An inlay hint that for a type annotation.
     Type: ClassVar["InlayHintKind"] = 1 # type: ignore
@@ -282,7 +326,11 @@ class InlayHintKind(TypedLSPEnum[int]):
 
 
 class MessageType(TypedLSPEnum[int]):
-    """The message type"""
+    """
+    The message type
+
+    *Generated from the TypeScript documentation*
+    """
 
     # An error message.
     Error: ClassVar["MessageType"] = 1 # type: ignore
@@ -298,8 +346,12 @@ class MessageType(TypedLSPEnum[int]):
 
 
 class TextDocumentSyncKind(TypedLSPEnum[int]):
-    """Defines how the host (editor) should sync
-document changes to the language server."""
+    """
+    Defines how the host (editor) should sync
+    document changes to the language server.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Documents should not be synced at all.
     None_: ClassVar["TextDocumentSyncKind"] = 0 # type: ignore
@@ -315,7 +367,11 @@ document changes to the language server."""
 
 
 class TextDocumentSaveReason(TypedLSPEnum[int]):
-    """Represents reasons why a text document is saved."""
+    """
+    Represents reasons why a text document is saved.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Manually triggered, e.g. by the user pressing save, by starting debugging,
     # or by an API call.
@@ -329,7 +385,11 @@ class TextDocumentSaveReason(TypedLSPEnum[int]):
 
 
 class CompletionItemKind(TypedLSPEnum[int]):
-    """The kind of a completion entry."""
+    """
+    The kind of a completion entry.
+
+    *Generated from the TypeScript documentation*
+    """
 
     Text: ClassVar["CompletionItemKind"] = 1 # type: ignore
     
@@ -383,18 +443,26 @@ class CompletionItemKind(TypedLSPEnum[int]):
 
 
 class CompletionItemTag(TypedLSPEnum[int]):
-    """Completion item tags are extra annotations that tweak the rendering of a completion
-item.
+    """
+    Completion item tags are extra annotations that tweak the rendering of a completion
+    item.
+    
+    @since 3.15.0
 
-@since 3.15.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Render a completion as obsolete, usually using a strike-out.
     Deprecated: ClassVar["CompletionItemTag"] = 1 # type: ignore
 
 
 class InsertTextFormat(TypedLSPEnum[int]):
-    """Defines whether the insert text in a completion item should be interpreted as
-plain text or a snippet."""
+    """
+    Defines whether the insert text in a completion item should be interpreted as
+    plain text or a snippet.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The primary text to be inserted is treated as a plain string.
     PlainText: ClassVar["InsertTextFormat"] = 1 # type: ignore
@@ -411,10 +479,14 @@ plain text or a snippet."""
 
 
 class InsertTextMode(TypedLSPEnum[int]):
-    """How whitespace and indentation is handled during completion
-item insertion.
+    """
+    How whitespace and indentation is handled during completion
+    item insertion.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The insertion or replace strings is taken as it is. If the
     # value is multi line the lines below the cursor will be
@@ -434,7 +506,11 @@ item insertion.
 
 
 class DocumentHighlightKind(TypedLSPEnum[int]):
-    """A document highlight kind."""
+    """
+    A document highlight kind.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # A textual occurrence.
     Text: ClassVar["DocumentHighlightKind"] = 1 # type: ignore
@@ -447,7 +523,11 @@ class DocumentHighlightKind(TypedLSPEnum[int]):
 
 
 class CodeActionKind(TypedLSPEnum[str], AllowCustomValues):
-    """A set of predefined code action kinds"""
+    """
+    A set of predefined code action kinds
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Empty kind.
     Empty: ClassVar["CodeActionKind"] = "" # type: ignore
@@ -509,7 +589,11 @@ class CodeActionKind(TypedLSPEnum[str], AllowCustomValues):
 
 
 class TraceValues(TypedLSPEnum[str]):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Turn tracing off.
     Off: ClassVar["TraceValues"] = "off" # type: ignore
@@ -522,11 +606,15 @@ class TraceValues(TypedLSPEnum[str]):
 
 
 class MarkupKind(TypedLSPEnum[str]):
-    """Describes the content type that a client supports in various
-result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
+    """
+    Describes the content type that a client supports in various
+    result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
+    
+    Please note that `MarkupKinds` must not start with a `$`. This kinds
+    are reserved for internal usage.
 
-Please note that `MarkupKinds` must not start with a `$`. This kinds
-are reserved for internal usage."""
+    *Generated from the TypeScript documentation*
+    """
 
     # Plain text is supported as a content format
     PlainText: ClassVar["MarkupKind"] = "plaintext" # type: ignore
@@ -536,9 +624,13 @@ are reserved for internal usage."""
 
 
 class PositionEncodingKind(TypedLSPEnum[str], AllowCustomValues):
-    """A set of predefined position encoding kinds.
+    """
+    A set of predefined position encoding kinds.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Character offsets count UTF-8 code units.
     UTF8: ClassVar["PositionEncodingKind"] = "utf-8" # type: ignore
@@ -558,7 +650,11 @@ class PositionEncodingKind(TypedLSPEnum[str], AllowCustomValues):
 
 
 class FileChangeType(TypedLSPEnum[int]):
-    """The file event type"""
+    """
+    The file event type
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The file got created.
     Created: ClassVar["FileChangeType"] = 1 # type: ignore
@@ -571,7 +667,11 @@ class FileChangeType(TypedLSPEnum[int]):
 
 
 class WatchKind(TypedLSPEnum[int], AllowCustomValues):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Interested in create events.
     Create: ClassVar["WatchKind"] = 1 # type: ignore
@@ -584,7 +684,11 @@ class WatchKind(TypedLSPEnum[int], AllowCustomValues):
 
 
 class DiagnosticSeverity(TypedLSPEnum[int]):
-    """The diagnostic's severity."""
+    """
+    The diagnostic's severity.
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Reports an error.
     Error: ClassVar["DiagnosticSeverity"] = 1 # type: ignore
@@ -600,9 +704,13 @@ class DiagnosticSeverity(TypedLSPEnum[int]):
 
 
 class DiagnosticTag(TypedLSPEnum[int]):
-    """The diagnostic tags.
+    """
+    The diagnostic tags.
+    
+    @since 3.15.0
 
-@since 3.15.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Unused or unnecessary code.
     # 
@@ -617,7 +725,11 @@ class DiagnosticTag(TypedLSPEnum[int]):
 
 
 class CompletionTriggerKind(TypedLSPEnum[int]):
-    """How a completion was triggered"""
+    """
+    How a completion was triggered
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Completion was triggered by typing an identifier (24x7 code
     # complete), manual invocation (e.g Ctrl+Space) or via API.
@@ -632,9 +744,13 @@ class CompletionTriggerKind(TypedLSPEnum[int]):
 
 
 class SignatureHelpTriggerKind(TypedLSPEnum[int]):
-    """How a signature help was triggered.
+    """
+    How a signature help was triggered.
+    
+    @since 3.15.0
 
-@since 3.15.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Signature help was invoked manually by the user or by a command.
     Invoked: ClassVar["SignatureHelpTriggerKind"] = 1 # type: ignore
@@ -647,9 +763,13 @@ class SignatureHelpTriggerKind(TypedLSPEnum[int]):
 
 
 class CodeActionTriggerKind(TypedLSPEnum[int]):
-    """The reason why code actions were requested.
+    """
+    The reason why code actions were requested.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # Code actions were explicitly requested by the user or by an extension.
     Invoked: ClassVar["CodeActionTriggerKind"] = 1 # type: ignore
@@ -662,10 +782,14 @@ class CodeActionTriggerKind(TypedLSPEnum[int]):
 
 
 class FileOperationPatternKind(TypedLSPEnum[str]):
-    """A pattern kind describing if a glob pattern matches a file a folder or
-both.
+    """
+    A pattern kind describing if a glob pattern matches a file a folder or
+    both.
+    
+    @since 3.16.0
 
-@since 3.16.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # The pattern matches a file only.
     file: ClassVar["FileOperationPatternKind"] = "file" # type: ignore
@@ -675,9 +799,13 @@ both.
 
 
 class NotebookCellKind(TypedLSPEnum[int]):
-    """A notebook cell kind.
+    """
+    A notebook cell kind.
+    
+    @since 3.17.0
 
-@since 3.17.0"""
+    *Generated from the TypeScript documentation*
+    """
 
     # A markup-cell is formatted source that is used for display.
     Markup: ClassVar["NotebookCellKind"] = 1 # type: ignore
@@ -687,7 +815,11 @@ class NotebookCellKind(TypedLSPEnum[int]):
 
 
 class ResourceOperationKind(TypedLSPEnum[str]):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Supports creating new files and folders.
     Create: ClassVar["ResourceOperationKind"] = "create" # type: ignore
@@ -700,7 +832,11 @@ class ResourceOperationKind(TypedLSPEnum[str]):
 
 
 class FailureHandlingKind(TypedLSPEnum[str]):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # Applying the workspace change is simply aborted if one of the changes provided
     # fails. All operations executed before the failing operation stay executed.
@@ -721,7 +857,11 @@ class FailureHandlingKind(TypedLSPEnum[str]):
 
 
 class PrepareSupportDefaultBehavior(TypedLSPEnum[int]):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     # The client's default behavior is to select the identifier
     # according the to language's syntax rule.
@@ -729,6 +869,10 @@ class PrepareSupportDefaultBehavior(TypedLSPEnum[int]):
 
 
 class TokenFormat(TypedLSPEnum[str]):
-    """"""
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
 
     Relative: ClassVar["TokenFormat"] = "relative" # type: ignore

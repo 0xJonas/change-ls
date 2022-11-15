@@ -169,14 +169,13 @@ class ClientRequestsMixin:
         result_json = await self.send_request("textDocument/semanticTokens/range", params_json)
         return parse_or_type((result_json), (lambda v: SemanticTokens.from_json(json_assert_type_object(v)), lambda v: json_assert_type_null(v)))
     
-    async def send_workspace_semantic_tokens_refresh(self, params: None) -> None:
+    async def send_workspace_semantic_tokens_refresh(self) -> None:
         """
         @since 3.16.0
     
         *Generated from the TypeScript documentation*
         """
-        params_json = None
-        result_json = await self.send_request("workspace/semanticTokens/refresh", params_json)
+        result_json = await self.send_request("workspace/semanticTokens/refresh", None)
         return json_assert_type_null(result_json)
     
     async def send_text_document_linked_editing_range(self, params: "LinkedEditingRangeParams") -> Union["LinkedEditingRanges", None]:
@@ -293,14 +292,13 @@ class ClientRequestsMixin:
         result_json = await self.send_request("textDocument/inlineValue", params_json)
         return parse_or_type((result_json), (lambda v: [parse_InlineValue((i)) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
     
-    async def send_workspace_inline_value_refresh(self, params: None) -> None:
+    async def send_workspace_inline_value_refresh(self) -> None:
         """
         @since 3.17.0
     
         *Generated from the TypeScript documentation*
         """
-        params_json = None
-        result_json = await self.send_request("workspace/inlineValue/refresh", params_json)
+        result_json = await self.send_request("workspace/inlineValue/refresh", None)
         return json_assert_type_null(result_json)
     
     async def send_text_document_inlay_hint(self, params: "InlayHintParams") -> Union[List["InlayHint"], None]:
@@ -331,14 +329,13 @@ class ClientRequestsMixin:
         result_json = await self.send_request("inlayHint/resolve", params_json)
         return InlayHint.from_json(json_assert_type_object(result_json))
     
-    async def send_workspace_inlay_hint_refresh(self, params: None) -> None:
+    async def send_workspace_inlay_hint_refresh(self) -> None:
         """
         @since 3.17.0
     
         *Generated from the TypeScript documentation*
         """
-        params_json = None
-        result_json = await self.send_request("workspace/inlayHint/refresh", params_json)
+        result_json = await self.send_request("workspace/inlayHint/refresh", None)
         return json_assert_type_null(result_json)
     
     async def send_text_document_diagnostic(self, params: "DocumentDiagnosticParams") -> "DocumentDiagnosticReport":
@@ -365,7 +362,7 @@ class ClientRequestsMixin:
         result_json = await self.send_request("workspace/diagnostic", params_json)
         return WorkspaceDiagnosticReport.from_json(json_assert_type_object(result_json))
     
-    async def send_workspace_diagnostic_refresh(self, params: None) -> None:
+    async def send_workspace_diagnostic_refresh(self) -> None:
         """
         The diagnostic refresh request definition.
         
@@ -373,8 +370,7 @@ class ClientRequestsMixin:
     
         *Generated from the TypeScript documentation*
         """
-        params_json = None
-        result_json = await self.send_request("workspace/diagnostic/refresh", params_json)
+        result_json = await self.send_request("workspace/diagnostic/refresh", None)
         return json_assert_type_null(result_json)
     
     async def send_initialize(self, params: "InitializeParams") -> "InitializeResult":
@@ -391,7 +387,7 @@ class ClientRequestsMixin:
         result_json = await self.send_request("initialize", params_json)
         return InitializeResult.from_json(json_assert_type_object(result_json))
     
-    async def send_shutdown(self, params: None) -> None:
+    async def send_shutdown(self) -> None:
         """
         A shutdown request is sent from the client to the server.
         It is sent once when the client decides to shutdown the
@@ -400,8 +396,7 @@ class ClientRequestsMixin:
     
         *Generated from the TypeScript documentation*
         """
-        params_json = None
-        result_json = await self.send_request("shutdown", params_json)
+        result_json = await self.send_request("shutdown", None)
         return json_assert_type_null(result_json)
     
     async def send_text_document_will_save_wait_until(self, params: "WillSaveTextDocumentParams") -> Union[List["TextEdit"], None]:
@@ -790,15 +785,14 @@ class ClientRequestsMixin:
         params_json = params.to_json()
         await self.send_notification("initialized", params_json)
     
-    async def send_exit(self, params: None) -> None:
+    async def send_exit(self) -> None:
         """
         The exit event is sent from the client to the server to
         ask the server to exit its process.
     
         *Generated from the TypeScript documentation*
         """
-        params_json = None
-        await self.send_notification("exit", params_json)
+        await self.send_notification("exit", None)
     
     async def send_workspace_did_change_configuration(self, params: "DidChangeConfigurationParams") -> None:
         """

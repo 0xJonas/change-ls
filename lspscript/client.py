@@ -5,7 +5,7 @@ from os import getpid
 from pathlib import Path
 from socket import AF_INET
 from threading import Thread
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Callable, Optional, Sequence, Tuple, Union
 
 from lspscript.generated.client_requests import ClientRequestsMixin
 from lspscript.generated.util import JSON_VALUE
@@ -156,6 +156,9 @@ class Client(ClientRequestsMixin):
         self._comm_thread_event_loop.run_forever()
 
     async def start(self) -> None:
+        """
+        Starts the Language Server.
+        """
         server_ready = get_running_loop().create_future()
         self._comm_thread = Thread(target=self._client_loop, args=[server_ready])
         self._comm_thread.start()
@@ -163,8 +166,10 @@ class Client(ClientRequestsMixin):
 
     async def send_request(self, method: str, params: JSON_VALUE) -> Union[JSON_VALUE, LSPException]:
         """
-        Sends a request to the server. If the server returns an error, the resulting
-        exception is returned, but not raised.
+        Sends a request to the server. The method and contents of the request are arbitrary
+        and need not be defined in the LSP.
+
+        If the server returns an error, the resulting exception is returned, but not raised.
         """
 
         future = get_running_loop().create_future()
@@ -179,10 +184,14 @@ class Client(ClientRequestsMixin):
         else:
             assert False # Future was cancelled # TODO raise something
 
-    async def send_request_iter(self, method: str, params: Any) -> Any:
+    async def send_request_iter(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         # Version of send_request which returns an async iterator.
         # This method is used when partial results are requested.
         pass
 
-    async def send_notification(self, method: str, params: Any) -> None:
+    async def send_notification(self, method: str, params: JSON_VALUE) -> None:
+        """
+        Sends a notification to the server. The method and contents of the notification are arbitrary
+        and need not be defined in the LSP.
+        """
         self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol.send_notification(method, params))

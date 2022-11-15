@@ -41,7 +41,7 @@ connection.onInitialize((params: InitializeParams) => {
         capabilities: {
             // TODO: fill accordingly as more tests are added
         }
-	};
+    };
 });
 
 function matchMessage(msg: TestMessage, method: string, params: any): boolean {

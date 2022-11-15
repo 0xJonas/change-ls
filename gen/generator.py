@@ -1008,7 +1008,6 @@ def write_{name}(obj: Dict[{name}Keys, Any]) -> JSON_VALUE:
 {self._generate_anonymous_structure_write_fun(val)}"""
 
 
-
     def generate_structure_definition(self, struct: Structure) -> str:
         superclasses: List[str] = []
         if struct.extends:
@@ -1127,25 +1126,33 @@ from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
     def _generate_send_request_method(self, request: Request) -> str:
         name = "send_" + request.method.translate(_message_translation_table)
+        documentation = request.documentation if request.documentation else ""
 
         assert not isinstance(request.params, Tuple) # TODO implement
-        if request.params is None:
-            param_type = "None"
-            param_write_expression = "None"
-        else:
-            param_type = self._generate_type_annotation(request.params)
-            param_write_expression = self.generate_write_expression(request.params, "params")
-
         result_json_type = self._get_expected_json_type(request.result)
         if result_json_type:
             result_type_assert = self._json_type_to_assert_function[result_json_type]
         else:
             result_type_assert = ""
 
-        return f'''\
+        if request.params is None:
+            return f'''\
+async def {name}(self) -> {self._generate_type_annotation(request.result)}:
+    """
+{indent(documentation)}
+
+    *Generated from the TypeScript documentation*
+    """
+    result_json = await self.send_request("{request.method}", None)
+    return {self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")}'''
+
+        else:
+            param_type = self._generate_type_annotation(request.params)
+            param_write_expression = self.generate_write_expression(request.params, "params")
+            return f'''\
 async def {name}(self, params: {param_type}) -> {self._generate_type_annotation(request.result)}:
     """
-{indent(request.documentation if request.documentation else "")}
+{indent(documentation)}
 
     *Generated from the TypeScript documentation*
     """
@@ -1153,13 +1160,21 @@ async def {name}(self, params: {param_type}) -> {self._generate_type_annotation(
     result_json = await self.send_request("{request.method}", params_json)
     return {self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")}'''
 
+
     def _generate_send_notification_method(self, notification: Notification) -> str:
         name = "send_" + notification.method.translate(_message_translation_table)
+        documentation = notification.documentation if notification.documentation else ""
 
         assert not isinstance(notification.params, Tuple) # TODO implement
         if notification.params is None:
-            param_type = "None"
-            param_write_expression = "None"
+            return f'''\
+async def {name}(self) -> None:
+    """
+{indent(documentation)}
+
+    *Generated from the TypeScript documentation*
+    """
+    await self.send_notification("{notification.method}", None)'''
         else:
             param_type = self._generate_type_annotation(notification.params)
             param_write_expression = self.generate_write_expression(notification.params, "params")
@@ -1167,12 +1182,13 @@ async def {name}(self, params: {param_type}) -> {self._generate_type_annotation(
         return f'''\
 async def {name}(self, params: {param_type}) -> None:
     """
-{indent(notification.documentation if notification.documentation else "")}
+{indent(documentation)}
 
     *Generated from the TypeScript documentation*
     """
     params_json = {param_write_expression}
     await self.send_notification("{notification.method}", params_json)'''
+
 
     def generate_client_requests_py(self) -> str:
         client_requests = filter(lambda r: r.message_direction == "clientToServer" or r.message_direction == "both",  self._meta_model.requests)

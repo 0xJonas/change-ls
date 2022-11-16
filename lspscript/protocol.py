@@ -1,4 +1,5 @@
-from asyncio import BaseTransport, Future, Protocol, SubprocessProtocol, SubprocessTransport, Transport, WriteTransport
+from abc import ABC, abstractmethod
+from asyncio import BaseTransport, Future, Protocol, SubprocessProtocol, SubprocessTransport, Transport, WriteTransport, get_running_loop
 from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder
 from typing import Any, Callable, Dict, Optional, Tuple, Union
@@ -24,6 +25,10 @@ class LSPException(Exception):
 
     def __str__(self) -> str:
         return f"Received error {str(self.error_code)}: {self.message}"
+
+
+class LSPClientException(Exception):
+    pass
 
 
 @dataclass
@@ -78,7 +83,7 @@ class LSPHeader:
         return "utf-8"
 
 
-class LSProtocol:
+class LSProtocol(ABC):
 
     # Maps the ids of currently active requests to their corresponding
     # Future objects provided by the client. These Future objects come from
@@ -98,6 +103,7 @@ class LSProtocol:
     _pending_header: Optional[LSPHeader]
     _content_offset: int
     _request_counter: int
+    _connected: bool
 
     def __init__(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> None:
         self._active_requests = {}
@@ -108,6 +114,7 @@ class LSProtocol:
         self._pending_header = None
         self._content_offset = 0
         self._request_counter = 0
+        self._connected = False
 
     def on_data(self, data: bytes) -> None:
         "Called by subclasses when new data has been received."
@@ -126,6 +133,7 @@ class LSProtocol:
 
         content = str(self._read_buffer[self._content_offset:], encoding=self._pending_header.get_encoding())
         self._read_buffer = self._read_buffer[self._content_offset + self._pending_header.content_length:]
+        self._pending_header = None
 
         json_data = self._decoder.decode(content)
         request_id = json_data["id"]
@@ -133,13 +141,14 @@ class LSProtocol:
             if error := json_data.get("error"):
                 exception = LSPException(error["code"], error["message"], error.get("data"))
                 future.get_loop().call_soon_threadsafe(lambda: future.set_exception(exception))
-            elif result := json_data.get("result"):
-                future.get_loop().call_soon_threadsafe(lambda: future.set_result(result))
+            elif "result" in json_data: # No := here, because json_data["result"] can be present but None
+                future.get_loop().call_soon_threadsafe(lambda: future.set_result(json_data["result"]))
         else:
             self._receive_callback(json_data["method"], json_data.get("params"))
 
+    @abstractmethod
     def write_data(self, data: bytes) -> None:
-        raise NotImplemented
+        pass
 
     def _create_message(self, method: str, params: JSON_VALUE, id: Optional[Union[str, int]] = None) -> bytes:
         request_content: Dict[str, JSON_VALUE] = {
@@ -161,6 +170,9 @@ class LSProtocol:
         Sends a request to the language server, using the given `method` and `params`.
         This function should only run on the LSProtocol's thread.
         """
+        if not self._connected:
+            future.get_loop().call_soon_threadsafe(lambda: future.set_exception(LSPClientException("No connection to server")))
+            return
 
         request_id = self._request_counter
         self._request_counter += 1
@@ -178,6 +190,13 @@ class LSProtocol:
         data = self._create_message(method, params)
         self.write_data(data)
 
+    def on_connection_lost(self) -> None:
+        # Stop the event_loop so the thread in Client terminates
+        get_running_loop().stop()
+        for f in self._active_requests.values():
+            f.get_loop().call_soon_threadsafe(lambda: f.set_exception(LSPClientException("Server has stopped.")))
+
+
 
 class LSStreamingProtocol(Protocol, LSProtocol):
 
@@ -189,8 +208,10 @@ class LSStreamingProtocol(Protocol, LSProtocol):
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, Transport)
         self._transport = transport
+        self._connected = True
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
+        self.on_connection_lost()
         if exc:
             raise exc
 
@@ -216,8 +237,10 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
         temp = transport.get_pipe_transport(0)
         assert isinstance(temp, WriteTransport)
         self._write_transport = temp
+        self._connected = True
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
+        self.on_connection_lost()
         if exc:
             raise exc
 

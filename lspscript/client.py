@@ -1,19 +1,22 @@
+from abc import ABC, abstractmethod
 import subprocess
-from asyncio import (AbstractEventLoop, BaseTransport, Future, get_running_loop,
-                     new_event_loop, set_event_loop)
+from asyncio import (AbstractEventLoop, BaseTransport, Future,
+                     get_running_loop, new_event_loop, set_event_loop)
 from os import getpid
 from pathlib import Path
 from socket import AF_INET
 from threading import Thread
-from typing import Callable, Optional, Sequence, Tuple, Union
+from types import TracebackType
+from typing import Callable, Literal, Optional, Sequence, Tuple, Type
 
 from lspscript.generated.client_requests import ClientRequestsMixin
-from lspscript.generated.util import JSON_VALUE
-from lspscript.protocol import (LSPException, LSProtocol, LSStreamingProtocol,
+from lspscript.generated.structures import ClientCapabilities, InitializeParams, InitializeResult, InitializedParams
+from lspscript.generated.util import JSON_VALUE, json_assert_type_object
+from lspscript.protocol import (LSPClientException, LSProtocol, LSStreamingProtocol,
                                 LSSubprocessProtocol)
 
 
-class _ServerLaunchParams:
+class _ServerLaunchParams(ABC):
     server_path: Optional[Path]
     launch_command: Optional[str]
     additional_args: Sequence[str]
@@ -29,8 +32,9 @@ class _ServerLaunchParams:
         self.additional_args = additional_args
         self.additional_only = additional_only
 
+    @abstractmethod
     async def launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
-        raise NotImplemented
+        pass
 
 
 class StdIOConnectionParams(_ServerLaunchParams):
@@ -132,66 +136,179 @@ class PipeConnectionParams(_ServerLaunchParams):
     pipename: str
 
 
+def get_default_client_capabilities() -> ClientCapabilities:
+    out = ClientCapabilities()
+    return out
+
+ClientState = Literal["disconnected", "uninitialized", "initializing", "running", "shutdown"]
+
 class Client(ClientRequestsMixin):
     # Manages capabilities (client and server).
     # Handles dispatching requests/responses/notifications.
 
-    _protocol: LSProtocol
+    _state: ClientState
+    _protocol: Optional[LSProtocol]
     _launch_params: _ServerLaunchParams
-    _comm_thread: Thread
-    _comm_thread_event_loop: AbstractEventLoop
+    _comm_thread: Optional[Thread]
+    _comm_thread_event_loop: Optional[AbstractEventLoop]
+
+    # Whether or not an 'exit' notification was sent. This is used
+    # to distinguish a normal termination of the server from a crash.
+    _exit_sent: bool
 
     def __init__(self, launch_params: _ServerLaunchParams) -> None:
+        self._state = "disconnected"
+        self._protocol = None
         self._launch_params = launch_params
+        self._comm_thread = None
+        self._comm_thread_event_loop = None
+        self._exit_sent = False
 
     async def _launch_internal(self) -> None:
         # TODO add callback
         (_, self._protocol) = await self._launch_params.launch_server_from_event_loop(lambda _1, _2: None)
 
     def _client_loop(self, server_ready: "Future[None]") -> None:
+        # Runs on the Client's thread
         self._comm_thread_event_loop = new_event_loop()
         set_event_loop(self._comm_thread_event_loop)
         self._comm_thread_event_loop.run_until_complete(self._comm_thread_event_loop.create_task(self._launch_internal()))
         server_ready.get_loop().call_soon_threadsafe(lambda: server_ready.set_result(None))
         self._comm_thread_event_loop.run_forever()
+        self._state = "disconnected"
+        if not self._exit_sent:
+            raise LSPClientException("Server stopped unexpectedly.")
 
-    async def start(self) -> None:
+    def get_state(self) -> ClientState:
+        """
+        Returns the current state of the `Client`.
+
+        Possible values:
+        - `disconnected`: No server process is running. When a server process is launched with `client.launch()`,
+                        the server enters the `uninitialized` state.
+        - `uninitialized`: The server is running, but no 'initialize' request has been sent. After the 'initialize'
+                         request has been sent, the `Client` enters the `initializing` state.
+        - `initializing`: The `Client` has received the result of the 'initialize' request, but has not yet sent the
+                        'initialized' notification. Doing so will put the `Client` in the `running` state.
+        - `running`: The server is running and ready to receive requests. Sending a 'shutdown' request
+                   will put the `Client` in the `shutdown` state.
+        - `shutdown`: The server shutting down. Sending an 'exit' notification will cause the `Client` to
+                    enter the `disconnected` state.
+        """
+        return self._state
+
+    async def launch(self) -> None:
         """
         Starts the Language Server.
         """
+        self._exit_sent = False
         server_ready = get_running_loop().create_future()
         self._comm_thread = Thread(target=self._client_loop, args=[server_ready])
         self._comm_thread.start()
         await server_ready
+        self._state = "uninitialized"
 
-    async def send_request(self, method: str, params: JSON_VALUE) -> Union[JSON_VALUE, LSPException]:
+    async def _send_request_internal(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+        assert self._comm_thread_event_loop
+
+        future = get_running_loop().create_future()
+        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol and self._protocol.send_request(method, params, future))
+        await future
+
+        assert not future.cancelled()
+        if exception := future.exception():
+            raise exception
+        else:
+            return future.result()
+
+    async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         """
         Sends a request to the server. The method and contents of the request are arbitrary
         and need not be defined in the LSP.
-
-        If the server returns an error, the resulting exception is returned, but not raised.
         """
-
-        future = get_running_loop().create_future()
-        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol.send_request(method, params, future))
-        await future
-
-        if result := future.result():
-            return result
-        elif exception := future.exception():
-            assert isinstance(exception, LSPException)
-            return exception
-        else:
-            assert False # Future was cancelled # TODO raise something
+        if self._state != "running":
+            raise LSPClientException("Invalid state, expected 'running'.")
+        return await self._send_request_internal(method, params)
 
     async def send_request_iter(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         # Version of send_request which returns an async iterator.
         # This method is used when partial results are requested.
         pass
 
+    async def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
+        assert self._comm_thread_event_loop
+        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol and self._protocol.send_notification(method, params))
+
     async def send_notification(self, method: str, params: JSON_VALUE) -> None:
         """
         Sends a notification to the server. The method and contents of the notification are arbitrary
         and need not be defined in the LSP.
         """
-        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol.send_notification(method, params))
+        if self._state != "running":
+            raise LSPClientException("Invalid state, expected 'running'.")
+        await self._send_notification_internal(method, params)
+
+    async def send_initialize(self, params: InitializeParams) -> InitializeResult:
+        if self._state != "uninitialized":
+            raise LSPClientException("Invalid state, expected 'uninitialized'.")
+
+        out_json = await self._send_request_internal("initialize", params.to_json())
+        out = InitializeResult.from_json(json_assert_type_object(out_json))
+        self._state = "initializing"
+        return out
+
+    async def send_initialized(self, params: InitializedParams) -> None:
+        if self._state != "initializing":
+            raise LSPClientException("Invalid state, expected 'initializing'.")
+
+        await self._send_notification_internal("initialized", params.to_json())
+        self._state = "running"
+
+    async def send_shutdown(self) -> None:
+        await super().send_shutdown()
+        self._state = "shutdown"
+
+    async def send_exit(self) -> None:
+        if self._state != "shutdown":
+            raise LSPClientException("Invalid state, expected 'shutdown'.")
+
+        # We set _exit_sent optimistically before the notification is actually sent.
+        # This has to be set beforehand because otherwise the thread might switch after
+        # the notification was sent, but before _exit_sent is set to True.
+        self._exit_sent = True
+        try:
+            await self._send_notification_internal("exit", None)
+        except:
+            # Something went wrong, so assume we did not actually send the notification.
+            self._exit_sent = False
+            raise
+
+        assert self._comm_thread
+        self._comm_thread.join(10.0)
+        if self._comm_thread.is_alive():
+            raise LSPClientException("Unable to stop server thread.")
+
+    async def __aenter__(self) -> "Client":
+        # These 'if's are here so that the method can be called from any state.
+
+        if self._state == "shutdown":
+            await self.send_exit()
+        if self._state == "disconnected":
+            await self.launch()
+        if self._state == "uninitialized":
+            # TODO provide actual parameters
+            # TODO store result
+            await self.send_initialize(InitializeParams(processId=getpid(), rootUri=None, capabilities=ClientCapabilities()))
+        if self._state == "initializing":
+            await self.send_initialized(InitializedParams())
+
+        assert self._state == "running"
+        return self
+
+    async def __aexit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
+        if self._state in ["uninitialized", "initializing", "running"]:
+            await self.send_shutdown()
+        if self._state == "shutdown":
+            await self.send_exit()
+        assert self._state == "disconnected"
+        return False

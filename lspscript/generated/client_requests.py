@@ -2,11 +2,15 @@ from .util import *
 from .enumerations import *
 from .structures import *
 
-class ClientRequestsMixin:
+from abc import ABC, abstractmethod
 
+class ClientRequestsMixin(ABC):
+
+    @abstractmethod
     async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
-        return NotImplemented
+        pass
 
+    @abstractmethod
     async def send_notification(self, method: str, params: JSON_VALUE) -> None:
         pass
 

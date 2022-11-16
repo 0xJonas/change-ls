@@ -703,7 +703,6 @@ def test_generator_get_referenced_definition_anytype() -> None:
     generator = Generator(model)
 
     res = generator.get_referenced_definitions(model.structures[0])
-    print(res)
     assert model.structures[1] in res
     assert model.structures[2] in res
     assert model.structures[3] in res
@@ -817,12 +816,16 @@ async def test_generator_client_requests() -> None:
     client_requests_py = generator.generate_client_requests_py()
     client_requests_py = client_requests_py[client_requests_py.index("class"):] # Skip imports
 
+    exec("from abc import ABC, abstractmethod", names)
     exec(client_requests_py, names)
     exec("""\
 class TestClient(ClientRequestsMixin):
 
     async def send_request(self, method, params):
         return "Request Ok!: " + params
+
+    async def send_notification(self, method, params):
+        pass
 """, names)
 
     test_client = names["TestClient"]()

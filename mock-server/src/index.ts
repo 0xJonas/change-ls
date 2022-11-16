@@ -1,4 +1,4 @@
-import { Connection, InitializeParams } from "vscode-languageserver"
+import { Connection, InitializedParams, InitializeParams } from "vscode-languageserver"
 import { createConnection } from "vscode-languageserver/node";
 
 import { readFileSync } from "fs";
@@ -44,6 +44,8 @@ connection.onInitialize((params: InitializeParams) => {
     };
 });
 
+connection.onInitialized((params: InitializedParams) => {})
+
 function matchMessage(msg: TestMessage, method: string, params: any): boolean {
     if (msg.method !== method) {
         return false;
@@ -70,6 +72,7 @@ function processRequest(connection: Connection, msg: TestMessage): any {
 }
 
 connection.onRequest((method: string, params: any) => {
+    console.error(method);
     const msg = test.sequence[sequenceIndex];
     if (msg.type == "request") {
         assert(matchMessage(msg, method, params), `${msg} does not match ${params}`);

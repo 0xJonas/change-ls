@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-from lspscript.generated.util import JSON_VALUE
-from lspscript.generated.enumerations import ErrorCodes, LSPErrorCodes
+from lspscript.types.util import JSON_VALUE
+from lspscript.types import ErrorCodes, LSPErrorCodes
 
 
 class LSPException(Exception):
@@ -32,12 +32,12 @@ class LSPClientException(Exception):
 
 
 @dataclass
-class LSPHeader:
+class _LSPHeader:
     content_length: int
     content_type: str = "application/vscode-jsonrpc; charset=utf-8"
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> Optional[Tuple["LSPHeader", int]]:
+    def from_bytes(cls, data: bytes) -> Optional[Tuple["_LSPHeader", int]]:
         content_length = -1
         content_type = "application/vscode-jsonrpc; charset=utf-8"
 
@@ -100,7 +100,7 @@ class LSProtocol(ABC):
     _encoder: JSONEncoder
     _decoder: JSONDecoder
     _read_buffer: bytes
-    _pending_header: Optional[LSPHeader]
+    _pending_header: Optional[_LSPHeader]
     _content_offset: int
     _request_counter: int
     _connected: bool
@@ -122,7 +122,7 @@ class LSProtocol(ABC):
         self._read_buffer += data
 
         if not self._pending_header:
-            maybe_header = LSPHeader.from_bytes(self._read_buffer)
+            maybe_header = _LSPHeader.from_bytes(self._read_buffer)
             if not maybe_header:
                 return
             (self._pending_header, self._content_offset) = maybe_header
@@ -143,6 +143,7 @@ class LSProtocol(ABC):
                 future.get_loop().call_soon_threadsafe(lambda: future.set_exception(exception))
             elif "result" in json_data: # No := here, because json_data["result"] can be present but None
                 future.get_loop().call_soon_threadsafe(lambda: future.set_result(json_data["result"]))
+            del self._active_requests[request_id]
         else:
             self._receive_callback(json_data["method"], json_data.get("params"))
 
@@ -161,7 +162,7 @@ class LSProtocol(ABC):
             request_content["params"] = params
 
         content = self._encoder.encode(request_content).encode("utf-8")
-        header = LSPHeader(len(content))
+        header = _LSPHeader(len(content))
 
         return header.to_bytes() + content
 

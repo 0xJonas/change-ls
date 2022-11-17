@@ -21,12 +21,14 @@ if __name__ == "__main__":
         for d in static_dir.iterdir():
             if not d.suffix == "py":
                 continue
-            with open(d) as input, open(f"lspscript/generated/{d.name}", "w") as output:
+            with open(d) as input, open(f"lspscript/types/{d.name}", "w") as output:
                 output.write(input.read())
 
-        with open("lspscript/generated/enumerations.py", "w", encoding="utf-8") as file:
+        with open("lspscript/types/enumerations.py", "w", encoding="utf-8") as file:
             file.write(generator.generate_enumerations_py())
-        with open("lspscript/generated/structures.py", "w", encoding="utf-8") as file:
+        with open("lspscript/types/structures.py", "w", encoding="utf-8") as file:
             file.write(generator.generate_structures_py())
-        with open("lspscript/generated/client_requests.py", "w", encoding="utf-8") as file:
+        with open("lspscript/types/client_requests.py", "w", encoding="utf-8") as file:
             file.write(generator.generate_client_requests_py())
+        with open("lspscript/types/__init__.py", "w", encoding="utf-8") as file:
+            file.write(generator.generate_init_py())

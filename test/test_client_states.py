@@ -1,5 +1,5 @@
 from lspscript.client import Client, StdIOConnectionParams
-from lspscript.generated.structures import ClientCapabilities, InitializeParams, InitializedParams
+from lspscript.types import ClientCapabilities, InitializeParams, InitializedParams
 from os import getpid
 
 

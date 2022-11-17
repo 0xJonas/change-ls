@@ -7,11 +7,11 @@ from pathlib import Path
 from socket import AF_INET
 from threading import Thread
 from types import TracebackType
-from typing import Callable, Literal, Optional, Sequence, Tuple, Type
+from typing import Callable, Literal, Mapping, Optional, Sequence, Tuple, Type
 
-from lspscript.generated.client_requests import ClientRequestsMixin
-from lspscript.generated.structures import ClientCapabilities, InitializeParams, InitializeResult, InitializedParams
-from lspscript.generated.util import JSON_VALUE, json_assert_type_object
+from lspscript.types.client_requests import ClientRequestsMixin
+from lspscript.types import ClientCapabilities, InitializeParams, InitializeResult, InitializedParams
+from lspscript.types.util import JSON_VALUE
 from lspscript.protocol import (LSPClientException, LSProtocol, LSStreamingProtocol,
                                 LSSubprocessProtocol)
 
@@ -33,7 +33,7 @@ class _ServerLaunchParams(ABC):
         self.additional_only = additional_only
 
     @abstractmethod
-    async def launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
         pass
 
 
@@ -63,7 +63,7 @@ class StdIOConnectionParams(_ServerLaunchParams):
 
         super().__init__(server_path=server_path, additional_args=additional_args, launch_command=launch_command, additional_only=additional_only)
 
-    async def launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
         args = ["--stdio", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -111,7 +111,7 @@ class SocketConnectionParams(_ServerLaunchParams):
         self.hostname = hostname
         self.port = port
 
-    async def launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
         args = [f"--socket={self.port}", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -166,7 +166,7 @@ class Client(ClientRequestsMixin):
 
     async def _launch_internal(self) -> None:
         # TODO add callback
-        (_, self._protocol) = await self._launch_params.launch_server_from_event_loop(lambda _1, _2: None)
+        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(lambda _1, _2: None) # type: ignore
 
     def _client_loop(self, server_ready: "Future[None]") -> None:
         # Runs on the Client's thread
@@ -184,22 +184,22 @@ class Client(ClientRequestsMixin):
         Returns the current state of the `Client`.
 
         Possible values:
-        - `disconnected`: No server process is running. When a server process is launched with `client.launch()`,
-                        the server enters the `uninitialized` state.
-        - `uninitialized`: The server is running, but no 'initialize' request has been sent. After the 'initialize'
-                         request has been sent, the `Client` enters the `initializing` state.
-        - `initializing`: The `Client` has received the result of the 'initialize' request, but has not yet sent the
-                        'initialized' notification. Doing so will put the `Client` in the `running` state.
-        - `running`: The server is running and ready to receive requests. Sending a 'shutdown' request
+        - `"disconnected"`: No server process is running. When a server process is launched with `client.launch()`,
+                        the server enters the `"uninitialized"` state.
+        - `"uninitialized"`: The server is running, but no 'initialize' request has been sent. After the 'initialize'
+                         request has been sent, the `Client` enters the `"initializing"` state.
+        - `"initializing"`: The `Client` has received the result of the 'initialize' request, but has not yet sent the
+                        'initialized' notification. Doing so will put the `Client` in the `"running"` state.
+        - `"running"`: The server is running and ready to receive requests. Sending a 'shutdown' request
                    will put the `Client` in the `shutdown` state.
-        - `shutdown`: The server shutting down. Sending an 'exit' notification will cause the `Client` to
-                    enter the `disconnected` state.
+        - `"shutdown"`: The server shutting down. Sending an 'exit' notification will cause the `Client` to
+                    enter the `"disconnected"` state.
         """
         return self._state
 
     async def launch(self) -> None:
         """
-        Starts the Language Server.
+        Launches the Language Server process.
         """
         self._exit_sent = False
         server_ready = get_running_loop().create_future()
@@ -252,8 +252,11 @@ class Client(ClientRequestsMixin):
         if self._state != "uninitialized":
             raise LSPClientException("Invalid state, expected 'uninitialized'.")
 
+        # We need to call _send_request_internal directly here, since the
+        # normal send_request method requires the state to be "running".
         out_json = await self._send_request_internal("initialize", params.to_json())
-        out = InitializeResult.from_json(json_assert_type_object(out_json))
+        assert isinstance(out_json, Mapping)
+        out = InitializeResult.from_json(out_json)
         self._state = "initializing"
         return out
 

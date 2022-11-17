@@ -1086,14 +1086,21 @@ def write_{typealias.name}(arg: {typealias.name}) -> JSON_VALUE:
 
 
     def generate_enumerations_py(self) -> str:
-        definitions: List[str] = [self.generate_enumeration_definition(e) for e in self._meta_model.enumerations]
-        imports = """\
+        definitions = [self.generate_enumeration_definition(e) for e in self._meta_model.enumerations]
+        exports = ['"' + e.name + '"' for e in self._meta_model.enumerations]
+        sep1 = ",\n"
+        sep2 = "\n\n\n"
+        return f"""\
 from typing import ClassVar
 from .lsp_enum import AllowCustomValues, TypedLSPEnum
 
+__all__ = (
+{indent(sep1.join(exports))}
+)
 
+
+{sep2.join(definitions)}
 """
-        return imports + "\n\n\n".join(definitions)
 
 
     def generate_structures_py(self) -> str:
@@ -1101,18 +1108,27 @@ from .lsp_enum import AllowCustomValues, TypedLSPEnum
         sorted_types = self.sort_structures_and_typealiases()
 
         definitions: List[str] = []
+        exports: List[str] = []
 
         for t in sorted_types:
             if isinstance(t, TypeAlias):
                 definitions.append(self.generate_typealias_definition(t))
+                exports.append('"' + t.name + '"')
             elif isinstance(t, Structure):
                 definitions.append(self.generate_structure_definition(t))
+                # The meta model defines a single structure called _InitializeParams for some reason.
+                # It is only uses as a base class for the actual InitializeParams, so we don't really need it
+                # to be exported.
+                if t.name[0] != '_':
+                    exports.append('"' + t.name + '"')
             elif isinstance(t, StructureLiteral):
                 definitions.append(self.generate_anonymous_structure_definition(t))
             else: # isinstance(t, AndType)
                 definitions.append(self.generate_andtype_definition(t))
+                exports.append('"' + self._anonymous_andtype_names[t] + '"')
 
-        sep = "\n\n\n"
+        sep1 = ",\n"
+        sep2 = "\n\n\n"
         return f"""\
 from .util import *
 from .enumerations import *
@@ -1121,7 +1137,12 @@ from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 
-{sep.join(definitions)}
+__all__ = (
+{indent(sep1.join(exports))}
+)
+
+
+{sep2.join(definitions)}
 """
 
     def _generate_send_request_method(self, request: Request) -> str:
@@ -1218,4 +1239,24 @@ class ClientRequestsMixin(ABC):
 {indent(sep.join(request_methods))}
 
 {indent(sep.join(notification_methods))}
+"""
+
+
+    def generate_init_py(self) -> str:
+        structures = ['"' + s.name + '"' for s in self._meta_model.structures if s.name[0] != '_']
+        enumerations = ['"' + e.name + '"' for e in self._meta_model.enumerations]
+        type_aliases = ['"' + t.name + '"' for t in self._meta_model.type_aliases]
+        and_types = ['"' + a + '"' for a in self._anonymous_andtype_names.values()]
+
+        exports = structures + enumerations + type_aliases + and_types
+        sep = ",\n"
+
+        return f"""\
+from .structures import *
+from .enumerations import *
+
+
+__all__ = (
+{indent(sep.join(exports))}
+)
 """

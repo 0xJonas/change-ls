@@ -1087,19 +1087,13 @@ def write_{typealias.name}(arg: {typealias.name}) -> JSON_VALUE:
 
     def generate_enumerations_py(self) -> str:
         definitions = [self.generate_enumeration_definition(e) for e in self._meta_model.enumerations]
-        exports = ['"' + e.name + '"' for e in self._meta_model.enumerations]
-        sep1 = ",\n"
-        sep2 = "\n\n\n"
+        sep = "\n\n\n"
         return f"""\
 from typing import ClassVar
 from .lsp_enum import AllowCustomValues, TypedLSPEnum
 
-__all__ = (
-{indent(sep1.join(exports))}
-)
 
-
-{sep2.join(definitions)}
+{sep.join(definitions)}
 """
 
 
@@ -1108,27 +1102,18 @@ __all__ = (
         sorted_types = self.sort_structures_and_typealiases()
 
         definitions: List[str] = []
-        exports: List[str] = []
 
         for t in sorted_types:
             if isinstance(t, TypeAlias):
                 definitions.append(self.generate_typealias_definition(t))
-                exports.append('"' + t.name + '"')
             elif isinstance(t, Structure):
                 definitions.append(self.generate_structure_definition(t))
-                # The meta model defines a single structure called _InitializeParams for some reason.
-                # It is only uses as a base class for the actual InitializeParams, so we don't really need it
-                # to be exported.
-                if t.name[0] != '_':
-                    exports.append('"' + t.name + '"')
             elif isinstance(t, StructureLiteral):
                 definitions.append(self.generate_anonymous_structure_definition(t))
             else: # isinstance(t, AndType)
                 definitions.append(self.generate_andtype_definition(t))
-                exports.append('"' + self._anonymous_andtype_names[t] + '"')
 
-        sep1 = ",\n"
-        sep2 = "\n\n\n"
+        sep = "\n\n\n"
         return f"""\
 from .util import *
 from .enumerations import *
@@ -1137,12 +1122,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 
-__all__ = (
-{indent(sep1.join(exports))}
-)
-
-
-{sep2.join(definitions)}
+{sep.join(definitions)}
 """
 
     def _generate_send_request_method(self, request: Request) -> str:

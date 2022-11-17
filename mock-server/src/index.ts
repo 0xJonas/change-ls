@@ -2,6 +2,7 @@ import { Connection, InitializedParams, InitializeParams } from "vscode-language
 import { createConnection } from "vscode-languageserver/node";
 
 import { readFileSync } from "fs";
+import { exit } from "process";
 import { argv } from "process";
 import assert = require("assert");
 
@@ -46,6 +47,24 @@ connection.onInitialize((params: InitializeParams) => {
 
 connection.onInitialized((params: InitializedParams) => {})
 
+function handleSleep(time: number) {
+    // :(
+    const waitUntil = new Date(new Date().getTime() + time * 1000);
+    while(waitUntil > new Date());
+}
+
+function handleTerminate(exitCode: number) {
+    exit(exitCode)
+}
+
+function handleCustomRequests(msg: TestMessage): any {
+    switch (msg.method) {
+        case "$/sleep": return handleSleep(msg.params);
+        case "$/terminate": handleTerminate(msg.params);
+    }
+    return null;
+}
+
 function matchMessage(msg: TestMessage, method: string, params: any): boolean {
     if (msg.method !== method) {
         return false;
@@ -59,6 +78,7 @@ function matchMessage(msg: TestMessage, method: string, params: any): boolean {
 }
 
 function processRequest(connection: Connection, msg: TestMessage): any {
+    handleCustomRequests(msg);
     if (msg.intermediate !== undefined) {
         for (let i of msg.intermediate) {
             assert(i.type == "notification");
@@ -72,10 +92,9 @@ function processRequest(connection: Connection, msg: TestMessage): any {
 }
 
 connection.onRequest((method: string, params: any) => {
-    console.error(method);
     const msg = test.sequence[sequenceIndex];
     if (msg.type == "request") {
-        assert(matchMessage(msg, method, params), `${msg} does not match ${params}`);
+        assert(matchMessage(msg, method, params), `${JSON.stringify(msg)} does not match ${method}, ${params}`);
         sequenceIndex++;
         return processRequest(connection, msg);
     } else if (msg.type == "request-unordered") {

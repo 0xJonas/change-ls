@@ -1138,27 +1138,27 @@ from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
         if request.params is None:
             return f'''\
-async def {name}(self) -> {self._generate_type_annotation(request.result)}:
+async def {name}(self, **kwargs: Any) -> {self._generate_type_annotation(request.result)}:
     """
 {indent(documentation)}
 
     *Generated from the TypeScript documentation*
     """
-    result_json = await self.send_request("{request.method}", None)
+    result_json = await self.send_request("{request.method}", None, **kwargs)
     return {self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")}'''
 
         else:
             param_type = self._generate_type_annotation(request.params)
             param_write_expression = self.generate_write_expression(request.params, "params")
             return f'''\
-async def {name}(self, params: {param_type}) -> {self._generate_type_annotation(request.result)}:
+async def {name}(self, params: {param_type}, **kwargs: Any) -> {self._generate_type_annotation(request.result)}:
     """
 {indent(documentation)}
 
     *Generated from the TypeScript documentation*
     """
     params_json = {param_write_expression}
-    result_json = await self.send_request("{request.method}", params_json)
+    result_json = await self.send_request("{request.method}", params_json, **kwargs)
     return {self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")}'''
 
 
@@ -1205,11 +1205,12 @@ from .enumerations import *
 from .structures import *
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 class ClientRequestsMixin(ABC):
 
     @abstractmethod
-    async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+    async def send_request(self, method: str, params: JSON_VALUE, **kwargs: Any) -> JSON_VALUE:
         pass
 
     @abstractmethod

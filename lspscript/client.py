@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 import subprocess
 from asyncio import (AbstractEventLoop, BaseTransport, Future,
-                     get_running_loop, new_event_loop, set_event_loop)
+                     get_running_loop, new_event_loop, set_event_loop, wait_for)
 from os import getpid
 from pathlib import Path
 from socket import AF_INET
 from threading import Thread
 from types import TracebackType
-from typing import Callable, Literal, Mapping, Optional, Sequence, Tuple, Type
+from typing import Any, Callable, Literal, Mapping, Optional, Sequence, Tuple, Type
 
 from lspscript.types.client_requests import ClientRequestsMixin
 from lspscript.types import ClientCapabilities, InitializeParams, InitializeResult, InitializedParams
@@ -208,12 +208,12 @@ class Client(ClientRequestsMixin):
         await server_ready
         self._state = "uninitialized"
 
-    async def _send_request_internal(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+    async def _send_request_internal(self, method: str, params: JSON_VALUE, timeout: Optional[float] = 10.0) -> JSON_VALUE:
         assert self._comm_thread_event_loop
 
         future = get_running_loop().create_future()
         self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol and self._protocol.send_request(method, params, future))
-        await future
+        await wait_for(future, timeout)
 
         assert not future.cancelled()
         if exception := future.exception():
@@ -221,14 +221,19 @@ class Client(ClientRequestsMixin):
         else:
             return future.result()
 
-    async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+    async def send_request(self, method: str, params: JSON_VALUE, **kwargs: Any) -> JSON_VALUE:
         """
-        Sends a request to the server. The method and contents of the request are arbitrary
-        and need not be defined in the LSP.
+        Sends a request to the server and returns the result.
+        The method and contents of the request are arbitrary and need not be defined in the LSP.
+
+        Keyword arguments:
+        - `timeout`: Number of seconds after which the request must be resolved. A value of
+          `None` indicates an infinite timeout. If the request is not resolved before the given
+          `timeout`, an `asyncio.exceptions.TimeoutError` is raised (not to be confused with `TimeoutError(OSError)`).
         """
         if self._state != "running":
             raise LSPClientException("Invalid state, expected 'running'.")
-        return await self._send_request_internal(method, params)
+        return await self._send_request_internal(method, params, **kwargs)
 
     async def send_request_iter(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         # Version of send_request which returns an async iterator.
@@ -248,13 +253,13 @@ class Client(ClientRequestsMixin):
             raise LSPClientException("Invalid state, expected 'running'.")
         await self._send_notification_internal(method, params)
 
-    async def send_initialize(self, params: InitializeParams) -> InitializeResult:
+    async def send_initialize(self, params: InitializeParams, **kwargs: Any) -> InitializeResult:
         if self._state != "uninitialized":
             raise LSPClientException("Invalid state, expected 'uninitialized'.")
 
         # We need to call _send_request_internal directly here, since the
         # normal send_request method requires the state to be "running".
-        out_json = await self._send_request_internal("initialize", params.to_json())
+        out_json = await self._send_request_internal("initialize", params.to_json(), **kwargs)
         assert isinstance(out_json, Mapping)
         out = InitializeResult.from_json(out_json)
         self._state = "initializing"
@@ -267,8 +272,8 @@ class Client(ClientRequestsMixin):
         await self._send_notification_internal("initialized", params.to_json())
         self._state = "running"
 
-    async def send_shutdown(self) -> None:
-        await super().send_shutdown()
+    async def send_shutdown(self, **kwargs: Any) -> None:
+        await super().send_shutdown(**kwargs)
         self._state = "shutdown"
 
     async def send_exit(self) -> None:

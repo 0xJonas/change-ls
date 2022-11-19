@@ -1,0 +1,23 @@
+name: Check Generator Output
+
+on:
+  workflow_call:
+
+jobs:
+  check-generator-output:
+    runs-on: [ubuntu-latest]
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Setup Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.8"
+
+    - name: Run Generator and Output into ./temp
+      run: python -m gen.main ./res/metaModel.json ./temp
+
+    - name: Compare Generated Files with ./lspscript/types/
+      run: "for f in *; do cmp $f ../lspscript/types/$f || exit 1; done"
+      working-directory: temp

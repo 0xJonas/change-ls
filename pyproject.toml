@@ -18,3 +18,4 @@ testpaths = [
     "."
 ]
 asyncio_mode = "auto"
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]

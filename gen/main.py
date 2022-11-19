@@ -37,16 +37,16 @@ def generate_output_files(out_dir: Path) -> None:
     for f in static_dir.iterdir():
         if not f.suffix == ".py":
             continue
-        with open(f) as input, open(out_dir.joinpath(f.name), "w") as output:
+        with open(f) as input, open(out_dir.joinpath(f.name), "w", newline="\n") as output:
             output.write(input.read())
 
-    with open(out_dir.joinpath("enumerations.py"), "w", encoding="utf-8") as file:
+    with open(out_dir.joinpath("enumerations.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_enumerations_py())
-    with open(out_dir.joinpath("structures.py"), "w", encoding="utf-8") as file:
+    with open(out_dir.joinpath("structures.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_structures_py())
-    with open(out_dir.joinpath("client_requests.py"), "w", encoding="utf-8") as file:
+    with open(out_dir.joinpath("client_requests.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_client_requests_py())
-    with open(out_dir.joinpath("__init__.py"), "w", encoding="utf-8") as file:
+    with open(out_dir.joinpath("__init__.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_init_py())
 
 

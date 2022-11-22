@@ -8,6 +8,8 @@ from socket import AF_INET
 from threading import Thread
 from types import TracebackType
 from typing import Any, Callable, Literal, Mapping, Optional, Sequence, Tuple, Type
+from sys import argv
+from lspscript import LSPSCRIPT_VERSION
 
 from lspscript.types.client_requests import ClientRequestsMixin
 from lspscript.types import ClientCapabilities, InitializeParams, InitializeResult, InitializedParams
@@ -137,8 +139,25 @@ class PipeConnectionParams(_ServerLaunchParams):
 
 
 def get_default_client_capabilities() -> ClientCapabilities:
-    out = ClientCapabilities()
-    return out
+    """
+    Returns the `ClientCapabilities` which are used for the default
+    `InitializeParams` (see `get_default_initialize_params`).
+    """
+    return ClientCapabilities()
+
+def get_default_initialize_params() -> InitializeParams:
+    """
+    Returns the `InitializeParams` which will be used when a Client is
+    constructed without explicit `InitializeParams`.
+    """
+    return InitializeParams(
+        processId=getpid(),
+        clientInfo={
+            "name": "[LSPScript]: " + argv[0],
+            "version": LSPSCRIPT_VERSION
+        },
+        rootUri=None,
+        capabilities=get_default_client_capabilities())
 
 ClientState = Literal["disconnected", "uninitialized", "initializing", "running", "shutdown"]
 
@@ -156,13 +175,16 @@ class Client(ClientRequestsMixin):
     # to distinguish a normal termination of the server from a crash.
     _exit_sent: bool
 
-    def __init__(self, launch_params: _ServerLaunchParams) -> None:
+    _initialize_params: InitializeParams
+
+    def __init__(self, launch_params: _ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params()) -> None:
         self._state = "disconnected"
         self._protocol = None
         self._launch_params = launch_params
         self._comm_thread = None
         self._comm_thread_event_loop = None
         self._exit_sent = False
+        self._initialize_params = initialize_params
 
     async def _launch_internal(self) -> None:
         # TODO add callback
@@ -185,15 +207,15 @@ class Client(ClientRequestsMixin):
 
         Possible values:
         - `"disconnected"`: No server process is running. When a server process is launched with `client.launch()`,
-                        the server enters the `"uninitialized"` state.
+                            the server enters the `"uninitialized"` state.
         - `"uninitialized"`: The server is running, but no 'initialize' request has been sent. After the 'initialize'
-                         request has been sent, the `Client` enters the `"initializing"` state.
+                             request has been sent, the `Client` enters the `"initializing"` state.
         - `"initializing"`: The `Client` has received the result of the 'initialize' request, but has not yet sent the
-                        'initialized' notification. Doing so will put the `Client` in the `"running"` state.
+                            'initialized' notification. Doing so will put the `Client` in the `"running"` state.
         - `"running"`: The server is running and ready to receive requests. Sending a 'shutdown' request
-                   will put the `Client` in the `shutdown` state.
-        - `"shutdown"`: The server shutting down. Sending an 'exit' notification will cause the `Client` to
-                    enter the `"disconnected"` state.
+                       will put the `Client` in the `shutdown` state.
+        - `"shutdown"`: The server is shutting down. Sending an 'exit' notification will cause the `Client` to
+                        enter the `"disconnected"` state.
         """
         return self._state
 
@@ -253,9 +275,12 @@ class Client(ClientRequestsMixin):
             raise LSPClientException("Invalid state, expected 'running'.")
         await self._send_notification_internal(method, params)
 
-    async def send_initialize(self, params: InitializeParams, **kwargs: Any) -> InitializeResult:
+    async def send_initialize(self, params: Optional[InitializeParams] = None, **kwargs: Any) -> InitializeResult:
         if self._state != "uninitialized":
             raise LSPClientException("Invalid state, expected 'uninitialized'.")
+
+        if not params:
+            params = self._initialize_params
 
         # We need to call _send_request_internal directly here, since the
         # normal send_request method requires the state to be "running".
@@ -304,9 +329,8 @@ class Client(ClientRequestsMixin):
         if self._state == "disconnected":
             await self.launch()
         if self._state == "uninitialized":
-            # TODO provide actual parameters
             # TODO store result
-            await self.send_initialize(InitializeParams(processId=getpid(), rootUri=None, capabilities=ClientCapabilities()))
+            await self.send_initialize()
         if self._state == "initializing":
             await self.send_initialized(InitializedParams())
 

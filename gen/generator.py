@@ -1,4 +1,5 @@
 from keyword import iskeyword
+from textwrap import dedent
 from gen.schema.anytype import AndType, AnyType, ArrayType, BaseType, BooleanLiteralType, IntegerLiteralType, MapKeyType, MapType, OrType, Property, StringLiteralType, StructureLiteral, StructureLiteralType, TupleType
 from gen.schema.types import Enumeration, MetaModel, Notification, ReferenceType, Request, Structure, TypeAlias
 
@@ -19,6 +20,20 @@ class LSPGeneratorException(Exception):
 
 def indent(text: str) -> str:
     return "\n".join(["    " + l for l in text.splitlines()])
+
+
+def dedent_ignore_empty(text: str) -> str:
+    min_indentation = 1 << 31
+    lines = text.splitlines(keepends=False)
+    for line in lines:
+        if len(line) == 0:
+            continue
+        for i, c in enumerate(line):
+            if c != ' ':
+                min_indentation = min(min_indentation, i)
+                break
+
+    return "\n".join((line[min_indentation:] if len(line) >= min_indentation else line for line in text.splitlines()))
 
 
 def _generate_documentation_comment(documentation: str) -> str:
@@ -978,34 +993,42 @@ class {class_name}({", ".join(superclasses)}):
 
 
     def _generate_anonymous_structure_read_fun(self, val: StructureLiteral) -> str:
-        name = self._anonymous_structure_names[val]
         read_statements = [self._generate_property_read_statement(p, "obj", True, "out") for p in val.properties]
-        sep = "\n"
-        return f"""\
-def parse_{name}(obj: Mapping[str, JSON_VALUE]) -> Dict[{name}Keys, Any]:
-    out: Dict[{name}Keys, Any] = {{}}
-{indent(sep.join(read_statements))}
-    return out"""
+        template = dedent("""\
+            def parse_{name}(obj: Mapping[str, JSON_VALUE]) -> Dict[{name}Keys, Any]:
+                out: Dict[{name}Keys, Any] = {{}}
+            {statements}
+                return out""")
+        return template.format(
+            name=self._anonymous_structure_names[val],
+            statements=indent("\n".join(read_statements)))
 
 
     def _generate_anonymous_structure_write_fun(self, val: StructureLiteral) -> str:
-        name = self._anonymous_structure_names[val]
         write_statements = [self._generate_property_write_statement(p, "out", True, "obj") for p in val.properties]
-        sep = "\n"
-        return f"""\
-def write_{name}(obj: Dict[{name}Keys, Any]) -> JSON_VALUE:
-    out: JSON_VALUE = {{}}
-{indent(sep.join(write_statements))}
-    return out"""
+
+        template = dedent("""\
+            def write_{name}(obj: Dict[{name}Keys, Any]) -> JSON_VALUE:
+                out: JSON_VALUE = {{}}
+            {statements}
+                return out""")
+
+        return template.format(
+            name=self._anonymous_structure_names[val],
+            statements=indent("\n".join(write_statements)))
 
 
     def generate_anonymous_structure_definition(self, val: StructureLiteral) -> str:
-        return f"""\
-{self._generate_anonymous_structure_key_type_alias(val)}
+        template = dedent_ignore_empty("""\
+            {key_type_alias}
 
-{self._generate_anonymous_structure_read_fun(val)}
+            {read_fun}
 
-{self._generate_anonymous_structure_write_fun(val)}"""
+            {write_fun}""")
+        return template.format(
+            key_type_alias=self._generate_anonymous_structure_key_type_alias(val),
+            read_fun=self._generate_anonymous_structure_read_fun(val),
+            write_fun=self._generate_anonymous_structure_write_fun(val))
 
 
     def generate_structure_definition(self, struct: Structure) -> str:
@@ -1044,22 +1067,24 @@ def write_{name}(obj: Dict[{name}Keys, Any]) -> JSON_VALUE:
 
             entry_definitions.append(f"{documentation}{_escape_keyword(e.name)}: ClassVar[\"{enum.name}\"] = {value} # type: ignore")
 
-        body = "\n\n".join(entry_definitions)
+        template = dedent_ignore_empty('''\
+            class {name}({superclasses}):
+                """
+            {documentation}
 
-        return f'''\
-class {enum.name}({", ".join(superclasses)}):
-    """
-{indent(enum.documentation if enum.documentation else "")}
+                *Generated from the TypeScript documentation*
+                """
 
-    *Generated from the TypeScript documentation*
-    """
+            {body}''')
 
-{indent(body)}'''
+        return template.format(
+                name=enum.name,
+                superclasses=", ".join(superclasses),
+                documentation=indent(enum.documentation if enum.documentation else ""),
+                body=indent("\n\n".join(entry_definitions)))
 
 
     def generate_typealias_definition(self, typealias: TypeAlias) -> str:
-        documentation = _generate_documentation_comment(typealias.documentation) if typealias.documentation else ""
-
         annotation = self._generate_type_annotation(typealias.type)
         if annotation[0] == '"' and annotation[-1] == '"':
             # If the type annotation is quoted, the generated code will look like
@@ -1068,33 +1093,39 @@ class {enum.name}({", ".join(superclasses)}):
             # here and hope that it does not cause problems with forward declarations.
             annotation = annotation[1: -1]
 
-        definition = f"{documentation}{typealias.name} = {annotation}"
         expected_json_type = self._get_expected_json_type(typealias.type)
         if expected_json_type:
             assert_fun = self._json_type_to_assert_function[expected_json_type]
         else:
             assert_fun = ""
-        parse_fun = f"""\
-def parse_{typealias.name}(arg: JSON_VALUE) -> {typealias.name}:
-    return {self.generate_parse_expression(typealias.type, f"{assert_fun}(arg)")}"""
 
-        write_fun = f"""\
-def write_{typealias.name}(arg: {typealias.name}) -> JSON_VALUE:
-    return {self.generate_write_expression(typealias.type, "arg")}"""
+        template = dedent_ignore_empty("""\
+            {documentation}{name} = {annotation}
 
-        return definition + "\n\n" + parse_fun + "\n\n" + write_fun
+            def parse_{name}(arg: JSON_VALUE) -> {name}:
+                return {parse_expression}
+
+            def write_{name}(arg: {name}) -> JSON_VALUE:
+                return {write_expression}""")
+
+        return template.format(
+            name=typealias.name,
+            documentation=_generate_documentation_comment(typealias.documentation) if typealias.documentation else "",
+            annotation=annotation,
+            parse_expression=self.generate_parse_expression(typealias.type, f"{assert_fun}(arg)"),
+            write_expression=self.generate_write_expression(typealias.type, "arg"))
 
 
     def generate_enumerations_py(self) -> str:
-        definitions = [self.generate_enumeration_definition(e) for e in self._meta_model.enumerations]
-        sep = "\n\n\n"
-        return f"""\
-from typing import ClassVar
-from .lsp_enum import AllowCustomValues, TypedLSPEnum
+        template = dedent_ignore_empty("""\
+            from typing import ClassVar
+            from .lsp_enum import AllowCustomValues, TypedLSPEnum
 
 
-{sep.join(definitions)}
-"""
+            {definitions}
+            """)
+
+        return template.format(definitions="\n\n\n".join(self.generate_enumeration_definition(e) for e in self._meta_model.enumerations))
 
 
     def generate_structures_py(self) -> str:
@@ -1113,22 +1144,21 @@ from .lsp_enum import AllowCustomValues, TypedLSPEnum
             else: # isinstance(t, AndType)
                 definitions.append(self.generate_andtype_definition(t))
 
-        sep = "\n\n\n"
-        return f"""\
-from .util import *
-from .enumerations import *
+        template = dedent_ignore_empty("""\
+            from .util import *
+            from .enumerations import *
 
-from dataclasses import dataclass
-from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
+            from dataclasses import dataclass
+            from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 
-{sep.join(definitions)}
-"""
+            {definitions}
+            """)
+
+        return template.format(definitions="\n\n\n".join(definitions))
+
 
     def _generate_send_request_method(self, request: Request) -> str:
-        name = "send_" + request.method.translate(_message_translation_table)
-        documentation = request.documentation if request.documentation else ""
-
         assert not isinstance(request.params, Tuple) # TODO implement
         result_json_type = self._get_expected_json_type(request.result)
         if result_json_type:
@@ -1136,59 +1166,79 @@ from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union
         else:
             result_type_assert = ""
 
+        return_expression = self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")
+
+        param_type = None
+        param_write_expression = None
+
         if request.params is None:
-            return f'''\
-async def {name}(self, **kwargs: Any) -> {self._generate_type_annotation(request.result)}:
-    """
-{indent(documentation)}
+            template = dedent_ignore_empty('''\
+                async def {name}(self, **kwargs: Any) -> {return_type}:
+                    """
+                {documentation}
 
-    *Generated from the TypeScript documentation*
-    """
-    result_json = await self.send_request("{request.method}", None, **kwargs)
-    return {self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")}'''
-
+                    *Generated from the TypeScript documentation*
+                    """
+                    result_json = await self.send_request("{method}", None, **kwargs)
+                    return {return_expression}''')
         else:
             param_type = self._generate_type_annotation(request.params)
             param_write_expression = self.generate_write_expression(request.params, "params")
-            return f'''\
-async def {name}(self, params: {param_type}, **kwargs: Any) -> {self._generate_type_annotation(request.result)}:
-    """
-{indent(documentation)}
+            template = dedent_ignore_empty('''\
+                async def {name}(self, params: {param_type}, **kwargs: Any) -> {return_type}:
+                    """
+                {documentation}
 
-    *Generated from the TypeScript documentation*
-    """
-    params_json = {param_write_expression}
-    result_json = await self.send_request("{request.method}", params_json, **kwargs)
-    return {self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")}'''
+                    *Generated from the TypeScript documentation*
+                    """
+                    params_json = {param_write_expression}
+                    result_json = await self.send_request("{method}", params_json, **kwargs)
+                    return {return_expression}''')
+
+        return template.format(
+            name="send_" + request.method.translate(_message_translation_table),
+            return_type=self._generate_type_annotation(request.result),
+            documentation=indent(request.documentation if request.documentation else ""),
+            return_expression=return_expression,
+            method=request.method,
+            param_type=param_type,
+            param_write_expression=param_write_expression)
 
 
     def _generate_send_notification_method(self, notification: Notification) -> str:
-        name = "send_" + notification.method.translate(_message_translation_table)
-        documentation = notification.documentation if notification.documentation else ""
+        param_type = None
+        param_write_expression = None
 
         assert not isinstance(notification.params, Tuple) # TODO implement
         if notification.params is None:
-            return f'''\
-async def {name}(self) -> None:
-    """
-{indent(documentation)}
+            template = dedent_ignore_empty('''\
+                async def {name}(self) -> None:
+                    """
+                {documentation}
 
-    *Generated from the TypeScript documentation*
-    """
-    await self.send_notification("{notification.method}", None)'''
+                    *Generated from the TypeScript documentation*
+                    """
+                    await self.send_notification("{method}", None)''')
         else:
             param_type = self._generate_type_annotation(notification.params)
             param_write_expression = self.generate_write_expression(notification.params, "params")
 
-        return f'''\
-async def {name}(self, params: {param_type}) -> None:
-    """
-{indent(documentation)}
+            template = dedent_ignore_empty('''\
+                async def {name}(self, params: {param_type}) -> None:
+                    """
+                {documentation}
 
-    *Generated from the TypeScript documentation*
-    """
-    params_json = {param_write_expression}
-    await self.send_notification("{notification.method}", params_json)'''
+                    *Generated from the TypeScript documentation*
+                    """
+                    params_json = {param_write_expression}
+                    await self.send_notification("{method}", params_json)''')
+
+        return template.format(
+            name="send_" + notification.method.translate(_message_translation_table),
+            documentation=indent(notification.documentation if notification.documentation else ""),
+            method=notification.method,
+            param_type=param_type,
+            param_write_expression=param_write_expression)
 
 
     def generate_client_requests_py(self) -> str:
@@ -1198,29 +1248,32 @@ async def {name}(self, params: {param_type}) -> None:
         request_methods = map(lambda r: self._generate_send_request_method(r), client_requests)
         notification_methods = map(lambda n: self._generate_send_notification_method(n), client_notifications)
 
-        sep = "\n\n"
-        return f"""\
-from .util import *
-from .enumerations import *
-from .structures import *
+        template = dedent_ignore_empty("""\
+            from .util import *
+            from .enumerations import *
+            from .structures import *
 
-from abc import ABC, abstractmethod
-from typing import Any
+            from abc import ABC, abstractmethod
+            from typing import Any
 
-class ClientRequestsMixin(ABC):
+            class ClientRequestsMixin(ABC):
 
-    @abstractmethod
-    async def send_request(self, method: str, params: JSON_VALUE, **kwargs: Any) -> JSON_VALUE:
-        pass
+                @abstractmethod
+                async def send_request(self, method: str, params: JSON_VALUE, **kwargs: Any) -> JSON_VALUE:
+                    pass
 
-    @abstractmethod
-    async def send_notification(self, method: str, params: JSON_VALUE) -> None:
-        pass
+                @abstractmethod
+                async def send_notification(self, method: str, params: JSON_VALUE) -> None:
+                    pass
 
-{indent(sep.join(request_methods))}
+            {request_methods}
 
-{indent(sep.join(notification_methods))}
-"""
+            {notification_methods}
+            """)
+
+        return template.format(
+            request_methods=indent("\n\n".join(request_methods)),
+            notification_methods=indent("\n\n".join(notification_methods)))
 
 
     def generate_init_py(self) -> str:
@@ -1229,15 +1282,14 @@ class ClientRequestsMixin(ABC):
         type_aliases = ['"' + t.name + '"' for t in self._meta_model.type_aliases]
         and_types = ['"' + a + '"' for a in self._anonymous_andtype_names.values()]
 
-        exports = structures + enumerations + type_aliases + and_types
-        sep = ",\n"
-
-        return f"""\
-from .structures import *
-from .enumerations import *
+        template = dedent_ignore_empty("""\
+            from .structures import *
+            from .enumerations import *
 
 
-__all__ = (
-{indent(sep.join(exports))}
-)
-"""
+            __all__ = (
+            {exports}
+            )
+            """)
+
+        return template.format(exports=indent(",\n".join(structures + enumerations + type_aliases + and_types)))

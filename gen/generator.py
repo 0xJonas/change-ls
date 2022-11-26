@@ -1,8 +1,7 @@
 from typing import Dict, List, Optional, Tuple, Union
 
-from gen.gen_util import (LSPGeneratorException, dedent_ignore_empty,
-                          escape_keyword, generate_documentation_comment,
-                          indent, json_type_to_assert_function, ref_target)
+from gen.gen_util import (LSPGeneratorException, dedent_ignore_empty, indent,
+                          json_type_to_assert_function, ref_target)
 from gen.schema.anytype import (AndType, AnyType, ArrayType, BaseType,
                                 BooleanLiteralType, IntegerLiteralType,
                                 MapKeyType, MapType, OrType, StringLiteralType,
@@ -569,58 +568,6 @@ class Generator:
 
     def get_anonymous_types(self) -> List[Union[StructureLiteral, AndType]]:
         return list(self._anonymous_structure_names.keys()) + list(self._anonymous_andtype_names.keys())
-
-
-    def generate_enumeration_definition(self, enum: Enumeration) -> str:
-        superclasses: List[str] = []
-        if enum.type.name == "string":
-            superclasses.append("TypedLSPEnum[str]")
-        elif enum.type.name in ["integer", "uinteger"]:
-            superclasses.append("TypedLSPEnum[int]")
-        else:
-            assert False # Broken Enumeration
-
-        if enum.supports_custom_values:
-            superclasses.append("AllowCustomValues")
-
-        entry_definitions: List[str] = []
-        for e in enum.values:
-            if e.documentation:
-                documentation = generate_documentation_comment(e.documentation)
-            else:
-                documentation = ""
-
-            value = '\"' + str(e.value) + '\"' if enum.type.name == "string" else str(e.value)
-
-            entry_definitions.append(f"{documentation}{escape_keyword(e.name)}: ClassVar[\"{enum.name}\"] = {value} # type: ignore")
-
-        template = dedent_ignore_empty('''\
-            class {name}({superclasses}):
-                """
-            {documentation}
-
-                *Generated from the TypeScript documentation*
-                """
-
-            {body}''')
-
-        return template.format(
-                name=enum.name,
-                superclasses=", ".join(superclasses),
-                documentation=indent(enum.documentation if enum.documentation else ""),
-                body=indent("\n\n".join(entry_definitions)))
-
-
-    def generate_enumerations_py(self) -> str:
-        template = dedent_ignore_empty("""\
-            from typing import ClassVar
-            from .lsp_enum import AllowCustomValues, TypedLSPEnum
-
-
-            {definitions}
-            """)
-
-        return template.format(definitions="\n\n\n".join(self.generate_enumeration_definition(e) for e in self._meta_model.enumerations))
 
 
     def generate_init_py(self) -> str:

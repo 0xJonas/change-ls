@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from gen.gen_util import (LSPGeneratorException, dedent_ignore_empty,
                           escape_keyword, generate_documentation_comment,
@@ -8,20 +8,9 @@ from gen.schema.anytype import (AndType, AnyType, ArrayType, BaseType,
                                 MapKeyType, MapType, OrType, StringLiteralType,
                                 StructureLiteral, StructureLiteralType,
                                 TupleType)
-from gen.schema.types import (Enumeration, MetaModel, Notification,
-                              ReferenceType, Request, Structure, TypeAlias)
+from gen.schema.types import (Enumeration, MetaModel, ReferenceType, Structure,
+                              TypeAlias)
 from gen.schema.util import JSON_TYPE_NAME
-
-
-def _create_message_translation_table() -> Any:
-    table: Dict[str, str] = {}
-    for i in range(ord("A"), ord("Z") + 1):
-        table[chr(i)] = "_" + chr(i + 32)
-    table["/"] = "_"
-    table["$"] = "s"
-    return str.maketrans(table)
-
-_message_translation_table = _create_message_translation_table()
 
 
 class ReferenceResolver:
@@ -632,124 +621,6 @@ class Generator:
             """)
 
         return template.format(definitions="\n\n\n".join(self.generate_enumeration_definition(e) for e in self._meta_model.enumerations))
-
-
-    def _generate_send_request_method(self, request: Request) -> str:
-        assert not isinstance(request.params, Tuple) # TODO implement
-        result_json_type = self.get_expected_json_type(request.result)
-        if result_json_type:
-            result_type_assert = json_type_to_assert_function[result_json_type]
-        else:
-            result_type_assert = ""
-
-        return_expression = self.generate_parse_expression(request.result, f"{result_type_assert}(result_json)")
-
-        param_type = None
-        param_write_expression = None
-
-        if request.params is None:
-            template = dedent_ignore_empty('''\
-                async def {name}(self, **kwargs: Any) -> {return_type}:
-                    """
-                {documentation}
-
-                    *Generated from the TypeScript documentation*
-                    """
-                    result_json = await self.send_request("{method}", None, **kwargs)
-                    return {return_expression}''')
-        else:
-            param_type = self.generate_type_annotation(request.params)
-            param_write_expression = self.generate_write_expression(request.params, "params")
-            template = dedent_ignore_empty('''\
-                async def {name}(self, params: {param_type}, **kwargs: Any) -> {return_type}:
-                    """
-                {documentation}
-
-                    *Generated from the TypeScript documentation*
-                    """
-                    params_json = {param_write_expression}
-                    result_json = await self.send_request("{method}", params_json, **kwargs)
-                    return {return_expression}''')
-
-        return template.format(
-            name="send_" + request.method.translate(_message_translation_table),
-            return_type=self.generate_type_annotation(request.result),
-            documentation=indent(request.documentation if request.documentation else ""),
-            return_expression=return_expression,
-            method=request.method,
-            param_type=param_type,
-            param_write_expression=param_write_expression)
-
-
-    def _generate_send_notification_method(self, notification: Notification) -> str:
-        param_type = None
-        param_write_expression = None
-
-        assert not isinstance(notification.params, Tuple) # TODO implement
-        if notification.params is None:
-            template = dedent_ignore_empty('''\
-                async def {name}(self) -> None:
-                    """
-                {documentation}
-
-                    *Generated from the TypeScript documentation*
-                    """
-                    await self.send_notification("{method}", None)''')
-        else:
-            param_type = self.generate_type_annotation(notification.params)
-            param_write_expression = self.generate_write_expression(notification.params, "params")
-
-            template = dedent_ignore_empty('''\
-                async def {name}(self, params: {param_type}) -> None:
-                    """
-                {documentation}
-
-                    *Generated from the TypeScript documentation*
-                    """
-                    params_json = {param_write_expression}
-                    await self.send_notification("{method}", params_json)''')
-
-        return template.format(
-            name="send_" + notification.method.translate(_message_translation_table),
-            documentation=indent(notification.documentation if notification.documentation else ""),
-            method=notification.method,
-            param_type=param_type,
-            param_write_expression=param_write_expression)
-
-
-    def generate_client_requests_py(self) -> str:
-        client_requests = filter(lambda r: r.message_direction == "clientToServer" or r.message_direction == "both",  self._meta_model.requests)
-        client_notifications = filter(lambda n: n.message_direction == "clientToServer" or n.message_direction == "both",  self._meta_model.notifications)
-
-        request_methods = map(lambda r: self._generate_send_request_method(r), client_requests)
-        notification_methods = map(lambda n: self._generate_send_notification_method(n), client_notifications)
-
-        template = dedent_ignore_empty("""\
-            from .util import *
-            from .enumerations import *
-            from .structures import *
-
-            from abc import ABC, abstractmethod
-            from typing import Any
-
-            class ClientRequestsMixin(ABC):
-
-                @abstractmethod
-                async def send_request(self, method: str, params: JSON_VALUE, **kwargs: Any) -> JSON_VALUE:
-                    pass
-
-                @abstractmethod
-                async def send_notification(self, method: str, params: JSON_VALUE) -> None:
-                    pass
-
-            {request_methods}
-
-            {notification_methods}
-            """)
-
-        return template.format(
-            request_methods=indent("\n\n".join(request_methods)),
-            notification_methods=indent("\n\n".join(notification_methods)))
 
 
     def generate_init_py(self) -> str:

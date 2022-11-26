@@ -1,6 +1,7 @@
 import argparse
 import json
 from pathlib import Path
+from gen.generate_client_requests import generate_client_requests_py
 
 import gen.schema.types as t
 from gen.generator import Generator
@@ -47,7 +48,7 @@ def generate_output_files(out_dir: Path) -> None:
     with open(out_dir.joinpath("structures.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generate_structures_py(generator))
     with open(out_dir.joinpath("client_requests.py"), "w", encoding="utf-8", newline="\n") as file:
-        file.write(generator.generate_client_requests_py())
+        file.write(generate_client_requests_py(generator))
     with open(out_dir.joinpath("__init__.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_init_py())
 

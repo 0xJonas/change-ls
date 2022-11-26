@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 import pytest
 
+from gen.generate_client_requests import generate_client_requests_py
 from gen.generate_structures import _get_referenced_definitions  # type: ignore
 from gen.generate_structures import (generate_structure_definition,
                                      generate_structures_py)
@@ -818,7 +819,7 @@ async def test_generator_client_requests() -> None:
     names = get_test_default_names()
 
 
-    client_requests_py = generator.generate_client_requests_py()
+    client_requests_py = generate_client_requests_py(generator)
     client_requests_py = client_requests_py[client_requests_py.index("class"):] # Skip imports
 
     exec("from abc import ABC, abstractmethod", names)

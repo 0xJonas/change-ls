@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-from asyncio import BaseTransport, Future, Protocol, SubprocessProtocol, SubprocessTransport, Transport, WriteTransport, get_running_loop
+from asyncio import (BaseTransport, Future, Protocol, SubprocessProtocol,
+                     SubprocessTransport, Transport, WriteTransport,
+                     get_running_loop)
 from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-from lspscript.types.util import JSON_VALUE
 from lspscript.types import ErrorCodes, LSPErrorCodes
+from lspscript.types.util import JSON_VALUE
 
 
 class LSPException(Exception):
@@ -116,6 +118,10 @@ class LSProtocol(ABC):
         self._request_counter = 0
         self._connected = False
 
+    def reject_active_requests(self, exc: Exception) -> None:
+        for f in self._active_requests.values():
+            f.get_loop().call_soon_threadsafe(lambda: f.set_exception(exc))
+
     def on_data(self, data: bytes) -> None:
         "Called by subclasses when new data has been received."
 
@@ -194,9 +200,7 @@ class LSProtocol(ABC):
     def on_connection_lost(self) -> None:
         # Stop the event_loop so the thread in Client terminates
         get_running_loop().stop()
-        for f in self._active_requests.values():
-            f.get_loop().call_soon_threadsafe(lambda: f.set_exception(LSPClientException("Server has stopped.")))
-
+        self.reject_active_requests(LSPClientException("Server has stopped."))
 
 
 class LSStreamingProtocol(Protocol, LSProtocol):

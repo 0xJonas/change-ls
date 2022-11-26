@@ -1,21 +1,24 @@
-from abc import ABC, abstractmethod
 import subprocess
+from abc import ABC, abstractmethod
 from asyncio import (AbstractEventLoop, BaseTransport, Future,
-                     get_running_loop, new_event_loop, set_event_loop, wait_for)
+                     get_running_loop, new_event_loop, set_event_loop,
+                     wait_for)
 from os import getpid
 from pathlib import Path
 from socket import AF_INET
+from sys import argv
 from threading import Thread
 from types import TracebackType
-from typing import Any, Callable, Literal, Mapping, Optional, Sequence, Tuple, Type
-from sys import argv
-from lspscript import LSPSCRIPT_VERSION
+from typing import (Any, Callable, Dict, Literal, Mapping, Optional, Sequence,
+                    Tuple, Type)
 
+from lspscript import LSPSCRIPT_VERSION
+from lspscript.protocol import (LSPClientException, LSProtocol,
+                                LSStreamingProtocol, LSSubprocessProtocol)
+from lspscript.types import (ClientCapabilities, InitializedParams,
+                             InitializeParams, InitializeResult)
 from lspscript.types.client_requests import ClientRequestsMixin
-from lspscript.types import ClientCapabilities, InitializeParams, InitializeResult, InitializedParams
 from lspscript.types.util import JSON_VALUE
-from lspscript.protocol import (LSPClientException, LSProtocol, LSStreamingProtocol,
-                                LSSubprocessProtocol)
 
 
 class _ServerLaunchParams(ABC):
@@ -190,13 +193,25 @@ class Client(ClientRequestsMixin):
         # TODO add callback
         (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(lambda _1, _2: None) # type: ignore
 
+    def _client_thread_exception_handler(self, loop: AbstractEventLoop, context: Dict[str, Any]) -> None:
+        exception = context.get("exception")
+        if exception is None:
+            exception = LSPClientException(context["message"])
+
+        if self._protocol:
+            self._protocol.reject_active_requests(exception)
+
     def _client_loop(self, server_ready: "Future[None]") -> None:
         # Runs on the Client's thread
         self._comm_thread_event_loop = new_event_loop()
         set_event_loop(self._comm_thread_event_loop)
+
+        self._comm_thread_event_loop.set_exception_handler(self._client_thread_exception_handler)
         self._comm_thread_event_loop.run_until_complete(self._comm_thread_event_loop.create_task(self._launch_internal()))
         server_ready.get_loop().call_soon_threadsafe(lambda: server_ready.set_result(None))
+
         self._comm_thread_event_loop.run_forever()
+
         self._state = "disconnected"
         if not self._exit_sent:
             raise LSPClientException("Server stopped unexpectedly.")
@@ -338,9 +353,17 @@ class Client(ClientRequestsMixin):
         return self
 
     async def __aexit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
-        if self._state in ["uninitialized", "initializing", "running"]:
-            await self.send_shutdown()
-        if self._state == "shutdown":
-            await self.send_exit()
-        assert self._state == "disconnected"
-        return False
+        try:
+            if self._state in ["uninitialized", "initializing", "running"]:
+                await self.send_shutdown()
+            if self._state == "shutdown":
+                await self.send_exit()
+            assert self._state == "disconnected"
+            return False
+        except:
+            if self._comm_thread and self._comm_thread.is_alive():
+                # Stop the event loop manually
+                if self._comm_thread_event_loop and self._comm_thread_event_loop.is_running():
+                    self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._comm_thread_event_loop and self._comm_thread_event_loop.stop())
+                self._comm_thread.join()
+            raise

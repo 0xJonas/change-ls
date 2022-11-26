@@ -1,8 +1,10 @@
-from gen.generator import Generator
-import gen.schema.types as t
+import argparse
 import json
 from pathlib import Path
-import argparse
+
+import gen.schema.types as t
+from gen.generator import Generator
+from gen.generate_structures import generate_structures_py
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -43,7 +45,7 @@ def generate_output_files(out_dir: Path) -> None:
     with open(out_dir.joinpath("enumerations.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_enumerations_py())
     with open(out_dir.joinpath("structures.py"), "w", encoding="utf-8", newline="\n") as file:
-        file.write(generator.generate_structures_py())
+        file.write(generate_structures_py(generator))
     with open(out_dir.joinpath("client_requests.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_client_requests_py())
     with open(out_dir.joinpath("__init__.py"), "w", encoding="utf-8", newline="\n") as file:

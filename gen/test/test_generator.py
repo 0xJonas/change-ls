@@ -1,13 +1,17 @@
-from gen.schema.anytype import AnyType
-from gen.schema.types import MetaModel, ReferenceType
-from gen.generator import Generator, LSPGeneratorException, ReferenceResolver
-from gen.schema.util import JSON_VALUE
-
-import pytest
 from typing import Any, Dict
 
-from gen.static.util import LSPKeyNotFoundException, LSPLiteralException, LSPTypeException
+import pytest
+
+from gen.generate_structures import _get_referenced_definitions  # type: ignore
+from gen.generate_structures import (generate_structure_definition,
+                                     generate_structures_py)
+from gen.generator import Generator, LSPGeneratorException
+from gen.schema.anytype import AnyType
+from gen.schema.types import MetaModel, ReferenceType
+from gen.schema.util import JSON_VALUE
 from gen.static.lsp_enum import LSPEnumException
+from gen.static.util import (LSPKeyNotFoundException, LSPLiteralException,
+                             LSPTypeException)
 
 
 def test_reference_resolver_resolves_reference() -> None:
@@ -42,15 +46,15 @@ def test_reference_resolver_resolves_reference() -> None:
         "typeAliases": [],
     })
 
-    resolver = ReferenceResolver(model)
+    generator = Generator(model)
 
-    res1 = resolver.resolve_reference(ReferenceType("Structure1"))
+    res1 = generator.resolve_reference(ReferenceType("Structure1"))
     assert res1 is model.structures[0]
 
-    res2 = resolver.resolve_reference(ReferenceType("Enumeration1"))
+    res2 = generator.resolve_reference(ReferenceType("Enumeration1"))
     assert res2 is model.enumerations[0]
 
-    res3 = resolver.resolve_reference(ReferenceType("DoesNotExist"))
+    res3 = generator.resolve_reference(ReferenceType("DoesNotExist"))
     assert res3 == None
 
 
@@ -76,9 +80,9 @@ def test_reference_resolver_resolves_typealias() -> None:
         ],
     })
 
-    resolver = ReferenceResolver(model)
+    generator = Generator(model)
 
-    res1 = resolver.resolve_reference(ReferenceType("TypeAlias1"))
+    res1 = generator.resolve_reference(ReferenceType("TypeAlias1"))
     assert res1 is model.structures[0]
 
 
@@ -106,10 +110,10 @@ def test_reference_resolver_detects_circular_references() -> None:
         ],
     })
 
-    resolver = ReferenceResolver(model)
+    generator = Generator(model)
 
     with pytest.raises(LSPGeneratorException):
-        resolver.resolve_reference(ReferenceType("TypeAlias1"))
+        generator.resolve_reference(ReferenceType("TypeAlias1"))
 
 
 def get_empty_meta_model() -> MetaModel:
@@ -123,8 +127,8 @@ def get_empty_meta_model() -> MetaModel:
 
 
 def get_test_default_names() -> Dict[str, Any]:
-    import gen.static.util as util
     import gen.static.lsp_enum as lsp_enum
+    import gen.static.util as util
     names = util.__dict__.copy()
     names.update(lsp_enum.__dict__)
     exec("""\
@@ -410,7 +414,8 @@ def test_generator_parse_anytypes() -> None:
 
     names = get_test_default_names()
 
-    structures_py = generator.generate_structures_py() # Skip imports, because they don't work inside the test
+    structures_py = generate_structures_py(generator)
+    # Skip imports, because they don't work inside the test
     exec(structures_py[structures_py.index("@dataclass"):], names)
 
     res1 = eval("TestBaseString.from_json({ 'test': 'test' })", names)
@@ -576,9 +581,9 @@ def test_generator_generate_structure_definition() -> None:
     names = get_test_default_names()
 
     # Process class definition
-    exec(generator.generate_structure_definition(model.structures[2]), names)
-    exec(generator.generate_structure_definition(model.structures[1]), names)
-    exec(generator.generate_structure_definition(model.structures[0]), names)
+    exec(generate_structure_definition(generator, model.structures[2]), names)
+    exec(generate_structure_definition(generator, model.structures[1]), names)
+    exec(generate_structure_definition(generator, model.structures[0]), names)
 
     assert eval("issubclass(Test1, Test2)", names)
 
@@ -702,7 +707,7 @@ def test_generator_get_referenced_definition_anytype() -> None:
     })
     generator = Generator(model)
 
-    res = generator.get_referenced_definitions(model.structures[0])
+    res = _get_referenced_definitions(generator, model.structures[0])
     assert model.structures[1] in res
     assert model.structures[2] in res
     assert model.structures[3] in res

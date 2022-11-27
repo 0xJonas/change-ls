@@ -5,6 +5,7 @@ from .structures import *
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 class ClientRequestsMixin(ABC):
 
     @abstractmethod
@@ -174,15 +175,6 @@ class ClientRequestsMixin(ABC):
         result_json = await self.send_request("textDocument/semanticTokens/range", params_json, **kwargs)
         return parse_or_type((result_json), (lambda v: SemanticTokens.from_json(json_assert_type_object(v)), lambda v: json_assert_type_null(v)))
     
-    async def send_workspace_semantic_tokens_refresh(self, **kwargs: Any) -> None:
-        """
-        @since 3.16.0
-    
-        *Generated from the TypeScript documentation*
-        """
-        result_json = await self.send_request("workspace/semanticTokens/refresh", None, **kwargs)
-        return json_assert_type_null(result_json)
-    
     async def send_text_document_linked_editing_range(self, params: "LinkedEditingRangeParams", **kwargs: Any) -> Union["LinkedEditingRanges", None]:
         """
         A request to provide ranges that can be edited together.
@@ -297,15 +289,6 @@ class ClientRequestsMixin(ABC):
         result_json = await self.send_request("textDocument/inlineValue", params_json, **kwargs)
         return parse_or_type((result_json), (lambda v: [parse_InlineValue((i)) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
     
-    async def send_workspace_inline_value_refresh(self, **kwargs: Any) -> None:
-        """
-        @since 3.17.0
-    
-        *Generated from the TypeScript documentation*
-        """
-        result_json = await self.send_request("workspace/inlineValue/refresh", None, **kwargs)
-        return json_assert_type_null(result_json)
-    
     async def send_text_document_inlay_hint(self, params: "InlayHintParams", **kwargs: Any) -> Union[List["InlayHint"], None]:
         """
         A request to provide inlay hints in a document. The request's parameter is of
@@ -334,15 +317,6 @@ class ClientRequestsMixin(ABC):
         result_json = await self.send_request("inlayHint/resolve", params_json, **kwargs)
         return InlayHint.from_json(json_assert_type_object(result_json))
     
-    async def send_workspace_inlay_hint_refresh(self, **kwargs: Any) -> None:
-        """
-        @since 3.17.0
-    
-        *Generated from the TypeScript documentation*
-        """
-        result_json = await self.send_request("workspace/inlayHint/refresh", None, **kwargs)
-        return json_assert_type_null(result_json)
-    
     async def send_text_document_diagnostic(self, params: "DocumentDiagnosticParams", **kwargs: Any) -> "DocumentDiagnosticReport":
         """
         The document diagnostic request definition.
@@ -366,17 +340,6 @@ class ClientRequestsMixin(ABC):
         params_json = params.to_json()
         result_json = await self.send_request("workspace/diagnostic", params_json, **kwargs)
         return WorkspaceDiagnosticReport.from_json(json_assert_type_object(result_json))
-    
-    async def send_workspace_diagnostic_refresh(self, **kwargs: Any) -> None:
-        """
-        The diagnostic refresh request definition.
-        
-        @since 3.17.0
-    
-        *Generated from the TypeScript documentation*
-        """
-        result_json = await self.send_request("workspace/diagnostic/refresh", None, **kwargs)
-        return json_assert_type_null(result_json)
     
     async def send_initialize(self, params: "InitializeParams", **kwargs: Any) -> "InitializeResult":
         """
@@ -907,3 +870,271 @@ class ClientRequestsMixin(ABC):
         """
         params_json = params.to_json()
         await self.send_notification("$/progress", params_json)
+
+
+class ServerRequestsMixin(ABC):
+
+    @abstractmethod
+    def on_workspace_workspace_folders(self) -> Union[List["WorkspaceFolder"], None]:
+        """
+        The `workspace/workspaceFolders` is sent from the server to the client to fetch the open workspace folders.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_workspace_configuration(self, params: ConfigurationParamsAndPartialResultParams) -> List["LSPAny"]:
+        """
+        The 'workspace/configuration' request is sent from the server to the client to fetch a certain
+        configuration setting.
+        
+        This pull model replaces the old push model were the client signaled configuration change via an
+        event. If the server still needs to react to configuration changes (since the server caches the
+        result of `workspace/configuration` requests) the server should register for an empty configuration
+        change event and empty the cache if such an event is received.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_window_work_done_progress_create(self, params: "WorkDoneProgressCreateParams") -> None:
+        """
+        The `window/workDoneProgress/create` request is sent from the server to the client to initiate progress
+        reporting from the server.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_workspace_semantic_tokens_refresh(self) -> None:
+        """
+        @since 3.16.0
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_window_show_document(self, params: "ShowDocumentParams") -> "ShowDocumentResult":
+        """
+        A request to show a document. This request might open an
+        external program depending on the value of the URI to open.
+        For example a request to open `https://code.visualstudio.com/`
+        will very likely open the URI in a WEB browser.
+        
+        @since 3.16.0
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_workspace_inline_value_refresh(self) -> None:
+        """
+        @since 3.17.0
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_workspace_inlay_hint_refresh(self) -> None:
+        """
+        @since 3.17.0
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_workspace_diagnostic_refresh(self) -> None:
+        """
+        The diagnostic refresh request definition.
+        
+        @since 3.17.0
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_client_register_capability(self, params: "RegistrationParams") -> None:
+        """
+        The `client/registerCapability` request is sent from the server to the client to register a new capability
+        handler on the client side.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_client_unregister_capability(self, params: "UnregistrationParams") -> None:
+        """
+        The `client/unregisterCapability` request is sent from the server to the client to unregister a previously registered capability
+        handler on the client side.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_window_show_message_request(self, params: "ShowMessageRequestParams") -> Union["MessageActionItem", None]:
+        """
+        The show message request is sent from the server to the client to show a message
+        and a set of options actions to the user.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_workspace_code_lens_refresh(self) -> None:
+        """
+        A request to refresh all code actions
+        
+        @since 3.16.0
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_workspace_apply_edit(self, params: "ApplyWorkspaceEditParams") -> "ApplyWorkspaceEditResult":
+        """
+        A request sent from the server to the client to modified certain resources.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+
+    @abstractmethod
+    def on_window_show_message(self, params: "ShowMessageParams") -> None:
+        """
+        The show message notification is sent from a server to a client to ask
+        the client to display a particular message in the user interface.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_window_log_message(self, params: "LogMessageParams") -> None:
+        """
+        The log message notification is sent from the server to the client to ask
+        the client to log a particular message.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_telemetry_event(self, params: "LSPAny") -> None:
+        """
+        The telemetry event notification is sent from the server to the client to ask
+        the client to log telemetry data.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_text_document_publish_diagnostics(self, params: "PublishDiagnosticsParams") -> None:
+        """
+        Diagnostics notification are sent from the server to the client to signal
+        results of validation runs.
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_s_log_trace(self, params: "LogTraceParams") -> None:
+        """
+    
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_s_cancel_request(self, params: "CancelParams") -> None:
+        """
+    
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+    
+    @abstractmethod
+    def on_s_progress(self, params: "ProgressParams") -> None:
+        """
+    
+    
+        *Generated from the TypeScript documentation*
+        """
+        return NotImplemented
+
+    def dispatch_server_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+        if False:
+            pass
+        elif method == "workspace/workspaceFolders":
+            result = self.on_workspace_workspace_folders()
+            return write_or_type(result, (lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i: i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
+        elif method == "workspace/configuration":
+            result = self.on_workspace_configuration(ConfigurationParamsAndPartialResultParams.from_json(json_assert_type_object(params)))
+            return [write_LSPAny(i) for i in result]
+        elif method == "window/workDoneProgress/create":
+            result = self.on_window_work_done_progress_create(WorkDoneProgressCreateParams.from_json(json_assert_type_object(params)))
+            return result
+        elif method == "workspace/semanticTokens/refresh":
+            result = self.on_workspace_semantic_tokens_refresh()
+            return result
+        elif method == "window/showDocument":
+            result = self.on_window_show_document(ShowDocumentParams.from_json(json_assert_type_object(params)))
+            return result.to_json()
+        elif method == "workspace/inlineValue/refresh":
+            result = self.on_workspace_inline_value_refresh()
+            return result
+        elif method == "workspace/inlayHint/refresh":
+            result = self.on_workspace_inlay_hint_refresh()
+            return result
+        elif method == "workspace/diagnostic/refresh":
+            result = self.on_workspace_diagnostic_refresh()
+            return result
+        elif method == "client/registerCapability":
+            result = self.on_client_register_capability(RegistrationParams.from_json(json_assert_type_object(params)))
+            return result
+        elif method == "client/unregisterCapability":
+            result = self.on_client_unregister_capability(UnregistrationParams.from_json(json_assert_type_object(params)))
+            return result
+        elif method == "window/showMessageRequest":
+            result = self.on_window_show_message_request(ShowMessageRequestParams.from_json(json_assert_type_object(params)))
+            return write_or_type(result, (lambda i: isinstance(i, MessageActionItem), lambda i: i is None), (lambda i: i.to_json(), lambda i: i))
+        elif method == "workspace/codeLens/refresh":
+            result = self.on_workspace_code_lens_refresh()
+            return result
+        elif method == "workspace/applyEdit":
+            result = self.on_workspace_apply_edit(ApplyWorkspaceEditParams.from_json(json_assert_type_object(params)))
+            return result.to_json()
+        return None
+
+    def dispatch_server_notification(self, method: str, params: JSON_VALUE) -> None:
+        if False:
+            pass
+        elif method == "window/showMessage":
+            self.on_window_show_message(ShowMessageParams.from_json(json_assert_type_object(params)))
+        elif method == "window/logMessage":
+            self.on_window_log_message(LogMessageParams.from_json(json_assert_type_object(params)))
+        elif method == "telemetry/event":
+            self.on_telemetry_event(parse_LSPAny((params)))
+        elif method == "textDocument/publishDiagnostics":
+            self.on_text_document_publish_diagnostics(PublishDiagnosticsParams.from_json(json_assert_type_object(params)))
+        elif method == "$/logTrace":
+            self.on_s_log_trace(LogTraceParams.from_json(json_assert_type_object(params)))
+        elif method == "$/cancelRequest":
+            self.on_s_cancel_request(CancelParams.from_json(json_assert_type_object(params)))
+        elif method == "$/progress":
+            self.on_s_progress(ProgressParams.from_json(json_assert_type_object(params)))

@@ -1,4 +1,5 @@
-from typing import Any, Dict, Tuple
+from textwrap import dedent
+from typing import Any, Dict, List, Sequence, Tuple
 
 from gen.gen_util import (dedent_ignore_empty, indent,
                           json_type_to_assert_function)
@@ -100,7 +101,7 @@ def _generate_send_notification_method(gen: Generator, notification: Notificatio
         param_write_expression=param_write_expression)
 
 
-def generate_client_requests_py(gen: Generator) -> str:
+def generate_client_requests_mixin(gen: Generator) -> str:
     client_requests = filter(lambda r: r.message_direction == "clientToServer" or r.message_direction == "both",  gen.get_meta_model().requests)
     client_notifications = filter(lambda n: n.message_direction == "clientToServer" or n.message_direction == "both",  gen.get_meta_model().notifications)
 
@@ -108,13 +109,6 @@ def generate_client_requests_py(gen: Generator) -> str:
     notification_methods = map(lambda n: _generate_send_notification_method(gen, n), client_notifications)
 
     template = dedent_ignore_empty("""\
-        from .util import *
-        from .enumerations import *
-        from .structures import *
-
-        from abc import ABC, abstractmethod
-        from typing import Any
-
         class ClientRequestsMixin(ABC):
 
             @abstractmethod
@@ -127,9 +121,179 @@ def generate_client_requests_py(gen: Generator) -> str:
 
         {request_methods}
 
-        {notification_methods}
-        """)
+        {notification_methods}""")
 
     return template.format(
         request_methods=indent("\n\n".join(request_methods)),
         notification_methods=indent("\n\n".join(notification_methods)))
+
+
+def _generate_server_request_method(gen: Generator, request: Request) -> str:
+    name = request.method.translate(_message_translation_table)
+
+    assert not isinstance(request.params, Tuple) # TODO implement
+    if request.params is None:
+        param_type = None
+        template = dedent_ignore_empty('''\
+            @abstractmethod
+            def on_{name}(self) -> {return_type}:
+                """
+            {documentation}
+
+                *Generated from the TypeScript documentation*
+                """
+                return NotImplemented''')
+    else:
+        param_type = gen.generate_type_annotation(request.params)
+        template = dedent_ignore_empty('''\
+            @abstractmethod
+            def on_{name}(self, params: {param_type}) -> {return_type}:
+                """
+            {documentation}
+
+                *Generated from the TypeScript documentation*
+                """
+                return NotImplemented''')
+
+    return template.format(
+        name=name,
+        return_type=gen.generate_type_annotation(request.result),
+        documentation=indent(request.documentation if request.documentation else ""),
+        param_type=param_type)
+
+
+def _generate_server_request_dispatch(gen: Generator, requests: Sequence[Request]) -> str:
+    branches: List[str] = []
+    for r in requests:
+        assert not isinstance(r.params, Tuple) # TODO implement
+        if r.params is None:
+            params = ""
+        else:
+            expected_json_type = gen.get_expected_json_type(r.params)
+            if expected_json_type:
+                json_type_assert_fun = json_type_to_assert_function[expected_json_type]
+            else:
+                json_type_assert_fun = ""
+            params = gen.generate_parse_expression(r.params, f"{json_type_assert_fun}(params)")
+        branches.append(dedent(f"""\
+            elif method == "{r.method}":
+                result = self.on_{r.method.translate(_message_translation_table)}({params})
+                return {gen.generate_write_expression(r.result, "result")}"""))
+
+    template = dedent("""\
+        def dispatch_server_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+            if False:
+                pass
+        {branches}
+            return None""")
+
+    return template.format(branches=indent("\n".join(branches)))
+
+
+def _generate_server_notification_method(gen: Generator, notification: Notification) -> str:
+    name = notification.method.translate(_message_translation_table)
+
+    assert not isinstance(notification.params, Tuple) # TODO implement
+    if notification.params is None:
+        param_type = None
+        template = dedent_ignore_empty('''\
+            @abstractmethod
+            def on_{name}(self) -> None:
+                """
+            {documentation}
+
+                *Generated from the TypeScript documentation*
+                """
+                return NotImplemented''')
+    else:
+        param_type = gen.generate_type_annotation(notification.params)
+        template = dedent_ignore_empty('''\
+            @abstractmethod
+            def on_{name}(self, params: {param_type}) -> None:
+                """
+            {documentation}
+
+                *Generated from the TypeScript documentation*
+                """
+                return NotImplemented''')
+
+    return template.format(
+        name=name,
+        documentation=indent(notification.documentation if notification.documentation else ""),
+        param_type=param_type)
+
+
+def _generate_server_notification_dispatch(gen: Generator, notifications: Sequence[Notification]) -> str:
+    branches: List[str] = []
+    for n in notifications:
+        assert not isinstance(n.params, Tuple) # TODO implement
+        if n.params is None:
+            params = ""
+        else:
+            expected_json_type = gen.get_expected_json_type(n.params)
+            if expected_json_type:
+                json_type_assert_fun = json_type_to_assert_function[expected_json_type]
+            else:
+                json_type_assert_fun = ""
+            params = gen.generate_parse_expression(n.params, f"{json_type_assert_fun}(params)")
+        branches.append(dedent(f"""\
+            elif method == "{n.method}":
+                self.on_{n.method.translate(_message_translation_table)}({params})"""))
+
+    template = dedent("""\
+        def dispatch_server_notification(self, method: str, params: JSON_VALUE) -> None:
+            if False:
+                pass
+        {branches}""")
+
+    return template.format(branches=indent("\n".join(branches)))
+
+
+def generate_server_requests_mixin(gen: Generator) -> str:
+    server_requests = [r for r in gen.get_meta_model().requests if r.message_direction == "serverToClient" or r.message_direction == "both"]
+    server_notifications = [n for n in gen.get_meta_model().notifications if n.message_direction == "serverToClient" or n.message_direction == "both"]
+
+    request_methods = map(lambda r: _generate_server_request_method(gen, r), server_requests)
+    notification_methods = map(lambda n: _generate_server_notification_method(gen, n), server_notifications)
+
+    request_dispatch = _generate_server_request_dispatch(gen, server_requests)
+    notification_dispatch = _generate_server_notification_dispatch(gen, server_notifications)
+
+    template = dedent_ignore_empty("""\
+        class ServerRequestsMixin(ABC):
+
+        {request_methods}
+
+        {notification_methods}
+
+        {request_dispatch}
+
+        {notification_dispatch}""")
+    return template.format(
+        request_methods=indent("\n\n".join(request_methods)),
+        notification_methods=indent("\n\n".join(notification_methods)),
+        request_dispatch=indent(request_dispatch),
+        notification_dispatch=indent(notification_dispatch))
+
+
+def generate_client_requests_py(gen: Generator) -> str:
+    client_requests_mixin = generate_client_requests_mixin(gen)
+    server_requests_mixin = generate_server_requests_mixin(gen)
+
+    template = dedent_ignore_empty("""\
+        from .util import *
+        from .enumerations import *
+        from .structures import *
+
+        from abc import ABC, abstractmethod
+        from typing import Any
+
+
+        {client_requests_mixin}
+
+
+        {server_requests_mixin}
+        """)
+    return template.format(
+        client_requests_mixin=client_requests_mixin,
+        server_requests_mixin=server_requests_mixin)

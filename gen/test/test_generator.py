@@ -785,7 +785,32 @@ def test_generator_generate_enum_definition() -> None:
 async def test_generator_client_requests() -> None:
     model = MetaModel.from_json({
         "enumerations": [],
-        "notifications": [],
+        "notifications": [
+            {
+                "method": "test/clientNotification",
+                "messageDirection": "clientToServer",
+                "params": {
+                    "kind": "base",
+                    "name": "string"
+                }
+            },
+            {
+                "method": "test/serverNotification",
+                "messageDirection": "serverToClient",
+                "params": {
+                    "kind": "base",
+                    "name": "string"
+                }
+            },
+            {
+                "method": "test/bidirectionalNotification",
+                "messageDirection": "both",
+                "params": {
+                    "kind": "base",
+                    "name": "string"
+                }
+            }
+        ],
         "requests": [
             {
                 "method": "test/clientRequest",
@@ -810,6 +835,18 @@ async def test_generator_client_requests() -> None:
                     "kind": "base",
                     "name": "string"
                 }
+            },
+            {
+                "method": "test/bidirectionalRequest",
+                "messageDirection": "both",
+                "params": {
+                    "kind": "base",
+                    "name": "string"
+                },
+                "result": {
+                    "kind": "base",
+                    "name": "string"
+                }
             }
         ],
         "structures": [],
@@ -819,26 +856,55 @@ async def test_generator_client_requests() -> None:
 
     names = get_test_default_names()
 
-
     client_requests_py = generate_client_requests_py(generator)
     client_requests_py = client_requests_py[client_requests_py.index("class"):] # Skip imports
 
     exec("from abc import ABC, abstractmethod", names)
     exec(client_requests_py, names)
     exec("""\
-class TestClient(ClientRequestsMixin):
+
+class TestClient(ClientRequestsMixin, ServerRequestsMixin):
 
     async def send_request(self, method, params):
-        return "Request Ok!: " + params
+        return "send_request " + params
 
     async def send_notification(self, method, params):
-        pass
+        self.sentinel = "send_notification " + params
+
+    def on_test_server_request(self, params: str) -> str:
+        return "on_test_server_request " + params
+
+    def on_test_bidirectional_request(self, params: str) -> str:
+        return "on_test_bidirectional_request " + params
+
+    def on_test_server_notification(self, params: str) -> None:
+        self.sentinel = "on_test_server_notification " + params
+
+    def on_test_bidirectional_notification(self, params: str) -> None:
+        self.sentinel = "on_test_bidirectional_notification " + params
 """, names)
 
     test_client = names["TestClient"]()
     assert "send_test_client_request" in dir(test_client)
-
-    res = await test_client.send_test_client_request("Hello")
-    assert res == "Request Ok!: Hello"
-
     assert "send_test_server_request" not in dir(test_client) # server requests should not generate methods in the client.
+    assert "send_test_bidirectional_request" in dir(test_client)
+
+    res1 = await test_client.send_test_client_request("Hello1")
+    assert res1 == "send_request Hello1"
+    res2 = await test_client.send_test_bidirectional_request("Hello2")
+    assert res2 == "send_request Hello2"
+
+    await test_client.send_test_client_notification("Hello1")
+    assert test_client.sentinel == "send_notification Hello1"
+    await test_client.send_test_bidirectional_notification("Hello2")
+    assert test_client.sentinel == "send_notification Hello2"
+
+    res3 = test_client.dispatch_server_request("test/serverRequest", "Bye1")
+    assert res3 == "on_test_server_request Bye1"
+    res4 = test_client.dispatch_server_request("test/bidirectionalRequest", "Bye2")
+    assert res4 == "on_test_bidirectional_request Bye2"
+
+    test_client.dispatch_server_notification("test/serverNotification", "Bye1")
+    assert test_client.sentinel == "on_test_server_notification Bye1"
+    test_client.dispatch_server_notification("test/bidirectionalNotification", "Bye2")
+    assert test_client.sentinel == "on_test_bidirectional_notification Bye2"

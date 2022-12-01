@@ -162,7 +162,7 @@ def _generate_server_request_method(gen: Generator, request: Request) -> str:
         param_type=param_type)
 
 
-def _generate_server_request_dispatch(gen: Generator, requests: Sequence[Request]) -> str:
+def _generate_server_request_branches(gen: Generator, requests: Sequence[Request], send_method_name: str) -> List[str]:
     branches: List[str] = []
     for r in requests:
         assert not isinstance(r.params, Tuple) # TODO implement
@@ -178,16 +178,10 @@ def _generate_server_request_dispatch(gen: Generator, requests: Sequence[Request
         branches.append(dedent(f"""\
             elif method == "{r.method}":
                 result = self.on_{r.method.translate(_message_translation_table)}({params})
-                return {gen.generate_write_expression(r.result, "result")}"""))
+                result_json = {gen.generate_write_expression(r.result, "result")}
+                {send_method_name}(result_json)"""))
 
-    template = dedent("""\
-        def dispatch_server_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
-            if False:
-                pass
-        {branches}
-            return None""")
-
-    return template.format(branches=indent("\n".join(branches)))
+    return branches
 
 
 def _generate_server_notification_method(gen: Generator, notification: Notification) -> str:
@@ -223,7 +217,7 @@ def _generate_server_notification_method(gen: Generator, notification: Notificat
         param_type=param_type)
 
 
-def _generate_server_notification_dispatch(gen: Generator, notifications: Sequence[Notification]) -> str:
+def _generate_server_notification_branches(gen: Generator, notifications: Sequence[Notification]) -> List[str]:
     branches: List[str] = []
     for n in notifications:
         assert not isinstance(n.params, Tuple) # TODO implement
@@ -240,13 +234,7 @@ def _generate_server_notification_dispatch(gen: Generator, notifications: Sequen
             elif method == "{n.method}":
                 self.on_{n.method.translate(_message_translation_table)}({params})"""))
 
-    template = dedent("""\
-        def dispatch_server_notification(self, method: str, params: JSON_VALUE) -> None:
-            if False:
-                pass
-        {branches}""")
-
-    return template.format(branches=indent("\n".join(branches)))
+    return branches
 
 
 def generate_server_requests_mixin(gen: Generator) -> str:
@@ -256,8 +244,8 @@ def generate_server_requests_mixin(gen: Generator) -> str:
     request_methods = map(lambda r: _generate_server_request_method(gen, r), server_requests)
     notification_methods = map(lambda n: _generate_server_notification_method(gen, n), server_notifications)
 
-    request_dispatch = _generate_server_request_dispatch(gen, server_requests)
-    notification_dispatch = _generate_server_notification_dispatch(gen, server_notifications)
+    request_branches = _generate_server_request_branches(gen, server_requests, "send_result")
+    notification_branches = _generate_server_notification_branches(gen, server_notifications)
 
     template = dedent_ignore_empty("""\
         class ServerRequestsMixin(ABC):
@@ -266,14 +254,16 @@ def generate_server_requests_mixin(gen: Generator) -> str:
 
         {notification_methods}
 
-        {request_dispatch}
-
-        {notification_dispatch}""")
+            def dispatch_server_message(self, method: str, params: JSON_VALUE, send_result: Callable[[JSON_VALUE], None]) -> None:
+                if False:
+                    pass
+        {request_branches}
+        {notification_branches}""")
     return template.format(
         request_methods=indent("\n\n".join(request_methods)),
         notification_methods=indent("\n\n".join(notification_methods)),
-        request_dispatch=indent(request_dispatch),
-        notification_dispatch=indent(notification_dispatch))
+        request_branches=indent(indent("\n".join(request_branches))),
+        notification_branches=indent(indent("\n".join(notification_branches))))
 
 
 def generate_client_requests_py(gen: Generator) -> str:

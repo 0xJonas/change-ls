@@ -126,6 +126,7 @@ connection.onNotification((method: string, params: any) => {
     const msg = test.sequence[sequenceIndex];
     assert(msg.type == "notification");
     assert(matchMessage(msg, method, params));
+    sequenceIndex++;
 
     if (msg.intermediate) {
         for (let option of msg.intermediate) {

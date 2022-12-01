@@ -9,15 +9,25 @@ from socket import AF_INET
 from sys import argv
 from threading import Thread
 from types import TracebackType
-from typing import (Any, Callable, Dict, Literal, Mapping, Optional, Sequence,
-                    Tuple, Type)
+from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional, Sequence,
+                    Tuple, Type, Union)
 
 from lspscript import LSPSCRIPT_VERSION
+from lspscript.protocol import _ServerMessageCallback  # type: ignore
 from lspscript.protocol import (LSPClientException, LSProtocol,
                                 LSStreamingProtocol, LSSubprocessProtocol)
 from lspscript.types import (ClientCapabilities, InitializedParams,
                              InitializeParams, InitializeResult)
-from lspscript.types.client_requests import ClientRequestsMixin
+from lspscript.types.client_requests import (ClientRequestsMixin,
+                                             ServerRequestsMixin)
+from lspscript.types.structures import (
+    ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, CancelParams,
+    ConfigurationParams, ConfigurationParamsAndPartialResultParams,
+    LogMessageParams, LogTraceParams, LSPAny, MessageActionItem,
+    ProgressParams, PublishDiagnosticsParams, RegistrationParams,
+    ShowDocumentParams, ShowDocumentResult, ShowMessageParams,
+    ShowMessageRequestParams, UnregistrationParams,
+    WorkDoneProgressCreateParams, WorkspaceFolder)
 from lspscript.types.util import JSON_VALUE
 
 
@@ -38,7 +48,7 @@ class _ServerLaunchParams(ABC):
         self.additional_only = additional_only
 
     @abstractmethod
-    async def _launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback) -> Tuple[BaseTransport, LSProtocol]:
         pass
 
 
@@ -68,7 +78,7 @@ class StdIOConnectionParams(_ServerLaunchParams):
 
         super().__init__(server_path=server_path, additional_args=additional_args, launch_command=launch_command, additional_only=additional_only)
 
-    async def _launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback) -> Tuple[BaseTransport, LSProtocol]:
         args = ["--stdio", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -76,9 +86,9 @@ class StdIOConnectionParams(_ServerLaunchParams):
             args += self.additional_args
         loop = get_running_loop()
         if self.server_path:
-            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(receive_callback), self.server_path, *args)
+            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(server_message_callback), self.server_path, *args)
         elif self.launch_command:
-            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(receive_callback), self.launch_command)
+            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(server_message_callback), self.launch_command)
         else:
             assert False
 
@@ -116,7 +126,7 @@ class SocketConnectionParams(_ServerLaunchParams):
         self.hostname = hostname
         self.port = port
 
-    async def _launch_server_from_event_loop(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback) -> Tuple[BaseTransport, LSProtocol]:
         args = [f"--socket={self.port}", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -129,7 +139,7 @@ class SocketConnectionParams(_ServerLaunchParams):
             subprocess.Popen(self.launch_command, shell=True)
 
         loop = get_running_loop()
-        return await loop.create_connection(lambda: LSStreamingProtocol(receive_callback), host=self.hostname, port=self.port, family=AF_INET)
+        return await loop.create_connection(lambda: LSStreamingProtocol(server_message_callback), host=self.hostname, port=self.port, family=AF_INET)
 
 
 class PipeConnectionParams(_ServerLaunchParams):
@@ -141,12 +151,52 @@ class PipeConnectionParams(_ServerLaunchParams):
     pipename: str
 
 
+class WorkspaceRequestHandler(ABC):
+
+    @abstractmethod
+    def on_workspace_folders(self) -> List[WorkspaceFolder]:
+        return NotImplemented
+
+    @abstractmethod
+    def on_configuration(self, params: ConfigurationParams) -> List[LSPAny]:
+        return NotImplemented
+
+    @abstractmethod
+    def on_semantic_tokens_refresh(self) -> None:
+        pass
+
+    @abstractmethod
+    def on_inline_value_refresh(self) -> None:
+        pass
+
+    @abstractmethod
+    def on_inlay_hint_refresh(self) -> None:
+        pass
+
+    @abstractmethod
+    def on_diagnostic_refresh(self) -> None:
+        pass
+
+    @abstractmethod
+    def on_code_lens_refresh(self) -> None:
+        pass
+
+    @abstractmethod
+    def on_apply_edit(self, params: ApplyWorkspaceEditParams) -> ApplyWorkspaceEditResult:
+        return NotImplemented
+
+    @abstractmethod
+    def on_publish_diagnostics(self, params: PublishDiagnosticsParams) -> None:
+        pass
+
+
 def get_default_client_capabilities() -> ClientCapabilities:
     """
     Returns the `ClientCapabilities` which are used for the default
     `InitializeParams` (see `get_default_initialize_params`).
     """
     return ClientCapabilities()
+
 
 def get_default_initialize_params() -> InitializeParams:
     """
@@ -162,9 +212,10 @@ def get_default_initialize_params() -> InitializeParams:
         rootUri=None,
         capabilities=get_default_client_capabilities())
 
+
 ClientState = Literal["disconnected", "uninitialized", "initializing", "running", "shutdown"]
 
-class Client(ClientRequestsMixin):
+class Client(ClientRequestsMixin, ServerRequestsMixin):
     # Manages capabilities (client and server).
     # Handles dispatching requests/responses/notifications.
 
@@ -174,11 +225,18 @@ class Client(ClientRequestsMixin):
     _comm_thread: Optional[Thread]
     _comm_thread_event_loop: Optional[AbstractEventLoop]
 
+    # Called when the server sends requests/notifications to the client.
+    # This callable will run on the server thread, so it must make sure
+    # to synchronize with the main thread using event_loop.call_soon_threadsafe()
+    # The callable is None until the server is actually launched.
+    _server_message_callback: Optional[_ServerMessageCallback]
+
     # Whether or not an 'exit' notification was sent. This is used
     # to distinguish a normal termination of the server from a crash.
     _exit_sent: bool
 
     _initialize_params: InitializeParams
+    _workspace_request_handler: Optional[WorkspaceRequestHandler]
 
     def __init__(self, launch_params: _ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params()) -> None:
         self._state = "disconnected"
@@ -188,10 +246,13 @@ class Client(ClientRequestsMixin):
         self._comm_thread_event_loop = None
         self._exit_sent = False
         self._initialize_params = initialize_params
+        self._server_message_callback = None
+
+    def set_workspace_request_handler(self, handler: Optional[WorkspaceRequestHandler]) -> None:
+        self._workspace_request_handler = handler
 
     async def _launch_internal(self) -> None:
-        # TODO add callback
-        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(lambda _1, _2: None) # type: ignore
+        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback) # type: ignore
 
     def _client_thread_exception_handler(self, loop: AbstractEventLoop, context: Dict[str, Any]) -> None:
         exception = context.get("exception")
@@ -239,7 +300,13 @@ class Client(ClientRequestsMixin):
         Launches the Language Server process.
         """
         self._exit_sent = False
-        server_ready = get_running_loop().create_future()
+        main_loop = get_running_loop()
+
+        def server_message_callback(method: str, params: JSON_VALUE, send_result: Callable[[JSON_VALUE], None]) -> None:
+            main_loop.call_soon_threadsafe(lambda :self.dispatch_server_message(method, params, send_result))
+
+        self._server_message_callback = server_message_callback
+        server_ready = main_loop.create_future()
         self._comm_thread = Thread(target=self._client_loop, args=[server_ready])
         self._comm_thread.start()
         await server_ready
@@ -367,3 +434,84 @@ class Client(ClientRequestsMixin):
                     self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._comm_thread_event_loop and self._comm_thread_event_loop.stop())
                 self._comm_thread.join()
             raise
+
+
+    # -----------------------------
+    # Callbacks for server requests
+    # -----------------------------
+
+    def on_workspace_workspace_folders(self) -> Union[List[WorkspaceFolder], None]:
+        if self._workspace_request_handler:
+            return self._workspace_request_handler.on_workspace_folders()
+        else:
+            return None
+
+    def on_workspace_configuration(self, params: ConfigurationParamsAndPartialResultParams) -> List[LSPAny]:
+        if self._workspace_request_handler:
+            # TODO handle partial results
+            return self._workspace_request_handler.on_configuration(ConfigurationParams(items=params.items))
+        else:
+            return []
+
+    def on_workspace_semantic_tokens_refresh(self) -> None:
+        if self._workspace_request_handler:
+            self._workspace_request_handler.on_semantic_tokens_refresh()
+
+    def on_workspace_inline_value_refresh(self) -> None:
+        if self._workspace_request_handler:
+            self._workspace_request_handler.on_inline_value_refresh()
+
+    def on_workspace_inlay_hint_refresh(self) -> None:
+        if self._workspace_request_handler:
+            self._workspace_request_handler.on_inlay_hint_refresh()
+
+    def on_workspace_diagnostic_refresh(self) -> None:
+        if self._workspace_request_handler:
+            self._workspace_request_handler.on_diagnostic_refresh()
+
+    def on_workspace_code_lens_refresh(self) -> None:
+        if self._workspace_request_handler:
+            self._workspace_request_handler.on_code_lens_refresh()
+
+    def on_workspace_apply_edit(self, params: ApplyWorkspaceEditParams) -> ApplyWorkspaceEditResult:
+        if self._workspace_request_handler:
+            return self._workspace_request_handler.on_apply_edit(params)
+        else:
+            return ApplyWorkspaceEditResult(applied=False, failureReason="Client is not registered with a Workspace.")
+
+    def on_text_document_publish_diagnostics(self, params: PublishDiagnosticsParams) -> None:
+        if self._workspace_request_handler:
+            self._workspace_request_handler.on_publish_diagnostics(params)
+
+    def on_client_register_capability(self, params: RegistrationParams) -> None:
+        pass
+
+    def on_client_unregister_capability(self, params: UnregistrationParams) -> None:
+        pass
+
+    def on_window_work_done_progress_create(self, params: WorkDoneProgressCreateParams) -> None:
+        pass
+
+    def on_window_show_document(self, params: ShowDocumentParams) -> ShowDocumentResult:
+        return NotImplemented
+
+    def on_window_show_message_request(self, params: ShowMessageRequestParams) -> Union[MessageActionItem, None]:
+        return NotImplemented
+
+    def on_window_show_message(self, params: ShowMessageParams) -> None:
+        pass
+
+    def on_window_log_message(self, params: LogMessageParams) -> None:
+        pass
+
+    def on_telemetry_event(self, params: LSPAny) -> None:
+        pass
+
+    def on_s_log_trace(self, params: LogTraceParams) -> None:
+        pass
+
+    def on_s_cancel_request(self, params: CancelParams) -> None:
+        pass
+
+    def on_s_progress(self, params: ProgressParams) -> None:
+        pass

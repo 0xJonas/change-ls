@@ -1077,53 +1077,61 @@ class ServerRequestsMixin(ABC):
         """
         return NotImplemented
 
-    def dispatch_server_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+    def dispatch_server_message(self, method: str, params: JSON_VALUE, send_result: Callable[[JSON_VALUE], None]) -> None:
         if False:
             pass
         elif method == "workspace/workspaceFolders":
             result = self.on_workspace_workspace_folders()
-            return write_or_type(result, (lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i: i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
+            result_json = write_or_type(result, (lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i: i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
+            send_result(result_json)
         elif method == "workspace/configuration":
             result = self.on_workspace_configuration(ConfigurationParamsAndPartialResultParams.from_json(json_assert_type_object(params)))
-            return [write_LSPAny(i) for i in result]
+            result_json = [write_LSPAny(i) for i in result]
+            send_result(result_json)
         elif method == "window/workDoneProgress/create":
             result = self.on_window_work_done_progress_create(WorkDoneProgressCreateParams.from_json(json_assert_type_object(params)))
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "workspace/semanticTokens/refresh":
             result = self.on_workspace_semantic_tokens_refresh()
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "window/showDocument":
             result = self.on_window_show_document(ShowDocumentParams.from_json(json_assert_type_object(params)))
-            return result.to_json()
+            result_json = result.to_json()
+            send_result(result_json)
         elif method == "workspace/inlineValue/refresh":
             result = self.on_workspace_inline_value_refresh()
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "workspace/inlayHint/refresh":
             result = self.on_workspace_inlay_hint_refresh()
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "workspace/diagnostic/refresh":
             result = self.on_workspace_diagnostic_refresh()
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "client/registerCapability":
             result = self.on_client_register_capability(RegistrationParams.from_json(json_assert_type_object(params)))
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "client/unregisterCapability":
             result = self.on_client_unregister_capability(UnregistrationParams.from_json(json_assert_type_object(params)))
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "window/showMessageRequest":
             result = self.on_window_show_message_request(ShowMessageRequestParams.from_json(json_assert_type_object(params)))
-            return write_or_type(result, (lambda i: isinstance(i, MessageActionItem), lambda i: i is None), (lambda i: i.to_json(), lambda i: i))
+            result_json = write_or_type(result, (lambda i: isinstance(i, MessageActionItem), lambda i: i is None), (lambda i: i.to_json(), lambda i: i))
+            send_result(result_json)
         elif method == "workspace/codeLens/refresh":
             result = self.on_workspace_code_lens_refresh()
-            return result
+            result_json = result
+            send_result(result_json)
         elif method == "workspace/applyEdit":
             result = self.on_workspace_apply_edit(ApplyWorkspaceEditParams.from_json(json_assert_type_object(params)))
-            return result.to_json()
-        return None
-
-    def dispatch_server_notification(self, method: str, params: JSON_VALUE) -> None:
-        if False:
-            pass
+            result_json = result.to_json()
+            send_result(result_json)
         elif method == "window/showMessage":
             self.on_window_show_message(ShowMessageParams.from_json(json_assert_type_object(params)))
         elif method == "window/logMessage":

@@ -1,0 +1,158 @@
+{
+    "name": "test_workspace_callbacks",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/workspaceFolders",
+                    "result": [
+                        {
+                            "uri": "file://test1",
+                            "name": "test1"
+                        },
+                        {
+                            "uri": "file://test2",
+                            "name": "test2"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/configuration",
+                    "params": {
+                        "items": [
+                            {
+                                "scopeUri": "file://config",
+                                "section": "test-section-1"
+                            },
+                            {
+                                "scopeUri": "file://config",
+                                "section": "test-section-2"
+                            }
+                        ]
+                    },
+                    "result": [
+                        "Config-Thing-1",
+                        "Config-Thing-2"
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/semanticTokens/refresh",
+                    "result": null
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/inlineValue/refresh",
+                    "result": null
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/inlayHint/refresh",
+                    "result": null
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/diagnostic/refresh",
+                    "result": null
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/codeLens/refresh",
+                    "result": null
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/applyEdit",
+                    "params": {
+                        "label": "Random Change",
+                        "edit": {
+                            "changes": {
+                                "file://module_1": [
+                                    {
+                                        "range": {
+                                            "start": { "line": 1, "character": 0 },
+                                            "end": { "line": 1, "character": 5 }
+                                        },
+                                        "newText": "Hey"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "result": {
+                        "applied": true
+                    }
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "notification",
+                    "method": "textDocument/publishDiagnostics",
+                    "params": {
+                        "uri": "file://dignostic_test",
+                        "diagnostics": [
+                            {
+                                "range": {
+                                    "start": { "line": 1, "character": 0 },
+                                    "end": { "line": 1, "character": 5 }
+                                },
+                                "severity": 3,
+                                "message": "This is a test"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

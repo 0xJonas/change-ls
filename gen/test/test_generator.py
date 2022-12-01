@@ -899,12 +899,20 @@ class TestClient(ClientRequestsMixin, ServerRequestsMixin):
     await test_client.send_test_bidirectional_notification("Hello2")
     assert test_client.sentinel == "send_notification Hello2"
 
-    res3 = test_client.dispatch_server_request("test/serverRequest", "Bye1")
-    assert res3 == "on_test_server_request Bye1"
-    res4 = test_client.dispatch_server_request("test/bidirectionalRequest", "Bye2")
-    assert res4 == "on_test_bidirectional_request Bye2"
+    response = ""
+    def mock_send_result(v: JSON_VALUE) -> None:
+        nonlocal response
+        response = v
 
-    test_client.dispatch_server_notification("test/serverNotification", "Bye1")
+    test_client.dispatch_server_message("test/serverRequest", "Bye1", mock_send_result)
+    assert response == "on_test_server_request Bye1"
+    test_client.dispatch_server_message("test/bidirectionalRequest", "Bye2",mock_send_result)
+    assert response == "on_test_bidirectional_request Bye2"
+
+    response = "This should not change"
+    test_client.dispatch_server_message("test/serverNotification", "Bye1", mock_send_result)
     assert test_client.sentinel == "on_test_server_notification Bye1"
-    test_client.dispatch_server_notification("test/bidirectionalNotification", "Bye2")
+    assert response == "This should not change"
+    test_client.dispatch_server_message("test/bidirectionalNotification", "Bye2", mock_send_result)
     assert test_client.sentinel == "on_test_bidirectional_notification Bye2"
+    assert response == "This should not change"

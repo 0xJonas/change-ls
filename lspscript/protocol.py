@@ -85,6 +85,9 @@ class _LSPHeader:
         return "utf-8"
 
 
+# Signature of a function which takes a str (method), a JSON_VALUE (params) and a function to send a JSON_VALUE back (send_data)
+_ServerMessageCallback = Callable[[str, JSON_VALUE, Callable[[JSON_VALUE], None]], None]
+
 class LSProtocol(ABC):
 
     # Maps the ids of currently active requests to their corresponding
@@ -97,7 +100,7 @@ class LSProtocol(ABC):
     # i.e. when the Language Server sends requests/notifications of its own.
     # This callable is run on the same thread as the LSProtocol, so it is up to
     # the callable's provider to ensure thread-safety.
-    _receive_callback: Callable[[str, JSON_VALUE], None]
+    _server_message_callback: _ServerMessageCallback
 
     _encoder: JSONEncoder
     _decoder: JSONDecoder
@@ -107,9 +110,9 @@ class LSProtocol(ABC):
     _request_counter: int
     _connected: bool
 
-    def __init__(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> None:
+    def __init__(self, server_message_callback: _ServerMessageCallback) -> None:
         self._active_requests = {}
-        self._receive_callback = receive_callback
+        self._server_message_callback = server_message_callback
         self._encoder = JSONEncoder(ensure_ascii=False)
         self._decoder = JSONDecoder()
         self._read_buffer = b""
@@ -142,22 +145,40 @@ class LSProtocol(ABC):
         self._pending_header = None
 
         json_data = self._decoder.decode(content)
-        request_id = json_data["id"]
-        if future := self._active_requests.get(request_id):
+        print(json_data)
+        request_id = json_data.get("id")
+        if (request_id is not None) and (future := self._active_requests.get(request_id)):
+            # A result for an active request was received.
             if error := json_data.get("error"):
                 exception = LSPException(error["code"], error["message"], error.get("data"))
                 future.get_loop().call_soon_threadsafe(lambda: future.set_exception(exception))
             elif "result" in json_data: # No := here, because json_data["result"] can be present but None
                 future.get_loop().call_soon_threadsafe(lambda: future.set_result(json_data["result"]))
             del self._active_requests[request_id]
+
         else:
-            self._receive_callback(json_data["method"], json_data.get("params"))
+            # The data does not correspond to an active request. This means the server
+            # is sending a request/notification of its own.
+            method = json_data["method"]
+            client_loop = get_running_loop()
+            def send_result(result: JSON_VALUE) -> None:
+                # send_result should only be to send results for requests,
+                # which means a request_id is required.
+                assert request_id is not None
+                data = self._create_message(method, request_id, result=result)
+
+                # The send_result function runs on the main thread, so any interactions
+                # with the client thread must go through call_soon_threadsafe. The client thread's
+                # event loop is saved in the closure.
+                client_loop.call_soon_threadsafe(lambda: self.write_data(data))
+
+            self._server_message_callback(json_data["method"], json_data.get("params"), send_result)
 
     @abstractmethod
     def write_data(self, data: bytes) -> None:
         pass
 
-    def _create_message(self, method: str, params: JSON_VALUE, id: Optional[Union[str, int]] = None) -> bytes:
+    def _create_message(self, method: str, id: Optional[Union[str, int]] = None, *, params: JSON_VALUE = None, result: JSON_VALUE = None) -> bytes:
         request_content: Dict[str, JSON_VALUE] = {
             "jsonrpc": "2.0",
             "method": method
@@ -166,6 +187,8 @@ class LSProtocol(ABC):
             request_content["id"] = id
         if params is not None:
             request_content["params"] = params
+        if result is not None:
+            request_content["result"] = result
 
         content = self._encoder.encode(request_content).encode("utf-8")
         header = _LSPHeader(len(content))
@@ -184,7 +207,7 @@ class LSProtocol(ABC):
         request_id = self._request_counter
         self._request_counter += 1
 
-        data = self._create_message(method, params, request_id)
+        data = self._create_message(method, request_id, params=params)
 
         self._active_requests[request_id] = future
         self.write_data(data)
@@ -194,7 +217,7 @@ class LSProtocol(ABC):
         Sends a notification to the language server, using the given `method` and `params`.
         This function should only run on the LSProtocol's thread.
         """
-        data = self._create_message(method, params)
+        data = self._create_message(method, params=params)
         self.write_data(data)
 
     def on_connection_lost(self) -> None:
@@ -207,8 +230,8 @@ class LSStreamingProtocol(Protocol, LSProtocol):
 
     _transport: Transport
 
-    def __init__(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> None:
-        super().__init__(receive_callback)
+    def __init__(self, server_message_callback: _ServerMessageCallback) -> None:
+        super().__init__(server_message_callback)
 
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, Transport)
@@ -232,8 +255,8 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
     _transport: SubprocessTransport
     _write_transport: WriteTransport
 
-    def __init__(self, receive_callback: Callable[[str, JSON_VALUE], None]) -> None:
-        super().__init__(receive_callback)
+    def __init__(self, server_message_callback: _ServerMessageCallback) -> None:
+        super().__init__(server_message_callback)
 
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, SubprocessTransport)

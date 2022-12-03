@@ -134,7 +134,7 @@ connection.onNotification((method: string, params: any) => {
                 connection.sendNotification(option.method, option.params);
             } else {
                 connection.sendRequest(option.method, option.params).then(result => {
-                    assert(result == option.result);
+                    assert.deepEqual(result, option.result);
                 })
             }
         }

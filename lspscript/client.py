@@ -3,14 +3,15 @@ from abc import ABC, abstractmethod
 from asyncio import (AbstractEventLoop, BaseTransport, Future,
                      get_running_loop, new_event_loop, set_event_loop,
                      wait_for)
+from logging import Logger, getLogger
 from os import getpid
 from pathlib import Path
 from socket import AF_INET
 from sys import argv
 from threading import Thread
 from types import TracebackType
-from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional, Sequence,
-                    Tuple, Type, Union)
+from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
+                    Sequence, Set, Tuple, Type, Union)
 
 from lspscript import LSPSCRIPT_VERSION
 from lspscript.protocol import _ServerMessageCallback  # type: ignore
@@ -20,6 +21,7 @@ from lspscript.types import (ClientCapabilities, InitializedParams,
                              InitializeParams, InitializeResult)
 from lspscript.types.client_requests import (ClientRequestsMixin,
                                              ServerRequestsMixin)
+from lspscript.types.enumerations import MessageType
 from lspscript.types.structures import (
     ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, CancelParams,
     ConfigurationParams, ConfigurationParamsAndPartialResultParams,
@@ -29,6 +31,10 @@ from lspscript.types.structures import (
     ShowMessageRequestParams, UnregistrationParams,
     WorkDoneProgressCreateParams, WorkspaceFolder)
 from lspscript.types.util import JSON_VALUE
+
+# Global list of client names, currently only used for logging purposes.
+_client_names: Set[str] = set()
+_anonymous_client_counter: int = 0
 
 
 class _ServerLaunchParams(ABC):
@@ -48,7 +54,7 @@ class _ServerLaunchParams(ABC):
         self.additional_only = additional_only
 
     @abstractmethod
-    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
         pass
 
 
@@ -78,7 +84,7 @@ class StdIOConnectionParams(_ServerLaunchParams):
 
         super().__init__(server_path=server_path, additional_args=additional_args, launch_command=launch_command, additional_only=additional_only)
 
-    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
         args = ["--stdio", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -86,9 +92,11 @@ class StdIOConnectionParams(_ServerLaunchParams):
             args += self.additional_args
         loop = get_running_loop()
         if self.server_path:
-            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(server_message_callback), self.server_path, *args)
+            logger.info("Launching server %s, connection over stdio, with arguments %s", self.server_path, ", ".join(args))
+            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(server_message_callback, logger), self.server_path, *args)
         elif self.launch_command:
-            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(server_message_callback), self.launch_command)
+            logger.info("launching server, connection over stdio, using '%s'", self.launch_command)
+            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(server_message_callback, logger), self.launch_command)
         else:
             assert False
 
@@ -126,7 +134,7 @@ class SocketConnectionParams(_ServerLaunchParams):
         self.hostname = hostname
         self.port = port
 
-    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
         args = [f"--socket={self.port}", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -134,12 +142,15 @@ class SocketConnectionParams(_ServerLaunchParams):
             args += self.additional_args
 
         if self.server_path:
+            logger.info("Launching server %s, connection over TCP sockets, with arguments %s", self.server_path, ", ".join(args))
             subprocess.Popen([self.server_path.absolute()] + list(args))
         elif self.launch_command:
+            logger.info("launching server, connection over TCP sockets, using '%s'", self.launch_command)
             subprocess.Popen(self.launch_command, shell=True)
 
         loop = get_running_loop()
-        return await loop.create_connection(lambda: LSStreamingProtocol(server_message_callback), host=self.hostname, port=self.port, family=AF_INET)
+        logger.info("Connecting to running server at %s:%d", self.hostname, self.port)
+        return await loop.create_connection(lambda: LSStreamingProtocol(server_message_callback, logger), host=self.hostname, port=self.port, family=AF_INET)
 
 
 class PipeConnectionParams(_ServerLaunchParams):
@@ -213,6 +224,22 @@ def get_default_initialize_params() -> InitializeParams:
         capabilities=get_default_client_capabilities())
 
 
+def _generate_client_name(launch_params: _ServerLaunchParams) -> str:
+    global _anonymous_client_counter
+    if launch_params.server_path:
+        basename = launch_params.server_path.stem
+        suffix = ""
+        index = 0
+        while basename + suffix in _client_names:
+            index += 1
+            suffix = "-" + str(index)
+        return basename + suffix
+    else:
+        name = str(_anonymous_client_counter)
+        _anonymous_client_counter += 1
+        return name
+
+
 ClientState = Literal["disconnected", "uninitialized", "initializing", "running", "shutdown"]
 
 class Client(ClientRequestsMixin, ServerRequestsMixin):
@@ -222,6 +249,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
     _state: ClientState
     _protocol: Optional[LSProtocol]
     _launch_params: _ServerLaunchParams
+    _logger: Logger
     _comm_thread: Optional[Thread]
     _comm_thread_event_loop: Optional[AbstractEventLoop]
 
@@ -238,7 +266,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
     _initialize_params: InitializeParams
     _workspace_request_handler: Optional[WorkspaceRequestHandler]
 
-    def __init__(self, launch_params: _ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params()) -> None:
+    def __init__(self, launch_params: _ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params(), name: Optional[str] = None) -> None:
         self._state = "disconnected"
         self._protocol = None
         self._launch_params = launch_params
@@ -248,22 +276,29 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         self._initialize_params = initialize_params
         self._server_message_callback = None
 
+        if name is None:
+            name = _generate_client_name(launch_params)
+        _client_names.add(name)
+        self._logger = getLogger("lspscript.client." + name)
+
     def set_workspace_request_handler(self, handler: Optional[WorkspaceRequestHandler]) -> None:
         self._workspace_request_handler = handler
 
     async def _launch_internal(self) -> None:
-        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback) # type: ignore
+        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback, self._logger) # type: ignore
 
     def _client_thread_exception_handler(self, loop: AbstractEventLoop, context: Dict[str, Any]) -> None:
         exception = context.get("exception")
         if exception is None:
             exception = LSPClientException(context["message"])
+        self._logger.exception(exception)
 
         if self._protocol:
             self._protocol.reject_active_requests(exception)
 
     def _client_loop(self, server_ready: "Future[None]") -> None:
         # Runs on the Client's thread
+        self._logger.info("Server thread started")
         self._comm_thread_event_loop = new_event_loop()
         set_event_loop(self._comm_thread_event_loop)
 
@@ -275,7 +310,10 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
 
         self._state = "disconnected"
         if not self._exit_sent:
+            self._logger.critical("Server stopped unexpectedly.")
             raise LSPClientException("Server stopped unexpectedly.")
+        else:
+            self._logger.info("Client is now disconnected")
 
     def get_state(self) -> ClientState:
         """
@@ -311,16 +349,19 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         self._comm_thread.start()
         await server_ready
         self._state = "uninitialized"
+        self._logger.info("Client is now uninitialized")
 
     async def _send_request_internal(self, method: str, params: JSON_VALUE, timeout: Optional[float] = 10.0) -> JSON_VALUE:
         assert self._comm_thread_event_loop
 
         future = get_running_loop().create_future()
+        self._logger.info("Sending request (%s)", method)
         self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol and self._protocol.send_request(method, params, future))
         await wait_for(future, timeout)
 
         assert not future.cancelled()
         if exception := future.exception():
+            self._logger.info("Request failed (%s)", method)
             raise exception
         else:
             return future.result()
@@ -346,6 +387,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
 
     async def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
         assert self._comm_thread_event_loop
+        self._logger.info("Sending notification (%s)", method)
         self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol and self._protocol.send_notification(method, params))
 
     async def send_notification(self, method: str, params: JSON_VALUE) -> None:
@@ -370,6 +412,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         assert isinstance(out_json, Mapping)
         out = InitializeResult.from_json(out_json)
         self._state = "initializing"
+        self._logger.info("Client is now initializing")
         return out
 
     async def send_initialized(self, params: InitializedParams) -> None:
@@ -378,10 +421,12 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
 
         await self._send_notification_internal("initialized", params.to_json())
         self._state = "running"
+        self._logger.info("Client is now running")
 
     async def send_shutdown(self, **kwargs: Any) -> None:
         await super().send_shutdown(**kwargs)
         self._state = "shutdown"
+        self._logger.info("Client is now shutting down")
 
     async def send_exit(self) -> None:
         if self._state != "shutdown":
@@ -499,16 +544,33 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         return NotImplemented
 
     def on_window_show_message(self, params: ShowMessageParams) -> None:
-        pass
+        logger = self._logger.getChild("server")
+        if params.type is MessageType.Log:
+            logger.debug("window/showMessage: %s", params.message)
+        elif params.type is MessageType.Info:
+            logger.info("window/showMessage: %s", params.message)
+        elif params.type is MessageType.Warning:
+            logger.warning("window/showMessage: %s", params.message)
+        elif params.type is MessageType.Error:
+            logger.error("window/showMessage: %s", params.message)
 
     def on_window_log_message(self, params: LogMessageParams) -> None:
-        pass
+        logger = self._logger.getChild("server")
+        if params.type is MessageType.Log:
+            logger.debug("window/logMessage: %s", params.message)
+        elif params.type is MessageType.Info:
+            logger.info("window/logMessage: %s", params.message)
+        elif params.type is MessageType.Warning:
+            logger.warning("window/logMessage: %s", params.message)
+        elif params.type is MessageType.Error:
+            logger.error("window/logMessage: %s", params.message)
 
     def on_telemetry_event(self, params: LSPAny) -> None:
         pass
 
     def on_s_log_trace(self, params: LogTraceParams) -> None:
-        pass
+        logger = self._logger.getChild("server")
+        logger.debug("$/logTrace: %s", params.message)
 
     def on_s_cancel_request(self, params: CancelParams) -> None:
         pass

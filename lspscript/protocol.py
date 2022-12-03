@@ -4,6 +4,8 @@ from asyncio import (BaseTransport, Future, Protocol, SubprocessProtocol,
                      get_running_loop)
 from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder
+from logging import DEBUG, Logger
+from sys import getdefaultencoding
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 from lspscript.types import ErrorCodes, LSPErrorCodes
@@ -102,6 +104,8 @@ class LSProtocol(ABC):
     # the callable's provider to ensure thread-safety.
     _server_message_callback: _ServerMessageCallback
 
+    _logger: Logger
+
     _encoder: JSONEncoder
     _decoder: JSONDecoder
     _read_buffer: bytes
@@ -110,9 +114,10 @@ class LSProtocol(ABC):
     _request_counter: int
     _connected: bool
 
-    def __init__(self, server_message_callback: _ServerMessageCallback) -> None:
+    def __init__(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> None:
         self._active_requests = {}
         self._server_message_callback = server_message_callback
+        self._logger = logger
         self._encoder = JSONEncoder(ensure_ascii=False)
         self._decoder = JSONDecoder()
         self._read_buffer = b""
@@ -122,6 +127,8 @@ class LSProtocol(ABC):
         self._connected = False
 
     def reject_active_requests(self, exc: Exception) -> None:
+        if len(self._active_requests) > 0:
+            self._logger.warning("Dropping %d currently active requests", len(self._active_requests))
         for f in self._active_requests.values():
             f.get_loop().call_soon_threadsafe(lambda: f.set_exception(exc))
 
@@ -140,12 +147,17 @@ class LSProtocol(ABC):
             # Content has not yet been fully received, wait for more data.
             return
 
-        content = str(self._read_buffer[self._content_offset:], encoding=self._pending_header.get_encoding())
+        content_from = self._content_offset
+        content_to = content_from + self._pending_header.content_length
+        content = str(self._read_buffer[content_from:content_to], encoding=self._pending_header.get_encoding())
+        logger = self._logger.getChild("data")
+        if logger.getEffectiveLevel() <= DEBUG:
+            logger.getChild("data").debug("Received:\n%s", str(self._read_buffer[:content_to], encoding=self._pending_header.get_encoding()))
+
         self._read_buffer = self._read_buffer[self._content_offset + self._pending_header.content_length:]
         self._pending_header = None
 
         json_data = self._decoder.decode(content)
-        print(json_data)
         request_id = json_data.get("id")
         if (request_id is not None) and (future := self._active_requests.get(request_id)):
             # A result for an active request was received.
@@ -159,13 +171,12 @@ class LSProtocol(ABC):
         else:
             # The data does not correspond to an active request. This means the server
             # is sending a request/notification of its own.
-            method = json_data["method"]
             client_loop = get_running_loop()
             def send_result(result: JSON_VALUE) -> None:
                 # send_result should only be to send results for requests,
                 # which means a request_id is required.
                 assert request_id is not None
-                data = self._create_message(method, request_id, result=result)
+                data = self._create_result_message(request_id, result)
 
                 # The send_result function runs on the main thread, so any interactions
                 # with the client thread must go through call_soon_threadsafe. The client thread's
@@ -189,6 +200,18 @@ class LSProtocol(ABC):
             request_content["params"] = params
         if result is not None:
             request_content["result"] = result
+
+        content = self._encoder.encode(request_content).encode("utf-8")
+        header = _LSPHeader(len(content))
+
+        return header.to_bytes() + content
+
+    def _create_result_message(self, id: Union[str, int], result: JSON_VALUE = None) -> bytes:
+        request_content: Dict[str, JSON_VALUE] = {
+            "jsonrpc": "2.0",
+            "id": id,
+            "result": result
+        }
 
         content = self._encoder.encode(request_content).encode("utf-8")
         header = _LSPHeader(len(content))
@@ -230,8 +253,8 @@ class LSStreamingProtocol(Protocol, LSProtocol):
 
     _transport: Transport
 
-    def __init__(self, server_message_callback: _ServerMessageCallback) -> None:
-        super().__init__(server_message_callback)
+    def __init__(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> None:
+        super().__init__(server_message_callback, logger)
 
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, Transport)
@@ -248,6 +271,9 @@ class LSStreamingProtocol(Protocol, LSProtocol):
 
     def write_data(self, data: bytes) -> None:
         self._transport.write(data)
+        logger = self._logger.getChild("data")
+        if logger.getEffectiveLevel() <= DEBUG:
+            logger.debug("Sent %s", str(data, encoding="utf-8"))
 
 
 class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
@@ -255,8 +281,8 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
     _transport: SubprocessTransport
     _write_transport: WriteTransport
 
-    def __init__(self, server_message_callback: _ServerMessageCallback) -> None:
-        super().__init__(server_message_callback)
+    def __init__(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> None:
+        super().__init__(server_message_callback, logger)
 
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, SubprocessTransport)
@@ -276,8 +302,10 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
         if fd == 1:
             super().on_data(data)
         elif fd == 2:
-            # TODO logging
-            print("server.stderr: " + str(data))
+            self._logger.getChild("server").warning("Server stderr: %s", str(data, encoding=getdefaultencoding()))
 
     def write_data(self, data: bytes) -> None:
         self._write_transport.write(data)
+        logger = self._logger.getChild("data")
+        if logger.getEffectiveLevel() <= DEBUG:
+            logger.debug("Sent:\n%s", str(data, encoding="utf-8"))

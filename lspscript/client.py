@@ -80,9 +80,11 @@ class StdIOConnectionParams(_ServerLaunchParams):
         - `additional_only`: Do not send any standard arguments, only those in `additional_args`."""
 
         if not server_path and not launch_command:
-            raise ValueError("Either server_path or launch_command need to be set.")
+            raise ValueError(
+                "Either server_path or launch_command need to be set.")
 
-        super().__init__(server_path=server_path, additional_args=additional_args, launch_command=launch_command, additional_only=additional_only)
+        super().__init__(server_path=server_path, additional_args=additional_args,
+                         launch_command=launch_command, additional_only=additional_only)
 
     async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
         args = ["--stdio", f"--clientProcessId={getpid()}"]
@@ -92,10 +94,12 @@ class StdIOConnectionParams(_ServerLaunchParams):
             args += self.additional_args
         loop = get_running_loop()
         if self.server_path:
-            logger.info("Launching server %s, connection over stdio, with arguments %s", self.server_path, ", ".join(args))
+            logger.info("Launching server %s, connection over stdio, with arguments %s",
+                        self.server_path, ", ".join(args))
             return await loop.subprocess_exec(lambda: LSSubprocessProtocol(server_message_callback, logger), self.server_path, *args)
         elif self.launch_command:
-            logger.info("launching server, connection over stdio, using '%s'", self.launch_command)
+            logger.info(
+                "launching server, connection over stdio, using '%s'", self.launch_command)
             return await loop.subprocess_shell(lambda: LSSubprocessProtocol(server_message_callback, logger), self.launch_command)
         else:
             assert False
@@ -108,12 +112,12 @@ class SocketConnectionParams(_ServerLaunchParams):
     port: int
 
     def __init__(self, *,
-                server_path: Optional[Path] = None,
-                launch_command: Optional[str] = None,
-                port: int,
-                hostname: str = "localhost",
-                additional_args: Sequence[str] = [],
-                additional_only: bool = False) -> None:
+                 server_path: Optional[Path] = None,
+                 launch_command: Optional[str] = None,
+                 port: int,
+                 hostname: str = "localhost",
+                 additional_args: Sequence[str] = [],
+                 additional_only: bool = False) -> None:
         """Constructs a new SocketConnectionParams instance. This instance can then
         be used to launch a new client/server connection.
 
@@ -130,7 +134,8 @@ class SocketConnectionParams(_ServerLaunchParams):
         - `additional_args`: List of additional arguments to pass to the server.
         - `additional_only`: Do not send any standard arguments, only those in `additional_args`."""
 
-        super().__init__(server_path=server_path, launch_command=launch_command, additional_args=additional_args, additional_only=additional_only)
+        super().__init__(server_path=server_path, launch_command=launch_command,
+                         additional_args=additional_args, additional_only=additional_only)
         self.hostname = hostname
         self.port = port
 
@@ -142,14 +147,17 @@ class SocketConnectionParams(_ServerLaunchParams):
             args += self.additional_args
 
         if self.server_path:
-            logger.info("Launching server %s, connection over TCP sockets, with arguments %s", self.server_path, ", ".join(args))
+            logger.info("Launching server %s, connection over TCP sockets, with arguments %s",
+                        self.server_path, ", ".join(args))
             subprocess.Popen([self.server_path.absolute()] + list(args))
         elif self.launch_command:
-            logger.info("launching server, connection over TCP sockets, using '%s'", self.launch_command)
+            logger.info(
+                "launching server, connection over TCP sockets, using '%s'", self.launch_command)
             subprocess.Popen(self.launch_command, shell=True)
 
         loop = get_running_loop()
-        logger.info("Connecting to running server at %s:%d", self.hostname, self.port)
+        logger.info("Connecting to running server at %s:%d",
+                    self.hostname, self.port)
         return await loop.create_connection(lambda: LSStreamingProtocol(server_message_callback, logger), host=self.hostname, port=self.port, family=AF_INET)
 
 
@@ -240,7 +248,9 @@ def _generate_client_name(launch_params: _ServerLaunchParams) -> str:
         return name
 
 
-ClientState = Literal["disconnected", "uninitialized", "initializing", "running", "shutdown"]
+ClientState = Literal["disconnected", "uninitialized",
+                      "initializing", "running", "shutdown"]
+
 
 class Client(ClientRequestsMixin, ServerRequestsMixin):
     # Manages capabilities (client and server).
@@ -285,7 +295,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         self._workspace_request_handler = handler
 
     async def _launch_internal(self) -> None:
-        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback, self._logger) # type: ignore
+        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback, self._logger)  # type: ignore
 
     def _client_thread_exception_handler(self, loop: AbstractEventLoop, context: Dict[str, Any]) -> None:
         exception = context.get("exception")
@@ -302,9 +312,12 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         self._comm_thread_event_loop = new_event_loop()
         set_event_loop(self._comm_thread_event_loop)
 
-        self._comm_thread_event_loop.set_exception_handler(self._client_thread_exception_handler)
-        self._comm_thread_event_loop.run_until_complete(self._comm_thread_event_loop.create_task(self._launch_internal()))
-        server_ready.get_loop().call_soon_threadsafe(lambda: server_ready.set_result(None))
+        self._comm_thread_event_loop.set_exception_handler(
+            self._client_thread_exception_handler)
+        self._comm_thread_event_loop.run_until_complete(
+            self._comm_thread_event_loop.create_task(self._launch_internal()))
+        server_ready.get_loop().call_soon_threadsafe(
+            lambda: server_ready.set_result(None))
 
         self._comm_thread_event_loop.run_forever()
 
@@ -341,11 +354,13 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         main_loop = get_running_loop()
 
         def server_message_callback(method: str, params: JSON_VALUE, send_result: Callable[[JSON_VALUE], None]) -> None:
-            main_loop.call_soon_threadsafe(lambda :self.dispatch_server_message(method, params, send_result))
+            main_loop.call_soon_threadsafe(
+                lambda: self.dispatch_server_message(method, params, send_result))
 
         self._server_message_callback = server_message_callback
         server_ready = main_loop.create_future()
-        self._comm_thread = Thread(target=self._client_loop, args=[server_ready])
+        self._comm_thread = Thread(
+            target=self._client_loop, args=[server_ready])
         self._comm_thread.start()
         await server_ready
         self._state = "uninitialized"
@@ -356,7 +371,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
 
         future = get_running_loop().create_future()
         self._logger.info("Sending request (%s)", method)
-        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol and self._protocol.send_request(method, params, future))
+        self._comm_thread_event_loop.call_soon_threadsafe(
+            lambda: self._protocol and self._protocol.send_request(method, params, future))
         await wait_for(future, timeout)
 
         assert not future.cancelled()
@@ -388,7 +404,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
     async def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
         assert self._comm_thread_event_loop
         self._logger.info("Sending notification (%s)", method)
-        self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._protocol and self._protocol.send_notification(method, params))
+        self._comm_thread_event_loop.call_soon_threadsafe(
+            lambda: self._protocol and self._protocol.send_notification(method, params))
 
     async def send_notification(self, method: str, params: JSON_VALUE) -> None:
         """
@@ -401,7 +418,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
 
     async def send_initialize(self, params: Optional[InitializeParams] = None, **kwargs: Any) -> InitializeResult:
         if self._state != "uninitialized":
-            raise LSPClientException("Invalid state, expected 'uninitialized'.")
+            raise LSPClientException(
+                "Invalid state, expected 'uninitialized'.")
 
         if not params:
             params = self._initialize_params
@@ -476,10 +494,10 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
             if self._comm_thread and self._comm_thread.is_alive():
                 # Stop the event loop manually
                 if self._comm_thread_event_loop and self._comm_thread_event_loop.is_running():
-                    self._comm_thread_event_loop.call_soon_threadsafe(lambda: self._comm_thread_event_loop and self._comm_thread_event_loop.stop())
+                    self._comm_thread_event_loop.call_soon_threadsafe(
+                        lambda: self._comm_thread_event_loop and self._comm_thread_event_loop.stop())
                 self._comm_thread.join()
             raise
-
 
     # -----------------------------
     # Callbacks for server requests

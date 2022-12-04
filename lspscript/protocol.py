@@ -88,7 +88,9 @@ class _LSPHeader:
 
 
 # Signature of a function which takes a str (method), a JSON_VALUE (params) and a function to send a JSON_VALUE back (send_data)
-_ServerMessageCallback = Callable[[str, JSON_VALUE, Callable[[JSON_VALUE], None]], None]
+_ServerMessageCallback = Callable[[
+    str, JSON_VALUE, Callable[[JSON_VALUE], None]], None]
+
 
 class LSProtocol(ABC):
 
@@ -128,7 +130,8 @@ class LSProtocol(ABC):
 
     def reject_active_requests(self, exc: Exception) -> None:
         if len(self._active_requests) > 0:
-            self._logger.warning("Dropping %d currently active requests", len(self._active_requests))
+            self._logger.warning(
+                "Dropping %d currently active requests", len(self._active_requests))
         for f in self._active_requests.values():
             f.get_loop().call_soon_threadsafe(lambda: f.set_exception(exc))
 
@@ -149,12 +152,15 @@ class LSProtocol(ABC):
 
         content_from = self._content_offset
         content_to = content_from + self._pending_header.content_length
-        content = str(self._read_buffer[content_from:content_to], encoding=self._pending_header.get_encoding())
+        content = str(self._read_buffer[content_from:content_to],
+                      encoding=self._pending_header.get_encoding())
         logger = self._logger.getChild("data")
         if logger.getEffectiveLevel() <= DEBUG:
-            logger.getChild("data").debug("Received:\n%s", str(self._read_buffer[:content_to], encoding=self._pending_header.get_encoding()))
+            logger.getChild("data").debug("Received:\n%s", str(
+                self._read_buffer[:content_to], encoding=self._pending_header.get_encoding()))
 
-        self._read_buffer = self._read_buffer[self._content_offset + self._pending_header.content_length:]
+        self._read_buffer = self._read_buffer[self._content_offset +
+                                              self._pending_header.content_length:]
         self._pending_header = None
 
         json_data = self._decoder.decode(content)
@@ -162,16 +168,20 @@ class LSProtocol(ABC):
         if (request_id is not None) and (future := self._active_requests.get(request_id)):
             # A result for an active request was received.
             if error := json_data.get("error"):
-                exception = LSPException(error["code"], error["message"], error.get("data"))
+                exception = LSPException(
+                    error["code"], error["message"], error.get("data"))
                 future.get_loop().call_soon_threadsafe(lambda: future.set_exception(exception))
-            elif "result" in json_data: # No := here, because json_data["result"] can be present but None
-                future.get_loop().call_soon_threadsafe(lambda: future.set_result(json_data["result"]))
+            # No := here, because json_data["result"] can be present but None
+            elif "result" in json_data:
+                future.get_loop().call_soon_threadsafe(
+                    lambda: future.set_result(json_data["result"]))
             del self._active_requests[request_id]
 
         else:
             # The data does not correspond to an active request. This means the server
             # is sending a request/notification of its own.
             client_loop = get_running_loop()
+
             def send_result(result: JSON_VALUE) -> None:
                 # send_result should only be to send results for requests,
                 # which means a request_id is required.
@@ -183,7 +193,8 @@ class LSProtocol(ABC):
                 # event loop is saved in the closure.
                 client_loop.call_soon_threadsafe(lambda: self.write_data(data))
 
-            self._server_message_callback(json_data["method"], json_data.get("params"), send_result)
+            self._server_message_callback(
+                json_data["method"], json_data.get("params"), send_result)
 
     @abstractmethod
     def write_data(self, data: bytes) -> None:
@@ -224,7 +235,8 @@ class LSProtocol(ABC):
         This function should only run on the LSProtocol's thread.
         """
         if not self._connected:
-            future.get_loop().call_soon_threadsafe(lambda: future.set_exception(LSPClientException("No connection to server")))
+            future.get_loop().call_soon_threadsafe(lambda: future.set_exception(
+                LSPClientException("No connection to server")))
             return
 
         request_id = self._request_counter
@@ -302,7 +314,8 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
         if fd == 1:
             super().on_data(data)
         elif fd == 2:
-            self._logger.getChild("server").warning("Server stderr: %s", str(data, encoding=getdefaultencoding()))
+            self._logger.getChild("server").warning(
+                "Server stderr: %s", str(data, encoding=getdefaultencoding()))
 
     def write_data(self, data: bytes) -> None:
         self._write_transport.write(data)

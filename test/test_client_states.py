@@ -1,10 +1,13 @@
-from lspscript.client import Client, StdIOConnectionParams
-from lspscript.types import ClientCapabilities, InitializeParams, InitializedParams
 from os import getpid
+
+from lspscript.client import Client, StdIOConnectionParams
+from lspscript.types import (ClientCapabilities, InitializedParams,
+                             InitializeParams)
 
 
 async def test_client_assumes_correct_states() -> None:
-    params = StdIOConnectionParams(launch_command="node mock-server/out/index.js --stdio test/test_client_states.json")
+    params = StdIOConnectionParams(
+        launch_command="node mock-server/out/index.js --stdio test/test_empty.json")
     client = Client(params)
     assert client.get_state() == "disconnected"
 
@@ -25,6 +28,7 @@ async def test_client_assumes_correct_states() -> None:
 
 
 async def test_client_context_manager_normal() -> None:
-    params = StdIOConnectionParams(launch_command="node mock-server/out/index.js --stdio test/test_client_states.json")
+    params = StdIOConnectionParams(
+        launch_command="node mock-server/out/index.js --stdio test/test_empty.json")
     async with Client(params) as client:
         assert client.get_state() == "running"

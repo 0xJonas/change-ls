@@ -1,0 +1,28 @@
+{
+    "name": "test_workspace_callbacks",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/configuration",
+                    "params": {
+                        "items": [
+                            {
+                                "scopeUri": "file:///repo/test/mock-ws-1",
+                                "section": "Test1"
+                            },
+                            {
+                                "scopeUri": "file:///repo/test/mock-ws-2",
+                                "section": "Test2"
+                            }
+                        ]
+                    },
+                    "result": [5, 10]
+                }
+            ]
+        }
+    ]
+}

@@ -42,7 +42,7 @@ function loadTest(path: string): TestSetup {
 
 const test = loadTest(argv[argv.length - 1]);
 let sequenceIndex = 0;
-let unorderedReceived: Array<boolean> = []
+let unorderedReceived: Array<boolean> = [];
 let templateParams: TemplateParams = {};
 const NOT_HANDLED = Symbol("NOT_HANDLED");
 
@@ -70,11 +70,11 @@ function handleSetTemplateParams(params: TemplateParams) {
     templateParams = params;
 }
 
-function assertTemplateParams(msg: any): asserts msg is TemplateParams {
-    assert(typeof msg.params === "object");
-    assert(msg !== null);
-    assert(!(msg instanceof Array));
-    for (let key in msg) {
+function assertTemplateParams(params: any): asserts params is TemplateParams {
+    assert(typeof params === "object");
+    assert(params !== null);
+    assert(!(params instanceof Array));
+    for (let key in params) {
         assert(key === "expand" || key === "replace");
     }
 }
@@ -128,10 +128,10 @@ function processTemplate(template: string): JSONValue {
             throw Error("Template parameter not found");
         }
         const from = expandResult.index;
-        const to = from + param.length;
+        const to = from + param.length + 3; // The 3 comes from '${' and '}'
         const replacement = templateParams.expand[param];
         template = template.substring(0, from) + templateParams.expand[param] + template.substring(to);
-        expandRegExp.lastIndex += replacement.length - param.length;
+        expandRegExp.lastIndex += replacement.length - (to - from);
         expandResult = expandRegExp.exec(template);
     }
     return template;
@@ -205,58 +205,71 @@ function matchMessage(msg: TestMessage, method: string, params?: JSONValue): boo
     }
 }
 
-function processRequest(connection: Connection, msg: TestMessage): any {
-    if (msg.intermediate !== undefined) {
-        for (let i of msg.intermediate) {
-            assert(i.type == "notification");
-
-            // Assume the notifications are sent in order and before the response.
-            connection.sendNotification(i.method, i.params);
-        }
-    }
-
-    return msg.result;
-}
-
-connection.onRequest((method: string, params: any) => {
-    if (sequenceIndex >= test.sequence.length) {
-        const maybeResult = handleCustomRequests(method, params);
-        assert(maybeResult !== NOT_HANDLED);
-        return maybeResult;
-    }
-
-    const msg = test.sequence[sequenceIndex];
-    if (msg.type == "request") {
-        const maybeResult = handleCustomRequests(method, params);
-        if (maybeResult === NOT_HANDLED) {
-            assert(matchMessage(msg, method, params));
-            sequenceIndex++;
-            return processRequest(connection, msg);
-        } else {
-            return maybeResult;
-        }
-    } else if (msg.type == "request-unordered") {
-        if (unorderedReceived.length == 0) {
-            unorderedReceived = Array(msg.content.length)
-            unorderedReceived.fill(false)
-        }
-
-        for (let i = 0; i < msg.content.length; i++) {
-            let option = msg.content[i];
-            if (unorderedReceived[i]) {
-                continue;
-            } else if (!matchMessage(option, method, params)) {
-                continue;
+async function processIntermediate(intermediate: TestMessage[]) {
+    try {
+        for (let option of intermediate) {
+            if (option.type == "notification") {
+                await connection.sendNotification(option.method, option.params);
             } else {
-                unorderedReceived[i] = true;
-                if (unorderedReceived.every(e => e)) {
-                    // All messages received
-                    sequenceIndex++;
-                }
-                return processRequest(connection, option);
+                const result = await connection.sendRequest<JSONValue>(option.method, option.params);
+                processRequestResult(result, option.result);
             }
         }
-        assert(false) // Nothing matched
+    } catch (e) {
+        // We need seperate error handling here,
+        // since the function async.
+        console.error(e);
+        exit(1);
+    }
+}
+
+connection.onRequest(async (method: string, params: any) => {
+    try {
+        const maybeResult = handleCustomRequests(method, params);
+        if (maybeResult !== NOT_HANDLED) {
+            return maybeResult;
+        }
+
+        const msg = test.sequence[sequenceIndex];
+        if (msg.type == "request") {
+            assert(matchMessage(msg, method, params));
+            sequenceIndex++;
+            if (msg.intermediate) {
+                await processIntermediate(msg.intermediate);
+            }
+            return msg.result;
+        } else if (msg.type == "request-unordered") {
+            if (unorderedReceived.length == 0) {
+                unorderedReceived = Array(msg.content.length)
+                unorderedReceived.fill(false)
+            }
+
+            for (let i = 0; i < msg.content.length; i++) {
+                let option = msg.content[i];
+                if (unorderedReceived[i]) {
+                    continue;
+                } else if (!matchMessage(option, method, params)) {
+                    continue;
+                } else {
+                    unorderedReceived[i] = true;
+                    if (unorderedReceived.every(e => e)) {
+                        // All messages received
+                        sequenceIndex++;
+                    }
+                    if (option.intermediate) {
+                        processIntermediate(option.intermediate);
+                    }
+                    return option.result;
+                }
+            }
+            assert(false) // Nothing matched
+        } else {
+            // Request was sent, but something else was expected.
+            assert(false);
+        }
+    } catch (e) {
+        console.error(e);
+        exit(1);
     }
 });
 
@@ -265,29 +278,23 @@ function processRequestResult(result?: JSONValue, expectedResult?: JSONValue) {
         assert(expectedResult === undefined)
     } else {
         assert(expectedResult !== undefined);
-        assert(matchDeepEqual(result, expectedResult));
-    }
-}
-
-function processNotification(connection: Connection, msg: TestMessage) {
-    if (!msg.intermediate)
-        return;
-
-    for (let option of msg.intermediate) {
-        if (option.type == "notification") {
-            connection.sendNotification(option.method, option.params);
-        } else {
-            connection.sendRequest<JSONValue>(option.method, option.params).then((result?: JSONValue) => processRequestResult(result, option.result))
-        }
+        assert(matchDeepEqual(expectedResult, result));
     }
 }
 
 connection.onNotification((method: string, params: any) => {
-    const msg = test.sequence[sequenceIndex];
-    assert(msg.type == "notification");
-    assert(matchMessage(msg, method, params));
-    sequenceIndex++;
-    processNotification(connection, msg);
+    try {
+        const msg = test.sequence[sequenceIndex];
+        assert(msg.type == "notification");
+        assert(matchMessage(msg, method, params));
+        sequenceIndex++;
+        if (msg.intermediate) {
+            processIntermediate(msg.intermediate);
+        }
+    } catch (e) {
+        console.error(e);
+        exit(1);
+    }
 });
 
 connection.listen()

@@ -1,0 +1,25 @@
+{
+    "name": "test_workspace_callbacks",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "workspace/workspaceFolders",
+                    "result": [
+                        {
+                            "uri": "${REPO_URI}/test/mock-ws-1",
+                            "name": "mock-ws-1"
+                        },
+                        {
+                            "uri": "${REPO_URI}/test/mock-ws-2",
+                            "name": "mock-ws-2"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

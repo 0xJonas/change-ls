@@ -2097,28 +2097,15 @@ class CallHierarchyPrepareParams(TextDocumentPositionParams):
         return out
 
 
-@dataclass
-class LSPObject():
-    """
-    LSP object definition.
-    @since 3.17.0
+# LSP object definition.
+# @since 3.17.0
+LSPObject = Dict[str, "LSPAny"]
 
-    *Generated from the TypeScript documentation*
-    """
+def parse_LSPObject(arg: JSON_VALUE) -> LSPObject:
+    return { json_assert_type_string(key): parse_LSPAny((value)) for key, value in json_assert_type_object(arg).items()}
 
-
-
-
-
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LSPObject":
-    
-        return cls()
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-    
-        return out
+def write_LSPObject(arg: LSPObject) -> JSON_VALUE:
+    return { key: write_LSPAny(val) for key, val in arg.items() }
 
 
 # LSP arrays.
@@ -2141,10 +2128,10 @@ def write_LSPArray(arg: LSPArray) -> JSON_VALUE:
 LSPAny = Union["LSPObject", "LSPArray", str, int, int, float, bool, None]
 
 def parse_LSPAny(arg: JSON_VALUE) -> LSPAny:
-    return parse_or_type((arg), (lambda v: LSPObject.from_json(json_assert_type_object(v)), lambda v: parse_LSPArray(json_assert_type_array(v)), lambda v: json_assert_type_string(v), lambda v: json_assert_type_int(v), lambda v: json_assert_type_int(v), lambda v: json_assert_type_float(v), lambda v: json_assert_type_bool(v), lambda v: json_assert_type_null(v)))
+    return parse_or_type((arg), (lambda v: parse_LSPObject(json_assert_type_object(v)), lambda v: parse_LSPArray(json_assert_type_array(v)), lambda v: json_assert_type_string(v), lambda v: json_assert_type_int(v), lambda v: json_assert_type_int(v), lambda v: json_assert_type_float(v), lambda v: json_assert_type_bool(v), lambda v: json_assert_type_null(v)))
 
 def write_LSPAny(arg: LSPAny) -> JSON_VALUE:
-    return write_or_type(arg, (lambda i: isinstance(i, LSPObject), lambda i: isinstance(i, List) and (len(i) == 0 or (True)), lambda i: isinstance(i, str), lambda i: isinstance(i, int), lambda i: isinstance(i, int), lambda i: isinstance(i, float), lambda i: isinstance(i, bool), lambda i: i is None), (lambda i: i.to_json(), lambda i: write_LSPArray(i), lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i))
+    return write_or_type(arg, (lambda i: isinstance(i, Dict), lambda i: isinstance(i, List) and (len(i) == 0 or (True)), lambda i: isinstance(i, str), lambda i: isinstance(i, int), lambda i: isinstance(i, int), lambda i: isinstance(i, float), lambda i: isinstance(i, bool), lambda i: i is None), (lambda i: write_LSPObject(i), lambda i: write_LSPArray(i), lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i, lambda i: i))
 
 
 @dataclass
@@ -6581,7 +6568,7 @@ class NotebookCell():
         kind = NotebookCellKind(json_get_int(obj, "kind"))
         document = json_get_string(obj, "document")
         if metadata_json := json_get_optional_object(obj, "metadata"):
-            metadata = LSPObject.from_json(metadata_json)
+            metadata = parse_LSPObject(metadata_json)
         else:
             metadata = None
         if executionSummary_json := json_get_optional_object(obj, "executionSummary"):
@@ -6595,7 +6582,7 @@ class NotebookCell():
         out["kind"] = self.kind.value
         out["document"] = self.document
         if self.metadata is not None:
-            out["metadata"] = self.metadata.to_json()
+            out["metadata"] = write_LSPObject(self.metadata)
         if self.executionSummary is not None:
             out["executionSummary"] = self.executionSummary.to_json()
         return out
@@ -6654,7 +6641,7 @@ class NotebookDocument():
         notebookType = json_get_string(obj, "notebookType")
         version = json_get_int(obj, "version")
         if metadata_json := json_get_optional_object(obj, "metadata"):
-            metadata = LSPObject.from_json(metadata_json)
+            metadata = parse_LSPObject(metadata_json)
         else:
             metadata = None
         cells = [NotebookCell.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "cells")]
@@ -6666,7 +6653,7 @@ class NotebookDocument():
         out["notebookType"] = self.notebookType
         out["version"] = self.version
         if self.metadata is not None:
-            out["metadata"] = self.metadata.to_json()
+            out["metadata"] = write_LSPObject(self.metadata)
         out["cells"] = [i.to_json() for i in self.cells]
         return out
 
@@ -7028,7 +7015,7 @@ class NotebookDocumentChangeEvent():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentChangeEvent":
         if metadata_json := json_get_optional_object(obj, "metadata"):
-            metadata = LSPObject.from_json(metadata_json)
+            metadata = parse_LSPObject(metadata_json)
         else:
             metadata = None
         if cells_json := json_get_optional_object(obj, "cells"):
@@ -7040,7 +7027,7 @@ class NotebookDocumentChangeEvent():
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         if self.metadata is not None:
-            out["metadata"] = self.metadata.to_json()
+            out["metadata"] = write_LSPObject(self.metadata)
         if self.cells is not None:
             out["cells"] = write_AnonymousStructure9(self.cells)
         return out

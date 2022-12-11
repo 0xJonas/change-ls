@@ -9617,12 +9617,6 @@
 			"since": "3.17.0"
 		},
 		{
-			"name": "LSPObject",
-			"properties": [],
-			"documentation": "LSP object definition.\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
 			"name": "NotebookCell",
 			"properties": [
 				{
@@ -14377,6 +14371,22 @@
 				"name": "string"
 			},
 			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
+			"name": "LSPObject",
+			"type": {
+				"kind": "map",
+				"key": {
+					"kind": "base",
+					"name": "string"
+				},
+				"value": {
+					"kind": "reference",
+					"name": "LSPAny"
+				}
+			},
+			"documentation": "LSP object definition.\n@since 3.17.0",
 			"since": "3.17.0"
 		}
 	]

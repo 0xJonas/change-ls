@@ -249,7 +249,6 @@ __all__ = (
     "FileOperationPattern",
     "WorkspaceFullDocumentDiagnosticReport",
     "WorkspaceUnchangedDocumentDiagnosticReport",
-    "LSPObject",
     "NotebookCell",
     "NotebookCellArrayChange",
     "ClientCapabilities",
@@ -372,6 +371,7 @@ __all__ = (
     "TextDocumentFilter",
     "NotebookDocumentFilter",
     "Pattern",
+    "LSPObject",
     "ConfigurationParamsAndPartialResultParams",
     "TextDocumentRegistrationOptionsAndWorkDoneProgressOptions"
 )

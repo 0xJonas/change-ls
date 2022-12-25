@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import Literal, Mapping, MutableSequence, Optional, Union, List
+from typing import List, Literal, Mapping, MutableSequence, Optional, Union
 
-from .util import *
 from .anytype import *
-
+from .util import *
 
 MessageDirection = Literal["clientToServer", "serverToClient", "both"]
+
 
 @dataclass(frozen=True)
 class EnumerationEntry:
@@ -40,10 +40,15 @@ class EnumerationType:
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "EnumerationType":
         name = json_get_string(obj, "name")
-        if name == "string": return cls("string")
-        elif name == "integer": return cls("integer")
-        elif name == "uinteger": return cls("uinteger")
-        else: raise LSPMetaModelException(f'Expected "name" to be one of "string", "integer" or "uinteger", found {name}')
+        if name == "string":
+            return cls("string")
+        elif name == "integer":
+            return cls("integer")
+        elif name == "uinteger":
+            return cls("uinteger")
+        else:
+            raise LSPMetaModelException(
+                f'Expected "name" to be one of "string", "integer" or "uinteger", found {name}')
 
 
 @dataclass(frozen=True)
@@ -64,7 +69,8 @@ class Enumeration:
         name = json_get_string(obj, "name")
         proposed = json_get_optional_bool(obj, "proposed")
         since = json_get_optional_string(obj, "since")
-        supports_custom_values = json_get_optional_bool(obj, "supportsCustomValues")
+        supports_custom_values = json_get_optional_bool(
+            obj, "supportsCustomValues")
         type_json = json_get_object(obj, "type")
         values_json = json_get_array_of_objects(obj, "values")
 
@@ -96,23 +102,29 @@ class Notification:
         elif message_direction_json == "both":
             message_direction = "both"
         else:
-            raise LSPMetaModelException("Invalid value for messageDirection: " + message_direction_json)
+            raise LSPMetaModelException(
+                "Invalid value for messageDirection: " + message_direction_json)
         method = json_get_string(obj, "method")
         proposed = json_get_optional_bool(obj, "proposed")
-        registration_options_json = json_get_optional_object(obj, "registrationOptions")
+        registration_options_json = json_get_optional_object(
+            obj, "registrationOptions")
         since = json_get_optional_string(obj, "since")
 
-        params_json: Optional[Union[JSON_VALUE, List[JSON_VALUE]]] = obj.get("params", None)
+        params_json: Optional[Union[JSON_VALUE,
+                                    List[JSON_VALUE]]] = obj.get("params", None)
         params: Optional[Union[AnyType, Tuple[AnyType, ...]]] = None
         if params_json is not None:
             if isinstance(params_json, MutableSequence):
-                params = tuple([AnyType.from_json(p) for p in params_json]) # type: ignore # TODO
+                params = tuple([AnyType.from_json(p)  # type: ignore # TODO
+                               for p in params_json])
             elif isinstance(params_json, Mapping):
                 params = AnyType.from_json(params_json)
             else:
-                raise LSPMetaModelException("Expected object or array of objects")
+                raise LSPMetaModelException(
+                    "Expected object or array of objects")
 
-        registration_options = AnyType.from_json(registration_options_json) if registration_options_json else None
+        registration_options = AnyType.from_json(
+            registration_options_json) if registration_options_json else None
 
         return cls(documentation, message_direction, method, params, proposed, registration_options, since)
 
@@ -129,6 +141,7 @@ class Request:
     partial_result: Optional[AnyType]
     proposed: Optional[bool]
     registration_options: Optional[AnyType]
+    registration_method: Optional[str]
     result: AnyType
     since: Optional[str]
 
@@ -144,30 +157,41 @@ class Request:
         elif message_direction_json == "both":
             message_direction = "both"
         else:
-            raise LSPMetaModelException("Invalid value for messageDirection: " + message_direction_json)
+            raise LSPMetaModelException(
+                "Invalid value for messageDirection: " + message_direction_json)
         method = json_get_string(obj, "method")
         partial_result_json = json_get_optional_object(obj, "partialResult")
         proposed = json_get_optional_bool(obj, "proposed")
-        registration_options_json = json_get_optional_object(obj, "registrationOptions")
+        registration_options_json = json_get_optional_object(
+            obj, "registrationOptions")
+        registration_method_json = json_get_optional_string(
+            obj, "registrationMethod")
         result_json = json_get_object(obj, "result")
         since = json_get_optional_string(obj, "since")
 
-        params_json: Optional[Union[JSON_VALUE, List[JSON_VALUE]]] = obj.get("params", None)
+        params_json: Optional[Union[JSON_VALUE,
+                                    List[JSON_VALUE]]] = obj.get("params", None)
         params: Optional[Union[AnyType, Tuple[AnyType, ...]]] = None
         if params_json is not None:
             if isinstance(params_json, MutableSequence):
-                params = tuple([AnyType.from_json(p) for p in params_json]) # type: ignore # TODO
+                params = tuple([AnyType.from_json(p)  # type: ignore # TODO
+                               for p in params_json])
             elif isinstance(params_json, Mapping):
                 params = AnyType.from_json(params_json)
             else:
-                raise LSPMetaModelException("Expected object or array of objects")
+                raise LSPMetaModelException(
+                    "Expected object or array of objects")
 
-        error_data = AnyType.from_json(error_data_json) if error_data_json else None
-        partial_result = AnyType.from_json(partial_result_json) if partial_result_json else None
-        registration_options = AnyType.from_json(registration_options_json) if registration_options_json else None
+        error_data = AnyType.from_json(
+            error_data_json) if error_data_json else None
+        partial_result = AnyType.from_json(
+            partial_result_json) if partial_result_json else None
+        registration_options = AnyType.from_json(
+            registration_options_json) if registration_options_json else None
+        registration_method = registration_method_json if registration_method_json else None
         results = AnyType.from_json(result_json)
 
-        return cls(documentation, error_data, message_direction, method, params, partial_result, proposed, registration_options, results, since)
+        return cls(documentation, error_data, message_direction, method, params, partial_result, proposed, registration_options, registration_method, results, since)
 
 
 @dataclass(frozen=True)
@@ -247,8 +271,10 @@ class MetaModel:
         structures_json = json_get_array_of_objects(obj, "structures")
         type_aliases_json = json_get_array_of_objects(obj, "typeAliases")
 
-        enumerations = tuple(Enumeration.from_json(i) for i in enumerations_json)
-        notifcations = tuple(Notification.from_json(i) for i in notifications_json)
+        enumerations = tuple(Enumeration.from_json(i)
+                             for i in enumerations_json)
+        notifcations = tuple(Notification.from_json(i)
+                             for i in notifications_json)
         requests = tuple(Request.from_json(i) for i in requests_json)
         structures = tuple(Structure.from_json(i) for i in structures_json)
         type_aliases = tuple(TypeAlias.from_json(i) for i in type_aliases_json)

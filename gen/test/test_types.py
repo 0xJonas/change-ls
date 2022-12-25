@@ -113,7 +113,8 @@ def test_parse_notification() -> None:
     }
 
     res3 = Notification.from_json(test_json3)
-    assert res3 == Notification(None, "both", "test/test", (AnyType("base", BaseType("string")), AnyType("base", BaseType("integer"))), None, None, None)
+    assert res3 == Notification(None, "both", "test/test", (AnyType("base", BaseType("string")),
+                                AnyType("base", BaseType("integer"))), None, None, None)
 
 
 def test_parse_request() -> None:
@@ -138,6 +139,7 @@ def test_parse_request() -> None:
             "kind": "base",
             "name": "boolean"
         },
+        "registrationMethod": "testing",
         "result": {
             "kind": "base",
             "name": "URI"
@@ -155,6 +157,7 @@ def test_parse_request() -> None:
         AnyType("base", BaseType("integer")),
         False,
         AnyType("base", BaseType("boolean")),
+        "testing",
         AnyType("base", BaseType("URI")),
         "0.1.0"
     )
@@ -169,7 +172,8 @@ def test_parse_request() -> None:
     }
 
     res2 = Request.from_json(test_json2)
-    assert res2 == Request(None, None, "serverToClient", "test/test", None, None, None, None, AnyType("base", BaseType("boolean")), None)
+    assert res2 == Request(None, None, "serverToClient", "test/test", None, None,
+                           None, None, None, AnyType("base", BaseType("boolean")), None)
 
     test_json3 = {
         "method": "test/test",
@@ -197,6 +201,7 @@ def test_parse_request() -> None:
         "both",
         "test/test",
         (AnyType("base", BaseType("string")), AnyType("base", BaseType("integer"))),
+        None,
         None,
         None,
         None,

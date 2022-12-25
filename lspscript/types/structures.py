@@ -24,6 +24,7 @@ class TextDocumentIdentifier():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentIdentifier":
+        check_properties(obj, ["uri"])
         uri = json_get_string(obj, "uri")
         return cls(uri=uri)
 
@@ -101,6 +102,7 @@ class Position():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Position":
+        check_properties(obj, ["line", "character"])
         line = json_get_int(obj, "line")
         character = json_get_int(obj, "character")
         return cls(line=line, character=character)
@@ -137,6 +139,7 @@ class TextDocumentPositionParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentPositionParams":
+        check_properties(obj, ["textDocument", "position"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         return cls(textDocument=textDocument, position=position)
@@ -193,6 +196,7 @@ class ImplementationParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -250,6 +254,7 @@ class Range():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Range":
+        check_properties(obj, ["start", "end"])
         start = Position.from_json(json_get_object(obj, "start"))
         end = Position.from_json(json_get_object(obj, "end"))
         return cls(start=start, end=end)
@@ -283,6 +288,7 @@ class Location():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Location":
+        check_properties(obj, ["uri", "range"])
         uri = json_get_string(obj, "uri")
         range = Range.from_json(json_get_object(obj, "range"))
         return cls(uri=uri, range=range)
@@ -522,6 +528,7 @@ class NotebookCellTextDocumentFilter():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCellTextDocumentFilter":
+        check_properties(obj, ["notebook", "language"])
         notebook = parse_or_type(obj["notebook"], (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
         if language_json := json_get_optional_string(obj, "language"):
             language = language_json
@@ -585,6 +592,7 @@ class TextDocumentRegistrationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentRegistrationOptions":
+        check_properties(obj, ["documentSelector"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         return cls(documentSelector=documentSelector)
 
@@ -612,6 +620,7 @@ class ImplementationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -656,6 +665,7 @@ class ImplementationRegistrationOptions(TextDocumentRegistrationOptions, Impleme
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -713,6 +723,7 @@ class TypeDefinitionParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -754,6 +765,7 @@ class TypeDefinitionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -798,6 +810,7 @@ class TypeDefinitionRegistrationOptions(TextDocumentRegistrationOptions, TypeDef
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -845,6 +858,7 @@ class WorkspaceFolder():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFolder":
+        check_properties(obj, ["uri", "name"])
         uri = json_get_string(obj, "uri")
         name = json_get_string(obj, "name")
         return cls(uri=uri, name=name)
@@ -880,6 +894,7 @@ class WorkspaceFoldersChangeEvent():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersChangeEvent":
+        check_properties(obj, ["added", "removed"])
         added = [WorkspaceFolder.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "added")]
         removed = [WorkspaceFolder.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "removed")]
         return cls(added=added, removed=removed)
@@ -910,6 +925,7 @@ class DidChangeWorkspaceFoldersParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWorkspaceFoldersParams":
+        check_properties(obj, ["event"])
         event = WorkspaceFoldersChangeEvent.from_json(json_get_object(obj, "event"))
         return cls(event=event)
 
@@ -943,6 +959,7 @@ class ConfigurationItem():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationItem":
+        check_properties(obj, ["scopeUri", "section"])
         if scopeUri_json := json_get_optional_string(obj, "scopeUri"):
             scopeUri = scopeUri_json
         else:
@@ -980,6 +997,7 @@ class ConfigurationParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationParams":
+        check_properties(obj, ["items"])
         items = [ConfigurationItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
         return cls(items=items)
 
@@ -1010,6 +1028,7 @@ class PartialResultParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PartialResultParams":
+        check_properties(obj, ["partialResultToken"])
         if partialResultToken_json := obj.get("partialResultToken"):
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
@@ -1054,6 +1073,7 @@ class DocumentColorParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -1109,6 +1129,7 @@ class Color():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Color":
+        check_properties(obj, ["red", "green", "blue", "alpha"])
         red = json_get_float(obj, "red")
         green = json_get_float(obj, "green")
         blue = json_get_float(obj, "blue")
@@ -1148,6 +1169,7 @@ class ColorInformation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorInformation":
+        check_properties(obj, ["range", "color"])
         range = Range.from_json(json_get_object(obj, "range"))
         color = Color.from_json(json_get_object(obj, "color"))
         return cls(range=range, color=color)
@@ -1177,6 +1199,7 @@ class DocumentColorOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -1221,6 +1244,7 @@ class DocumentColorRegistrationOptions(TextDocumentRegistrationOptions, Document
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -1283,6 +1307,7 @@ class ColorPresentationParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorPresentationParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument", "color", "range"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -1336,6 +1361,7 @@ class TextEdit():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextEdit":
+        check_properties(obj, ["range", "newText"])
         range = Range.from_json(json_get_object(obj, "range"))
         newText = json_get_string(obj, "newText")
         return cls(range=range, newText=newText)
@@ -1386,6 +1412,7 @@ class ColorPresentation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorPresentation":
+        check_properties(obj, ["label", "textEdit", "additionalTextEdits"])
         label = json_get_string(obj, "label")
         if textEdit_json := json_get_optional_object(obj, "textEdit"):
             textEdit = TextEdit.from_json(textEdit_json)
@@ -1425,6 +1452,7 @@ class WorkDoneProgressOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -1469,6 +1497,7 @@ class FoldingRangeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -1551,6 +1580,7 @@ class FoldingRange():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRange":
+        check_properties(obj, ["startLine", "startCharacter", "endLine", "endCharacter", "kind", "collapsedText"])
         startLine = json_get_int(obj, "startLine")
         if startCharacter_json := json_get_optional_int(obj, "startCharacter"):
             startCharacter = startCharacter_json
@@ -1604,6 +1634,7 @@ class FoldingRangeOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -1648,6 +1679,7 @@ class FoldingRangeRegistrationOptions(TextDocumentRegistrationOptions, FoldingRa
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -1705,6 +1737,7 @@ class DeclarationParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -1746,6 +1779,7 @@ class DeclarationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -1790,6 +1824,7 @@ class DeclarationRegistrationOptions(DeclarationOptions, TextDocumentRegistratio
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationRegistrationOptions":
+        check_properties(obj, ["workDoneProgress", "documentSelector", "id"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -1847,6 +1882,7 @@ class SelectionRangeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument", "positions"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -1895,6 +1931,7 @@ class SelectionRange():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRange":
+        check_properties(obj, ["range", "parent"])
         range = Range.from_json(json_get_object(obj, "range"))
         if parent_json := json_get_optional_object(obj, "parent"):
             parent = SelectionRange.from_json(parent_json)
@@ -1928,6 +1965,7 @@ class SelectionRangeOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -1972,6 +2010,7 @@ class SelectionRangeRegistrationOptions(SelectionRangeOptions, TextDocumentRegis
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeRegistrationOptions":
+        check_properties(obj, ["workDoneProgress", "documentSelector", "id"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -2012,6 +2051,7 @@ class WorkDoneProgressCreateParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressCreateParams":
+        check_properties(obj, ["token"])
         token = parse_ProgressToken(obj["token"])
         return cls(token=token)
 
@@ -2040,6 +2080,7 @@ class WorkDoneProgressCancelParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressCancelParams":
+        check_properties(obj, ["token"])
         token = parse_ProgressToken(obj["token"])
         return cls(token=token)
 
@@ -2080,6 +2121,7 @@ class CallHierarchyPrepareParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyPrepareParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -2195,6 +2237,7 @@ class CallHierarchyItem():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyItem":
+        check_properties(obj, ["name", "kind", "tags", "detail", "uri", "range", "selectionRange", "data"])
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
         if tags_json := json_get_optional_array(obj, "tags"):
@@ -2250,6 +2293,7 @@ class CallHierarchyOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -2296,6 +2340,7 @@ class CallHierarchyRegistrationOptions(TextDocumentRegistrationOptions, CallHier
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -2348,6 +2393,7 @@ class CallHierarchyIncomingCallsParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyIncomingCallsParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "item"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -2397,6 +2443,7 @@ class CallHierarchyIncomingCall():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyIncomingCall":
+        check_properties(obj, ["from_", "fromRanges"])
         from_ = CallHierarchyItem.from_json(json_get_object(obj, "from"))
         fromRanges = [Range.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "fromRanges")]
         return cls(from_=from_, fromRanges=fromRanges)
@@ -2439,6 +2486,7 @@ class CallHierarchyOutgoingCallsParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOutgoingCallsParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "item"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -2490,6 +2538,7 @@ class CallHierarchyOutgoingCall():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOutgoingCall":
+        check_properties(obj, ["to", "fromRanges"])
         to = CallHierarchyItem.from_json(json_get_object(obj, "to"))
         fromRanges = [Range.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "fromRanges")]
         return cls(to=to, fromRanges=fromRanges)
@@ -2532,6 +2581,7 @@ class SemanticTokensParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -2583,6 +2633,7 @@ class SemanticTokens():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokens":
+        check_properties(obj, ["resultId", "data"])
         if resultId_json := json_get_optional_string(obj, "resultId"):
             resultId = resultId_json
         else:
@@ -2616,6 +2667,7 @@ class SemanticTokensPartialResult():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensPartialResult":
+        check_properties(obj, ["data"])
         data = [json_assert_type_int(i) for i in json_get_array(obj, "data")]
         return cls(data=data)
 
@@ -2649,6 +2701,7 @@ class SemanticTokensLegend():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensLegend":
+        check_properties(obj, ["tokenTypes", "tokenModifiers"])
         tokenTypes = [json_assert_type_string(i) for i in json_get_array(obj, "tokenTypes")]
         tokenModifiers = [json_assert_type_string(i) for i in json_get_array(obj, "tokenModifiers")]
         return cls(tokenTypes=tokenTypes, tokenModifiers=tokenModifiers)
@@ -2724,6 +2777,7 @@ class SemanticTokensOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensOptions":
+        check_properties(obj, ["workDoneProgress", "legend", "range", "full"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -2799,6 +2853,7 @@ class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, Semanti
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "legend", "range", "full", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -2872,6 +2927,7 @@ class SemanticTokensDeltaParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDeltaParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument", "previousResultId"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -2924,6 +2980,7 @@ class SemanticTokensEdit():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensEdit":
+        check_properties(obj, ["start", "deleteCount", "data"])
         start = json_get_int(obj, "start")
         deleteCount = json_get_int(obj, "deleteCount")
         if data_json := json_get_optional_array(obj, "data"):
@@ -2963,6 +3020,7 @@ class SemanticTokensDelta():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDelta":
+        check_properties(obj, ["resultId", "edits"])
         if resultId_json := json_get_optional_string(obj, "resultId"):
             resultId = resultId_json
         else:
@@ -2996,6 +3054,7 @@ class SemanticTokensDeltaPartialResult():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDeltaPartialResult":
+        check_properties(obj, ["edits"])
         edits = [SemanticTokensEdit.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "edits")]
         return cls(edits=edits)
 
@@ -3041,6 +3100,7 @@ class SemanticTokensRangeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensRangeParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument", "range"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -3116,6 +3176,7 @@ class ShowDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowDocumentParams":
+        check_properties(obj, ["uri", "external", "takeFocus", "selection"])
         uri = json_get_string(obj, "uri")
         if external_json := json_get_optional_bool(obj, "external"):
             external = external_json
@@ -3164,6 +3225,7 @@ class ShowDocumentResult():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowDocumentResult":
+        check_properties(obj, ["success"])
         success = json_get_bool(obj, "success")
         return cls(success=success)
 
@@ -3202,6 +3264,7 @@ class LinkedEditingRangeParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -3251,6 +3314,7 @@ class LinkedEditingRanges():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRanges":
+        check_properties(obj, ["ranges", "wordPattern"])
         ranges = [Range.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "ranges")]
         if wordPattern_json := json_get_optional_string(obj, "wordPattern"):
             wordPattern = wordPattern_json
@@ -3284,6 +3348,7 @@ class LinkedEditingRangeOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -3328,6 +3393,7 @@ class LinkedEditingRangeRegistrationOptions(TextDocumentRegistrationOptions, Lin
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -3370,6 +3436,7 @@ class FileCreate():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileCreate":
+        check_properties(obj, ["uri"])
         uri = json_get_string(obj, "uri")
         return cls(uri=uri)
 
@@ -3401,6 +3468,7 @@ class CreateFilesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFilesParams":
+        check_properties(obj, ["files"])
         files = [FileCreate.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "files")]
         return cls(files=files)
 
@@ -3442,6 +3510,7 @@ class OptionalVersionedTextDocumentIdentifier(TextDocumentIdentifier):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "OptionalVersionedTextDocumentIdentifier":
+        check_properties(obj, ["uri", "version"])
         uri = json_get_string(obj, "uri")
         version = parse_or_type(obj["version"], (lambda v: json_assert_type_int(v), lambda v: json_assert_type_null(v)))
         return cls(uri=uri, version=version)
@@ -3498,6 +3567,7 @@ class AnnotatedTextEdit(TextEdit):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnnotatedTextEdit":
+        check_properties(obj, ["range", "newText", "annotationId"])
         range = Range.from_json(json_get_object(obj, "range"))
         newText = json_get_string(obj, "newText")
         annotationId = parse_ChangeAnnotationIdentifier(json_get_string(obj, "annotationId"))
@@ -3544,6 +3614,7 @@ class TextDocumentEdit():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentEdit":
+        check_properties(obj, ["textDocument", "edits"])
         textDocument = OptionalVersionedTextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         edits = [parse_or_type((i), (lambda v: TextEdit.from_json(json_assert_type_object(v)), lambda v: AnnotatedTextEdit.from_json(json_assert_type_object(v)))) for i in json_get_array(obj, "edits")]
         return cls(textDocument=textDocument, edits=edits)
@@ -3583,6 +3654,7 @@ class ResourceOperation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ResourceOperation":
+        check_properties(obj, ["kind", "annotationId"])
         kind = json_get_string(obj, "kind")
         if annotationId_json := json_get_optional_string(obj, "annotationId"):
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
@@ -3622,6 +3694,7 @@ class CreateFileOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFileOptions":
+        check_properties(obj, ["overwrite", "ignoreIfExists"])
         if overwrite_json := json_get_optional_bool(obj, "overwrite"):
             overwrite = overwrite_json
         else:
@@ -3679,6 +3752,7 @@ class CreateFile(ResourceOperation):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFile":
+        check_properties(obj, ["kind", "annotationId", "uri", "options"])
         kind = match_string(json_get_string(obj, "kind"), "create")
         if annotationId_json := json_get_optional_string(obj, "annotationId"):
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
@@ -3726,6 +3800,7 @@ class RenameFileOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFileOptions":
+        check_properties(obj, ["overwrite", "ignoreIfExists"])
         if overwrite_json := json_get_optional_bool(obj, "overwrite"):
             overwrite = overwrite_json
         else:
@@ -3788,6 +3863,7 @@ class RenameFile(ResourceOperation):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFile":
+        check_properties(obj, ["kind", "annotationId", "oldUri", "newUri", "options"])
         kind = match_string(json_get_string(obj, "kind"), "rename")
         if annotationId_json := json_get_optional_string(obj, "annotationId"):
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
@@ -3837,6 +3913,7 @@ class DeleteFileOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFileOptions":
+        check_properties(obj, ["recursive", "ignoreIfNotExists"])
         if recursive_json := json_get_optional_bool(obj, "recursive"):
             recursive = recursive_json
         else:
@@ -3894,6 +3971,7 @@ class DeleteFile(ResourceOperation):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFile":
+        check_properties(obj, ["kind", "annotationId", "uri", "options"])
         kind = match_string(json_get_string(obj, "kind"), "delete")
         if annotationId_json := json_get_optional_string(obj, "annotationId"):
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
@@ -3954,6 +4032,7 @@ class ChangeAnnotation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ChangeAnnotation":
+        check_properties(obj, ["label", "needsConfirmation", "description"])
         label = json_get_string(obj, "label")
         if needsConfirmation_json := json_get_optional_bool(obj, "needsConfirmation"):
             needsConfirmation = needsConfirmation_json
@@ -4043,6 +4122,7 @@ class WorkspaceEdit():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceEdit":
+        check_properties(obj, ["changes", "documentChanges", "changeAnnotations"])
         if changes_json := json_get_optional_object(obj, "changes"):
             changes = { json_assert_type_string(key): [TextEdit.from_json(json_assert_type_object(i)) for i in json_assert_type_array(value)] for key, value in changes_json.items()}
         else:
@@ -4089,6 +4169,7 @@ class FileOperationPatternOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationPatternOptions":
+        check_properties(obj, ["ignoreCase"])
         if ignoreCase_json := json_get_optional_bool(obj, "ignoreCase"):
             ignoreCase = ignoreCase_json
         else:
@@ -4150,6 +4231,7 @@ class FileOperationPattern():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationPattern":
+        check_properties(obj, ["glob", "matches", "options"])
         glob = json_get_string(obj, "glob")
         if matches_json := json_get_optional_string(obj, "matches"):
             matches = FileOperationPatternKind(matches_json)
@@ -4198,6 +4280,7 @@ class FileOperationFilter():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationFilter":
+        check_properties(obj, ["scheme", "pattern"])
         if scheme_json := json_get_optional_string(obj, "scheme"):
             scheme = scheme_json
         else:
@@ -4234,6 +4317,7 @@ class FileOperationRegistrationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationRegistrationOptions":
+        check_properties(obj, ["filters"])
         filters = [FileOperationFilter.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "filters")]
         return cls(filters=filters)
 
@@ -4269,6 +4353,7 @@ class FileRename():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileRename":
+        check_properties(obj, ["oldUri", "newUri"])
         oldUri = json_get_string(obj, "oldUri")
         newUri = json_get_string(obj, "newUri")
         return cls(oldUri=oldUri, newUri=newUri)
@@ -4304,6 +4389,7 @@ class RenameFilesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFilesParams":
+        check_properties(obj, ["files"])
         files = [FileRename.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "files")]
         return cls(files=files)
 
@@ -4334,6 +4420,7 @@ class FileDelete():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileDelete":
+        check_properties(obj, ["uri"])
         uri = json_get_string(obj, "uri")
         return cls(uri=uri)
 
@@ -4365,6 +4452,7 @@ class DeleteFilesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFilesParams":
+        check_properties(obj, ["files"])
         files = [FileDelete.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "files")]
         return cls(files=files)
 
@@ -4410,6 +4498,7 @@ class MonikerParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -4471,6 +4560,7 @@ class Moniker():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Moniker":
+        check_properties(obj, ["scheme", "identifier", "unique", "kind"])
         scheme = json_get_string(obj, "scheme")
         identifier = json_get_string(obj, "identifier")
         unique = UniquenessLevel(json_get_string(obj, "unique"))
@@ -4508,6 +4598,7 @@ class MonikerOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -4545,6 +4636,7 @@ class MonikerRegistrationOptions(TextDocumentRegistrationOptions, MonikerOptions
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -4591,6 +4683,7 @@ class TypeHierarchyPrepareParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyPrepareParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -4674,6 +4767,7 @@ class TypeHierarchyItem():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyItem":
+        check_properties(obj, ["name", "kind", "tags", "detail", "uri", "range", "selectionRange", "data"])
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
         if tags_json := json_get_optional_array(obj, "tags"):
@@ -4729,6 +4823,7 @@ class TypeHierarchyOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -4775,6 +4870,7 @@ class TypeHierarchyRegistrationOptions(TextDocumentRegistrationOptions, TypeHier
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -4827,6 +4923,7 @@ class TypeHierarchySupertypesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchySupertypesParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "item"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -4879,6 +4976,7 @@ class TypeHierarchySubtypesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchySubtypesParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "item"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -4926,6 +5024,7 @@ class InlineValueContext():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueContext":
+        check_properties(obj, ["frameId", "stoppedLocation"])
         frameId = json_get_int(obj, "frameId")
         stoppedLocation = Range.from_json(json_get_object(obj, "stoppedLocation"))
         return cls(frameId=frameId, stoppedLocation=stoppedLocation)
@@ -4975,6 +5074,7 @@ class InlineValueParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueParams":
+        check_properties(obj, ["workDoneToken", "textDocument", "range", "context"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -5014,6 +5114,7 @@ class InlineValueOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -5060,6 +5161,7 @@ class InlineValueRegistrationOptions(InlineValueOptions, TextDocumentRegistratio
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueRegistrationOptions":
+        check_properties(obj, ["workDoneProgress", "documentSelector", "id"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -5112,6 +5214,7 @@ class InlayHintParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintParams":
+        check_properties(obj, ["workDoneToken", "textDocument", "range"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -5174,6 +5277,7 @@ class MarkupContent():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MarkupContent":
+        check_properties(obj, ["kind", "value"])
         kind = MarkupKind(json_get_string(obj, "kind"))
         value = json_get_string(obj, "value")
         return cls(kind=kind, value=value)
@@ -5219,6 +5323,7 @@ class Command():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Command":
+        check_properties(obj, ["title", "command", "arguments"])
         title = json_get_string(obj, "title")
         command = json_get_string(obj, "command")
         if arguments_json := json_get_optional_array(obj, "arguments"):
@@ -5303,6 +5408,7 @@ class InlayHintLabelPart():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintLabelPart":
+        check_properties(obj, ["value", "tooltip", "location", "command"])
         value = json_get_string(obj, "value")
         if tooltip_json := obj.get("tooltip"):
             tooltip = parse_or_type(tooltip_json, (lambda v: json_assert_type_string(v), lambda v: MarkupContent.from_json(json_assert_type_object(v))))
@@ -5420,6 +5526,7 @@ class InlayHint():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHint":
+        check_properties(obj, ["position", "label", "kind", "textEdits", "tooltip", "paddingLeft", "paddingRight", "data"])
         position = Position.from_json(json_get_object(obj, "position"))
         label = parse_or_type(obj["label"], (lambda v: json_assert_type_string(v), lambda v: [InlayHintLabelPart.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)]))
         if kind_json := json_get_optional_int(obj, "kind"):
@@ -5493,6 +5600,7 @@ class InlayHintOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintOptions":
+        check_properties(obj, ["workDoneProgress", "resolveProvider"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -5552,6 +5660,7 @@ class InlayHintRegistrationOptions(InlayHintOptions, TextDocumentRegistrationOpt
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintRegistrationOptions":
+        check_properties(obj, ["workDoneProgress", "resolveProvider", "documentSelector", "id"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -5622,6 +5731,7 @@ class DocumentDiagnosticParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentDiagnosticParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument", "identifier", "previousResultId"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -5675,6 +5785,7 @@ class DocumentDiagnosticReportPartialResult():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentDiagnosticReportPartialResult":
+        check_properties(obj, ["relatedDocuments"])
         relatedDocuments = { json_assert_type_string(key): parse_or_type((value), (lambda v: FullDocumentDiagnosticReport.from_json(json_assert_type_object(v)), lambda v: UnchangedDocumentDiagnosticReport.from_json(json_assert_type_object(v)))) for key, value in json_get_object(obj, "relatedDocuments").items()}
         return cls(relatedDocuments=relatedDocuments)
 
@@ -5704,6 +5815,7 @@ class DiagnosticServerCancellationData():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticServerCancellationData":
+        check_properties(obj, ["retriggerRequest"])
         retriggerRequest = json_get_bool(obj, "retriggerRequest")
         return cls(retriggerRequest=retriggerRequest)
 
@@ -5755,6 +5867,7 @@ class DiagnosticOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticOptions":
+        check_properties(obj, ["workDoneProgress", "identifier", "interFileDependencies", "workspaceDiagnostics"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -5834,6 +5947,7 @@ class DiagnosticRegistrationOptions(TextDocumentRegistrationOptions, DiagnosticO
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "identifier", "interFileDependencies", "workspaceDiagnostics", "id"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -5893,6 +6007,7 @@ class PreviousResultId():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PreviousResultId":
+        check_properties(obj, ["uri", "value"])
         uri = json_get_string(obj, "uri")
         value = json_get_string(obj, "value")
         return cls(uri=uri, value=value)
@@ -5944,6 +6059,7 @@ class WorkspaceDiagnosticParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceDiagnosticParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "identifier", "previousResultIds"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -5992,6 +6108,7 @@ class CodeDescription():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeDescription":
+        check_properties(obj, ["href"])
         href = json_get_string(obj, "href")
         return cls(href=href)
 
@@ -6027,6 +6144,7 @@ class DiagnosticRelatedInformation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticRelatedInformation":
+        check_properties(obj, ["location", "message"])
         location = Location.from_json(json_get_object(obj, "location"))
         message = json_get_string(obj, "message")
         return cls(location=location, message=message)
@@ -6122,6 +6240,7 @@ class Diagnostic():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Diagnostic":
+        check_properties(obj, ["range", "severity", "code", "codeDescription", "source", "message", "tags", "relatedInformation", "data"])
         range = Range.from_json(json_get_object(obj, "range"))
         if severity_json := json_get_optional_int(obj, "severity"):
             severity = DiagnosticSeverity(severity_json)
@@ -6210,6 +6329,7 @@ class FullDocumentDiagnosticReport():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FullDocumentDiagnosticReport":
+        check_properties(obj, ["kind", "resultId", "items"])
         kind = match_string(json_get_string(obj, "kind"), "full")
         if resultId_json := json_get_optional_string(obj, "resultId"):
             resultId = resultId_json
@@ -6274,6 +6394,7 @@ class WorkspaceFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFullDocumentDiagnosticReport":
+        check_properties(obj, ["kind", "resultId", "items", "uri", "version"])
         kind = match_string(json_get_string(obj, "kind"), "full")
         if resultId_json := json_get_optional_string(obj, "resultId"):
             resultId = resultId_json
@@ -6330,6 +6451,7 @@ class UnchangedDocumentDiagnosticReport():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "UnchangedDocumentDiagnosticReport":
+        check_properties(obj, ["kind", "resultId"])
         kind = match_string(json_get_string(obj, "kind"), "unchanged")
         resultId = json_get_string(obj, "resultId")
         return cls(kind=kind, resultId=resultId)
@@ -6387,6 +6509,7 @@ class WorkspaceUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticRepo
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceUnchangedDocumentDiagnosticReport":
+        check_properties(obj, ["kind", "resultId", "uri", "version"])
         kind = match_string(json_get_string(obj, "kind"), "unchanged")
         resultId = json_get_string(obj, "resultId")
         uri = json_get_string(obj, "uri")
@@ -6434,6 +6557,7 @@ class WorkspaceDiagnosticReport():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceDiagnosticReport":
+        check_properties(obj, ["items"])
         items = [parse_WorkspaceDocumentDiagnosticReport((i)) for i in json_get_array(obj, "items")]
         return cls(items=items)
 
@@ -6463,6 +6587,7 @@ class WorkspaceDiagnosticReportPartialResult():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceDiagnosticReportPartialResult":
+        check_properties(obj, ["items"])
         items = [parse_WorkspaceDocumentDiagnosticReport((i)) for i in json_get_array(obj, "items")]
         return cls(items=items)
 
@@ -6502,6 +6627,7 @@ class ExecutionSummary():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecutionSummary":
+        check_properties(obj, ["executionOrder", "success"])
         executionOrder = json_get_int(obj, "executionOrder")
         if success_json := json_get_optional_bool(obj, "success"):
             success = success_json
@@ -6565,6 +6691,7 @@ class NotebookCell():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCell":
+        check_properties(obj, ["kind", "document", "metadata", "executionSummary"])
         kind = NotebookCellKind(json_get_int(obj, "kind"))
         document = json_get_string(obj, "document")
         if metadata_json := json_get_optional_object(obj, "metadata"):
@@ -6637,6 +6764,7 @@ class NotebookDocument():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocument":
+        check_properties(obj, ["uri", "notebookType", "version", "metadata", "cells"])
         uri = json_get_string(obj, "uri")
         notebookType = json_get_string(obj, "notebookType")
         version = json_get_int(obj, "version")
@@ -6695,6 +6823,7 @@ class TextDocumentItem():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentItem":
+        check_properties(obj, ["uri", "languageId", "version", "text"])
         uri = json_get_string(obj, "uri")
         languageId = json_get_string(obj, "languageId")
         version = json_get_int(obj, "version")
@@ -6738,6 +6867,7 @@ class DidOpenNotebookDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidOpenNotebookDocumentParams":
+        check_properties(obj, ["notebookDocument", "cellTextDocuments"])
         notebookDocument = NotebookDocument.from_json(json_get_object(obj, "notebookDocument"))
         cellTextDocuments = [TextDocumentItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "cellTextDocuments")]
         return cls(notebookDocument=notebookDocument, cellTextDocuments=cellTextDocuments)
@@ -6775,6 +6905,7 @@ class VersionedNotebookDocumentIdentifier():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "VersionedNotebookDocumentIdentifier":
+        check_properties(obj, ["version", "uri"])
         version = json_get_int(obj, "version")
         uri = json_get_string(obj, "uri")
         return cls(version=version, uri=uri)
@@ -6818,6 +6949,7 @@ class NotebookCellArrayChange():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCellArrayChange":
+        check_properties(obj, ["start", "deleteCount", "cells"])
         start = json_get_int(obj, "start")
         deleteCount = json_get_int(obj, "deleteCount")
         if cells_json := json_get_optional_array(obj, "cells"):
@@ -6884,6 +7016,7 @@ class VersionedTextDocumentIdentifier(TextDocumentIdentifier):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "VersionedTextDocumentIdentifier":
+        check_properties(obj, ["uri", "version"])
         uri = json_get_string(obj, "uri")
         version = json_get_int(obj, "version")
         return cls(uri=uri, version=version)
@@ -7014,6 +7147,7 @@ class NotebookDocumentChangeEvent():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentChangeEvent":
+        check_properties(obj, ["metadata", "cells"])
         if metadata_json := json_get_optional_object(obj, "metadata"):
             metadata = parse_LSPObject(metadata_json)
         else:
@@ -7089,6 +7223,7 @@ class DidChangeNotebookDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeNotebookDocumentParams":
+        check_properties(obj, ["notebookDocument", "change"])
         notebookDocument = VersionedNotebookDocumentIdentifier.from_json(json_get_object(obj, "notebookDocument"))
         change = NotebookDocumentChangeEvent.from_json(json_get_object(obj, "change"))
         return cls(notebookDocument=notebookDocument, change=change)
@@ -7121,6 +7256,7 @@ class NotebookDocumentIdentifier():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentIdentifier":
+        check_properties(obj, ["uri"])
         uri = json_get_string(obj, "uri")
         return cls(uri=uri)
 
@@ -7151,6 +7287,7 @@ class DidSaveNotebookDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidSaveNotebookDocumentParams":
+        check_properties(obj, ["notebookDocument"])
         notebookDocument = NotebookDocumentIdentifier.from_json(json_get_object(obj, "notebookDocument"))
         return cls(notebookDocument=notebookDocument)
 
@@ -7188,6 +7325,7 @@ class DidCloseNotebookDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidCloseNotebookDocumentParams":
+        check_properties(obj, ["notebookDocument", "cellTextDocuments"])
         notebookDocument = NotebookDocumentIdentifier.from_json(json_get_object(obj, "notebookDocument"))
         cellTextDocuments = [TextDocumentIdentifier.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "cellTextDocuments")]
         return cls(notebookDocument=notebookDocument, cellTextDocuments=cellTextDocuments)
@@ -7230,6 +7368,7 @@ class Registration():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Registration":
+        check_properties(obj, ["id", "method", "registerOptions"])
         id = json_get_string(obj, "id")
         method = json_get_string(obj, "method")
         if registerOptions_json := obj.get("registerOptions"):
@@ -7265,6 +7404,7 @@ class RegistrationParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RegistrationParams":
+        check_properties(obj, ["registrations"])
         registrations = [Registration.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "registrations")]
         return cls(registrations=registrations)
 
@@ -7300,6 +7440,7 @@ class Unregistration():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Unregistration":
+        check_properties(obj, ["id", "method"])
         id = json_get_string(obj, "id")
         method = json_get_string(obj, "method")
         return cls(id=id, method=method)
@@ -7329,6 +7470,7 @@ class UnregistrationParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "UnregistrationParams":
+        check_properties(obj, ["unregisterations"])
         unregisterations = [Unregistration.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "unregisterations")]
         return cls(unregisterations=unregisterations)
 
@@ -7443,6 +7585,7 @@ class WorkspaceEditClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceEditClientCapabilities":
+        check_properties(obj, ["documentChanges", "resourceOperations", "failureHandling", "normalizesLineEndings", "changeAnnotationSupport"])
         if documentChanges_json := json_get_optional_bool(obj, "documentChanges"):
             documentChanges = documentChanges_json
         else:
@@ -7499,6 +7642,7 @@ class DidChangeConfigurationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -7546,6 +7690,7 @@ class DidChangeWatchedFilesClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWatchedFilesClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "relativePatternSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -7656,6 +7801,7 @@ class WorkspaceSymbolClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "symbolKind", "tagSupport", "resolveSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -7706,6 +7852,7 @@ class ExecuteCommandClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -7750,6 +7897,7 @@ class SemanticTokensWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensWorkspaceClientCapabilities":
+        check_properties(obj, ["refreshSupport"])
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
             refreshSupport = refreshSupport_json
         else:
@@ -7794,6 +7942,7 @@ class CodeLensWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensWorkspaceClientCapabilities":
+        check_properties(obj, ["refreshSupport"])
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
             refreshSupport = refreshSupport_json
         else:
@@ -7861,6 +8010,7 @@ class FileOperationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "didCreate", "willCreate", "didRename", "willRename", "didDelete", "willDelete"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -7943,6 +8093,7 @@ class InlineValueWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueWorkspaceClientCapabilities":
+        check_properties(obj, ["refreshSupport"])
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
             refreshSupport = refreshSupport_json
         else:
@@ -7989,6 +8140,7 @@ class InlayHintWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintWorkspaceClientCapabilities":
+        check_properties(obj, ["refreshSupport"])
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
             refreshSupport = refreshSupport_json
         else:
@@ -8035,6 +8187,7 @@ class DiagnosticWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticWorkspaceClientCapabilities":
+        check_properties(obj, ["refreshSupport"])
         if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
             refreshSupport = refreshSupport_json
         else:
@@ -8178,6 +8331,7 @@ class WorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceClientCapabilities":
+        check_properties(obj, ["applyEdit", "workspaceEdit", "didChangeConfiguration", "didChangeWatchedFiles", "symbol", "executeCommand", "workspaceFolders", "configuration", "semanticTokens", "codeLens", "fileOperations", "inlineValue", "inlayHint", "diagnostics"])
         if applyEdit_json := json_get_optional_bool(obj, "applyEdit"):
             applyEdit = applyEdit_json
         else:
@@ -8307,6 +8461,7 @@ class TextDocumentSyncClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSyncClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "willSave", "willSaveWaitUntil", "didSave"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8542,6 +8697,7 @@ class CompletionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "completionItem", "completionItemKind", "insertTextMode", "contextSupport", "completionList"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8611,6 +8767,7 @@ class HoverClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "contentFormat"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8717,6 +8874,7 @@ class SignatureHelpClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "signatureInformation", "contextSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8770,6 +8928,7 @@ class DeclarationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "linkSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8817,6 +8976,7 @@ class DefinitionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "linkSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8868,6 +9028,7 @@ class TypeDefinitionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "linkSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8919,6 +9080,7 @@ class ImplementationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "linkSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8957,6 +9119,7 @@ class ReferenceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -8989,6 +9152,7 @@ class DocumentHighlightClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9057,6 +9221,7 @@ class DocumentSymbolClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "symbolKind", "hierarchicalDocumentSymbolSupport", "tagSupport", "labelSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9211,6 +9376,7 @@ class CodeActionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "codeActionLiteralSupport", "isPreferredSupport", "disabledSupport", "dataSupport", "resolveSupport", "honorsChangeAnnotations"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9279,6 +9445,7 @@ class CodeLensClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9320,6 +9487,7 @@ class DocumentLinkClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "tooltipSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9362,6 +9530,7 @@ class DocumentColorClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9394,6 +9563,7 @@ class DocumentFormattingClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9426,6 +9596,7 @@ class DocumentRangeFormattingClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9458,6 +9629,7 @@ class DocumentOnTypeFormattingClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9533,6 +9705,7 @@ class RenameClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "prepareSupport", "prepareSupportDefaultBehavior", "honorsChangeAnnotations"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9659,6 +9832,7 @@ class FoldingRangeClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "rangeLimit", "lineFoldingOnly", "foldingRangeKind", "foldingRange"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9719,6 +9893,7 @@ class SelectionRangeClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -9808,6 +9983,7 @@ class PublishDiagnosticsClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PublishDiagnosticsClientCapabilities":
+        check_properties(obj, ["relatedInformation", "tagSupport", "versionSupport", "codeDescriptionSupport", "dataSupport"])
         if relatedInformation_json := json_get_optional_bool(obj, "relatedInformation"):
             relatedInformation = relatedInformation_json
         else:
@@ -9868,6 +10044,7 @@ class CallHierarchyClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10026,6 +10203,7 @@ class SemanticTokensClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "requests", "tokenTypes", "tokenModifiers", "formats", "overlappingTokenSupport", "multilineTokenSupport", "serverCancelSupport", "augmentsSyntaxTokens"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10096,6 +10274,7 @@ class LinkedEditingRangeClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10134,6 +10313,7 @@ class MonikerClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10170,6 +10350,7 @@ class TypeHierarchyClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10204,6 +10385,7 @@ class InlineValueClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueClientCapabilities":
+        check_properties(obj, ["dynamicRegistration"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10245,6 +10427,7 @@ class InlayHintClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "resolveSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10294,6 +10477,7 @@ class DiagnosticClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "relatedDocumentSupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10535,6 +10719,7 @@ class TextDocumentClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentClientCapabilities":
+        check_properties(obj, ["synchronization", "completion", "hover", "signatureHelp", "declaration", "definition", "typeDefinition", "implementation", "references", "documentHighlight", "documentSymbol", "codeAction", "codeLens", "documentLink", "colorProvider", "formatting", "rangeFormatting", "onTypeFormatting", "rename", "foldingRange", "selectionRange", "publishDiagnostics", "callHierarchy", "semanticTokens", "linkedEditingRange", "moniker", "typeHierarchy", "inlineValue", "inlayHint", "diagnostic"])
         if synchronization_json := json_get_optional_object(obj, "synchronization"):
             synchronization = TextDocumentSyncClientCapabilities.from_json(synchronization_json)
         else:
@@ -10754,6 +10939,7 @@ class NotebookDocumentSyncClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncClientCapabilities":
+        check_properties(obj, ["dynamicRegistration", "executionSummarySupport"])
         if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
             dynamicRegistration = dynamicRegistration_json
         else:
@@ -10798,6 +10984,7 @@ class NotebookDocumentClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentClientCapabilities":
+        check_properties(obj, ["synchronization"])
         synchronization = NotebookDocumentSyncClientCapabilities.from_json(json_get_object(obj, "synchronization"))
         return cls(synchronization=synchronization)
 
@@ -10843,6 +11030,7 @@ class ShowMessageRequestClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageRequestClientCapabilities":
+        check_properties(obj, ["messageActionItem"])
         if messageActionItem_json := json_get_optional_object(obj, "messageActionItem"):
             messageActionItem = parse_AnonymousStructure36(messageActionItem_json)
         else:
@@ -10879,6 +11067,7 @@ class ShowDocumentClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowDocumentClientCapabilities":
+        check_properties(obj, ["support"])
         support = json_get_bool(obj, "support")
         return cls(support=support)
 
@@ -10941,6 +11130,7 @@ class WindowClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WindowClientCapabilities":
+        check_properties(obj, ["workDoneProgress", "showMessage", "showDocument"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -11007,6 +11197,7 @@ class RegularExpressionsClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RegularExpressionsClientCapabilities":
+        check_properties(obj, ["engine", "version"])
         engine = json_get_string(obj, "engine")
         if version_json := json_get_optional_string(obj, "version"):
             version = version_json
@@ -11059,6 +11250,7 @@ class MarkdownClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MarkdownClientCapabilities":
+        check_properties(obj, ["parser", "version", "allowedTags"])
         parser = json_get_string(obj, "parser")
         if version_json := json_get_optional_string(obj, "version"):
             version = version_json
@@ -11168,6 +11360,7 @@ class GeneralClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "GeneralClientCapabilities":
+        check_properties(obj, ["staleRequestSupport", "regularExpressions", "markdown", "positionEncodings"])
         if staleRequestSupport_json := json_get_optional_object(obj, "staleRequestSupport"):
             staleRequestSupport = parse_AnonymousStructure16(staleRequestSupport_json)
         else:
@@ -11251,6 +11444,7 @@ class ClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ClientCapabilities":
+        check_properties(obj, ["workspace", "textDocument", "notebookDocument", "window", "general", "experimental"])
         if workspace_json := json_get_optional_object(obj, "workspace"):
             workspace = WorkspaceClientCapabilities.from_json(workspace_json)
         else:
@@ -11393,6 +11587,7 @@ class _InitializeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "_InitializeParams":
+        check_properties(obj, ["workDoneToken", "processId", "clientInfo", "locale", "rootPath", "rootUri", "capabilities", "initializationOptions", "trace"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -11473,6 +11668,7 @@ class WorkspaceFoldersInitializeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersInitializeParams":
+        check_properties(obj, ["workspaceFolders"])
         if workspaceFolders_json := obj.get("workspaceFolders"):
             workspaceFolders = parse_or_type(workspaceFolders_json, (lambda v: [WorkspaceFolder.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
         else:
@@ -11602,6 +11798,7 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeParams":
+        check_properties(obj, ["workDoneToken", "processId", "clientInfo", "locale", "rootPath", "rootUri", "capabilities", "initializationOptions", "trace", "workspaceFolders"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -11676,6 +11873,7 @@ class SaveOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SaveOptions":
+        check_properties(obj, ["includeText"])
         if includeText_json := json_get_optional_bool(obj, "includeText"):
             includeText = includeText_json
         else:
@@ -11738,6 +11936,7 @@ class TextDocumentSyncOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSyncOptions":
+        check_properties(obj, ["openClose", "change", "willSave", "willSaveWaitUntil", "save"])
         if openClose_json := json_get_optional_bool(obj, "openClose"):
             openClose = openClose_json
         else:
@@ -11864,6 +12063,7 @@ class NotebookDocumentSyncOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncOptions":
+        check_properties(obj, ["notebookSelector", "save"])
         notebookSelector = [parse_or_type((i), (lambda v: parse_AnonymousStructure14(json_assert_type_object(v)), lambda v: parse_AnonymousStructure15(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
         if save_json := json_get_optional_bool(obj, "save"):
             save = save_json
@@ -11914,6 +12114,7 @@ class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncRegistrationOptions":
+        check_properties(obj, ["notebookSelector", "save", "id"])
         notebookSelector = [parse_or_type((i), (lambda v: parse_AnonymousStructure14(json_assert_type_object(v)), lambda v: parse_AnonymousStructure15(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
         if save_json := json_get_optional_bool(obj, "save"):
             save = save_json
@@ -12025,6 +12226,7 @@ class CompletionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionOptions":
+        check_properties(obj, ["workDoneProgress", "triggerCharacters", "allCommitCharacters", "resolveProvider", "completionItem"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12080,6 +12282,7 @@ class HoverOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12130,6 +12333,7 @@ class SignatureHelpOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpOptions":
+        check_properties(obj, ["workDoneProgress", "triggerCharacters", "retriggerCharacters"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12173,6 +12377,7 @@ class DefinitionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12204,6 +12409,7 @@ class ReferenceOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12235,6 +12441,7 @@ class DocumentHighlightOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12276,6 +12483,7 @@ class DocumentSymbolOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolOptions":
+        check_properties(obj, ["workDoneProgress", "label"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12334,6 +12542,7 @@ class CodeActionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionOptions":
+        check_properties(obj, ["workDoneProgress", "codeActionKinds", "resolveProvider"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12381,6 +12590,7 @@ class CodeLensOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensOptions":
+        check_properties(obj, ["workDoneProgress", "resolveProvider"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12422,6 +12632,7 @@ class DocumentLinkOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkOptions":
+        check_properties(obj, ["workDoneProgress", "resolveProvider"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12469,6 +12680,7 @@ class WorkspaceSymbolOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolOptions":
+        check_properties(obj, ["workDoneProgress", "resolveProvider"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12506,6 +12718,7 @@ class DocumentFormattingOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12537,6 +12750,7 @@ class DocumentRangeFormattingOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingOptions":
+        check_properties(obj, ["workDoneProgress"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12574,6 +12788,7 @@ class DocumentOnTypeFormattingOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingOptions":
+        check_properties(obj, ["firstTriggerCharacter", "moreTriggerCharacter"])
         firstTriggerCharacter = json_get_string(obj, "firstTriggerCharacter")
         if moreTriggerCharacter_json := json_get_optional_array(obj, "moreTriggerCharacter"):
             moreTriggerCharacter = [json_assert_type_string(i) for i in moreTriggerCharacter_json]
@@ -12615,6 +12830,7 @@ class RenameOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameOptions":
+        check_properties(obj, ["workDoneProgress", "prepareProvider"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12656,6 +12872,7 @@ class ExecuteCommandOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandOptions":
+        check_properties(obj, ["workDoneProgress", "commands"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -12707,6 +12924,7 @@ class WorkspaceFoldersServerCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersServerCapabilities":
+        check_properties(obj, ["supported", "changeNotifications"])
         if supported_json := json_get_optional_bool(obj, "supported"):
             supported = supported_json
         else:
@@ -12772,6 +12990,7 @@ class FileOperationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationOptions":
+        check_properties(obj, ["didCreate", "willCreate", "didRename", "willRename", "didDelete", "willDelete"])
         if didCreate_json := json_get_optional_object(obj, "didCreate"):
             didCreate = FileOperationRegistrationOptions.from_json(didCreate_json)
         else:
@@ -13092,6 +13311,7 @@ class ServerCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ServerCapabilities":
+        check_properties(obj, ["positionEncoding", "textDocumentSync", "notebookDocumentSync", "completionProvider", "hoverProvider", "signatureHelpProvider", "declarationProvider", "definitionProvider", "typeDefinitionProvider", "implementationProvider", "referencesProvider", "documentHighlightProvider", "documentSymbolProvider", "codeActionProvider", "codeLensProvider", "documentLinkProvider", "colorProvider", "workspaceSymbolProvider", "documentFormattingProvider", "documentRangeFormattingProvider", "documentOnTypeFormattingProvider", "renameProvider", "foldingRangeProvider", "selectionRangeProvider", "executeCommandProvider", "callHierarchyProvider", "linkedEditingRangeProvider", "semanticTokensProvider", "monikerProvider", "typeHierarchyProvider", "inlineValueProvider", "inlayHintProvider", "diagnosticProvider", "workspace", "experimental"])
         if positionEncoding_json := json_get_optional_string(obj, "positionEncoding"):
             positionEncoding = PositionEncodingKind(positionEncoding_json)
         else:
@@ -13356,6 +13576,7 @@ class InitializeResult():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeResult":
+        check_properties(obj, ["capabilities", "serverInfo"])
         capabilities = ServerCapabilities.from_json(json_get_object(obj, "capabilities"))
         if serverInfo_json := json_get_optional_object(obj, "serverInfo"):
             serverInfo = parse_AnonymousStructure0(serverInfo_json)
@@ -13397,6 +13618,7 @@ class InitializeError():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeError":
+        check_properties(obj, ["retry"])
         retry = json_get_bool(obj, "retry")
         return cls(retry=retry)
 
@@ -13420,6 +13642,7 @@ class InitializedParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializedParams":
+        check_properties(obj, [])
     
         return cls()
 
@@ -13448,6 +13671,7 @@ class DidChangeConfigurationParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationParams":
+        check_properties(obj, ["settings"])
         settings = parse_LSPAny(obj["settings"])
         return cls(settings=settings)
 
@@ -13475,6 +13699,7 @@ class DidChangeConfigurationRegistrationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationRegistrationOptions":
+        check_properties(obj, ["section"])
         if section_json := obj.get("section"):
             section = parse_or_type(section_json, (lambda v: json_assert_type_string(v), lambda v: [json_assert_type_string(i) for i in json_assert_type_array(v)]))
         else:
@@ -13512,6 +13737,7 @@ class ShowMessageParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageParams":
+        check_properties(obj, ["type", "message"])
         type = MessageType(json_get_int(obj, "type"))
         message = json_get_string(obj, "message")
         return cls(type=type, message=message)
@@ -13542,6 +13768,7 @@ class MessageActionItem():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MessageActionItem":
+        check_properties(obj, ["title"])
         title = json_get_string(obj, "title")
         return cls(title=title)
 
@@ -13580,6 +13807,7 @@ class ShowMessageRequestParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageRequestParams":
+        check_properties(obj, ["type", "message", "actions"])
         type = MessageType(json_get_int(obj, "type"))
         message = json_get_string(obj, "message")
         if actions_json := json_get_optional_array(obj, "actions"):
@@ -13621,6 +13849,7 @@ class LogMessageParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LogMessageParams":
+        check_properties(obj, ["type", "message"])
         type = MessageType(json_get_int(obj, "type"))
         message = json_get_string(obj, "message")
         return cls(type=type, message=message)
@@ -13651,6 +13880,7 @@ class DidOpenTextDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidOpenTextDocumentParams":
+        check_properties(obj, ["textDocument"])
         textDocument = TextDocumentItem.from_json(json_get_object(obj, "textDocument"))
         return cls(textDocument=textDocument)
 
@@ -13708,6 +13938,7 @@ class DidChangeTextDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeTextDocumentParams":
+        check_properties(obj, ["textDocument", "contentChanges"])
         textDocument = VersionedTextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         contentChanges = [parse_TextDocumentContentChangeEvent((i)) for i in json_get_array(obj, "contentChanges")]
         return cls(textDocument=textDocument, contentChanges=contentChanges)
@@ -13745,6 +13976,7 @@ class TextDocumentChangeRegistrationOptions(TextDocumentRegistrationOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentChangeRegistrationOptions":
+        check_properties(obj, ["documentSelector", "syncKind"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         syncKind = TextDocumentSyncKind(json_get_int(obj, "syncKind"))
         return cls(documentSelector=documentSelector, syncKind=syncKind)
@@ -13775,6 +14007,7 @@ class DidCloseTextDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidCloseTextDocumentParams":
+        check_properties(obj, ["textDocument"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         return cls(textDocument=textDocument)
 
@@ -13810,6 +14043,7 @@ class DidSaveTextDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidSaveTextDocumentParams":
+        check_properties(obj, ["textDocument", "text"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         if text_json := json_get_optional_string(obj, "text"):
             text = text_json
@@ -13851,6 +14085,7 @@ class TextDocumentSaveRegistrationOptions(TextDocumentRegistrationOptions, SaveO
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSaveRegistrationOptions":
+        check_properties(obj, ["documentSelector", "includeText"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if includeText_json := json_get_optional_bool(obj, "includeText"):
             includeText = includeText_json
@@ -13890,6 +14125,7 @@ class WillSaveTextDocumentParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WillSaveTextDocumentParams":
+        check_properties(obj, ["textDocument", "reason"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         reason = TextDocumentSaveReason(json_get_int(obj, "reason"))
         return cls(textDocument=textDocument, reason=reason)
@@ -13925,6 +14161,7 @@ class FileEvent():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileEvent":
+        check_properties(obj, ["uri", "type"])
         uri = json_get_string(obj, "uri")
         type = FileChangeType(json_get_int(obj, "type"))
         return cls(uri=uri, type=type)
@@ -13955,6 +14192,7 @@ class DidChangeWatchedFilesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWatchedFilesParams":
+        check_properties(obj, ["changes"])
         changes = [FileEvent.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "changes")]
         return cls(changes=changes)
 
@@ -14012,6 +14250,7 @@ class RelativePattern():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelativePattern":
+        check_properties(obj, ["baseUri", "pattern"])
         baseUri = parse_or_type(obj["baseUri"], (lambda v: WorkspaceFolder.from_json(json_assert_type_object(v)), lambda v: json_assert_type_string(v)))
         pattern = parse_Pattern(json_get_string(obj, "pattern"))
         return cls(baseUri=baseUri, pattern=pattern)
@@ -14067,6 +14306,7 @@ class FileSystemWatcher():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileSystemWatcher":
+        check_properties(obj, ["globPattern", "kind"])
         globPattern = parse_GlobPattern(obj["globPattern"])
         if kind_json := json_get_optional_int(obj, "kind"):
             kind = WatchKind(kind_json)
@@ -14101,6 +14341,7 @@ class DidChangeWatchedFilesRegistrationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWatchedFilesRegistrationOptions":
+        check_properties(obj, ["watchers"])
         watchers = [FileSystemWatcher.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "watchers")]
         return cls(watchers=watchers)
 
@@ -14143,6 +14384,7 @@ class PublishDiagnosticsParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PublishDiagnosticsParams":
+        check_properties(obj, ["uri", "version", "diagnostics"])
         uri = json_get_string(obj, "uri")
         if version_json := json_get_optional_int(obj, "version"):
             version = version_json
@@ -14186,6 +14428,7 @@ class CompletionContext():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionContext":
+        check_properties(obj, ["triggerKind", "triggerCharacter"])
         triggerKind = CompletionTriggerKind(json_get_int(obj, "triggerKind"))
         if triggerCharacter_json := json_get_optional_string(obj, "triggerCharacter"):
             triggerCharacter = triggerCharacter_json
@@ -14244,6 +14487,7 @@ class CompletionParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken", "context"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -14303,6 +14547,7 @@ class CompletionItemLabelDetails():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionItemLabelDetails":
+        check_properties(obj, ["detail", "description"])
         if detail_json := json_get_optional_string(obj, "detail"):
             detail = detail_json
         else:
@@ -14353,6 +14598,7 @@ class InsertReplaceEdit():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InsertReplaceEdit":
+        check_properties(obj, ["newText", "insert", "replace"])
         newText = json_get_string(obj, "newText")
         insert = Range.from_json(json_get_object(obj, "insert"))
         replace = Range.from_json(json_get_object(obj, "replace"))
@@ -14634,6 +14880,7 @@ class CompletionItem():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionItem":
+        check_properties(obj, ["label", "labelDetails", "kind", "tags", "detail", "documentation", "deprecated", "preselect", "sortText", "filterText", "insertText", "insertTextFormat", "insertTextMode", "textEdit", "textEditText", "additionalTextEdits", "commitCharacters", "command", "data"])
         label = json_get_string(obj, "label")
         if labelDetails_json := json_get_optional_object(obj, "labelDetails"):
             labelDetails = CompletionItemLabelDetails.from_json(labelDetails_json)
@@ -14867,6 +15114,7 @@ class CompletionList():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionList":
+        check_properties(obj, ["isIncomplete", "itemDefaults", "items"])
         isIncomplete = json_get_bool(obj, "isIncomplete")
         if itemDefaults_json := json_get_optional_object(obj, "itemDefaults"):
             itemDefaults = parse_AnonymousStructure2(itemDefaults_json)
@@ -14964,6 +15212,7 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "triggerCharacters", "allCommitCharacters", "resolveProvider", "completionItem"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -15032,6 +15281,7 @@ class HoverParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -15111,6 +15361,7 @@ class Hover():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Hover":
+        check_properties(obj, ["contents", "range"])
         contents = parse_or_type(obj["contents"], (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: parse_MarkedString((v)), lambda v: [parse_MarkedString((i)) for i in json_assert_type_array(v)]))
         if range_json := json_get_optional_object(obj, "range"):
             range = Range.from_json(range_json)
@@ -15150,6 +15401,7 @@ class HoverRegistrationOptions(TextDocumentRegistrationOptions, HoverOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -15206,6 +15458,7 @@ class ParameterInformation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ParameterInformation":
+        check_properties(obj, ["label", "documentation"])
         label = parse_or_type(obj["label"], (lambda v: json_assert_type_string(v), lambda v: (json_assert_type_int(json_assert_type_array(v)[0]), json_assert_type_int(json_assert_type_array(v)[1]))))
         if documentation_json := obj.get("documentation"):
             documentation = parse_or_type(documentation_json, (lambda v: json_assert_type_string(v), lambda v: MarkupContent.from_json(json_assert_type_object(v))))
@@ -15269,6 +15522,7 @@ class SignatureInformation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureInformation":
+        check_properties(obj, ["label", "documentation", "parameters", "activeParameter"])
         label = json_get_string(obj, "label")
         if documentation_json := obj.get("documentation"):
             documentation = parse_or_type(documentation_json, (lambda v: json_assert_type_string(v), lambda v: MarkupContent.from_json(json_assert_type_object(v))))
@@ -15355,6 +15609,7 @@ class SignatureHelp():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelp":
+        check_properties(obj, ["signatures", "activeSignature", "activeParameter"])
         signatures = [SignatureInformation.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "signatures")]
         if activeSignature_json := json_get_optional_int(obj, "activeSignature"):
             activeSignature = activeSignature_json
@@ -15428,6 +15683,7 @@ class SignatureHelpContext():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpContext":
+        check_properties(obj, ["triggerKind", "triggerCharacter", "isRetrigger", "activeSignatureHelp"])
         triggerKind = SignatureHelpTriggerKind(json_get_int(obj, "triggerKind"))
         if triggerCharacter_json := json_get_optional_string(obj, "triggerCharacter"):
             triggerCharacter = triggerCharacter_json
@@ -15491,6 +15747,7 @@ class SignatureHelpParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "context"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -15558,6 +15815,7 @@ class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, Signatur
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "triggerCharacters", "retriggerCharacters"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -15621,6 +15879,7 @@ class DefinitionParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -15668,6 +15927,7 @@ class DefinitionRegistrationOptions(TextDocumentRegistrationOptions, DefinitionO
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -15703,6 +15963,7 @@ class ReferenceContext():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceContext":
+        check_properties(obj, ["includeDeclaration"])
         includeDeclaration = json_get_bool(obj, "includeDeclaration")
         return cls(includeDeclaration=includeDeclaration)
 
@@ -15751,6 +16012,7 @@ class ReferenceParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken", "context"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -15800,6 +16062,7 @@ class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOpt
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -15851,6 +16114,7 @@ class DocumentHighlightParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken", "partialResultToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -15900,6 +16164,7 @@ class DocumentHighlight():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlight":
+        check_properties(obj, ["range", "kind"])
         range = Range.from_json(json_get_object(obj, "range"))
         if kind_json := json_get_optional_int(obj, "kind"):
             kind = DocumentHighlightKind(kind_json)
@@ -15939,6 +16204,7 @@ class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, Docu
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -15985,6 +16251,7 @@ class DocumentSymbolParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -16050,6 +16317,7 @@ class BaseSymbolInformation():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "BaseSymbolInformation":
+        check_properties(obj, ["name", "kind", "tags", "containerName"])
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
         if tags_json := json_get_optional_array(obj, "tags"):
@@ -16148,6 +16416,7 @@ class SymbolInformation(BaseSymbolInformation):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SymbolInformation":
+        check_properties(obj, ["name", "kind", "tags", "containerName", "deprecated", "location"])
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
         if tags_json := json_get_optional_array(obj, "tags"):
@@ -16252,6 +16521,7 @@ class DocumentSymbol():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbol":
+        check_properties(obj, ["name", "detail", "kind", "tags", "deprecated", "range", "selectionRange", "children"])
         name = json_get_string(obj, "name")
         if detail_json := json_get_optional_string(obj, "detail"):
             detail = detail_json
@@ -16326,6 +16596,7 @@ class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, Documen
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "label"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -16395,6 +16666,7 @@ class CodeActionContext():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionContext":
+        check_properties(obj, ["diagnostics", "only", "triggerKind"])
         diagnostics = [Diagnostic.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "diagnostics")]
         if only_json := json_get_optional_array(obj, "only"):
             only = [CodeActionKind(json_assert_type_string(i)) for i in only_json]
@@ -16457,6 +16729,7 @@ class CodeActionParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument", "range", "context"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -16606,6 +16879,7 @@ class CodeAction():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeAction":
+        check_properties(obj, ["title", "kind", "diagnostics", "isPreferred", "disabled", "edit", "command", "data"])
         title = json_get_string(obj, "title")
         if kind_json := json_get_optional_string(obj, "kind"):
             kind = CodeActionKind(kind_json)
@@ -16703,6 +16977,7 @@ class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionO
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "codeActionKinds", "resolveProvider"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -16763,6 +17038,7 @@ class WorkspaceSymbolParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "query"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -16865,6 +17141,7 @@ class WorkspaceSymbol(BaseSymbolInformation):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbol":
+        check_properties(obj, ["name", "kind", "tags", "containerName", "location", "data"])
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
         if tags_json := json_get_optional_array(obj, "tags"):
@@ -16924,6 +17201,7 @@ class WorkspaceSymbolRegistrationOptions(WorkspaceSymbolOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolRegistrationOptions":
+        check_properties(obj, ["workDoneProgress", "resolveProvider"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -16974,6 +17252,7 @@ class CodeLensParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -17032,6 +17311,7 @@ class CodeLens():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLens":
+        check_properties(obj, ["range", "command", "data"])
         range = Range.from_json(json_get_object(obj, "range"))
         if command_json := json_get_optional_object(obj, "command"):
             command = Command.from_json(command_json)
@@ -17082,6 +17362,7 @@ class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptio
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "resolveProvider"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -17134,6 +17415,7 @@ class DocumentLinkParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkParams":
+        check_properties(obj, ["workDoneToken", "partialResultToken", "textDocument"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -17204,6 +17486,7 @@ class DocumentLink():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLink":
+        check_properties(obj, ["range", "target", "tooltip", "data"])
         range = Range.from_json(json_get_object(obj, "range"))
         if target_json := json_get_optional_string(obj, "target"):
             target = target_json
@@ -17260,6 +17543,7 @@ class DocumentLinkRegistrationOptions(TextDocumentRegistrationOptions, DocumentL
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "resolveProvider"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -17332,6 +17616,7 @@ class FormattingOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FormattingOptions":
+        check_properties(obj, ["tabSize", "insertSpaces", "trimTrailingWhitespace", "insertFinalNewline", "trimFinalNewlines"])
         tabSize = json_get_int(obj, "tabSize")
         insertSpaces = json_get_bool(obj, "insertSpaces")
         if trimTrailingWhitespace_json := json_get_optional_bool(obj, "trimTrailingWhitespace"):
@@ -17390,6 +17675,7 @@ class DocumentFormattingParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingParams":
+        check_properties(obj, ["workDoneToken", "textDocument", "options"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -17431,6 +17717,7 @@ class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, Doc
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -17480,6 +17767,7 @@ class DocumentRangeFormattingParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingParams":
+        check_properties(obj, ["workDoneToken", "textDocument", "range", "options"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -17523,6 +17811,7 @@ class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -17582,6 +17871,7 @@ class DocumentOnTypeFormattingParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingParams":
+        check_properties(obj, ["textDocument", "position", "ch", "options"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         ch = json_get_string(obj, "ch")
@@ -17628,6 +17918,7 @@ class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOption
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingRegistrationOptions":
+        check_properties(obj, ["documentSelector", "firstTriggerCharacter", "moreTriggerCharacter"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         firstTriggerCharacter = json_get_string(obj, "firstTriggerCharacter")
         if moreTriggerCharacter_json := json_get_optional_array(obj, "moreTriggerCharacter"):
@@ -17683,6 +17974,7 @@ class RenameParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameParams":
+        check_properties(obj, ["workDoneToken", "textDocument", "position", "newName"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -17735,6 +18027,7 @@ class RenameRegistrationOptions(TextDocumentRegistrationOptions, RenameOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameRegistrationOptions":
+        check_properties(obj, ["documentSelector", "workDoneProgress", "prepareProvider"])
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
@@ -17785,6 +18078,7 @@ class PrepareRenameParams(TextDocumentPositionParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PrepareRenameParams":
+        check_properties(obj, ["textDocument", "position", "workDoneToken"])
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
         if workDoneToken_json := obj.get("workDoneToken"):
@@ -17831,6 +18125,7 @@ class ExecuteCommandParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandParams":
+        check_properties(obj, ["workDoneToken", "command", "arguments"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -17874,6 +18169,7 @@ class ExecuteCommandRegistrationOptions(ExecuteCommandOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandRegistrationOptions":
+        check_properties(obj, ["workDoneProgress", "commands"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:
@@ -17917,6 +18213,7 @@ class ApplyWorkspaceEditParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ApplyWorkspaceEditParams":
+        check_properties(obj, ["label", "edit"])
         if label_json := json_get_optional_string(obj, "label"):
             label = label_json
         else:
@@ -17971,6 +18268,7 @@ class ApplyWorkspaceEditResult():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ApplyWorkspaceEditResult":
+        check_properties(obj, ["applied", "failureReason", "failedChange"])
         applied = json_get_bool(obj, "applied")
         if failureReason_json := json_get_optional_string(obj, "failureReason"):
             failureReason = failureReason_json
@@ -18057,6 +18355,7 @@ class WorkDoneProgressBegin():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressBegin":
+        check_properties(obj, ["kind", "title", "cancellable", "message", "percentage"])
         kind = match_string(json_get_string(obj, "kind"), "begin")
         title = json_get_string(obj, "title")
         if cancellable_json := json_get_optional_bool(obj, "cancellable"):
@@ -18142,6 +18441,7 @@ class WorkDoneProgressReport():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressReport":
+        check_properties(obj, ["kind", "cancellable", "message", "percentage"])
         kind = match_string(json_get_string(obj, "kind"), "report")
         if cancellable_json := json_get_optional_bool(obj, "cancellable"):
             cancellable = cancellable_json
@@ -18193,6 +18493,7 @@ class WorkDoneProgressEnd():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressEnd":
+        check_properties(obj, ["kind", "message"])
         kind = match_string(json_get_string(obj, "kind"), "end")
         if message_json := json_get_optional_string(obj, "message"):
             message = message_json
@@ -18226,6 +18527,7 @@ class SetTraceParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SetTraceParams":
+        check_properties(obj, ["value"])
         value = TraceValues(json_get_string(obj, "value"))
         return cls(value=value)
 
@@ -18256,6 +18558,7 @@ class LogTraceParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LogTraceParams":
+        check_properties(obj, ["message", "verbose"])
         message = json_get_string(obj, "message")
         if verbose_json := json_get_optional_string(obj, "verbose"):
             verbose = verbose_json
@@ -18290,6 +18593,7 @@ class CancelParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CancelParams":
+        check_properties(obj, ["id"])
         id = parse_or_type(obj["id"], (lambda v: json_assert_type_int(v), lambda v: json_assert_type_string(v)))
         return cls(id=id)
 
@@ -18323,6 +18627,7 @@ class ProgressParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ProgressParams":
+        check_properties(obj, ["token", "value"])
         token = parse_ProgressToken(obj["token"])
         value = parse_LSPAny(obj["value"])
         return cls(token=token, value=value)
@@ -18353,6 +18658,7 @@ class WorkDoneProgressParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressParams":
+        check_properties(obj, ["workDoneToken"])
         if workDoneToken_json := obj.get("workDoneToken"):
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
@@ -18413,6 +18719,7 @@ class LocationLink():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LocationLink":
+        check_properties(obj, ["originSelectionRange", "targetUri", "targetRange", "targetSelectionRange"])
         if originSelectionRange_json := json_get_optional_object(obj, "originSelectionRange"):
             originSelectionRange = Range.from_json(originSelectionRange_json)
         else:
@@ -18454,6 +18761,7 @@ class StaticRegistrationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "StaticRegistrationOptions":
+        check_properties(obj, ["id"])
         if id_json := json_get_optional_string(obj, "id"):
             id = id_json
         else:
@@ -18493,6 +18801,7 @@ class InlineValueText():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueText":
+        check_properties(obj, ["range", "text"])
         range = Range.from_json(json_get_object(obj, "range"))
         text = json_get_string(obj, "text")
         return cls(range=range, text=text)
@@ -18539,6 +18848,7 @@ class InlineValueVariableLookup():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueVariableLookup":
+        check_properties(obj, ["range", "variableName", "caseSensitiveLookup"])
         range = Range.from_json(json_get_object(obj, "range"))
         if variableName_json := json_get_optional_string(obj, "variableName"):
             variableName = variableName_json
@@ -18586,6 +18896,7 @@ class InlineValueEvaluatableExpression():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueEvaluatableExpression":
+        check_properties(obj, ["range", "expression"])
         range = Range.from_json(json_get_object(obj, "range"))
         if expression_json := json_get_optional_string(obj, "expression"):
             expression = expression_json
@@ -18653,6 +18964,7 @@ class RelatedFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelatedFullDocumentDiagnosticReport":
+        check_properties(obj, ["kind", "resultId", "items", "relatedDocuments"])
         kind = match_string(json_get_string(obj, "kind"), "full")
         if resultId_json := json_get_optional_string(obj, "resultId"):
             resultId = resultId_json
@@ -18727,6 +19039,7 @@ class RelatedUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelatedUnchangedDocumentDiagnosticReport":
+        check_properties(obj, ["kind", "resultId", "relatedDocuments"])
         kind = match_string(json_get_string(obj, "kind"), "unchanged")
         resultId = json_get_string(obj, "resultId")
         if relatedDocuments_json := json_get_optional_object(obj, "relatedDocuments"):
@@ -18891,6 +19204,7 @@ class ConfigurationParamsAndPartialResultParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationParamsAndPartialResultParams":
+        check_properties(obj, ["items", "partialResultToken"])
         items = [ConfigurationItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
         if partialResultToken_json := obj.get("partialResultToken"):
             partialResultToken = parse_ProgressToken(partialResultToken_json)
@@ -18930,6 +19244,7 @@ class TextDocumentRegistrationOptionsAndWorkDoneProgressOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentRegistrationOptionsAndWorkDoneProgressOptions":
+        check_properties(obj, ["workDoneProgress", "documentSelector"])
         if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
             workDoneProgress = workDoneProgress_json
         else:

@@ -120,7 +120,7 @@ def _collect_structure_properties(gen: Generator, struct: Structure) -> List[Pro
             target = gen.resolve_reference(m.content)
             if not isinstance(target, Structure):
                 raise LSPGeneratorException("Non-Structure references in 'extends' are not supported")
-            props.update({ p.name: p for p in _collect_structure_properties(gen, target)})
+            props.update({p.name: p for p in _collect_structure_properties(gen, target)})
 
     if struct.mixins:
         for m in struct.mixins:
@@ -129,9 +129,9 @@ def _collect_structure_properties(gen: Generator, struct: Structure) -> List[Pro
             target = gen.resolve_reference(m.content)
             if not isinstance(target, Structure):
                 raise LSPGeneratorException("Non-Structure references in 'mixins' are not supported")
-            props.update({ p.name: p for p in target.properties})
+            props.update({p.name: p for p in target.properties})
 
-    props.update({ p.name: p for p in struct.properties})
+    props.update({p.name: p for p in struct.properties})
 
     return list(props.values())
 
@@ -146,7 +146,6 @@ def _generate_property_declaration(gen: Generator, prop: Property) -> str:
         documentation = generate_documentation_comment(prop.documentation)
     else:
         documentation = ""
-
 
     return f"{documentation}{escape_keyword(prop.name)}: {type_annotation}"
 
@@ -191,17 +190,20 @@ def _generate_structure_init_method(gen: Generator, properties: Tuple[Property, 
 
 def _generate_structure_from_json_method(gen: Generator, class_name: str, properties: Tuple[Property]) -> str:
     property_read_statements = "\n".join([_generate_property_read_statement(gen, p, "obj") for p in properties])
-    property_names = ", ".join([escape_keyword(p.name) + "=" + escape_keyword(p.name) for p in properties])
+    property_names = ", ".join(['"' + escape_keyword(p.name) + '"' for p in properties])
+    property_assignments = ", ".join([escape_keyword(p.name) + "=" + escape_keyword(p.name) for p in properties])
 
     template = dedent("""\
         @classmethod
         def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "{class_name}":
+            check_properties(obj, [{property_names}])
         {read_statements}
-            return cls({property_names})""")
+            return cls({property_assignments})""")
     return template.format(
         class_name=class_name,
         read_statements=indent(property_read_statements),
-        property_names=property_names)
+        property_names=property_names,
+        property_assignments=property_assignments)
 
 
 def _generate_structure_to_json_method(gen: Generator, properties: Tuple[Property]) -> str:
@@ -344,7 +346,7 @@ def get_referenced_definitions_anytype(gen: Generator, val: AnyType) -> List[Uni
     elif val.kind in ["base", "stringLiteral", "integerLiteral", "booleanLiteral"]:
         return []
     else:
-        assert False # Broken AnyType
+        assert False  # Broken AnyType
 
 
 def _get_referenced_definitions(gen: Generator, obj: Union[Notification, Request, Structure, TypeAlias, StructureLiteral, AndType]) -> List[Union[ref_target, StructureLiteral, AndType]]:
@@ -417,7 +419,7 @@ def _get_referenced_definitions(gen: Generator, obj: Union[Notification, Request
         for p in obj.properties:
             out += get_referenced_definitions_anytype(gen, p.type)
         return out
-    else: # isinstance(obj, AndType)
+    else:  # isinstance(obj, AndType)
         out: List[Union[ref_target, StructureLiteral, AndType]] = []
         for i in obj.items:
             if i.kind != "reference":
@@ -481,7 +483,7 @@ def generate_structures_py(gen: Generator) -> str:
             definitions.append(generate_structure_definition(gen, t))
         elif isinstance(t, StructureLiteral):
             definitions.append(generate_anonymous_structure_definition(gen, t))
-        else: # isinstance(t, AndType)
+        else:  # isinstance(t, AndType)
             definitions.append(generate_andtype_definition(gen, t))
 
     template = dedent_ignore_empty("""\

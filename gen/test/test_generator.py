@@ -13,7 +13,7 @@ from gen.schema.types import MetaModel, ReferenceType
 from gen.schema.util import JSON_VALUE
 from gen.static.lsp_enum import LSPEnumException
 from gen.static.util import (LSPKeyNotFoundException, LSPLiteralException,
-                             LSPTypeException)
+                             LSPTypeException, LSPUnknownPropertyException)
 
 
 def test_reference_resolver_resolves_reference() -> None:
@@ -422,55 +422,55 @@ def test_generator_parse_anytypes() -> None:
 
     res1 = eval("TestBaseString.from_json({ 'test': 'test' })", names)
     assert res1.test == "test"
-    assert res1.to_json() == { 'test': 'test' }
+    assert res1.to_json() == {'test': 'test'}
 
     res2 = eval("TestBaseInteger.from_json({ 'test': 15 })", names)
     assert res2.test == 15
-    assert res2.to_json() == { 'test': 15 }
+    assert res2.to_json() == {'test': 15}
 
     res3 = eval("TestBaseBoolean.from_json({ 'test': True })", names)
     assert res3.test == True
-    assert res3.to_json() == { 'test': True }
+    assert res3.to_json() == {'test': True}
 
     res4 = eval("TestArray.from_json({ 'test': [2, 4, 6, 8, 10] })", names)
     assert res4.test == [2, 4, 6, 8, 10]
-    assert res4.to_json() == { 'test': [2, 4, 6, 8, 10] }
+    assert res4.to_json() == {'test': [2, 4, 6, 8, 10]}
 
     res5 = eval("TestMap.from_json({ 'test': { 'test1': True, 'test2': False }})", names)
-    assert res5.test == { "test1": True, "test2": False }
-    assert res5.to_json() == { 'test': { 'test1': True, 'test2': False }}
+    assert res5.test == {"test1": True, "test2": False}
+    assert res5.to_json() == {'test': {'test1': True, 'test2': False}}
 
     res6 = eval("TestAnd.from_json({ 'test': { 'part1': 3, 'part2': True } })", names)
     assert res6.test.part1 == 3
     assert res6.test.part2 == True
-    assert res6.to_json() == { 'test': { 'part1': 3, 'part2': True } }
+    assert res6.to_json() == {'test': {'part1': 3, 'part2': True}}
 
     res7 = eval("TestOr.from_json({ 'test': 16 })", names)
     assert res7.test == 16
-    assert res7.to_json() == { 'test': 16 }
+    assert res7.to_json() == {'test': 16}
     res7 = eval("TestOr.from_json({ 'test': [2, 4, 8, 16] })", names)
     assert res7.test == [2, 4, 8, 16]
-    assert res7.to_json() == { 'test': [2, 4, 8, 16] }
+    assert res7.to_json() == {'test': [2, 4, 8, 16]}
 
     res8 = eval("TestTuple.from_json({ 'test': ['test', [5, 10]] })", names)
     assert res8.test == ("test", [5, 10])
-    assert res8.to_json() == { 'test': ['test', [5, 10]] }
+    assert res8.to_json() == {'test': ['test', [5, 10]]}
 
     res9 = eval("TestLiteral.from_json({ 'test': { 'sub': 'Nested struct' } })", names)
     assert res9.test["sub"] == 'Nested struct'
-    assert res9.to_json() == { 'test': { 'sub': 'Nested struct' } }
+    assert res9.to_json() == {'test': {'sub': 'Nested struct'}}
 
     res10 = eval("TestStringLiteral.from_json({ 'test': 'test123' })", names)
     assert res10.test == "test123"
-    assert res10.to_json() == { 'test': 'test123' }
+    assert res10.to_json() == {'test': 'test123'}
 
     res11 = eval("TestIntegerLiteral.from_json({ 'test': 4096 })", names)
     assert res11.test == 4096
-    assert res11.to_json() == { 'test': 4096 }
+    assert res11.to_json() == {'test': 4096}
 
     res12 = eval("TestBooleanLiteral.from_json({ 'test': True })", names)
     assert res12.test == True
-    assert res12.to_json() == { 'test': True }
+    assert res12.to_json() == {'test': True}
 
     with pytest.raises(LSPTypeException):
         eval("TestBaseString.from_json({ 'test': 5 })", names)
@@ -594,7 +594,7 @@ def test_generator_generate_structure_definition() -> None:
     assert res1.testopt is None
     assert res1.test2 == 10
     assert res1.test3 == True
-    assert res1.to_json() == { 'test1': 'Hello', 'test2': 10, 'test3': True }
+    assert res1.to_json() == {'test1': 'Hello', 'test2': 10, 'test3': True}
 
     res2 = eval("Test1(test1='Hello', test2=10, test3=True)", names)
     assert res2.test1 == 'Hello'
@@ -604,6 +604,9 @@ def test_generator_generate_structure_definition() -> None:
 
     res3 = eval("Test1(test1='Hello', test2=10, test3=True, testopt='Optional')", names)
     assert res3.testopt == "Optional"
+
+    with pytest.raises(LSPUnknownPropertyException):
+        eval("Test1.from_json({ 'test1': 'Hello', 'test2': 10, 'test3': True, 'unknown': 'unknown' })", names)
 
 
 def test_generator_get_referenced_definition_anytype() -> None:
@@ -857,7 +860,7 @@ async def test_generator_client_requests() -> None:
     names = get_test_default_names()
 
     client_requests_py = generate_client_requests_py(generator)
-    client_requests_py = client_requests_py[client_requests_py.index("class"):] # Skip imports
+    client_requests_py = client_requests_py[client_requests_py.index("class"):]  # Skip imports
 
     exec("from abc import ABC, abstractmethod", names)
     exec(client_requests_py, names)
@@ -886,7 +889,8 @@ class TestClient(ClientRequestsMixin, ServerRequestsMixin):
 
     test_client = names["TestClient"]()
     assert "send_test_client_request" in dir(test_client)
-    assert "send_test_server_request" not in dir(test_client) # server requests should not generate methods in the client.
+    # server requests should not generate methods in the client.
+    assert "send_test_server_request" not in dir(test_client)
     assert "send_test_bidirectional_request" in dir(test_client)
 
     res1 = await test_client.send_test_client_request("Hello1")
@@ -900,13 +904,14 @@ class TestClient(ClientRequestsMixin, ServerRequestsMixin):
     assert test_client.sentinel == "send_notification Hello2"
 
     response = ""
+
     def mock_send_result(v: JSON_VALUE) -> None:
         nonlocal response
         response = v
 
     test_client.dispatch_server_message("test/serverRequest", "Bye1", mock_send_result)
     assert response == "on_test_server_request Bye1"
-    test_client.dispatch_server_message("test/bidirectionalRequest", "Bye2",mock_send_result)
+    test_client.dispatch_server_message("test/bidirectionalRequest", "Bye2", mock_send_result)
     assert response == "on_test_bidirectional_request Bye2"
 
     response = "This should not change"

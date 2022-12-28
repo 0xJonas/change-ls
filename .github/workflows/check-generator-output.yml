@@ -16,7 +16,7 @@ jobs:
         python-version: "3.8"
 
     - name: Run Generator and Output into ./temp
-      run: python -m gen.main ./res/metaModel.json ./temp
+      run: python -m gen.main ./res/ ./temp
 
     - name: Compare Generated Files with ./lspscript/types/
       run: "for f in *; do cmp $f ../lspscript/types/$f || exit 1; done"

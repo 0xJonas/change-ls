@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 
 import gen.schema.types as t
+from gen.generate_capabilities import (generate_capabilities_py,
+                                       parse_capabilities)
 from gen.generate_client_requests import generate_client_requests_py
 from gen.generate_enumerations import generate_enumerations_py
 from gen.generate_structures import generate_structures_py
@@ -50,6 +52,8 @@ def generate_output_files(out_dir: Path) -> None:
         file.write(generate_structures_py(generator))
     with open(out_dir.joinpath("client_requests.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generate_client_requests_py(generator))
+    with open(out_dir.joinpath("capabilities.py"), "w", encoding="utf-8", newline="\n") as file:
+        file.write(generate_capabilities_py(generator, feature_infos))
     with open(out_dir.joinpath("__init__.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_init_py())
 
@@ -57,6 +61,8 @@ def generate_output_files(out_dir: Path) -> None:
 if __name__ == "__main__":
     args = parse_arguments()
 
-    generator = create_generator(args.input)
+    input_dir = Path(args.input)
+    generator = create_generator(input_dir/"metaModel.json")
+    feature_infos = parse_capabilities(Path(input_dir/"capabilities.json"))
 
     generate_output_files(Path(args.output))

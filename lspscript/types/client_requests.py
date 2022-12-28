@@ -20,7 +20,7 @@ class ClientRequestsMixin(ABC):
         """
         A request to resolve the implementation locations of a symbol at a given text
         document position. The request's parameter is of type [TextDocumentPositionParams]
-        (#TextDocumentPositionParams) the response is of type [Definition](#Definition) or a
+        (#TextDocumentPositionParams) the response is of type {@link Definition} or a
         Thenable that resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -33,7 +33,7 @@ class ClientRequestsMixin(ABC):
         """
         A request to resolve the type definition locations of a symbol at a given text
         document position. The request's parameter is of type [TextDocumentPositionParams]
-        (#TextDocumentPositionParams) the response is of type [Definition](#Definition) or a
+        (#TextDocumentPositionParams) the response is of type {@link Definition} or a
         Thenable that resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -45,8 +45,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_document_color(self, params: "DocumentColorParams", **kwargs: Any) -> List["ColorInformation"]:
         """
         A request to list all color symbols found in a given text document. The request's
-        parameter is of type [DocumentColorParams](#DocumentColorParams) the
-        response is of type [ColorInformation[]](#ColorInformation) or a Thenable
+        parameter is of type {@link DocumentColorParams} the
+        response is of type {@link ColorInformation ColorInformation[]} or a Thenable
         that resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -58,8 +58,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_color_presentation(self, params: "ColorPresentationParams", **kwargs: Any) -> List["ColorPresentation"]:
         """
         A request to list all presentation for a color. The request's
-        parameter is of type [ColorPresentationParams](#ColorPresentationParams) the
-        response is of type [ColorInformation[]](#ColorInformation) or a Thenable
+        parameter is of type {@link ColorPresentationParams} the
+        response is of type {@link ColorInformation ColorInformation[]} or a Thenable
         that resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -71,8 +71,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_folding_range(self, params: "FoldingRangeParams", **kwargs: Any) -> Union[List["FoldingRange"], None]:
         """
         A request to provide folding ranges in a document. The request's
-        parameter is of type [FoldingRangeParams](#FoldingRangeParams), the
-        response is of type [FoldingRangeList](#FoldingRangeList) or a Thenable
+        parameter is of type {@link FoldingRangeParams}, the
+        response is of type {@link FoldingRangeList} or a Thenable
         that resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -85,8 +85,8 @@ class ClientRequestsMixin(ABC):
         """
         A request to resolve the type definition locations of a symbol at a given text
         document position. The request's parameter is of type [TextDocumentPositionParams]
-        (#TextDocumentPositionParams) the response is of type [Declaration](#Declaration)
-        or a typed array of [DeclarationLink](#DeclarationLink) or a Thenable that resolves
+        (#TextDocumentPositionParams) the response is of type {@link Declaration}
+        or a typed array of {@link DeclarationLink} or a Thenable that resolves
         to such.
     
         *Generated from the TypeScript documentation*
@@ -98,8 +98,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_selection_range(self, params: "SelectionRangeParams", **kwargs: Any) -> Union[List["SelectionRange"], None]:
         """
         A request to provide selection ranges in a document. The request's
-        parameter is of type [SelectionRangeParams](#SelectionRangeParams), the
-        response is of type [SelectionRange[]](#SelectionRange[]) or a Thenable
+        parameter is of type {@link SelectionRangeParams}, the
+        response is of type {@link SelectionRange SelectionRange[]} or a Thenable
         that resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -229,8 +229,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_moniker(self, params: "MonikerParams", **kwargs: Any) -> Union[List["Moniker"], None]:
         """
         A request to get the moniker of a symbol at a given text document position.
-        The request parameter is of type [TextDocumentPositionParams](#TextDocumentPositionParams).
-        The response is of type [Moniker[]](#Moniker[]) or `null`.
+        The request parameter is of type {@link TextDocumentPositionParams}.
+        The response is of type {@link Moniker Moniker[]} or `null`.
     
         *Generated from the TypeScript documentation*
         """
@@ -278,8 +278,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_inline_value(self, params: "InlineValueParams", **kwargs: Any) -> Union[List["InlineValue"], None]:
         """
         A request to provide inline values in a document. The request's parameter is of
-        type [InlineValueParams](#InlineValueParams), the response is of type
-        [InlineValue[]](#InlineValue[]) or a Thenable that resolves to such.
+        type {@link InlineValueParams}, the response is of type
+        {@link InlineValue InlineValue[]} or a Thenable that resolves to such.
         
         @since 3.17.0
     
@@ -292,8 +292,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_inlay_hint(self, params: "InlayHintParams", **kwargs: Any) -> Union[List["InlayHint"], None]:
         """
         A request to provide inlay hints in a document. The request's parameter is of
-        type [InlayHintsParams](#InlayHintsParams), the response is of type
-        [InlayHint[]](#InlayHint[]) or a Thenable that resolves to such.
+        type {@link InlayHintsParams}, the response is of type
+        {@link InlayHint InlayHint[]} or a Thenable that resolves to such.
         
         @since 3.17.0
     
@@ -306,8 +306,8 @@ class ClientRequestsMixin(ABC):
     async def send_inlay_hint_resolve(self, params: "InlayHint", **kwargs: Any) -> "InlayHint":
         """
         A request to resolve additional properties for an inlay hint.
-        The request's parameter is of type [InlayHint](#InlayHint), the response is
-        of type [InlayHint](#InlayHint) or a Thenable that resolves to such.
+        The request's parameter is of type {@link InlayHint}, the response is
+        of type {@link InlayHint} or a Thenable that resolves to such.
         
         @since 3.17.0
     
@@ -345,8 +345,8 @@ class ClientRequestsMixin(ABC):
         """
         The initialize request is sent from the client to the server.
         It is sent once as the request after starting up the server.
-        The requests parameter is of type [InitializeParams](#InitializeParams)
-        the response if of type [InitializeResult](#InitializeResult) of a Thenable that
+        The requests parameter is of type {@link InitializeParams}
+        the response if of type {@link InitializeResult} of a Thenable that
         resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -385,12 +385,12 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_completion(self, params: "CompletionParams", **kwargs: Any) -> Union[List["CompletionItem"], "CompletionList", None]:
         """
         Request to request completion at a given text document position. The request's
-        parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
-        is of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)
+        parameter is of type {@link TextDocumentPosition} the response
+        is of type {@link CompletionItem CompletionItem[]} or {@link CompletionList}
         or a Thenable that resolves to such.
         
-        The request can delay the computation of the [`detail`](#CompletionItem.detail)
-        and [`documentation`](#CompletionItem.documentation) properties to the `completionItem/resolve`
+        The request can delay the computation of the {@link CompletionItem.detail `detail`}
+        and {@link CompletionItem.documentation `documentation`} properties to the `completionItem/resolve`
         request. However, properties that are needed for the initial sorting and filtering, like `sortText`,
         `filterText`, `insertText`, and `textEdit`, must not be changed during resolve.
     
@@ -403,8 +403,8 @@ class ClientRequestsMixin(ABC):
     async def send_completion_item_resolve(self, params: "CompletionItem", **kwargs: Any) -> "CompletionItem":
         """
         Request to resolve additional information for a given completion item.The request's
-        parameter is of type [CompletionItem](#CompletionItem) the response
-        is of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such.
+        parameter is of type {@link CompletionItem} the response
+        is of type {@link CompletionItem} or a Thenable that resolves to such.
     
         *Generated from the TypeScript documentation*
         """
@@ -415,8 +415,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_hover(self, params: "HoverParams", **kwargs: Any) -> Union["Hover", None]:
         """
         Request to request hover information at a given text document position. The request's
-        parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response is of
-        type [Hover](#Hover) or a Thenable that resolves to such.
+        parameter is of type {@link TextDocumentPosition} the response is of
+        type {@link Hover} or a Thenable that resolves to such.
     
         *Generated from the TypeScript documentation*
         """
@@ -438,8 +438,8 @@ class ClientRequestsMixin(ABC):
         """
         A request to resolve the definition location of a symbol at a given text
         document position. The request's parameter is of type [TextDocumentPosition]
-        (#TextDocumentPosition) the response is of either type [Definition](#Definition)
-        or a typed array of [DefinitionLink](#DefinitionLink) or a Thenable that resolves
+        (#TextDocumentPosition) the response is of either type {@link Definition}
+        or a typed array of {@link DefinitionLink} or a Thenable that resolves
         to such.
     
         *Generated from the TypeScript documentation*
@@ -452,8 +452,8 @@ class ClientRequestsMixin(ABC):
         """
         A request to resolve project-wide references for the symbol denoted
         by the given text document position. The request's parameter is of
-        type [ReferenceParams](#ReferenceParams) the response is of type
-        [Location[]](#Location) or a Thenable that resolves to such.
+        type {@link ReferenceParams} the response is of type
+        {@link Location Location[]} or a Thenable that resolves to such.
     
         *Generated from the TypeScript documentation*
         """
@@ -463,7 +463,7 @@ class ClientRequestsMixin(ABC):
     
     async def send_text_document_document_highlight(self, params: "DocumentHighlightParams", **kwargs: Any) -> Union[List["DocumentHighlight"], None]:
         """
-        Request to resolve a [DocumentHighlight](#DocumentHighlight) for a given
+        Request to resolve a {@link DocumentHighlight} for a given
         text document position. The request's parameter is of type [TextDocumentPosition]
         (#TextDocumentPosition) the request response is of type [DocumentHighlight[]]
         (#DocumentHighlight) or a Thenable that resolves to such.
@@ -477,8 +477,8 @@ class ClientRequestsMixin(ABC):
     async def send_text_document_document_symbol(self, params: "DocumentSymbolParams", **kwargs: Any) -> Union[List["SymbolInformation"], List["DocumentSymbol"], None]:
         """
         A request to list all symbols found in a given text document. The request's
-        parameter is of type [TextDocumentIdentifier](#TextDocumentIdentifier) the
-        response is of type [SymbolInformation[]](#SymbolInformation) or a Thenable
+        parameter is of type {@link TextDocumentIdentifier} the
+        response is of type {@link SymbolInformation SymbolInformation[]} or a Thenable
         that resolves to such.
     
         *Generated from the TypeScript documentation*
@@ -500,8 +500,8 @@ class ClientRequestsMixin(ABC):
     async def send_code_action_resolve(self, params: "CodeAction", **kwargs: Any) -> "CodeAction":
         """
         Request to resolve additional information for a given code action.The request's
-        parameter is of type [CodeAction](#CodeAction) the response
-        is of type [CodeAction](#CodeAction) or a Thenable that resolves to such.
+        parameter is of type {@link CodeAction} the response
+        is of type {@link CodeAction} or a Thenable that resolves to such.
     
         *Generated from the TypeScript documentation*
         """
@@ -512,8 +512,8 @@ class ClientRequestsMixin(ABC):
     async def send_workspace_symbol(self, params: "WorkspaceSymbolParams", **kwargs: Any) -> Union[List["SymbolInformation"], List["WorkspaceSymbol"], None]:
         """
         A request to list project-wide symbols matching the query string given
-        by the [WorkspaceSymbolParams](#WorkspaceSymbolParams). The response is
-        of type [SymbolInformation[]](#SymbolInformation) or a Thenable that
+        by the {@link WorkspaceSymbolParams}. The response is
+        of type {@link SymbolInformation SymbolInformation[]} or a Thenable that
         resolves to such.
         
         @since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients
@@ -572,8 +572,8 @@ class ClientRequestsMixin(ABC):
     async def send_document_link_resolve(self, params: "DocumentLink", **kwargs: Any) -> "DocumentLink":
         """
         Request to resolve additional information for a given document link. The request's
-        parameter is of type [DocumentLink](#DocumentLink) the response
-        is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
+        parameter is of type {@link DocumentLink} the response
+        is of type {@link DocumentLink} or a Thenable that resolves to such.
     
         *Generated from the TypeScript documentation*
         """
@@ -884,7 +884,7 @@ class ServerRequestsMixin(ABC):
         return NotImplemented
     
     @abstractmethod
-    def on_workspace_configuration(self, params: ConfigurationParamsAndPartialResultParams) -> List["LSPAny"]:
+    def on_workspace_configuration(self, params: "ConfigurationParams") -> List["LSPAny"]:
         """
         The 'workspace/configuration' request is sent from the server to the client to fetch a certain
         configuration setting.
@@ -1085,7 +1085,7 @@ class ServerRequestsMixin(ABC):
             result_json = write_or_type(result, (lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i: i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
             send_result(result_json)
         elif method == "workspace/configuration":
-            result = self.on_workspace_configuration(ConfigurationParamsAndPartialResultParams.from_json(json_assert_type_object(params)))
+            result = self.on_workspace_configuration(ConfigurationParams.from_json(json_assert_type_object(params)))
             result_json = [write_LSPAny(i) for i in result]
             send_result(result_json)
         elif method == "window/workDoneProgress/create":

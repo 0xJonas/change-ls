@@ -76,6 +76,7 @@ def test_parse_notification() -> None:
             "kind": "base",
             "name": "integer"
         },
+        "registrationMethod": "test/x",
         "since": "0.1.0"
     }
 
@@ -87,6 +88,7 @@ def test_parse_notification() -> None:
         AnyType("base", BaseType("string")),
         True,
         AnyType("base", BaseType("integer")),
+        "test/x",
         "0.1.0"
     )
 
@@ -95,7 +97,7 @@ def test_parse_notification() -> None:
         "messageDirection": "serverToClient"
     }
     res2 = Notification.from_json(test_json2)
-    assert res2 == Notification(None, "serverToClient", "test/test", None, None, None, None)
+    assert res2 == Notification(None, "serverToClient", "test/test", None, None, None, None, None)
 
     test_json3 = {
         "method": "test/test",
@@ -114,7 +116,7 @@ def test_parse_notification() -> None:
 
     res3 = Notification.from_json(test_json3)
     assert res3 == Notification(None, "both", "test/test", (AnyType("base", BaseType("string")),
-                                AnyType("base", BaseType("integer"))), None, None, None)
+                                AnyType("base", BaseType("integer"))), None, None, None, None)
 
 
 def test_parse_request() -> None:

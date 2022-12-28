@@ -376,8 +376,8 @@ def write_AnonymousStructure44(obj: Dict[AnonymousStructure44Keys, Any]) -> JSON
 
 
 # A document filter denotes a document by different properties like
-# the [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of
-# its resource, or a glob-pattern that is applied to the [path](#TextDocument.fileName).
+# the {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of
+# its resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.
 # 
 # Glob patterns can have the following syntax:
 # - `*` to match one or more characters in a path segment
@@ -1008,44 +1008,9 @@ class ConfigurationParams():
 
 
 @dataclass
-class PartialResultParams():
-    """
-
-
-    *Generated from the TypeScript documentation*
-    """
-
-    # An optional token that a server can use to report partial results (e.g. streaming) to
-    # the client.
-    partialResultToken: Optional["ProgressToken"]
-
-    def __init__(self, *, partialResultToken: Optional["ProgressToken"] = None) -> None:
-        """
-        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
-            the client.
-        """
-        self.partialResultToken = partialResultToken
-
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PartialResultParams":
-        check_properties(obj, ["partialResultToken"])
-        if partialResultToken_json := obj.get("partialResultToken"):
-            partialResultToken = parse_ProgressToken(partialResultToken_json)
-        else:
-            partialResultToken = None
-        return cls(partialResultToken=partialResultToken)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.partialResultToken is not None:
-            out["partialResultToken"] = write_ProgressToken(self.partialResultToken)
-        return out
-
-
-@dataclass
 class DocumentColorParams():
     """
-    Parameters for a [DocumentColorRequest](#DocumentColorRequest).
+    Parameters for a {@link DocumentColorRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -1269,7 +1234,7 @@ class DocumentColorRegistrationOptions(TextDocumentRegistrationOptions, Document
 @dataclass
 class ColorPresentationParams():
     """
-    Parameters for a [ColorPresentationRequest](#ColorPresentationRequest).
+    Parameters for a {@link ColorPresentationRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -1386,13 +1351,13 @@ class ColorPresentation():
     # this color presentation.
     label: str
     
-    # An [edit](#TextEdit) which is applied to a document when selecting
-    # this presentation for the color.  When `falsy` the [label](#ColorPresentation.label)
+    # An {@link TextEdit edit} which is applied to a document when selecting
+    # this presentation for the color.  When `falsy` the {@link ColorPresentation.label label}
     # is used.
     textEdit: Optional["TextEdit"]
     
-    # An optional array of additional [text edits](#TextEdit) that are applied when
-    # selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves.
+    # An optional array of additional {@link TextEdit text edits} that are applied when
+    # selecting this color presentation. Edits must not overlap with the main {@link ColorPresentation.textEdit edit} nor with themselves.
     additionalTextEdits: Optional[List["TextEdit"]]
 
     def __init__(self, *, label: str, textEdit: Optional["TextEdit"] = None, additionalTextEdits: Optional[List["TextEdit"]] = None) -> None:
@@ -1400,11 +1365,11 @@ class ColorPresentation():
         - label: The label of this color presentation. It will be shown on the color
             picker header. By default this is also the text that is inserted when selecting
             this color presentation.
-        - textEdit: An [edit](#TextEdit) which is applied to a document when selecting
-            this presentation for the color.  When `falsy` the [label](#ColorPresentation.label)
+        - textEdit: An {@link TextEdit edit} which is applied to a document when selecting
+            this presentation for the color.  When `falsy` the {@link ColorPresentation.label label}
             is used.
-        - additionalTextEdits: An optional array of additional [text edits](#TextEdit) that are applied when
-            selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves.
+        - additionalTextEdits: An optional array of additional {@link TextEdit text edits} that are applied when
+            selecting this color presentation. Edits must not overlap with the main {@link ColorPresentation.textEdit edit} nor with themselves.
         """
         self.label = label
         self.textEdit = textEdit
@@ -1469,7 +1434,7 @@ class WorkDoneProgressOptions():
 @dataclass
 class FoldingRangeParams():
     """
-    Parameters for a [FoldingRangeRequest](#FoldingRangeRequest).
+    Parameters for a {@link FoldingRangeRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -1544,7 +1509,7 @@ class FoldingRange():
     
     # Describes the kind of the folding range such as `comment' or 'region'. The kind
     # is used to categorize folding ranges and used by commands like 'Fold all comments'.
-    # See [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
+    # See {@link FoldingRangeKind} for an enumeration of standardized kinds.
     kind: Optional["FoldingRangeKind"]
     
     # The text that the client should show when the specified range is
@@ -1564,7 +1529,7 @@ class FoldingRange():
         - endCharacter: The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
         - kind: Describes the kind of the folding range such as `comment' or 'region'. The kind
             is used to categorize folding ranges and used by commands like 'Fold all comments'.
-            See [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
+            See {@link FoldingRangeKind} for an enumeration of standardized kinds.
         - collapsedText: The text that the client should show when the specified range is
             collapsed. If not defined or not supported by the client, a default
             will be chosen by the client.
@@ -1915,7 +1880,7 @@ class SelectionRange():
     *Generated from the TypeScript documentation*
     """
 
-    # The [range](#Range) of this selection range.
+    # The {@link Range range} of this selection range.
     range: "Range"
     
     # The parent selection range containing this range. Therefore `parent.range` must contain `this.range`.
@@ -1923,7 +1888,7 @@ class SelectionRange():
 
     def __init__(self, *, range: "Range", parent: Optional["SelectionRange"] = None) -> None:
         """
-        - range: The [range](#Range) of this selection range.
+        - range: The {@link Range range} of this selection range.
         - parent: The parent selection range containing this range. Therefore `parent.range` must contain `this.range`.
         """
         self.range = range
@@ -2206,7 +2171,7 @@ class CallHierarchyItem():
     range: "Range"
     
     # The range that should be selected and revealed when this symbol is being picked, e.g. the name of a function.
-    # Must be contained by the [`range`](#CallHierarchyItem.range).
+    # Must be contained by the {@link CallHierarchyItem.range `range`}.
     selectionRange: "Range"
     
     # A data entry field that is preserved between a call hierarchy prepare and
@@ -2222,7 +2187,7 @@ class CallHierarchyItem():
         - uri: The resource identifier of this item.
         - range: The range enclosing this symbol not including leading/trailing whitespace but everything else, e.g. comments and code.
         - selectionRange: The range that should be selected and revealed when this symbol is being picked, e.g. the name of a function.
-            Must be contained by the [`range`](#CallHierarchyItem.range).
+            Must be contained by the {@link CallHierarchyItem.range `range`}.
         - data: A data entry field that is preserved between a call hierarchy prepare and
             incoming calls or outgoing calls requests.
         """
@@ -2429,14 +2394,14 @@ class CallHierarchyIncomingCall():
     from_: "CallHierarchyItem"
     
     # The ranges at which the calls appear. This is relative to the caller
-    # denoted by [`this.from`](#CallHierarchyIncomingCall.from).
+    # denoted by {@link CallHierarchyIncomingCall.from `this.from`}.
     fromRanges: List["Range"]
 
     def __init__(self, *, from_: "CallHierarchyItem", fromRanges: List["Range"]) -> None:
         """
         - from: The item that makes the call.
         - fromRanges: The ranges at which the calls appear. This is relative to the caller
-            denoted by [`this.from`](#CallHierarchyIncomingCall.from).
+            denoted by {@link CallHierarchyIncomingCall.from `this.from`}.
         """
         self.from_ = from_
         self.fromRanges = fromRanges
@@ -2522,16 +2487,16 @@ class CallHierarchyOutgoingCall():
     to: "CallHierarchyItem"
     
     # The range at which this item is called. This is the range relative to the caller, e.g the item
-    # passed to [`provideCallHierarchyOutgoingCalls`](#CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls)
-    # and not [`this.to`](#CallHierarchyOutgoingCall.to).
+    # passed to {@link CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls `provideCallHierarchyOutgoingCalls`}
+    # and not {@link CallHierarchyOutgoingCall.to `this.to`}.
     fromRanges: List["Range"]
 
     def __init__(self, *, to: "CallHierarchyItem", fromRanges: List["Range"]) -> None:
         """
         - to: The item that is called.
         - fromRanges: The range at which this item is called. This is the range relative to the caller, e.g the item
-            passed to [`provideCallHierarchyOutgoingCalls`](#CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls)
-            and not [`this.to`](#CallHierarchyOutgoingCall.to).
+            passed to {@link CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls `provideCallHierarchyOutgoingCalls`}
+            and not {@link CallHierarchyOutgoingCall.to `this.to`}.
         """
         self.to = to
         self.fromRanges = fromRanges
@@ -4730,7 +4695,7 @@ class TypeHierarchyItem():
     
     # The range that should be selected and revealed when this symbol is being
     # picked, e.g. the name of a function. Must be contained by the
-    # [`range`](#TypeHierarchyItem.range).
+    # {@link TypeHierarchyItem.range `range`}.
     selectionRange: "Range"
     
     # A data entry field that is preserved between a type hierarchy prepare and
@@ -4750,7 +4715,7 @@ class TypeHierarchyItem():
             but everything else, e.g. comments and code.
         - selectionRange: The range that should be selected and revealed when this symbol is being
             picked, e.g. the name of a function. Must be contained by the
-            [`range`](#TypeHierarchyItem.range).
+            {@link TypeHierarchyItem.range `range`}.
         - data: A data entry field that is preserved between a type hierarchy prepare and
             supertypes or subtypes requests. It could also be used to identify the
             type hierarchy in the server, helping improve the performance on
@@ -7756,7 +7721,7 @@ def write_AnonymousStructure20(obj: Dict[AnonymousStructure20Keys, Any]) -> JSON
 @dataclass
 class WorkspaceSymbolClientCapabilities():
     """
-    Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+    Client capabilities for a {@link WorkspaceSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -7836,7 +7801,7 @@ class WorkspaceSymbolClientCapabilities():
 @dataclass
 class ExecuteCommandClientCapabilities():
     """
-    The client capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+    The client capabilities of a {@link ExecuteCommandRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -8836,7 +8801,7 @@ def write_AnonymousStructure28(obj: Dict[AnonymousStructure28Keys, Any]) -> JSON
 @dataclass
 class SignatureHelpClientCapabilities():
     """
-    Client Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+    Client Capabilities for a {@link SignatureHelpRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -8951,7 +8916,7 @@ class DeclarationClientCapabilities():
 @dataclass
 class DefinitionClientCapabilities():
     """
-    Client Capabilities for a [DefinitionRequest](#DefinitionRequest).
+    Client Capabilities for a {@link DefinitionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9103,7 +9068,7 @@ class ImplementationClientCapabilities():
 @dataclass
 class ReferenceClientCapabilities():
     """
-    Client Capabilities for a [ReferencesRequest](#ReferencesRequest).
+    Client Capabilities for a {@link ReferencesRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9136,7 +9101,7 @@ class ReferenceClientCapabilities():
 @dataclass
 class DocumentHighlightClientCapabilities():
     """
-    Client Capabilities for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+    Client Capabilities for a {@link DocumentHighlightRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9169,7 +9134,7 @@ class DocumentHighlightClientCapabilities():
 @dataclass
 class DocumentSymbolClientCapabilities():
     """
-    Client Capabilities for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+    Client Capabilities for a {@link DocumentSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9288,7 +9253,7 @@ def write_AnonymousStructure30(obj: Dict[AnonymousStructure30Keys, Any]) -> JSON
 @dataclass
 class CodeActionClientCapabilities():
     """
-    The Client Capabilities of a [CodeActionRequest](#CodeActionRequest).
+    The Client Capabilities of a {@link CodeActionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9429,7 +9394,7 @@ class CodeActionClientCapabilities():
 @dataclass
 class CodeLensClientCapabilities():
     """
-    The client capabilities  of a [CodeLensRequest](#CodeLensRequest).
+    The client capabilities  of a {@link CodeLensRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9462,7 +9427,7 @@ class CodeLensClientCapabilities():
 @dataclass
 class DocumentLinkClientCapabilities():
     """
-    The client capabilities of a [DocumentLinkRequest](#DocumentLinkRequest).
+    The client capabilities of a {@link DocumentLinkRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9547,7 +9512,7 @@ class DocumentColorClientCapabilities():
 @dataclass
 class DocumentFormattingClientCapabilities():
     """
-    Client capabilities of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+    Client capabilities of a {@link DocumentFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9580,7 +9545,7 @@ class DocumentFormattingClientCapabilities():
 @dataclass
 class DocumentRangeFormattingClientCapabilities():
     """
-    Client capabilities of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+    Client capabilities of a {@link DocumentRangeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -9613,7 +9578,7 @@ class DocumentRangeFormattingClientCapabilities():
 @dataclass
 class DocumentOnTypeFormattingClientCapabilities():
     """
-    Client capabilities of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+    Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -11541,9 +11506,9 @@ class _InitializeParams():
     initializationOptions: Optional["LSPAny"]
     
     # The initial trace setting. If omitted trace is disabled ('off').
-    trace: Optional[Union[str, str, str, str]]
+    trace: Optional["TraceValues"]
 
-    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, processId: Union[int, None], clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]] = None, locale: Optional[str] = None, rootPath: Optional[Union[str, None]] = None, rootUri: Union[str, None], capabilities: "ClientCapabilities", initializationOptions: Optional["LSPAny"] = None, trace: Optional[Union[str, str, str, str]] = None) -> None:
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, processId: Union[int, None], clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]] = None, locale: Optional[str] = None, rootPath: Optional[Union[str, None]] = None, rootUri: Union[str, None], capabilities: "ClientCapabilities", initializationOptions: Optional["LSPAny"] = None, trace: Optional["TraceValues"] = None) -> None:
         """
         - workDoneToken: An optional token that a server can use to report work done progress.
         - processId: The process Id of the parent process that started
@@ -11611,8 +11576,8 @@ class _InitializeParams():
             initializationOptions = parse_LSPAny(initializationOptions_json)
         else:
             initializationOptions = None
-        if trace_json := obj.get("trace"):
-            trace = parse_or_type(trace_json, (lambda v: match_string(json_assert_type_string(v), "off"), lambda v: match_string(json_assert_type_string(v), "messages"), lambda v: match_string(json_assert_type_string(v), "compact"), lambda v: match_string(json_assert_type_string(v), "verbose")))
+        if trace_json := json_get_optional_string(obj, "trace"):
+            trace = TraceValues(trace_json)
         else:
             trace = None
         return cls(workDoneToken=workDoneToken, processId=processId, clientInfo=clientInfo, locale=locale, rootPath=rootPath, rootUri=rootUri, capabilities=capabilities, initializationOptions=initializationOptions, trace=trace)
@@ -11633,7 +11598,7 @@ class _InitializeParams():
         if self.initializationOptions is not None:
             out["initializationOptions"] = write_LSPAny(self.initializationOptions)
         if self.trace is not None:
-            out["trace"] = write_or_type(self.trace, (lambda i: i == "off", lambda i: i == "messages", lambda i: i == "compact", lambda i: i == "verbose"), (lambda i: "off", lambda i: "messages", lambda i: "compact", lambda i: "verbose"))
+            out["trace"] = self.trace.value
         return out
 
 
@@ -11735,7 +11700,7 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
     initializationOptions: Optional["LSPAny"]
     
     # The initial trace setting. If omitted trace is disabled ('off').
-    trace: Optional[Union[str, str, str, str]]
+    trace: Optional["TraceValues"]
     
     # The workspace folders configured in the client when the server starts.
     # 
@@ -11746,7 +11711,7 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
     # @since 3.6.0
     workspaceFolders: Optional[Union[List["WorkspaceFolder"], None]]
 
-    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, processId: Union[int, None], clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]] = None, locale: Optional[str] = None, rootPath: Optional[Union[str, None]] = None, rootUri: Union[str, None], capabilities: "ClientCapabilities", initializationOptions: Optional["LSPAny"] = None, trace: Optional[Union[str, str, str, str]] = None, workspaceFolders: Optional[Union[List["WorkspaceFolder"], None]] = None) -> None:
+    def __init__(self, *, workDoneToken: Optional["ProgressToken"] = None, processId: Union[int, None], clientInfo: Optional[Dict[AnonymousStructure10Keys, Any]] = None, locale: Optional[str] = None, rootPath: Optional[Union[str, None]] = None, rootUri: Union[str, None], capabilities: "ClientCapabilities", initializationOptions: Optional["LSPAny"] = None, trace: Optional["TraceValues"] = None, workspaceFolders: Optional[Union[List["WorkspaceFolder"], None]] = None) -> None:
         """
         - workDoneToken: An optional token that a server can use to report work done progress.
         - processId: The process Id of the parent process that started
@@ -11822,8 +11787,8 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
             initializationOptions = parse_LSPAny(initializationOptions_json)
         else:
             initializationOptions = None
-        if trace_json := obj.get("trace"):
-            trace = parse_or_type(trace_json, (lambda v: match_string(json_assert_type_string(v), "off"), lambda v: match_string(json_assert_type_string(v), "messages"), lambda v: match_string(json_assert_type_string(v), "compact"), lambda v: match_string(json_assert_type_string(v), "verbose")))
+        if trace_json := json_get_optional_string(obj, "trace"):
+            trace = TraceValues(trace_json)
         else:
             trace = None
         if workspaceFolders_json := obj.get("workspaceFolders"):
@@ -11848,7 +11813,7 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
         if self.initializationOptions is not None:
             out["initializationOptions"] = write_LSPAny(self.initializationOptions)
         if self.trace is not None:
-            out["trace"] = write_or_type(self.trace, (lambda i: i == "off", lambda i: i == "messages", lambda i: i == "compact", lambda i: i == "verbose"), (lambda i: "off", lambda i: "messages", lambda i: "compact", lambda i: "verbose"))
+            out["trace"] = self.trace.value
         if self.workspaceFolders is not None:
             out["workspaceFolders"] = write_or_type(self.workspaceFolders, (lambda i: isinstance(i, List) and (len(i) == 0 or (isinstance(i[0], WorkspaceFolder))), lambda i: i is None), (lambda i: [i.to_json() for i in i], lambda i: i))
         return out
@@ -12299,7 +12264,7 @@ class HoverOptions():
 @dataclass
 class SignatureHelpOptions():
     """
-    Server Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+    Server Capabilities for a {@link SignatureHelpRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12362,7 +12327,7 @@ class SignatureHelpOptions():
 @dataclass
 class DefinitionOptions():
     """
-    Server Capabilities for a [DefinitionRequest](#DefinitionRequest).
+    Server Capabilities for a {@link DefinitionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12426,7 +12391,7 @@ class ReferenceOptions():
 @dataclass
 class DocumentHighlightOptions():
     """
-    Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+    Provider options for a {@link DocumentHighlightRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12458,7 +12423,7 @@ class DocumentHighlightOptions():
 @dataclass
 class DocumentSymbolOptions():
     """
-    Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+    Provider options for a {@link DocumentSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12506,7 +12471,7 @@ class DocumentSymbolOptions():
 @dataclass
 class CodeActionOptions():
     """
-    Provider options for a [CodeActionRequest](#CodeActionRequest).
+    Provider options for a {@link CodeActionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12571,7 +12536,7 @@ class CodeActionOptions():
 @dataclass
 class CodeLensOptions():
     """
-    Code Lens provider options of a [CodeLensRequest](#CodeLensRequest).
+    Code Lens provider options of a {@link CodeLensRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12613,7 +12578,7 @@ class CodeLensOptions():
 @dataclass
 class DocumentLinkOptions():
     """
-    Provider options for a [DocumentLinkRequest](#DocumentLinkRequest).
+    Provider options for a {@link DocumentLinkRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12655,7 +12620,7 @@ class DocumentLinkOptions():
 @dataclass
 class WorkspaceSymbolOptions():
     """
-    Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+    Server capabilities for a {@link WorkspaceSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12703,7 +12668,7 @@ class WorkspaceSymbolOptions():
 @dataclass
 class DocumentFormattingOptions():
     """
-    Provider options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+    Provider options for a {@link DocumentFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12735,7 +12700,7 @@ class DocumentFormattingOptions():
 @dataclass
 class DocumentRangeFormattingOptions():
     """
-    Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+    Provider options for a {@link DocumentRangeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12767,7 +12732,7 @@ class DocumentRangeFormattingOptions():
 @dataclass
 class DocumentOnTypeFormattingOptions():
     """
-    Provider options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+    Provider options for a {@link DocumentOnTypeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12807,7 +12772,7 @@ class DocumentOnTypeFormattingOptions():
 @dataclass
 class RenameOptions():
     """
-    Provider options for a [RenameRequest](#RenameRequest).
+    Provider options for a {@link RenameRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -12853,7 +12818,7 @@ class RenameOptions():
 @dataclass
 class ExecuteCommandOptions():
     """
-    The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+    The server capabilities of a {@link ExecuteCommandRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -14663,17 +14628,17 @@ class CompletionItem():
     preselect: Optional[bool]
     
     # A string that should be used when comparing this item
-    # with other items. When `falsy` the [label](#CompletionItem.label)
+    # with other items. When `falsy` the {@link CompletionItem.label label}
     # is used.
     sortText: Optional[str]
     
     # A string that should be used when filtering a set of
-    # completion items. When `falsy` the [label](#CompletionItem.label)
+    # completion items. When `falsy` the {@link CompletionItem.label label}
     # is used.
     filterText: Optional[str]
     
     # A string that should be inserted into a document when selecting
-    # this completion. When `falsy` the [label](#CompletionItem.label)
+    # this completion. When `falsy` the {@link CompletionItem.label label}
     # is used.
     # 
     # The `insertText` is subject to interpretation by the client side.
@@ -14700,9 +14665,9 @@ class CompletionItem():
     # @since 3.16.0
     insertTextMode: Optional["InsertTextMode"]
     
-    # An [edit](#TextEdit) which is applied to a document when selecting
+    # An {@link TextEdit edit} which is applied to a document when selecting
     # this completion. When an edit is provided the value of
-    # [insertText](#CompletionItem.insertText) is ignored.
+    # {@link CompletionItem.insertText insertText} is ignored.
     # 
     # Most editors support two different operations when accepting a completion
     # item. One is to insert a completion text and the other is to replace an
@@ -14734,9 +14699,9 @@ class CompletionItem():
     # @since 3.17.0
     textEditText: Optional[str]
     
-    # An optional array of additional [text edits](#TextEdit) that are applied when
+    # An optional array of additional {@link TextEdit text edits} that are applied when
     # selecting this completion. Edits must not overlap (including the same insert position)
-    # with the main [edit](#CompletionItem.textEdit) nor with themselves.
+    # with the main {@link CompletionItem.textEdit edit} nor with themselves.
     # 
     # Additional text edits should be used to change text unrelated to the current cursor position
     # (for example adding an import statement at the top of the file if the completion item will
@@ -14748,13 +14713,13 @@ class CompletionItem():
     # characters will be ignored.
     commitCharacters: Optional[List[str]]
     
-    # An optional [command](#Command) that is executed *after* inserting this completion. *Note* that
+    # An optional {@link Command command} that is executed *after* inserting this completion. *Note* that
     # additional modifications to the current document should be described with the
-    # [additionalTextEdits](#CompletionItem.additionalTextEdits)-property.
+    # {@link CompletionItem.additionalTextEdits additionalTextEdits}-property.
     command: Optional["Command"]
     
     # A data entry field that is preserved on a completion item between a
-    # [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
+    # {@link CompletionRequest} and a {@link CompletionResolveRequest}.
     data: Optional["LSPAny"]
 
     def __init__(self, *, label: str, labelDetails: Optional["CompletionItemLabelDetails"] = None, kind: Optional["CompletionItemKind"] = None, tags: Optional[List["CompletionItemTag"]] = None, detail: Optional[str] = None, documentation: Optional[Union[str, "MarkupContent"]] = None, deprecated: Optional[bool] = None, preselect: Optional[bool] = None, sortText: Optional[str] = None, filterText: Optional[str] = None, insertText: Optional[str] = None, insertTextFormat: Optional["InsertTextFormat"] = None, insertTextMode: Optional["InsertTextMode"] = None, textEdit: Optional[Union["TextEdit", "InsertReplaceEdit"]] = None, textEditText: Optional[str] = None, additionalTextEdits: Optional[List["TextEdit"]] = None, commitCharacters: Optional[List[str]] = None, command: Optional["Command"] = None, data: Optional["LSPAny"] = None) -> None:
@@ -14785,13 +14750,13 @@ class CompletionItem():
             tool / client decides which item that is. The rule is that the *first*
             item of those that match best is selected.
         - sortText: A string that should be used when comparing this item
-            with other items. When `falsy` the [label](#CompletionItem.label)
+            with other items. When `falsy` the {@link CompletionItem.label label}
             is used.
         - filterText: A string that should be used when filtering a set of
-            completion items. When `falsy` the [label](#CompletionItem.label)
+            completion items. When `falsy` the {@link CompletionItem.label label}
             is used.
         - insertText: A string that should be inserted into a document when selecting
-            this completion. When `falsy` the [label](#CompletionItem.label)
+            this completion. When `falsy` the {@link CompletionItem.label label}
             is used.
             
             The `insertText` is subject to interpretation by the client side.
@@ -14812,9 +14777,9 @@ class CompletionItem():
             the `textDocument.completion.insertTextMode` client capability.
             
             @since 3.16.0
-        - textEdit: An [edit](#TextEdit) which is applied to a document when selecting
+        - textEdit: An {@link TextEdit edit} which is applied to a document when selecting
             this completion. When an edit is provided the value of
-            [insertText](#CompletionItem.insertText) is ignored.
+            {@link CompletionItem.insertText insertText} is ignored.
             
             Most editors support two different operations when accepting a completion
             item. One is to insert a completion text and the other is to replace an
@@ -14842,9 +14807,9 @@ class CompletionItem():
             property is used as a text.
             
             @since 3.17.0
-        - additionalTextEdits: An optional array of additional [text edits](#TextEdit) that are applied when
+        - additionalTextEdits: An optional array of additional {@link TextEdit text edits} that are applied when
             selecting this completion. Edits must not overlap (including the same insert position)
-            with the main [edit](#CompletionItem.textEdit) nor with themselves.
+            with the main {@link CompletionItem.textEdit edit} nor with themselves.
             
             Additional text edits should be used to change text unrelated to the current cursor position
             (for example adding an import statement at the top of the file if the completion item will
@@ -14852,11 +14817,11 @@ class CompletionItem():
         - commitCharacters: An optional set of characters that when pressed while this completion is active will accept it first and
             then type that character. *Note* that all commit characters should have `length=1` and that superfluous
             characters will be ignored.
-        - command: An optional [command](#Command) that is executed *after* inserting this completion. *Note* that
+        - command: An optional {@link Command command} that is executed *after* inserting this completion. *Note* that
             additional modifications to the current document should be described with the
-            [additionalTextEdits](#CompletionItem.additionalTextEdits)-property.
+            {@link CompletionItem.additionalTextEdits additionalTextEdits}-property.
         - data: A data entry field that is preserved on a completion item between a
-            [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
+            {@link CompletionRequest} and a {@link CompletionResolveRequest}.
         """
         self.label = label
         self.labelDetails = labelDetails
@@ -15057,7 +15022,7 @@ def write_AnonymousStructure2(obj: Dict[AnonymousStructure2Keys, Any]) -> JSON_V
 @dataclass
 class CompletionList():
     """
-    Represents a collection of [completion items](#CompletionItem) to be presented
+    Represents a collection of {@link CompletionItem completion items} to be presented
     in the editor.
 
     *Generated from the TypeScript documentation*
@@ -15135,7 +15100,7 @@ class CompletionList():
 @dataclass
 class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionOptions):
     """
-    Registration options for a [CompletionRequest](#CompletionRequest).
+    Registration options for a {@link CompletionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -15255,7 +15220,7 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
 @dataclass
 class HoverParams(TextDocumentPositionParams):
     """
-    Parameters for a [HoverRequest](#HoverRequest).
+    Parameters for a {@link HoverRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -15380,7 +15345,7 @@ class Hover():
 @dataclass
 class HoverRegistrationOptions(TextDocumentRegistrationOptions, HoverOptions):
     """
-    Registration options for a [HoverRequest](#HoverRequest).
+    Registration options for a {@link HoverRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -15710,7 +15675,7 @@ class SignatureHelpContext():
 @dataclass
 class SignatureHelpParams(TextDocumentPositionParams):
     """
-    Parameters for a [SignatureHelpRequest](#SignatureHelpRequest).
+    Parameters for a {@link SignatureHelpRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -15774,7 +15739,7 @@ class SignatureHelpParams(TextDocumentPositionParams):
 @dataclass
 class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, SignatureHelpOptions):
     """
-    Registration options for a [SignatureHelpRequest](#SignatureHelpRequest).
+    Registration options for a {@link SignatureHelpRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -15846,7 +15811,7 @@ class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, Signatur
 @dataclass
 class DefinitionParams(TextDocumentPositionParams):
     """
-    Parameters for a [DefinitionRequest](#DefinitionRequest).
+    Parameters for a {@link DefinitionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -15906,7 +15871,7 @@ class DefinitionParams(TextDocumentPositionParams):
 @dataclass
 class DefinitionRegistrationOptions(TextDocumentRegistrationOptions, DefinitionOptions):
     """
-    Registration options for a [DefinitionRequest](#DefinitionRequest).
+    Registration options for a {@link DefinitionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -15976,7 +15941,7 @@ class ReferenceContext():
 @dataclass
 class ReferenceParams(TextDocumentPositionParams):
     """
-    Parameters for a [ReferencesRequest](#ReferencesRequest).
+    Parameters for a {@link ReferencesRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -16041,7 +16006,7 @@ class ReferenceParams(TextDocumentPositionParams):
 @dataclass
 class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOptions):
     """
-    Registration options for a [ReferencesRequest](#ReferencesRequest).
+    Registration options for a {@link ReferencesRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -16081,7 +16046,7 @@ class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOpt
 @dataclass
 class DocumentHighlightParams(TextDocumentPositionParams):
     """
-    Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+    Parameters for a {@link DocumentHighlightRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -16151,13 +16116,13 @@ class DocumentHighlight():
     # The range this highlight applies to.
     range: "Range"
     
-    # The highlight kind, default is [text](#DocumentHighlightKind.Text).
+    # The highlight kind, default is {@link DocumentHighlightKind.Text text}.
     kind: Optional["DocumentHighlightKind"]
 
     def __init__(self, *, range: "Range", kind: Optional["DocumentHighlightKind"] = None) -> None:
         """
         - range: The range this highlight applies to.
-        - kind: The highlight kind, default is [text](#DocumentHighlightKind.Text).
+        - kind: The highlight kind, default is {@link DocumentHighlightKind.Text text}.
         """
         self.range = range
         self.kind = kind
@@ -16183,7 +16148,7 @@ class DocumentHighlight():
 @dataclass
 class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, DocumentHighlightOptions):
     """
-    Registration options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+    Registration options for a {@link DocumentHighlightRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -16223,7 +16188,7 @@ class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, Docu
 @dataclass
 class DocumentSymbolParams():
     """
-    Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+    Parameters for a {@link DocumentSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -16564,7 +16529,7 @@ class DocumentSymbol():
 @dataclass
 class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, DocumentSymbolOptions):
     """
-    Registration options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+    Registration options for a {@link DocumentSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -16622,7 +16587,7 @@ class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, Documen
 class CodeActionContext():
     """
     Contains additional diagnostic information about the context in which
-    a [code action](#CodeActionProvider.provideCodeActions) is run.
+    a {@link CodeActionProvider.provideCodeActions code action} is run.
 
     *Generated from the TypeScript documentation*
     """
@@ -16691,7 +16656,7 @@ class CodeActionContext():
 @dataclass
 class CodeActionParams():
     """
-    The parameters of a [CodeActionRequest](#CodeActionRequest).
+    The parameters of a {@link CodeActionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -16934,7 +16899,7 @@ class CodeAction():
 @dataclass
 class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionOptions):
     """
-    Registration options for a [CodeActionRequest](#CodeActionRequest).
+    Registration options for a {@link CodeActionRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17008,7 +16973,7 @@ class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionO
 @dataclass
 class WorkspaceSymbolParams():
     """
-    The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+    The parameters of a {@link WorkspaceSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17176,7 +17141,7 @@ class WorkspaceSymbol(BaseSymbolInformation):
 @dataclass
 class WorkspaceSymbolRegistrationOptions(WorkspaceSymbolOptions):
     """
-    Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+    Registration options for a {@link WorkspaceSymbolRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17224,7 +17189,7 @@ class WorkspaceSymbolRegistrationOptions(WorkspaceSymbolOptions):
 @dataclass
 class CodeLensParams():
     """
-    The parameters of a [CodeLensRequest](#CodeLensRequest).
+    The parameters of a {@link CodeLensRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17277,7 +17242,7 @@ class CodeLensParams():
 @dataclass
 class CodeLens():
     """
-    A code lens represents a [command](#Command) that should be shown along with
+    A code lens represents a {@link Command command} that should be shown along with
     source text, like the number of references, a way to run tests, etc.
     
     A code lens is _unresolved_ when no command is associated to it. For performance
@@ -17293,7 +17258,7 @@ class CodeLens():
     command: Optional["Command"]
     
     # A data entry field that is preserved on a code lens item between
-    # a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
+    # a {@link CodeLensRequest} and a [CodeLensResolveRequest]
     # (#CodeLensResolveRequest)
     data: Optional["LSPAny"]
 
@@ -17302,7 +17267,7 @@ class CodeLens():
         - range: The range in which this code lens is valid. Should only span a single line.
         - command: The command this code lens represents.
         - data: A data entry field that is preserved on a code lens item between
-            a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
+            a {@link CodeLensRequest} and a [CodeLensResolveRequest]
             (#CodeLensResolveRequest)
         """
         self.range = range
@@ -17336,7 +17301,7 @@ class CodeLens():
 @dataclass
 class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptions):
     """
-    Registration options for a [CodeLensRequest](#CodeLensRequest).
+    Registration options for a {@link CodeLensRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17387,7 +17352,7 @@ class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptio
 @dataclass
 class DocumentLinkParams():
     """
-    The parameters of a [DocumentLinkRequest](#DocumentLinkRequest).
+    The parameters of a {@link DocumentLinkRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17517,7 +17482,7 @@ class DocumentLink():
 @dataclass
 class DocumentLinkRegistrationOptions(TextDocumentRegistrationOptions, DocumentLinkOptions):
     """
-    Registration options for a [DocumentLinkRequest](#DocumentLinkRequest).
+    Registration options for a {@link DocumentLinkRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17649,7 +17614,7 @@ class FormattingOptions():
 @dataclass
 class DocumentFormattingParams():
     """
-    The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+    The parameters of a {@link DocumentFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17696,7 +17661,7 @@ class DocumentFormattingParams():
 @dataclass
 class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, DocumentFormattingOptions):
     """
-    Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+    Registration options for a {@link DocumentFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17736,7 +17701,7 @@ class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, Doc
 @dataclass
 class DocumentRangeFormattingParams():
     """
-    The parameters of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+    The parameters of a {@link DocumentRangeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17790,7 +17755,7 @@ class DocumentRangeFormattingParams():
 @dataclass
 class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions, DocumentRangeFormattingOptions):
     """
-    Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+    Registration options for a {@link DocumentRangeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17830,7 +17795,7 @@ class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions
 @dataclass
 class DocumentOnTypeFormattingParams():
     """
-    The parameters of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+    The parameters of a {@link DocumentOnTypeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17890,7 +17855,7 @@ class DocumentOnTypeFormattingParams():
 @dataclass
 class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOptions, DocumentOnTypeFormattingOptions):
     """
-    Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+    Registration options for a {@link DocumentOnTypeFormattingRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17939,7 +17904,7 @@ class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOption
 @dataclass
 class RenameParams():
     """
-    The parameters of a [RenameRequest](#RenameRequest).
+    The parameters of a {@link RenameRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -17954,7 +17919,7 @@ class RenameParams():
     position: "Position"
     
     # The new name of the symbol. If the given name is not valid the
-    # request must return a [ResponseError](#ResponseError) with an
+    # request must return a {@link ResponseError} with an
     # appropriate message set.
     newName: str
 
@@ -17964,7 +17929,7 @@ class RenameParams():
         - textDocument: The document to rename.
         - position: The position at which this request was sent.
         - newName: The new name of the symbol. If the given name is not valid the
-            request must return a [ResponseError](#ResponseError) with an
+            request must return a {@link ResponseError} with an
             appropriate message set.
         """
         self.workDoneToken = workDoneToken
@@ -17997,7 +17962,7 @@ class RenameParams():
 @dataclass
 class RenameRegistrationOptions(TextDocumentRegistrationOptions, RenameOptions):
     """
-    Registration options for a [RenameRequest](#RenameRequest).
+    Registration options for a {@link RenameRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -18099,7 +18064,7 @@ class PrepareRenameParams(TextDocumentPositionParams):
 @dataclass
 class ExecuteCommandParams():
     """
-    The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+    The parameters of a {@link ExecuteCommandRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -18150,7 +18115,7 @@ class ExecuteCommandParams():
 @dataclass
 class ExecuteCommandRegistrationOptions(ExecuteCommandOptions):
     """
-    Registration options for a [ExecuteCommandRequest](#ExecuteCommandRequest).
+    Registration options for a {@link ExecuteCommandRequest}.
 
     *Generated from the TypeScript documentation*
     """
@@ -18673,9 +18638,44 @@ class WorkDoneProgressParams():
 
 
 @dataclass
+class PartialResultParams():
+    """
+
+
+    *Generated from the TypeScript documentation*
+    """
+
+    # An optional token that a server can use to report partial results (e.g. streaming) to
+    # the client.
+    partialResultToken: Optional["ProgressToken"]
+
+    def __init__(self, *, partialResultToken: Optional["ProgressToken"] = None) -> None:
+        """
+        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
+            the client.
+        """
+        self.partialResultToken = partialResultToken
+
+    @classmethod
+    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PartialResultParams":
+        check_properties(obj, ["partialResultToken"])
+        if partialResultToken_json := obj.get("partialResultToken"):
+            partialResultToken = parse_ProgressToken(partialResultToken_json)
+        else:
+            partialResultToken = None
+        return cls(partialResultToken=partialResultToken)
+
+    def to_json(self) -> Dict[str, JSON_VALUE]:
+        out: Dict[str, JSON_VALUE] = {}
+        if self.partialResultToken is not None:
+            out["partialResultToken"] = write_ProgressToken(self.partialResultToken)
+        return out
+
+
+@dataclass
 class LocationLink():
     """
-    Represents the connection of two locations. Provides additional metadata over normal [locations](#Location),
+    Represents the connection of two locations. Provides additional metadata over normal {@link Location locations},
     including an origin range.
 
     *Generated from the TypeScript documentation*
@@ -19057,7 +19057,7 @@ class RelatedUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport
         return out
 
 
-# The definition of a symbol represented as one or many [locations](#Location).
+# The definition of a symbol represented as one or many {@link Location locations}.
 # For most programming languages there is only one location at which a symbol is
 # defined.
 # 
@@ -19074,7 +19074,7 @@ def write_Definition(arg: Definition) -> JSON_VALUE:
 
 # Information about where a symbol is defined.
 # 
-# Provides additional metadata over normal [location](#Location) definitions, including the range of
+# Provides additional metadata over normal {@link Location location} definitions, including the range of
 # the defining symbol
 DefinitionLink = LocationLink
 
@@ -19085,7 +19085,7 @@ def write_DefinitionLink(arg: DefinitionLink) -> JSON_VALUE:
     return arg.to_json()
 
 
-# The declaration of a symbol representation as one or many [locations](#Location).
+# The declaration of a symbol representation as one or many {@link Location locations}.
 Declaration = Union["Location", List["Location"]]
 
 def parse_Declaration(arg: JSON_VALUE) -> Declaration:
@@ -19097,7 +19097,7 @@ def write_Declaration(arg: Declaration) -> JSON_VALUE:
 
 # Information about where a symbol is declared.
 # 
-# Provides additional metadata over normal [location](#Location) declarations, including the range of
+# Provides additional metadata over normal {@link Location location} declarations, including the range of
 # the declaring symbol.
 # 
 # Servers should prefer returning `DeclarationLink` over `Declaration` if supported
@@ -19178,83 +19178,3 @@ def parse_PrepareRenameResult(arg: JSON_VALUE) -> PrepareRenameResult:
 
 def write_PrepareRenameResult(arg: PrepareRenameResult) -> JSON_VALUE:
     return write_or_type(arg, (lambda i: isinstance(i, Range), lambda i: isinstance(i, Dict) and "range" in i.keys() and "placeholder" in i.keys(), lambda i: isinstance(i, Dict) and "defaultBehavior" in i.keys()), (lambda i: i.to_json(), lambda i: write_AnonymousStructure37(i), lambda i: write_AnonymousStructure38(i)))
-
-
-@dataclass
-class ConfigurationParamsAndPartialResultParams():
-    """
-
-
-    *Generated from the TypeScript documentation*
-    """
-
-    items: List["ConfigurationItem"]
-    
-    # An optional token that a server can use to report partial results (e.g. streaming) to
-    # the client.
-    partialResultToken: Optional["ProgressToken"]
-
-    def __init__(self, *, items: List["ConfigurationItem"], partialResultToken: Optional["ProgressToken"] = None) -> None:
-        """
-        - partialResultToken: An optional token that a server can use to report partial results (e.g. streaming) to
-            the client.
-        """
-        self.items = items
-        self.partialResultToken = partialResultToken
-
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationParamsAndPartialResultParams":
-        check_properties(obj, ["items", "partialResultToken"])
-        items = [ConfigurationItem.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
-        if partialResultToken_json := obj.get("partialResultToken"):
-            partialResultToken = parse_ProgressToken(partialResultToken_json)
-        else:
-            partialResultToken = None
-        return cls(items=items, partialResultToken=partialResultToken)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        out["items"] = [i.to_json() for i in self.items]
-        if self.partialResultToken is not None:
-            out["partialResultToken"] = write_ProgressToken(self.partialResultToken)
-        return out
-
-
-@dataclass
-class TextDocumentRegistrationOptionsAndWorkDoneProgressOptions():
-    """
-
-
-    *Generated from the TypeScript documentation*
-    """
-
-    workDoneProgress: Optional[bool]
-    
-    # A document selector to identify the scope of the registration. If set to null
-    # the document selector provided on the client side will be used.
-    documentSelector: Union["DocumentSelector", None]
-
-    def __init__(self, *, workDoneProgress: Optional[bool] = None, documentSelector: Union["DocumentSelector", None]) -> None:
-        """
-        - documentSelector: A document selector to identify the scope of the registration. If set to null
-            the document selector provided on the client side will be used.
-        """
-        self.workDoneProgress = workDoneProgress
-        self.documentSelector = documentSelector
-
-    @classmethod
-    def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentRegistrationOptionsAndWorkDoneProgressOptions":
-        check_properties(obj, ["workDoneProgress", "documentSelector"])
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
-            workDoneProgress = workDoneProgress_json
-        else:
-            workDoneProgress = None
-        documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        return cls(workDoneProgress=workDoneProgress, documentSelector=documentSelector)
-
-    def to_json(self) -> Dict[str, JSON_VALUE]:
-        out: Dict[str, JSON_VALUE] = {}
-        if self.workDoneProgress is not None:
-            out["workDoneProgress"] = self.workDoneProgress
-        out["documentSelector"] = write_or_type(self.documentSelector, (lambda i: isinstance(i, List) and (len(i) == 0 or (((isinstance(i[0], Dict) and "language" in i[0].keys()) or (isinstance(i[0], Dict) and "scheme" in i[0].keys()) or (isinstance(i[0], Dict) and "pattern" in i[0].keys())) or (isinstance(i[0], NotebookCellTextDocumentFilter)))), lambda i: i is None), (lambda i: write_DocumentSelector(i), lambda i: i))
-        return out

@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 import pytest
 
+from gen.generate_capabilities import FeatureInfo, generate_capabilities_py
 from gen.generate_client_requests import generate_client_requests_py
 from gen.generate_enumerations import generate_enumeration_definition
 from gen.generate_structures import _get_referenced_definitions  # type: ignore
@@ -921,3 +922,315 @@ class TestClient(ClientRequestsMixin, ServerRequestsMixin):
     test_client.dispatch_server_message("test/bidirectionalNotification", "Bye2", mock_send_result)
     assert test_client.sentinel == "on_test_bidirectional_notification Bye2"
     assert response == "This should not change"
+
+
+def test_generator_server_capabilities() -> None:
+    model = MetaModel.from_json({
+        "requests": [],
+        "structures": [
+            {
+                "name": "DocumentSelector",
+                "properties": []
+            },
+            {
+                "name": "Registration",
+                "properties": []
+            },
+            {
+                "name": "TextDocumentRegistrationOptions",
+                "properties": [
+                    {
+                        "name": "documentSelector",
+                        "type": {
+                            "kind": "reference",
+                            "name": "DocumentSelector"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "StaticRegistrationOptions",
+                "properties": [
+                    {
+                        "name": "id",
+                        "type": {
+                            "kind": "base",
+                            "name": "string"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "ServerCapabilities",
+                "properties": [
+                    {
+                        "name": "capability1",
+                        "type": {
+                            "kind": "reference",
+                            "name": "TextDocumentRegistrationOptions"
+                        }
+                    },
+                    {
+                        "name": "capability2",
+                        "type": {
+                            "kind": "reference",
+                            "name": "StaticRegistrationOptions"
+                        }
+                    },
+                    {
+                        "name": "capability3",
+                        "type": {
+                            "kind": "literal",
+                            "value": {
+                                "properties": [
+                                    {
+                                        "name": "test",
+                                        "type": {
+                                            "kind": "base",
+                                            "name": "boolean"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "enumerations": [],
+        "notifications": [],
+        "typeAliases": []
+    })
+
+    feature_infos = {
+        "test/1": FeatureInfo("capability1"),
+        "test/2": FeatureInfo("capability2"),
+        "test/3": FeatureInfo("capability3.test"),
+    }
+
+    generator = Generator(model)
+
+    names = get_test_default_names()
+
+    structures_py = generate_structures_py(generator)
+    # Skip imports, because they don't work inside the test
+    exec(structures_py[structures_py.index("@dataclass"):], names)
+
+    capabilities_py = generate_capabilities_py(generator, feature_infos)
+    exec(capabilities_py[capabilities_py.index("@dataclass"):], names)
+
+    server_capabilities = names["ServerCapabilities"].from_json({
+        "capability1": {
+            "documentSelector": {}
+        },
+        "capability2": {
+            "id": "test_id"
+        },
+        "capability3": {
+            "test": True
+        }
+    })
+    registrations = names["server_capabilities_to_feature_registrations"](server_capabilities)
+
+    assert len(registrations) == 3
+
+    assert registrations[0].id is None
+    assert registrations[0].method == "test/1"
+    assert registrations[0].document_selector is not None
+
+    assert registrations[1].id == "test_id"
+    assert registrations[1].method == "test/2"
+    assert registrations[1].document_selector is None
+
+    assert registrations[2].id is None
+    assert registrations[2].method == "test/3"
+    assert registrations[2].document_selector is None
+
+
+def test_generator_feature_registration() -> None:
+    model = MetaModel.from_json({
+        "requests": [
+            {
+                "method": "test/1",
+                "params": [],
+                "messageDirection": "clientToServer",
+                "registrationOptions": {
+                    "kind": "reference",
+                    "name": "TextDocumentRegistrationOptions"
+                },
+                "result": {
+                    "kind": "base",
+                    "name": "null"
+                }
+            },
+            {
+                "method": "test/2",
+                "params": [],
+                "messageDirection": "clientToServer",
+                "registrationOptions": {
+                    "kind": "reference",
+                    "name": "StaticRegistrationOptions"
+                },
+                "registrationMethod": "test",
+                "result": {
+                    "kind": "base",
+                    "name": "null"
+                }
+            }
+        ],
+        "structures": [
+            {
+                "name": "DocumentSelector",
+                "properties": []
+            },
+            {
+                "name": "TextDocumentRegistrationOptions",
+                "properties": [
+                    {
+                        "name": "documentSelector",
+                        "type": {
+                            "kind": "reference",
+                            "name": "DocumentSelector"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "StaticRegistrationOptions",
+                "properties": [
+                    {
+                        "name": "id",
+                        "type": {
+                            "kind": "base",
+                            "name": "string"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Registration",
+                "properties": [
+                    {
+                        "name": "id",
+                        "type": {
+                            "kind": "base",
+                            "name": "string"
+                        },
+                    },
+                    {
+                        "name": "method",
+                        "type": {
+                            "kind": "base",
+                            "name": "string"
+                        },
+                    },
+                    {
+                        "name": "registerOptions",
+                        "type": {
+                            "kind": "reference",
+                            "name": "LSPAny"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "ServerCapabilities",
+                "properties": []
+            }
+        ],
+        "typeAliases": [
+            {
+                "name": "LSPAny",
+                "type": {
+                    "kind": "or",
+                    "items": [
+                        {
+                            "kind": "reference",
+                            "name": "LSPObject"
+                        },
+                        {
+                            "kind": "reference",
+                            "name": "LSPArray"
+                        },
+                        {
+                            "kind": "base",
+                            "name": "string"
+                        },
+                        {
+                            "kind": "base",
+                            "name": "integer"
+                        },
+                        {
+                            "kind": "base",
+                            "name": "uinteger"
+                        },
+                        {
+                            "kind": "base",
+                            "name": "decimal"
+                        },
+                        {
+                            "kind": "base",
+                            "name": "boolean"
+                        },
+                        {
+                            "kind": "base",
+                            "name": "null"
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "LSPArray",
+                "type": {
+                    "kind": "array",
+                    "element": {
+                        "kind": "reference",
+                        "name": "LSPAny"
+                    }
+                }
+            },
+            {
+                "name": "LSPObject",
+                "type": {
+                    "kind": "map",
+                    "key": {
+                        "kind": "base",
+                        "name": "string"
+                    },
+                    "value": {
+                        "kind": "reference",
+                        "name": "LSPAny"
+                    }
+                }
+            },
+        ],
+        "enumerations": [],
+        "notifications": []
+    })
+
+    generator = Generator(model)
+
+    names = get_test_default_names()
+
+    structures_py = generate_structures_py(generator)
+    # Skip imports, because they don't work inside the test
+    exec(structures_py[structures_py.index("@dataclass"):], names)
+
+    capabilities_py = generate_capabilities_py(generator, {})
+    exec(capabilities_py[capabilities_py.index("@dataclass"):], names)
+
+    registration1 = eval(
+        "Registration(id='test_id/1', method='test/1', registerOptions={'documentSelector': {}})",
+        names)
+    res1 = names["registration_to_feature_registration"](registration1)
+    assert res1.id == "test_id/1"
+    assert res1.method == "test/1"
+    assert res1.document_selector is not None
+
+    registration2 = eval(
+        "Registration(id='test_id/2', method='test', registerOptions={'id': 'test_id/3'})",
+        names)
+    res2 = names["registration_to_feature_registration"](registration2)
+    assert res2.id == "test_id/3"  # !
+    assert res2.method == "test"
+    assert res2.document_selector is None

@@ -1,0 +1,123 @@
+{
+    "textDocument/implementation": {
+        "serverCapability": "implementationProvider"
+    },
+    "textDocument/typeDefinition": {
+        "serverCapability": "typeDefinitionProvider"
+    },
+    "textDocument/documentColor": {
+        "serverCapability": "colorProvider"
+    },
+    "textDocument/foldingRange": {
+        "serverCapability": "foldingRangeProvider"
+    },
+    "textDocument/declaration": {
+        "serverCapability": "declarationProvider"
+    },
+    "textDocument/selectionRange": {
+        "serverCapability": "selectionRangeProvider"
+    },
+    "textDocument/prepareCallHierarchy": {
+        "serverCapability": "callHierarchyProvider"
+    },
+    "textDocument/semanticTokens": {
+        "serverCapability": "semanticTokensProvider"
+    },
+    "textDocument/linkedEditingRange": {
+        "serverCapability": "linkedEditingRangeProvider"
+    },
+    "workspace/willCreateFiles": {
+        "serverCapability": "workspace.fileOperations.willCreate"
+    },
+    "workspace/willRenameFiles": {
+        "serverCapability": "workspace.fileOperations.willRename"
+    },
+    "workspace/willDeleteFiles": {
+        "serverCapability": "workspace.fileOperations.willDelete"
+    },
+    "textDocument/moniker": {
+        "serverCapability": "monikerProvider"
+    },
+    "textDocument/prepareTypeHierarchy": {
+        "serverCapability": "typeHierarchyProvider"
+    },
+    "textDocument/inlineValue": {
+        "serverCapability": "inlineValueProvider"
+    },
+    "textDocument/inlayHint": {
+        "serverCapability": "inlayHintProvider"
+    },
+    "textDocument/diagnostic": {
+        "serverCapability": "diagnosticProvider"
+    },
+    "textDocument/willSaveWaitUntil": {},
+    "textDocument/completion": {
+        "serverCapability": "completionProvider"
+    },
+    "textDocument/hover": {
+        "serverCapability": "hoverProvider"
+    },
+    "textDocument/signatureHelp": {
+        "serverCapability": "signatureHelpProvider"
+    },
+    "textDocument/definition": {
+        "serverCapability": "definitionProvider"
+    },
+    "textDocument/references": {
+        "serverCapability": "referencesProvider"
+    },
+    "textDocument/documentHighlight": {
+        "serverCapability": "documentHighlightProvider"
+    },
+    "textDocument/documentSymbol": {
+        "serverCapability": "documentSymbolProvider"
+    },
+    "textDocument/codeAction": {
+        "serverCapability": "codeActionProvider"
+    },
+    "workspace/symbol": {
+        "serverCapability": "workspaceSymbolProvider"
+    },
+    "textDocument/codeLens": {
+        "serverCapability": "codeLensProvider"
+    },
+    "textDocument/documentLink": {
+        "serverCapability": "documentLinkProvider"
+    },
+    "textDocument/formatting": {
+        "serverCapability": "documentFormattingProvider"
+    },
+    "textDocument/rangeFormatting": {
+        "serverCapability": "documentRangeFormattingProvider"
+    },
+    "textDocument/onTypeFormatting": {
+        "serverCapability": "documentOnTypeFormattingProvider"
+    },
+    "textDocument/rename": {
+        "serverCapability": "renameProvider"
+    },
+    "workspace/executeCommand": {
+        "serverCapability": "executeCommandProvider"
+    },
+
+    "workspace/didCreateFiles": {
+        "serverCapability": "workspace.fileOperations.didCreate"
+    },
+    "workspace/didRenameFiles": {
+        "serverCapability": "workspace.fileOperations.didRename"
+    },
+    "workspace/didDeleteFiles": {
+        "serverCapability": "workspace.fileOperations.didDelete"
+    },
+    "workspace/didChangeConfiguration": {},
+    "workspace/didChangeWorkspaceFolders": {},
+    "textDocument/didOpen": {},
+    "textDocument/didChange": {},
+    "textDocument/didClose": {},
+    "textDocument/didSave": {},
+    "textDocument/willSave": {},
+    "workspace/didChangeWatchedFiles": {},
+    "notebookDocument/sync": {
+        "serverCapability": "notebookDocumentSync"
+    }
+}

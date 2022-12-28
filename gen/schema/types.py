@@ -89,6 +89,7 @@ class Notification:
     params: Optional[Union[AnyType, Tuple[AnyType, ...]]]
     proposed: Optional[bool]
     registration_options: Optional[AnyType]
+    registration_method: Optional[str]
     since: Optional[str]
 
     @classmethod
@@ -106,8 +107,8 @@ class Notification:
                 "Invalid value for messageDirection: " + message_direction_json)
         method = json_get_string(obj, "method")
         proposed = json_get_optional_bool(obj, "proposed")
-        registration_options_json = json_get_optional_object(
-            obj, "registrationOptions")
+        registration_options_json = json_get_optional_object(obj, "registrationOptions")
+        registration_method = json_get_optional_string(obj, "registrationMethod")
         since = json_get_optional_string(obj, "since")
 
         params_json: Optional[Union[JSON_VALUE,
@@ -126,7 +127,7 @@ class Notification:
         registration_options = AnyType.from_json(
             registration_options_json) if registration_options_json else None
 
-        return cls(documentation, message_direction, method, params, proposed, registration_options, since)
+        return cls(documentation, message_direction, method, params, proposed, registration_options, registration_method, since)
 
 
 @dataclass(frozen=True)

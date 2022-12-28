@@ -22,14 +22,18 @@ from lspscript.types import (ClientCapabilities, InitializedParams,
 from lspscript.types.client_requests import (ClientRequestsMixin,
                                              ServerRequestsMixin)
 from lspscript.types.enumerations import MessageType
-from lspscript.types.structures import (
-    ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, CancelParams,
-    ConfigurationParams, ConfigurationParamsAndPartialResultParams,
-    LogMessageParams, LogTraceParams, LSPAny, MessageActionItem,
-    ProgressParams, PublishDiagnosticsParams, RegistrationParams,
-    ShowDocumentParams, ShowDocumentResult, ShowMessageParams,
-    ShowMessageRequestParams, UnregistrationParams,
-    WorkDoneProgressCreateParams, WorkspaceFolder)
+from lspscript.types.structures import (ApplyWorkspaceEditParams,
+                                        ApplyWorkspaceEditResult, CancelParams,
+                                        ConfigurationParams, LogMessageParams,
+                                        LogTraceParams, LSPAny,
+                                        MessageActionItem, ProgressParams,
+                                        PublishDiagnosticsParams,
+                                        RegistrationParams, ShowDocumentParams,
+                                        ShowDocumentResult, ShowMessageParams,
+                                        ShowMessageRequestParams,
+                                        UnregistrationParams,
+                                        WorkDoneProgressCreateParams,
+                                        WorkspaceFolder)
 from lspscript.types.util import JSON_VALUE
 
 # Global list of client names, currently only used for logging purposes.
@@ -509,9 +513,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         else:
             return None
 
-    def on_workspace_configuration(self, params: ConfigurationParamsAndPartialResultParams) -> List[LSPAny]:
+    def on_workspace_configuration(self, params: ConfigurationParams) -> List[LSPAny]:
         if self._workspace_request_handler:
-            # TODO handle partial results
             return self._workspace_request_handler.on_configuration(ConfigurationParams(items=params.items))
         else:
             return []

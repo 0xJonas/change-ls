@@ -375,8 +375,8 @@ def matches_file_operation_filter(uri: str, filter: FileOperationFilter) -> bool
         lsp_glob = filter.pattern.glob
 
         if ignore_case:
-            path_raw.casefold()
-            lsp_glob.casefold()
+            path_raw = path_raw.casefold()
+            lsp_glob = lsp_glob.casefold()
 
         found = False
         for glob in _expand_lsp_glob(lsp_glob):

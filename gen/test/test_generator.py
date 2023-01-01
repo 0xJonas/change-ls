@@ -606,9 +606,6 @@ def test_generator_generate_structure_definition() -> None:
     res3 = eval("Test1(test1='Hello', test2=10, test3=True, testopt='Optional')", names)
     assert res3.testopt == "Optional"
 
-    with pytest.raises(LSPUnknownPropertyException):
-        eval("Test1.from_json({ 'test1': 'Hello', 'test2': 10, 'test3': True, 'unknown': 'unknown' })", names)
-
 
 def test_generator_get_referenced_definition_anytype() -> None:
     model = MetaModel.from_json({

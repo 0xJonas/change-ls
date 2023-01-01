@@ -108,34 +108,6 @@ def generate_anonymous_structure_definition(gen: Generator, val: StructureLitera
         write_fun=_generate_anonymous_structure_write_fun(gen, val))
 
 
-def _collect_structure_properties(gen: Generator, struct: Structure) -> List[Property]:
-    # Use a dict instead of a List, so that the properties from
-    # derived classes can override those from the base classes
-    props: Dict[str, Property] = {}
-
-    if struct.extends:
-        for m in struct.extends:
-            if not isinstance(m.content, ReferenceType):
-                raise LSPGeneratorException("Non-reference 'extends' values are not supported.")
-            target = gen.resolve_reference(m.content)
-            if not isinstance(target, Structure):
-                raise LSPGeneratorException("Non-Structure references in 'extends' are not supported")
-            props.update({p.name: p for p in _collect_structure_properties(gen, target)})
-
-    if struct.mixins:
-        for m in struct.mixins:
-            if not isinstance(m.content, ReferenceType):
-                raise LSPGeneratorException("Non-reference 'mixins' values are not supported.")
-            target = gen.resolve_reference(m.content)
-            if not isinstance(target, Structure):
-                raise LSPGeneratorException("Non-Structure references in 'mixins' are not supported")
-            props.update({p.name: p for p in target.properties})
-
-    props.update({p.name: p for p in struct.properties})
-
-    return list(props.values())
-
-
 def _generate_property_declaration(gen: Generator, prop: Property) -> str:
     """Generates declaration code for a `Property`."""
     type_annotation = gen.generate_type_annotation(prop.type)
@@ -190,19 +162,16 @@ def _generate_structure_init_method(gen: Generator, properties: Tuple[Property, 
 
 def _generate_structure_from_json_method(gen: Generator, class_name: str, properties: Tuple[Property]) -> str:
     property_read_statements = "\n".join([_generate_property_read_statement(gen, p, "obj") for p in properties])
-    property_names = ", ".join(['"' + escape_keyword(p.name) + '"' for p in properties])
     property_assignments = ", ".join([escape_keyword(p.name) + "=" + escape_keyword(p.name) for p in properties])
 
     template = dedent("""\
         @classmethod
         def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "{class_name}":
-            check_properties(obj, [{property_names}])
         {read_statements}
             return cls({property_assignments})""")
     return template.format(
         class_name=class_name,
         read_statements=indent(property_read_statements),
-        property_names=property_names,
         property_assignments=property_assignments)
 
 
@@ -255,7 +224,7 @@ def generate_structure_definition(gen: Generator, struct: Structure) -> str:
                 raise LSPGeneratorException("Non-reference 'extends' values are not supported.")
             superclasses.append(m.content.name)
 
-    properties = tuple(_collect_structure_properties(gen, struct))
+    properties = tuple(gen.collect_structure_properties(struct))
 
     return _generate_structure_definition_generic(gen, struct.name, struct.documentation, properties, tuple(superclasses))
 
@@ -268,7 +237,7 @@ def generate_andtype_definition(gen: Generator, val: AndType) -> str:
             raise LSPGeneratorException("AndType items must be references")
         target = gen.resolve_reference(i.content)
         if isinstance(target, Structure):
-            properties += _collect_structure_properties(gen, target)
+            properties += gen.collect_structure_properties(target)
         elif isinstance(target, StructureLiteral):
             properties += target.properties
         else:

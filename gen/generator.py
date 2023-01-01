@@ -4,9 +4,9 @@ from gen.gen_util import (LSPGeneratorException, dedent_ignore_empty, indent,
                           json_type_to_assert_function, ref_target)
 from gen.schema.anytype import (AndType, AnyType, ArrayType, BaseType,
                                 BooleanLiteralType, IntegerLiteralType,
-                                MapKeyType, MapType, OrType, StringLiteralType,
-                                StructureLiteral, StructureLiteralType,
-                                TupleType)
+                                MapKeyType, MapType, OrType, Property,
+                                StringLiteralType, StructureLiteral,
+                                StructureLiteralType, TupleType)
 from gen.schema.types import (Enumeration, MetaModel, ReferenceType, Structure,
                               TypeAlias)
 from gen.schema.util import JSON_TYPE_NAME
@@ -168,9 +168,28 @@ class Generator:
         parse_expression_arg = f"{assert_type_func_value}(value)"
         return f"{{ {assert_type_func_key}(key): {self.generate_parse_expression(map.value, parse_expression_arg)} for key, value in {arg}.items()}}"
 
+    def _get_or_item_priority(self, item: AnyType) -> int:
+        if not isinstance(item.content, ReferenceType):
+            return 0
+
+        target = self.resolve_reference(item.content)
+        if not target:
+            return 0
+
+        if isinstance(target, Structure):
+            return len(self.collect_structure_properties(target))
+        else:
+            return 0
+
+    def _sort_or_items(self, items: Tuple[AnyType, ...]) -> List[AnyType]:
+        out = list(items)
+        out.sort(key=lambda i: self._get_or_item_priority(i), reverse=True)
+        return out
+
     def _generate_parse_expression_or(self, or_val: OrType, arg: str) -> str:
         parse_functions: List[str] = []
-        for i in or_val.items:
+        items = self._sort_or_items(or_val.items)
+        for i in items:
             if expected_json_type := self.get_expected_json_type(i):
                 assert_type_func = json_type_to_assert_function[expected_json_type]
             else:
@@ -558,6 +577,33 @@ class Generator:
 
         for t in self._meta_model.type_aliases:
             self._add_anonymous_definitions_from_anytype(t.type)
+
+    def collect_structure_properties(self, struct: Structure) -> List[Property]:
+        # Use a dict instead of a List, so that the properties from
+        # derived classes can override those from the base classes
+        props: Dict[str, Property] = {}
+
+        if struct.extends:
+            for m in struct.extends:
+                if not isinstance(m.content, ReferenceType):
+                    raise LSPGeneratorException("Non-reference 'extends' values are not supported.")
+                target = self.resolve_reference(m.content)
+                if not isinstance(target, Structure):
+                    raise LSPGeneratorException("Non-Structure references in 'extends' are not supported")
+                props.update({p.name: p for p in self.collect_structure_properties(target)})
+
+        if struct.mixins:
+            for m in struct.mixins:
+                if not isinstance(m.content, ReferenceType):
+                    raise LSPGeneratorException("Non-reference 'mixins' values are not supported.")
+                target = self.resolve_reference(m.content)
+                if not isinstance(target, Structure):
+                    raise LSPGeneratorException("Non-Structure references in 'mixins' are not supported")
+                props.update({p.name: p for p in target.properties})
+
+        props.update({p.name: p for p in struct.properties})
+
+        return list(props.values())
 
     def get_anonymous_type_name(self, type: Union[StructureLiteral, AndType]) -> str:
         if isinstance(type, StructureLiteral):

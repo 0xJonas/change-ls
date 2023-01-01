@@ -398,7 +398,7 @@ class ClientRequestsMixin(ABC):
         """
         params_json = params.to_json()
         result_json = await self.send_request("textDocument/completion", params_json, **kwargs)
-        return parse_or_type((result_json), (lambda v: [CompletionItem.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)], lambda v: CompletionList.from_json(json_assert_type_object(v)), lambda v: json_assert_type_null(v)))
+        return parse_or_type((result_json), (lambda v: CompletionList.from_json(json_assert_type_object(v)), lambda v: [CompletionItem.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
     
     async def send_completion_item_resolve(self, params: "CompletionItem", **kwargs: Any) -> "CompletionItem":
         """
@@ -495,7 +495,7 @@ class ClientRequestsMixin(ABC):
         """
         params_json = params.to_json()
         result_json = await self.send_request("textDocument/codeAction", params_json, **kwargs)
-        return parse_or_type((result_json), (lambda v: [parse_or_type((i), (lambda v: Command.from_json(json_assert_type_object(v)), lambda v: CodeAction.from_json(json_assert_type_object(v)))) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
+        return parse_or_type((result_json), (lambda v: [parse_or_type((i), (lambda v: CodeAction.from_json(json_assert_type_object(v)), lambda v: Command.from_json(json_assert_type_object(v)))) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
     
     async def send_code_action_resolve(self, params: "CodeAction", **kwargs: Any) -> "CodeAction":
         """

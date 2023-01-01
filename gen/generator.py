@@ -60,13 +60,15 @@ class Generator:
         return self._meta_model
 
     def resolve_reference(self, reference: ReferenceType, resolve_typealiases: bool = True) -> Optional[ref_target]:
-        """Resolves a ReferenceType to its reference type in the MetaModel of this Generator.
+        """
+        Resolves a ReferenceType to its reference type in the MetaModel of this Generator.
 
         This method will transparently resolve intermediate TypeAliases.
         Raises an LSPGeneratorException if circular references are detected. This is possible if a TypeAlias
         aliases a References which, either directly or indirectly points back to the same TypeAlias.
 
-        Returns None if the referenced type was not found."""
+        Returns None if the referenced type was not found.
+        """
         return self._reference_resolver.resolve_reference(reference.name, resolve_typealiases)
 
     def _get_expected_json_type_base(self, base: BaseType) -> JSON_TYPE_NAME:
@@ -143,9 +145,11 @@ class Generator:
                 "Reference pointing to an unsupported type.")
 
     def _generate_parse_expression_mapping(self, map: MapType, arg: str) -> str:
-        """Generates an expression that parses the given `MapType` from the given `arg`.
+        """
+        Generates an expression that parses the given `MapType` from the given `arg`.
         The expression evaluates to a Python dict, which maps arbitrary instances of the
-        map's key type to instances of the map's value type."""
+        map's key type to instances of the map's value type.
+        """
         if isinstance(map.key, MapKeyType):
             assert_type_func_key = json_type_to_assert_function[self._get_expected_json_type_mapkey(
                 map.key)]
@@ -169,6 +173,14 @@ class Generator:
         return f"{{ {assert_type_func_key}(key): {self.generate_parse_expression(map.value, parse_expression_arg)} for key, value in {arg}.items()}}"
 
     def _get_or_item_priority(self, item: AnyType) -> int:
+        """
+        Computes a priority for an item of an OrType.
+
+        These priorities control in which order the parses for
+        the items are attempted. The first item which successfully
+        parses is returned. No subsequent items are attempted, even
+        if they would parse successfully as well.
+        """
         if not isinstance(item.content, ReferenceType):
             return 0
 
@@ -182,11 +194,20 @@ class Generator:
             return 0
 
     def _sort_or_items(self, items: Tuple[AnyType, ...]) -> List[AnyType]:
+        """
+        Returns the given list of items sorted by priority.
+
+        See `_get_or_item_priority` for how priorities are used with OrTypes.
+        """
         out = list(items)
         out.sort(key=lambda i: self._get_or_item_priority(i), reverse=True)
         return out
 
     def _generate_parse_expression_or(self, or_val: OrType, arg: str) -> str:
+        """
+        Generate an expression that parses the given `OrType` which is contained
+        in a variable with the name given in `arg`.
+        """
         parse_functions: List[str] = []
         items = self._sort_or_items(or_val.items)
         for i in items:
@@ -200,8 +221,10 @@ class Generator:
         return f"parse_or_type({arg}, ({', '.join(parse_functions)}))"
 
     def _generate_parse_expression_tuple(self, tuple: TupleType, arg: str) -> str:
-        """Generates an expression that parses the given `TupleType` from the given `arg`.
-        The returned expression evaluates to a Python tuple which contains the types defined in the `TupleType`"""
+        """
+        Generates an expression that parses the given `TupleType` from the given `arg`.
+        The returned expression evaluates to a Python tuple which contains the types defined in the `TupleType`
+        """
         parse_expressions: List[str] = []
         for i, t in enumerate(tuple.items):
             json_type = self.get_expected_json_type(t)
@@ -211,8 +234,10 @@ class Generator:
         return "(" + ", ".join(parse_expressions) + ")"
 
     def generate_parse_expression(self, val: AnyType, arg: str) -> str:
-        """Generate an expression that will parse the value in `arg` into the type denoted by `val`.
-        `arg` should be an expression that evaluates to a `JSON_VALUE`."""
+        """
+        Generate an expression that will parse the value in `arg` into the type denoted by `val`.
+        `arg` should be an expression that evaluates to a `JSON_VALUE`.
+        """
         if val.kind == "base":
             assert isinstance(val.content, BaseType)
             return self._generate_parse_expression_base(val.content, arg)
@@ -256,6 +281,11 @@ class Generator:
     # --------------------------------------------
 
     def _generate_write_expression_reference(self, reference: ReferenceType, name: str) -> str:
+        """
+        Generates an expression which creates a `JSON_VALUE` representing the given `reference`.
+
+        The expression will be different depending on what the `reference` points to.
+        """
         target = self.resolve_reference(reference, resolve_typealiases=False)
         if isinstance(target, Enumeration):
             return name + ".value"
@@ -268,6 +298,12 @@ class Generator:
                 "Reference pointing to an unsupported type.")
 
     def _generate_type_test(self, val: AnyType, name: str) -> str:
+        """
+        Generates an expression which tests if the variable with the name given in `name`
+        has the type given in `val`.
+
+        Type tests are used when creating `JSON_VALUEs` for `OrTypes`.
+        """
         if val.kind == "base":
             assert isinstance(val.content, BaseType)
             if val.content.name in ["URI", "DocumentUri", "RegExp", "string"]:
@@ -333,6 +369,10 @@ class Generator:
             assert False  # Broken AnyType
 
     def _generate_write_expression_or(self, val: OrType, name: str) -> str:
+        """
+        Generates an expression which creates a `JSON_VALUE` from a variable with a name given in `name`,
+        using the items from the `OrType` in `val`.
+        """
         kinds = [i.kind for i in val.items]
 
         # Currently we cannot check generic type parameters, so if this
@@ -351,6 +391,10 @@ class Generator:
         return f"write_or_type({name}, ({', '.join(type_tests)}), ({', '.join(writers)}))"
 
     def generate_write_expression(self, val: AnyType, name: str) -> str:
+        """
+        Generates an expression which creates a `JSON_VALUE` from the variable in `name` of the type
+        given in `val`.
+        """
         if val.kind == "base":
             return name
         elif val.kind == "reference":
@@ -399,6 +443,8 @@ class Generator:
     # --------------------------------------------
 
     def _generate_type_annotation_base(self, base: BaseType) -> str:
+        """Generates a type annotation for the `BaseType` given in `base`."""
+
         if base.name in ["URI", "DocumentUri", "RegExp", "string"]:
             return "str"
         elif base.name in ["integer", "uinteger"]:
@@ -414,6 +460,7 @@ class Generator:
 
     def _generate_type_annotation_mapkey(self, key: MapKeyType) -> str:
         """Returns the variant `JSON_VALUE` which values of the given `MapKeyType` are expected to have."""
+
         if key.name in ["URI", "DocumentUri", "string"]:
             return "str"
         elif key.name == "integer":
@@ -423,6 +470,7 @@ class Generator:
 
     def generate_type_annotation(self, val: AnyType) -> str:
         """Generates a type annotation for the given `AnyType`."""
+
         if val.kind == "base":
             assert isinstance(val.content, BaseType)
             return self._generate_type_annotation_base(val.content)
@@ -472,6 +520,8 @@ class Generator:
     # --------------------------------------------
 
     def _generate_and_type_name(self, val: AndType) -> str:
+        """Generates a name for an `AndType` from its items."""
+
         item_names: List[str] = []
         for i in val.items:
             assert isinstance(i.content, ReferenceType)
@@ -480,10 +530,12 @@ class Generator:
         return "And".join(item_names)
 
     def _add_anonymous_definitions_from_anytype(self, val: AnyType) -> None:
-        """Adds a definition to the list of anonymous definitions for the given anytype.
+        """
+        Adds a definition to the list of anonymous definitions for the given anytype.
         If `val` is an aggregate type, definitions are created recursively for all
         encountered anonymous types (literal, and). Recursion stops if a type is not an
-        anonymous structure."""
+        anonymous structure.
+        """
 
         if val.kind in ["base", "reference", "stringLiteral", "integerLiteral", "booleanLiteral"]:
             return
@@ -579,6 +631,10 @@ class Generator:
             self._add_anonymous_definitions_from_anytype(t.type)
 
     def collect_structure_properties(self, struct: Structure) -> List[Property]:
+        """
+        Returns the complete list of properties which the given `Structure` has,
+        including properties from mixins and superclasses.
+        """
         # Use a dict instead of a List, so that the properties from
         # derived classes can override those from the base classes
         props: Dict[str, Property] = {}
@@ -606,12 +662,20 @@ class Generator:
         return list(props.values())
 
     def get_anonymous_type_name(self, type: Union[StructureLiteral, AndType]) -> str:
+        """
+        Returns the name generated for the given anonymous type.
+
+        Currently, anonymous types include `StructureLiterals` ("kind": "literal") and `AndTypes` ("kind": "and").
+        """
         if isinstance(type, StructureLiteral):
             return self._anonymous_structure_names[type]
         else:
             return self._anonymous_andtype_names[type]
 
     def get_anonymous_types(self) -> List[Union[StructureLiteral, AndType]]:
+        """
+        Returns a list of all anonymous types in the metaModel.
+        """
         return list(self._anonymous_structure_names.keys()) + list(self._anonymous_andtype_names.keys())
 
     def generate_init_py(self) -> str:

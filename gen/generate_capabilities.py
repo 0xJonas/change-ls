@@ -57,7 +57,11 @@ def _generate_capability_check(root: str, path: List[str], access_modes: List[st
             expr = '.' + segment
         access_expressions.append(access_expressions[-1] + expr)
 
-    return " and ".join(access_expressions)
+    # The last check will be the actual capability. We need to
+    # check for None and False explicitly here, since these are the values
+    # that indicate that the capability is not supported. Other values,
+    # especially {} will register the capability.
+    return " and ".join(access_expressions) + " not in [None, False]"
 
 
 def _generate_capability_access(root: str, path: List[str], access_modes: List[str]) -> str:

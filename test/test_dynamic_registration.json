@@ -1,0 +1,93 @@
+{
+    "name": "test_dynamic_registration",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "client/registerCapability",
+                    "params": {
+                        "registrations": [
+                            {
+                                "id": "test-dynamic-did-create-files",
+                                "method": "workspace/didCreateFiles",
+                                "registerOptions": {
+                                    "filters": [
+                                        {
+                                            "schema": "file",
+                                            "pattern": {
+                                                "glob": "**/test/*.py",
+                                                "options": {
+                                                    "ignoreCase": true
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "result": null
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "client/registerCapability",
+                    "params": {
+                        "registrations": [
+                            {
+                                "id": "test-dynamic-semantic-tokens",
+                                "method": "textDocument/semanticTokens",
+                                "registerOptions": {
+                                    "documentSelector": [
+                                        {
+                                            "language": "python",
+                                            "scheme": "file",
+                                            "pattern": "**/*.py"
+                                        }
+                                    ],
+                                    "legend": {
+                                        "tokenTypes": ["a", "b", "c"],
+                                        "tokenModifiers": ["d", "e", "f"]
+                                    },
+                                    "full": true,
+                                    "range": false
+                                }
+                            }
+                        ]
+                    },
+                    "result": null
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "$/go",
+            "intermediate": [
+                {
+                    "type": "request",
+                    "method": "client/registerCapability",
+                    "params": {
+                        "registrations": [
+                            {
+                                "id": "test-dynamic-document-color",
+                                "method": "textDocument/documentColor",
+                                "registerOptions": {
+                                    "documentSelector": null
+                                }
+                            }
+                        ]
+                    },
+                    "result": null
+                }
+            ]
+        }
+    ]
+}

@@ -14,6 +14,7 @@ from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
                     Sequence, Set, Tuple, Type, Union)
 
 from lspscript import LSPSCRIPT_VERSION
+from lspscript.capabilities_mixin import CapabilitiesMixin
 from lspscript.protocol import _ServerMessageCallback  # type: ignore
 from lspscript.protocol import (LSPClientException, LSProtocol,
                                 LSStreamingProtocol, LSSubprocessProtocol)
@@ -256,7 +257,7 @@ ClientState = Literal["disconnected", "uninitialized",
                       "initializing", "running", "shutdown"]
 
 
-class Client(ClientRequestsMixin, ServerRequestsMixin):
+class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     # Manages capabilities (client and server).
     # Handles dispatching requests/responses/notifications.
 
@@ -281,6 +282,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
     _workspace_request_handler: Optional[WorkspaceRequestHandler]
 
     def __init__(self, launch_params: _ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params(), name: Optional[str] = None) -> None:
+        super().__init__()
+
         self._state = "disconnected"
         self._protocol = None
         self._launch_params = launch_params
@@ -433,6 +436,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
         out_json = await self._send_request_internal("initialize", params.to_json(), **kwargs)
         assert isinstance(out_json, Mapping)
         out = InitializeResult.from_json(out_json)
+        self._set_server_capabilities(out.capabilities)
+
         self._state = "initializing"
         self._logger.info("Client is now initializing")
         return out
@@ -550,10 +555,13 @@ class Client(ClientRequestsMixin, ServerRequestsMixin):
             self._workspace_request_handler.on_publish_diagnostics(params)
 
     def on_client_register_capability(self, params: RegistrationParams) -> None:
-        pass
+        for r in params.registrations:
+            self._add_dynamic_registration(r)
+        self._check_pending_feature_requests()
 
     def on_client_unregister_capability(self, params: UnregistrationParams) -> None:
-        pass
+        for r in params.unregisterations:
+            self._remove_dynamic_registration(r)
 
     def on_window_work_done_progress_create(self, params: WorkDoneProgressCreateParams) -> None:
         pass

@@ -30,7 +30,7 @@ def _generate_property_read_statement(gen: Generator, prop: Property, obj_name: 
         parse_expression = gen.generate_parse_expression(prop.type, f"{prop.name}_json")
 
         return dedent(f"""\
-            if {prop.name}_json := {get_json_expr}:
+            if ({prop.name}_json := {get_json_expr}) is not None:
                 {dest} = {parse_expression}
             else:
                 {dest} = None""")

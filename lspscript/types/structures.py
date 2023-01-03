@@ -195,11 +195,11 @@ class ImplementationParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -299,11 +299,11 @@ AnonymousStructure42Keys = Literal["language","scheme","pattern"]
 def parse_AnonymousStructure42(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure42Keys, Any]:
     out: Dict[AnonymousStructure42Keys, Any] = {}
     out["language"] = json_get_string(obj, "language")
-    if scheme_json := json_get_optional_string(obj, "scheme"):
+    if (scheme_json := json_get_optional_string(obj, "scheme")) is not None:
         out["scheme"] = scheme_json
     else:
         out["scheme"] = None
-    if pattern_json := json_get_optional_string(obj, "pattern"):
+    if (pattern_json := json_get_optional_string(obj, "pattern")) is not None:
         out["pattern"] = pattern_json
     else:
         out["pattern"] = None
@@ -323,12 +323,12 @@ AnonymousStructure43Keys = Literal["language","scheme","pattern"]
 
 def parse_AnonymousStructure43(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure43Keys, Any]:
     out: Dict[AnonymousStructure43Keys, Any] = {}
-    if language_json := json_get_optional_string(obj, "language"):
+    if (language_json := json_get_optional_string(obj, "language")) is not None:
         out["language"] = language_json
     else:
         out["language"] = None
     out["scheme"] = json_get_string(obj, "scheme")
-    if pattern_json := json_get_optional_string(obj, "pattern"):
+    if (pattern_json := json_get_optional_string(obj, "pattern")) is not None:
         out["pattern"] = pattern_json
     else:
         out["pattern"] = None
@@ -348,11 +348,11 @@ AnonymousStructure44Keys = Literal["language","scheme","pattern"]
 
 def parse_AnonymousStructure44(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure44Keys, Any]:
     out: Dict[AnonymousStructure44Keys, Any] = {}
-    if language_json := json_get_optional_string(obj, "language"):
+    if (language_json := json_get_optional_string(obj, "language")) is not None:
         out["language"] = language_json
     else:
         out["language"] = None
-    if scheme_json := json_get_optional_string(obj, "scheme"):
+    if (scheme_json := json_get_optional_string(obj, "scheme")) is not None:
         out["scheme"] = scheme_json
     else:
         out["scheme"] = None
@@ -399,11 +399,11 @@ AnonymousStructure45Keys = Literal["notebookType","scheme","pattern"]
 def parse_AnonymousStructure45(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure45Keys, Any]:
     out: Dict[AnonymousStructure45Keys, Any] = {}
     out["notebookType"] = json_get_string(obj, "notebookType")
-    if scheme_json := json_get_optional_string(obj, "scheme"):
+    if (scheme_json := json_get_optional_string(obj, "scheme")) is not None:
         out["scheme"] = scheme_json
     else:
         out["scheme"] = None
-    if pattern_json := json_get_optional_string(obj, "pattern"):
+    if (pattern_json := json_get_optional_string(obj, "pattern")) is not None:
         out["pattern"] = pattern_json
     else:
         out["pattern"] = None
@@ -423,12 +423,12 @@ AnonymousStructure46Keys = Literal["notebookType","scheme","pattern"]
 
 def parse_AnonymousStructure46(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure46Keys, Any]:
     out: Dict[AnonymousStructure46Keys, Any] = {}
-    if notebookType_json := json_get_optional_string(obj, "notebookType"):
+    if (notebookType_json := json_get_optional_string(obj, "notebookType")) is not None:
         out["notebookType"] = notebookType_json
     else:
         out["notebookType"] = None
     out["scheme"] = json_get_string(obj, "scheme")
-    if pattern_json := json_get_optional_string(obj, "pattern"):
+    if (pattern_json := json_get_optional_string(obj, "pattern")) is not None:
         out["pattern"] = pattern_json
     else:
         out["pattern"] = None
@@ -448,11 +448,11 @@ AnonymousStructure47Keys = Literal["notebookType","scheme","pattern"]
 
 def parse_AnonymousStructure47(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure47Keys, Any]:
     out: Dict[AnonymousStructure47Keys, Any] = {}
-    if notebookType_json := json_get_optional_string(obj, "notebookType"):
+    if (notebookType_json := json_get_optional_string(obj, "notebookType")) is not None:
         out["notebookType"] = notebookType_json
     else:
         out["notebookType"] = None
-    if scheme_json := json_get_optional_string(obj, "scheme"):
+    if (scheme_json := json_get_optional_string(obj, "scheme")) is not None:
         out["scheme"] = scheme_json
     else:
         out["scheme"] = None
@@ -523,7 +523,7 @@ class NotebookCellTextDocumentFilter():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCellTextDocumentFilter":
         notebook = parse_or_type(obj["notebook"], (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
-        if language_json := json_get_optional_string(obj, "language"):
+        if (language_json := json_get_optional_string(obj, "language")) is not None:
             language = language_json
         else:
             language = None
@@ -612,7 +612,7 @@ class ImplementationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -657,11 +657,11 @@ class ImplementationRegistrationOptions(TextDocumentRegistrationOptions, Impleme
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -715,11 +715,11 @@ class TypeDefinitionParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -754,7 +754,7 @@ class TypeDefinitionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -799,11 +799,11 @@ class TypeDefinitionRegistrationOptions(TextDocumentRegistrationOptions, TypeDef
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -943,11 +943,11 @@ class ConfigurationItem():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ConfigurationItem":
-        if scopeUri_json := json_get_optional_string(obj, "scopeUri"):
+        if (scopeUri_json := json_get_optional_string(obj, "scopeUri")) is not None:
             scopeUri = scopeUri_json
         else:
             scopeUri = None
-        if section_json := json_get_optional_string(obj, "section"):
+        if (section_json := json_get_optional_string(obj, "section")) is not None:
             section = section_json
         else:
             section = None
@@ -1020,11 +1020,11 @@ class DocumentColorParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -1143,7 +1143,7 @@ class DocumentColorOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -1188,11 +1188,11 @@ class DocumentColorRegistrationOptions(TextDocumentRegistrationOptions, Document
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -1249,11 +1249,11 @@ class ColorPresentationParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorPresentationParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -1353,11 +1353,11 @@ class ColorPresentation():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ColorPresentation":
         label = json_get_string(obj, "label")
-        if textEdit_json := json_get_optional_object(obj, "textEdit"):
+        if (textEdit_json := json_get_optional_object(obj, "textEdit")) is not None:
             textEdit = TextEdit.from_json(textEdit_json)
         else:
             textEdit = None
-        if additionalTextEdits_json := json_get_optional_array(obj, "additionalTextEdits"):
+        if (additionalTextEdits_json := json_get_optional_array(obj, "additionalTextEdits")) is not None:
             additionalTextEdits = [TextEdit.from_json(json_assert_type_object(i)) for i in additionalTextEdits_json]
         else:
             additionalTextEdits = None
@@ -1391,7 +1391,7 @@ class WorkDoneProgressOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -1435,11 +1435,11 @@ class FoldingRangeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -1518,20 +1518,20 @@ class FoldingRange():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRange":
         startLine = json_get_int(obj, "startLine")
-        if startCharacter_json := json_get_optional_int(obj, "startCharacter"):
+        if (startCharacter_json := json_get_optional_int(obj, "startCharacter")) is not None:
             startCharacter = startCharacter_json
         else:
             startCharacter = None
         endLine = json_get_int(obj, "endLine")
-        if endCharacter_json := json_get_optional_int(obj, "endCharacter"):
+        if (endCharacter_json := json_get_optional_int(obj, "endCharacter")) is not None:
             endCharacter = endCharacter_json
         else:
             endCharacter = None
-        if kind_json := json_get_optional_string(obj, "kind"):
+        if (kind_json := json_get_optional_string(obj, "kind")) is not None:
             kind = FoldingRangeKind(kind_json)
         else:
             kind = None
-        if collapsedText_json := json_get_optional_string(obj, "collapsedText"):
+        if (collapsedText_json := json_get_optional_string(obj, "collapsedText")) is not None:
             collapsedText = collapsedText_json
         else:
             collapsedText = None
@@ -1570,7 +1570,7 @@ class FoldingRangeOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -1615,11 +1615,11 @@ class FoldingRangeRegistrationOptions(TextDocumentRegistrationOptions, FoldingRa
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -1673,11 +1673,11 @@ class DeclarationParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -1712,7 +1712,7 @@ class DeclarationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -1756,12 +1756,12 @@ class DeclarationRegistrationOptions(DeclarationOptions, TextDocumentRegistratio
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationRegistrationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -1813,11 +1813,11 @@ class SelectionRangeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -1862,7 +1862,7 @@ class SelectionRange():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRange":
         range = Range.from_json(json_get_object(obj, "range"))
-        if parent_json := json_get_optional_object(obj, "parent"):
+        if (parent_json := json_get_optional_object(obj, "parent")) is not None:
             parent = SelectionRange.from_json(parent_json)
         else:
             parent = None
@@ -1894,7 +1894,7 @@ class SelectionRangeOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -1938,12 +1938,12 @@ class SelectionRangeRegistrationOptions(SelectionRangeOptions, TextDocumentRegis
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeRegistrationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -2048,7 +2048,7 @@ class CallHierarchyPrepareParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyPrepareParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -2163,18 +2163,18 @@ class CallHierarchyItem():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyItem":
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [SymbolTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if detail_json := json_get_optional_string(obj, "detail"):
+        if (detail_json := json_get_optional_string(obj, "detail")) is not None:
             detail = detail_json
         else:
             detail = None
         uri = json_get_string(obj, "uri")
         range = Range.from_json(json_get_object(obj, "range"))
         selectionRange = Range.from_json(json_get_object(obj, "selectionRange"))
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -2216,7 +2216,7 @@ class CallHierarchyOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -2263,11 +2263,11 @@ class CallHierarchyRegistrationOptions(TextDocumentRegistrationOptions, CallHier
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -2314,11 +2314,11 @@ class CallHierarchyIncomingCallsParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyIncomingCallsParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -2405,11 +2405,11 @@ class CallHierarchyOutgoingCallsParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyOutgoingCallsParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -2498,11 +2498,11 @@ class SemanticTokensParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -2549,7 +2549,7 @@ class SemanticTokens():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokens":
-        if resultId_json := json_get_optional_string(obj, "resultId"):
+        if (resultId_json := json_get_optional_string(obj, "resultId")) is not None:
             resultId = resultId_json
         else:
             resultId = None
@@ -2643,7 +2643,7 @@ AnonymousStructure6Keys = Literal["delta"]
 
 def parse_AnonymousStructure6(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure6Keys, Any]:
     out: Dict[AnonymousStructure6Keys, Any] = {}
-    if delta_json := json_get_optional_bool(obj, "delta"):
+    if (delta_json := json_get_optional_bool(obj, "delta")) is not None:
         out["delta"] = delta_json
     else:
         out["delta"] = None
@@ -2690,16 +2690,16 @@ class SemanticTokensOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
         legend = SemanticTokensLegend.from_json(json_get_object(obj, "legend"))
-        if range_json := obj.get("range"):
+        if (range_json := obj.get("range")) is not None:
             range = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure5(json_assert_type_object(v))))
         else:
             range = None
-        if full_json := obj.get("full"):
+        if (full_json := obj.get("full")) is not None:
             full = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure6(json_assert_type_object(v))))
         else:
             full = None
@@ -2766,20 +2766,20 @@ class SemanticTokensRegistrationOptions(TextDocumentRegistrationOptions, Semanti
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
         legend = SemanticTokensLegend.from_json(json_get_object(obj, "legend"))
-        if range_json := obj.get("range"):
+        if (range_json := obj.get("range")) is not None:
             range = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure5(json_assert_type_object(v))))
         else:
             range = None
-        if full_json := obj.get("full"):
+        if (full_json := obj.get("full")) is not None:
             full = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure6(json_assert_type_object(v))))
         else:
             full = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -2838,11 +2838,11 @@ class SemanticTokensDeltaParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDeltaParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -2892,7 +2892,7 @@ class SemanticTokensEdit():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensEdit":
         start = json_get_int(obj, "start")
         deleteCount = json_get_int(obj, "deleteCount")
-        if data_json := json_get_optional_array(obj, "data"):
+        if (data_json := json_get_optional_array(obj, "data")) is not None:
             data = [json_assert_type_int(i) for i in data_json]
         else:
             data = None
@@ -2929,7 +2929,7 @@ class SemanticTokensDelta():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensDelta":
-        if resultId_json := json_get_optional_string(obj, "resultId"):
+        if (resultId_json := json_get_optional_string(obj, "resultId")) is not None:
             resultId = resultId_json
         else:
             resultId = None
@@ -3007,11 +3007,11 @@ class SemanticTokensRangeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensRangeParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -3083,15 +3083,15 @@ class ShowDocumentParams():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowDocumentParams":
         uri = json_get_string(obj, "uri")
-        if external_json := json_get_optional_bool(obj, "external"):
+        if (external_json := json_get_optional_bool(obj, "external")) is not None:
             external = external_json
         else:
             external = None
-        if takeFocus_json := json_get_optional_bool(obj, "takeFocus"):
+        if (takeFocus_json := json_get_optional_bool(obj, "takeFocus")) is not None:
             takeFocus = takeFocus_json
         else:
             takeFocus = None
-        if selection_json := json_get_optional_object(obj, "selection"):
+        if (selection_json := json_get_optional_object(obj, "selection")) is not None:
             selection = Range.from_json(selection_json)
         else:
             selection = None
@@ -3170,7 +3170,7 @@ class LinkedEditingRangeParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -3218,7 +3218,7 @@ class LinkedEditingRanges():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRanges":
         ranges = [Range.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "ranges")]
-        if wordPattern_json := json_get_optional_string(obj, "wordPattern"):
+        if (wordPattern_json := json_get_optional_string(obj, "wordPattern")) is not None:
             wordPattern = wordPattern_json
         else:
             wordPattern = None
@@ -3250,7 +3250,7 @@ class LinkedEditingRangeOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -3295,11 +3295,11 @@ class LinkedEditingRangeRegistrationOptions(TextDocumentRegistrationOptions, Lin
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -3550,7 +3550,7 @@ class ResourceOperation():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ResourceOperation":
         kind = json_get_string(obj, "kind")
-        if annotationId_json := json_get_optional_string(obj, "annotationId"):
+        if (annotationId_json := json_get_optional_string(obj, "annotationId")) is not None:
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
         else:
             annotationId = None
@@ -3588,11 +3588,11 @@ class CreateFileOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFileOptions":
-        if overwrite_json := json_get_optional_bool(obj, "overwrite"):
+        if (overwrite_json := json_get_optional_bool(obj, "overwrite")) is not None:
             overwrite = overwrite_json
         else:
             overwrite = None
-        if ignoreIfExists_json := json_get_optional_bool(obj, "ignoreIfExists"):
+        if (ignoreIfExists_json := json_get_optional_bool(obj, "ignoreIfExists")) is not None:
             ignoreIfExists = ignoreIfExists_json
         else:
             ignoreIfExists = None
@@ -3646,12 +3646,12 @@ class CreateFile(ResourceOperation):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CreateFile":
         kind = match_string(json_get_string(obj, "kind"), "create")
-        if annotationId_json := json_get_optional_string(obj, "annotationId"):
+        if (annotationId_json := json_get_optional_string(obj, "annotationId")) is not None:
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
         else:
             annotationId = None
         uri = json_get_string(obj, "uri")
-        if options_json := json_get_optional_object(obj, "options"):
+        if (options_json := json_get_optional_object(obj, "options")) is not None:
             options = CreateFileOptions.from_json(options_json)
         else:
             options = None
@@ -3692,11 +3692,11 @@ class RenameFileOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFileOptions":
-        if overwrite_json := json_get_optional_bool(obj, "overwrite"):
+        if (overwrite_json := json_get_optional_bool(obj, "overwrite")) is not None:
             overwrite = overwrite_json
         else:
             overwrite = None
-        if ignoreIfExists_json := json_get_optional_bool(obj, "ignoreIfExists"):
+        if (ignoreIfExists_json := json_get_optional_bool(obj, "ignoreIfExists")) is not None:
             ignoreIfExists = ignoreIfExists_json
         else:
             ignoreIfExists = None
@@ -3755,13 +3755,13 @@ class RenameFile(ResourceOperation):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameFile":
         kind = match_string(json_get_string(obj, "kind"), "rename")
-        if annotationId_json := json_get_optional_string(obj, "annotationId"):
+        if (annotationId_json := json_get_optional_string(obj, "annotationId")) is not None:
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
         else:
             annotationId = None
         oldUri = json_get_string(obj, "oldUri")
         newUri = json_get_string(obj, "newUri")
-        if options_json := json_get_optional_object(obj, "options"):
+        if (options_json := json_get_optional_object(obj, "options")) is not None:
             options = RenameFileOptions.from_json(options_json)
         else:
             options = None
@@ -3803,11 +3803,11 @@ class DeleteFileOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFileOptions":
-        if recursive_json := json_get_optional_bool(obj, "recursive"):
+        if (recursive_json := json_get_optional_bool(obj, "recursive")) is not None:
             recursive = recursive_json
         else:
             recursive = None
-        if ignoreIfNotExists_json := json_get_optional_bool(obj, "ignoreIfNotExists"):
+        if (ignoreIfNotExists_json := json_get_optional_bool(obj, "ignoreIfNotExists")) is not None:
             ignoreIfNotExists = ignoreIfNotExists_json
         else:
             ignoreIfNotExists = None
@@ -3861,12 +3861,12 @@ class DeleteFile(ResourceOperation):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeleteFile":
         kind = match_string(json_get_string(obj, "kind"), "delete")
-        if annotationId_json := json_get_optional_string(obj, "annotationId"):
+        if (annotationId_json := json_get_optional_string(obj, "annotationId")) is not None:
             annotationId = parse_ChangeAnnotationIdentifier(annotationId_json)
         else:
             annotationId = None
         uri = json_get_string(obj, "uri")
-        if options_json := json_get_optional_object(obj, "options"):
+        if (options_json := json_get_optional_object(obj, "options")) is not None:
             options = DeleteFileOptions.from_json(options_json)
         else:
             options = None
@@ -3921,11 +3921,11 @@ class ChangeAnnotation():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ChangeAnnotation":
         label = json_get_string(obj, "label")
-        if needsConfirmation_json := json_get_optional_bool(obj, "needsConfirmation"):
+        if (needsConfirmation_json := json_get_optional_bool(obj, "needsConfirmation")) is not None:
             needsConfirmation = needsConfirmation_json
         else:
             needsConfirmation = None
-        if description_json := json_get_optional_string(obj, "description"):
+        if (description_json := json_get_optional_string(obj, "description")) is not None:
             description = description_json
         else:
             description = None
@@ -4009,15 +4009,15 @@ class WorkspaceEdit():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceEdit":
-        if changes_json := json_get_optional_object(obj, "changes"):
+        if (changes_json := json_get_optional_object(obj, "changes")) is not None:
             changes = { json_assert_type_string(key): [TextEdit.from_json(json_assert_type_object(i)) for i in json_assert_type_array(value)] for key, value in changes_json.items()}
         else:
             changes = None
-        if documentChanges_json := json_get_optional_array(obj, "documentChanges"):
+        if (documentChanges_json := json_get_optional_array(obj, "documentChanges")) is not None:
             documentChanges = [parse_or_type((i), (lambda v: RenameFile.from_json(json_assert_type_object(v)), lambda v: CreateFile.from_json(json_assert_type_object(v)), lambda v: DeleteFile.from_json(json_assert_type_object(v)), lambda v: TextDocumentEdit.from_json(json_assert_type_object(v)))) for i in documentChanges_json]
         else:
             documentChanges = None
-        if changeAnnotations_json := json_get_optional_object(obj, "changeAnnotations"):
+        if (changeAnnotations_json := json_get_optional_object(obj, "changeAnnotations")) is not None:
             changeAnnotations = { json_assert_type_string(key): ChangeAnnotation.from_json(json_assert_type_object(value)) for key, value in changeAnnotations_json.items()}
         else:
             changeAnnotations = None
@@ -4055,7 +4055,7 @@ class FileOperationPatternOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationPatternOptions":
-        if ignoreCase_json := json_get_optional_bool(obj, "ignoreCase"):
+        if (ignoreCase_json := json_get_optional_bool(obj, "ignoreCase")) is not None:
             ignoreCase = ignoreCase_json
         else:
             ignoreCase = None
@@ -4117,11 +4117,11 @@ class FileOperationPattern():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationPattern":
         glob = json_get_string(obj, "glob")
-        if matches_json := json_get_optional_string(obj, "matches"):
+        if (matches_json := json_get_optional_string(obj, "matches")) is not None:
             matches = FileOperationPatternKind(matches_json)
         else:
             matches = None
-        if options_json := json_get_optional_object(obj, "options"):
+        if (options_json := json_get_optional_object(obj, "options")) is not None:
             options = FileOperationPatternOptions.from_json(options_json)
         else:
             options = None
@@ -4164,7 +4164,7 @@ class FileOperationFilter():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationFilter":
-        if scheme_json := json_get_optional_string(obj, "scheme"):
+        if (scheme_json := json_get_optional_string(obj, "scheme")) is not None:
             scheme = scheme_json
         else:
             scheme = None
@@ -4378,11 +4378,11 @@ class MonikerParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -4440,7 +4440,7 @@ class Moniker():
         scheme = json_get_string(obj, "scheme")
         identifier = json_get_string(obj, "identifier")
         unique = UniquenessLevel(json_get_string(obj, "unique"))
-        if kind_json := json_get_optional_string(obj, "kind"):
+        if (kind_json := json_get_optional_string(obj, "kind")) is not None:
             kind = MonikerKind(kind_json)
         else:
             kind = None
@@ -4474,7 +4474,7 @@ class MonikerOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -4512,7 +4512,7 @@ class MonikerRegistrationOptions(TextDocumentRegistrationOptions, MonikerOptions
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -4559,7 +4559,7 @@ class TypeHierarchyPrepareParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyPrepareParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -4642,18 +4642,18 @@ class TypeHierarchyItem():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyItem":
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [SymbolTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if detail_json := json_get_optional_string(obj, "detail"):
+        if (detail_json := json_get_optional_string(obj, "detail")) is not None:
             detail = detail_json
         else:
             detail = None
         uri = json_get_string(obj, "uri")
         range = Range.from_json(json_get_object(obj, "range"))
         selectionRange = Range.from_json(json_get_object(obj, "selectionRange"))
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -4695,7 +4695,7 @@ class TypeHierarchyOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -4742,11 +4742,11 @@ class TypeHierarchyRegistrationOptions(TextDocumentRegistrationOptions, TypeHier
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -4793,11 +4793,11 @@ class TypeHierarchySupertypesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchySupertypesParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -4845,11 +4845,11 @@ class TypeHierarchySubtypesParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchySubtypesParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -4941,7 +4941,7 @@ class InlineValueParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -4980,7 +4980,7 @@ class InlineValueOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -5026,12 +5026,12 @@ class InlineValueRegistrationOptions(InlineValueOptions, TextDocumentRegistratio
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueRegistrationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -5078,7 +5078,7 @@ class InlayHintParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -5187,7 +5187,7 @@ class Command():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Command":
         title = json_get_string(obj, "title")
         command = json_get_string(obj, "command")
-        if arguments_json := json_get_optional_array(obj, "arguments"):
+        if (arguments_json := json_get_optional_array(obj, "arguments")) is not None:
             arguments = [parse_LSPAny((i)) for i in arguments_json]
         else:
             arguments = None
@@ -5270,15 +5270,15 @@ class InlayHintLabelPart():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintLabelPart":
         value = json_get_string(obj, "value")
-        if tooltip_json := obj.get("tooltip"):
+        if (tooltip_json := obj.get("tooltip")) is not None:
             tooltip = parse_or_type(tooltip_json, (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: json_assert_type_string(v)))
         else:
             tooltip = None
-        if location_json := json_get_optional_object(obj, "location"):
+        if (location_json := json_get_optional_object(obj, "location")) is not None:
             location = Location.from_json(location_json)
         else:
             location = None
-        if command_json := json_get_optional_object(obj, "command"):
+        if (command_json := json_get_optional_object(obj, "command")) is not None:
             command = Command.from_json(command_json)
         else:
             command = None
@@ -5388,27 +5388,27 @@ class InlayHint():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHint":
         position = Position.from_json(json_get_object(obj, "position"))
         label = parse_or_type(obj["label"], (lambda v: json_assert_type_string(v), lambda v: [InlayHintLabelPart.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)]))
-        if kind_json := json_get_optional_int(obj, "kind"):
+        if (kind_json := json_get_optional_int(obj, "kind")) is not None:
             kind = InlayHintKind(kind_json)
         else:
             kind = None
-        if textEdits_json := json_get_optional_array(obj, "textEdits"):
+        if (textEdits_json := json_get_optional_array(obj, "textEdits")) is not None:
             textEdits = [TextEdit.from_json(json_assert_type_object(i)) for i in textEdits_json]
         else:
             textEdits = None
-        if tooltip_json := obj.get("tooltip"):
+        if (tooltip_json := obj.get("tooltip")) is not None:
             tooltip = parse_or_type(tooltip_json, (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: json_assert_type_string(v)))
         else:
             tooltip = None
-        if paddingLeft_json := json_get_optional_bool(obj, "paddingLeft"):
+        if (paddingLeft_json := json_get_optional_bool(obj, "paddingLeft")) is not None:
             paddingLeft = paddingLeft_json
         else:
             paddingLeft = None
-        if paddingRight_json := json_get_optional_bool(obj, "paddingRight"):
+        if (paddingRight_json := json_get_optional_bool(obj, "paddingRight")) is not None:
             paddingRight = paddingRight_json
         else:
             paddingRight = None
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -5459,11 +5459,11 @@ class InlayHintOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -5518,16 +5518,16 @@ class InlayHintRegistrationOptions(InlayHintOptions, TextDocumentRegistrationOpt
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintRegistrationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -5588,20 +5588,20 @@ class DocumentDiagnosticParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentDiagnosticParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
-        if identifier_json := json_get_optional_string(obj, "identifier"):
+        if (identifier_json := json_get_optional_string(obj, "identifier")) is not None:
             identifier = identifier_json
         else:
             identifier = None
-        if previousResultId_json := json_get_optional_string(obj, "previousResultId"):
+        if (previousResultId_json := json_get_optional_string(obj, "previousResultId")) is not None:
             previousResultId = previousResultId_json
         else:
             previousResultId = None
@@ -5721,11 +5721,11 @@ class DiagnosticOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if identifier_json := json_get_optional_string(obj, "identifier"):
+        if (identifier_json := json_get_optional_string(obj, "identifier")) is not None:
             identifier = identifier_json
         else:
             identifier = None
@@ -5801,17 +5801,17 @@ class DiagnosticRegistrationOptions(TextDocumentRegistrationOptions, DiagnosticO
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if identifier_json := json_get_optional_string(obj, "identifier"):
+        if (identifier_json := json_get_optional_string(obj, "identifier")) is not None:
             identifier = identifier_json
         else:
             identifier = None
         interFileDependencies = json_get_bool(obj, "interFileDependencies")
         workspaceDiagnostics = json_get_bool(obj, "workspaceDiagnostics")
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -5910,15 +5910,15 @@ class WorkspaceDiagnosticParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceDiagnosticParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
-        if identifier_json := json_get_optional_string(obj, "identifier"):
+        if (identifier_json := json_get_optional_string(obj, "identifier")) is not None:
             identifier = identifier_json
         else:
             identifier = None
@@ -6089,32 +6089,32 @@ class Diagnostic():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Diagnostic":
         range = Range.from_json(json_get_object(obj, "range"))
-        if severity_json := json_get_optional_int(obj, "severity"):
+        if (severity_json := json_get_optional_int(obj, "severity")) is not None:
             severity = DiagnosticSeverity(severity_json)
         else:
             severity = None
-        if code_json := obj.get("code"):
+        if (code_json := obj.get("code")) is not None:
             code = parse_or_type(code_json, (lambda v: json_assert_type_int(v), lambda v: json_assert_type_string(v)))
         else:
             code = None
-        if codeDescription_json := json_get_optional_object(obj, "codeDescription"):
+        if (codeDescription_json := json_get_optional_object(obj, "codeDescription")) is not None:
             codeDescription = CodeDescription.from_json(codeDescription_json)
         else:
             codeDescription = None
-        if source_json := json_get_optional_string(obj, "source"):
+        if (source_json := json_get_optional_string(obj, "source")) is not None:
             source = source_json
         else:
             source = None
         message = json_get_string(obj, "message")
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [DiagnosticTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if relatedInformation_json := json_get_optional_array(obj, "relatedInformation"):
+        if (relatedInformation_json := json_get_optional_array(obj, "relatedInformation")) is not None:
             relatedInformation = [DiagnosticRelatedInformation.from_json(json_assert_type_object(i)) for i in relatedInformation_json]
         else:
             relatedInformation = None
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -6177,7 +6177,7 @@ class FullDocumentDiagnosticReport():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FullDocumentDiagnosticReport":
         kind = match_string(json_get_string(obj, "kind"), "full")
-        if resultId_json := json_get_optional_string(obj, "resultId"):
+        if (resultId_json := json_get_optional_string(obj, "resultId")) is not None:
             resultId = resultId_json
         else:
             resultId = None
@@ -6241,7 +6241,7 @@ class WorkspaceFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFullDocumentDiagnosticReport":
         kind = match_string(json_get_string(obj, "kind"), "full")
-        if resultId_json := json_get_optional_string(obj, "resultId"):
+        if (resultId_json := json_get_optional_string(obj, "resultId")) is not None:
             resultId = resultId_json
         else:
             resultId = None
@@ -6469,7 +6469,7 @@ class ExecutionSummary():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecutionSummary":
         executionOrder = json_get_int(obj, "executionOrder")
-        if success_json := json_get_optional_bool(obj, "success"):
+        if (success_json := json_get_optional_bool(obj, "success")) is not None:
             success = success_json
         else:
             success = None
@@ -6533,11 +6533,11 @@ class NotebookCell():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCell":
         kind = NotebookCellKind(json_get_int(obj, "kind"))
         document = json_get_string(obj, "document")
-        if metadata_json := json_get_optional_object(obj, "metadata"):
+        if (metadata_json := json_get_optional_object(obj, "metadata")) is not None:
             metadata = parse_LSPObject(metadata_json)
         else:
             metadata = None
-        if executionSummary_json := json_get_optional_object(obj, "executionSummary"):
+        if (executionSummary_json := json_get_optional_object(obj, "executionSummary")) is not None:
             executionSummary = ExecutionSummary.from_json(executionSummary_json)
         else:
             executionSummary = None
@@ -6606,7 +6606,7 @@ class NotebookDocument():
         uri = json_get_string(obj, "uri")
         notebookType = json_get_string(obj, "notebookType")
         version = json_get_int(obj, "version")
-        if metadata_json := json_get_optional_object(obj, "metadata"):
+        if (metadata_json := json_get_optional_object(obj, "metadata")) is not None:
             metadata = parse_LSPObject(metadata_json)
         else:
             metadata = None
@@ -6786,7 +6786,7 @@ class NotebookCellArrayChange():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookCellArrayChange":
         start = json_get_int(obj, "start")
         deleteCount = json_get_int(obj, "deleteCount")
-        if cells_json := json_get_optional_array(obj, "cells"):
+        if (cells_json := json_get_optional_array(obj, "cells")) is not None:
             cells = [NotebookCell.from_json(json_assert_type_object(i)) for i in cells_json]
         else:
             cells = None
@@ -6806,11 +6806,11 @@ AnonymousStructure7Keys = Literal["array","didOpen","didClose"]
 def parse_AnonymousStructure7(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure7Keys, Any]:
     out: Dict[AnonymousStructure7Keys, Any] = {}
     out["array"] = NotebookCellArrayChange.from_json(json_get_object(obj, "array"))
-    if didOpen_json := json_get_optional_array(obj, "didOpen"):
+    if (didOpen_json := json_get_optional_array(obj, "didOpen")) is not None:
         out["didOpen"] = [TextDocumentItem.from_json(json_assert_type_object(i)) for i in didOpen_json]
     else:
         out["didOpen"] = None
-    if didClose_json := json_get_optional_array(obj, "didClose"):
+    if (didClose_json := json_get_optional_array(obj, "didClose")) is not None:
         out["didClose"] = [TextDocumentIdentifier.from_json(json_assert_type_object(i)) for i in didClose_json]
     else:
         out["didClose"] = None
@@ -6866,7 +6866,7 @@ AnonymousStructure39Keys = Literal["range","rangeLength","text"]
 def parse_AnonymousStructure39(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure39Keys, Any]:
     out: Dict[AnonymousStructure39Keys, Any] = {}
     out["range"] = Range.from_json(json_get_object(obj, "range"))
-    if rangeLength_json := json_get_optional_int(obj, "rangeLength"):
+    if (rangeLength_json := json_get_optional_int(obj, "rangeLength")) is not None:
         out["rangeLength"] = rangeLength_json
     else:
         out["rangeLength"] = None
@@ -6925,15 +6925,15 @@ AnonymousStructure9Keys = Literal["structure","data","textContent"]
 
 def parse_AnonymousStructure9(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure9Keys, Any]:
     out: Dict[AnonymousStructure9Keys, Any] = {}
-    if structure_json := json_get_optional_object(obj, "structure"):
+    if (structure_json := json_get_optional_object(obj, "structure")) is not None:
         out["structure"] = parse_AnonymousStructure7(structure_json)
     else:
         out["structure"] = None
-    if data_json := json_get_optional_array(obj, "data"):
+    if (data_json := json_get_optional_array(obj, "data")) is not None:
         out["data"] = [NotebookCell.from_json(json_assert_type_object(i)) for i in data_json]
     else:
         out["data"] = None
-    if textContent_json := json_get_optional_array(obj, "textContent"):
+    if (textContent_json := json_get_optional_array(obj, "textContent")) is not None:
         out["textContent"] = [parse_AnonymousStructure8(json_assert_type_object(i)) for i in textContent_json]
     else:
         out["textContent"] = None
@@ -6980,11 +6980,11 @@ class NotebookDocumentChangeEvent():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentChangeEvent":
-        if metadata_json := json_get_optional_object(obj, "metadata"):
+        if (metadata_json := json_get_optional_object(obj, "metadata")) is not None:
             metadata = parse_LSPObject(metadata_json)
         else:
             metadata = None
-        if cells_json := json_get_optional_object(obj, "cells"):
+        if (cells_json := json_get_optional_object(obj, "cells")) is not None:
             cells = parse_AnonymousStructure9(cells_json)
         else:
             cells = None
@@ -7198,7 +7198,7 @@ class Registration():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Registration":
         id = json_get_string(obj, "id")
         method = json_get_string(obj, "method")
-        if registerOptions_json := obj.get("registerOptions"):
+        if (registerOptions_json := obj.get("registerOptions")) is not None:
             registerOptions = parse_LSPAny(registerOptions_json)
         else:
             registerOptions = None
@@ -7309,7 +7309,7 @@ AnonymousStructure10Keys = Literal["name","version"]
 def parse_AnonymousStructure10(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure10Keys, Any]:
     out: Dict[AnonymousStructure10Keys, Any] = {}
     out["name"] = json_get_string(obj, "name")
-    if version_json := json_get_optional_string(obj, "version"):
+    if (version_json := json_get_optional_string(obj, "version")) is not None:
         out["version"] = version_json
     else:
         out["version"] = None
@@ -7327,7 +7327,7 @@ AnonymousStructure17Keys = Literal["groupsOnLabel"]
 
 def parse_AnonymousStructure17(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure17Keys, Any]:
     out: Dict[AnonymousStructure17Keys, Any] = {}
-    if groupsOnLabel_json := json_get_optional_bool(obj, "groupsOnLabel"):
+    if (groupsOnLabel_json := json_get_optional_bool(obj, "groupsOnLabel")) is not None:
         out["groupsOnLabel"] = groupsOnLabel_json
     else:
         out["groupsOnLabel"] = None
@@ -7409,23 +7409,23 @@ class WorkspaceEditClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceEditClientCapabilities":
-        if documentChanges_json := json_get_optional_bool(obj, "documentChanges"):
+        if (documentChanges_json := json_get_optional_bool(obj, "documentChanges")) is not None:
             documentChanges = documentChanges_json
         else:
             documentChanges = None
-        if resourceOperations_json := json_get_optional_array(obj, "resourceOperations"):
+        if (resourceOperations_json := json_get_optional_array(obj, "resourceOperations")) is not None:
             resourceOperations = [ResourceOperationKind(json_assert_type_string(i)) for i in resourceOperations_json]
         else:
             resourceOperations = None
-        if failureHandling_json := json_get_optional_string(obj, "failureHandling"):
+        if (failureHandling_json := json_get_optional_string(obj, "failureHandling")) is not None:
             failureHandling = FailureHandlingKind(failureHandling_json)
         else:
             failureHandling = None
-        if normalizesLineEndings_json := json_get_optional_bool(obj, "normalizesLineEndings"):
+        if (normalizesLineEndings_json := json_get_optional_bool(obj, "normalizesLineEndings")) is not None:
             normalizesLineEndings = normalizesLineEndings_json
         else:
             normalizesLineEndings = None
-        if changeAnnotationSupport_json := json_get_optional_object(obj, "changeAnnotationSupport"):
+        if (changeAnnotationSupport_json := json_get_optional_object(obj, "changeAnnotationSupport")) is not None:
             changeAnnotationSupport = parse_AnonymousStructure17(changeAnnotationSupport_json)
         else:
             changeAnnotationSupport = None
@@ -7465,7 +7465,7 @@ class DidChangeConfigurationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -7512,11 +7512,11 @@ class DidChangeWatchedFilesClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeWatchedFilesClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if relativePatternSupport_json := json_get_optional_bool(obj, "relativePatternSupport"):
+        if (relativePatternSupport_json := json_get_optional_bool(obj, "relativePatternSupport")) is not None:
             relativePatternSupport = relativePatternSupport_json
         else:
             relativePatternSupport = None
@@ -7535,7 +7535,7 @@ AnonymousStructure18Keys = Literal["valueSet"]
 
 def parse_AnonymousStructure18(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure18Keys, Any]:
     out: Dict[AnonymousStructure18Keys, Any] = {}
-    if valueSet_json := json_get_optional_array(obj, "valueSet"):
+    if (valueSet_json := json_get_optional_array(obj, "valueSet")) is not None:
         out["valueSet"] = [SymbolKind(json_assert_type_int(i)) for i in valueSet_json]
     else:
         out["valueSet"] = None
@@ -7622,19 +7622,19 @@ class WorkspaceSymbolClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if symbolKind_json := json_get_optional_object(obj, "symbolKind"):
+        if (symbolKind_json := json_get_optional_object(obj, "symbolKind")) is not None:
             symbolKind = parse_AnonymousStructure18(symbolKind_json)
         else:
             symbolKind = None
-        if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
+        if (tagSupport_json := json_get_optional_object(obj, "tagSupport")) is not None:
             tagSupport = parse_AnonymousStructure19(tagSupport_json)
         else:
             tagSupport = None
-        if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
+        if (resolveSupport_json := json_get_optional_object(obj, "resolveSupport")) is not None:
             resolveSupport = parse_AnonymousStructure20(resolveSupport_json)
         else:
             resolveSupport = None
@@ -7672,7 +7672,7 @@ class ExecuteCommandClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -7716,7 +7716,7 @@ class SemanticTokensWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensWorkspaceClientCapabilities":
-        if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
+        if (refreshSupport_json := json_get_optional_bool(obj, "refreshSupport")) is not None:
             refreshSupport = refreshSupport_json
         else:
             refreshSupport = None
@@ -7760,7 +7760,7 @@ class CodeLensWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensWorkspaceClientCapabilities":
-        if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
+        if (refreshSupport_json := json_get_optional_bool(obj, "refreshSupport")) is not None:
             refreshSupport = refreshSupport_json
         else:
             refreshSupport = None
@@ -7827,31 +7827,31 @@ class FileOperationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if didCreate_json := json_get_optional_bool(obj, "didCreate"):
+        if (didCreate_json := json_get_optional_bool(obj, "didCreate")) is not None:
             didCreate = didCreate_json
         else:
             didCreate = None
-        if willCreate_json := json_get_optional_bool(obj, "willCreate"):
+        if (willCreate_json := json_get_optional_bool(obj, "willCreate")) is not None:
             willCreate = willCreate_json
         else:
             willCreate = None
-        if didRename_json := json_get_optional_bool(obj, "didRename"):
+        if (didRename_json := json_get_optional_bool(obj, "didRename")) is not None:
             didRename = didRename_json
         else:
             didRename = None
-        if willRename_json := json_get_optional_bool(obj, "willRename"):
+        if (willRename_json := json_get_optional_bool(obj, "willRename")) is not None:
             willRename = willRename_json
         else:
             willRename = None
-        if didDelete_json := json_get_optional_bool(obj, "didDelete"):
+        if (didDelete_json := json_get_optional_bool(obj, "didDelete")) is not None:
             didDelete = didDelete_json
         else:
             didDelete = None
-        if willDelete_json := json_get_optional_bool(obj, "willDelete"):
+        if (willDelete_json := json_get_optional_bool(obj, "willDelete")) is not None:
             willDelete = willDelete_json
         else:
             willDelete = None
@@ -7909,7 +7909,7 @@ class InlineValueWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueWorkspaceClientCapabilities":
-        if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
+        if (refreshSupport_json := json_get_optional_bool(obj, "refreshSupport")) is not None:
             refreshSupport = refreshSupport_json
         else:
             refreshSupport = None
@@ -7955,7 +7955,7 @@ class InlayHintWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintWorkspaceClientCapabilities":
-        if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
+        if (refreshSupport_json := json_get_optional_bool(obj, "refreshSupport")) is not None:
             refreshSupport = refreshSupport_json
         else:
             refreshSupport = None
@@ -8001,7 +8001,7 @@ class DiagnosticWorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticWorkspaceClientCapabilities":
-        if refreshSupport_json := json_get_optional_bool(obj, "refreshSupport"):
+        if (refreshSupport_json := json_get_optional_bool(obj, "refreshSupport")) is not None:
             refreshSupport = refreshSupport_json
         else:
             refreshSupport = None
@@ -8144,59 +8144,59 @@ class WorkspaceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceClientCapabilities":
-        if applyEdit_json := json_get_optional_bool(obj, "applyEdit"):
+        if (applyEdit_json := json_get_optional_bool(obj, "applyEdit")) is not None:
             applyEdit = applyEdit_json
         else:
             applyEdit = None
-        if workspaceEdit_json := json_get_optional_object(obj, "workspaceEdit"):
+        if (workspaceEdit_json := json_get_optional_object(obj, "workspaceEdit")) is not None:
             workspaceEdit = WorkspaceEditClientCapabilities.from_json(workspaceEdit_json)
         else:
             workspaceEdit = None
-        if didChangeConfiguration_json := json_get_optional_object(obj, "didChangeConfiguration"):
+        if (didChangeConfiguration_json := json_get_optional_object(obj, "didChangeConfiguration")) is not None:
             didChangeConfiguration = DidChangeConfigurationClientCapabilities.from_json(didChangeConfiguration_json)
         else:
             didChangeConfiguration = None
-        if didChangeWatchedFiles_json := json_get_optional_object(obj, "didChangeWatchedFiles"):
+        if (didChangeWatchedFiles_json := json_get_optional_object(obj, "didChangeWatchedFiles")) is not None:
             didChangeWatchedFiles = DidChangeWatchedFilesClientCapabilities.from_json(didChangeWatchedFiles_json)
         else:
             didChangeWatchedFiles = None
-        if symbol_json := json_get_optional_object(obj, "symbol"):
+        if (symbol_json := json_get_optional_object(obj, "symbol")) is not None:
             symbol = WorkspaceSymbolClientCapabilities.from_json(symbol_json)
         else:
             symbol = None
-        if executeCommand_json := json_get_optional_object(obj, "executeCommand"):
+        if (executeCommand_json := json_get_optional_object(obj, "executeCommand")) is not None:
             executeCommand = ExecuteCommandClientCapabilities.from_json(executeCommand_json)
         else:
             executeCommand = None
-        if workspaceFolders_json := json_get_optional_bool(obj, "workspaceFolders"):
+        if (workspaceFolders_json := json_get_optional_bool(obj, "workspaceFolders")) is not None:
             workspaceFolders = workspaceFolders_json
         else:
             workspaceFolders = None
-        if configuration_json := json_get_optional_bool(obj, "configuration"):
+        if (configuration_json := json_get_optional_bool(obj, "configuration")) is not None:
             configuration = configuration_json
         else:
             configuration = None
-        if semanticTokens_json := json_get_optional_object(obj, "semanticTokens"):
+        if (semanticTokens_json := json_get_optional_object(obj, "semanticTokens")) is not None:
             semanticTokens = SemanticTokensWorkspaceClientCapabilities.from_json(semanticTokens_json)
         else:
             semanticTokens = None
-        if codeLens_json := json_get_optional_object(obj, "codeLens"):
+        if (codeLens_json := json_get_optional_object(obj, "codeLens")) is not None:
             codeLens = CodeLensWorkspaceClientCapabilities.from_json(codeLens_json)
         else:
             codeLens = None
-        if fileOperations_json := json_get_optional_object(obj, "fileOperations"):
+        if (fileOperations_json := json_get_optional_object(obj, "fileOperations")) is not None:
             fileOperations = FileOperationClientCapabilities.from_json(fileOperations_json)
         else:
             fileOperations = None
-        if inlineValue_json := json_get_optional_object(obj, "inlineValue"):
+        if (inlineValue_json := json_get_optional_object(obj, "inlineValue")) is not None:
             inlineValue = InlineValueWorkspaceClientCapabilities.from_json(inlineValue_json)
         else:
             inlineValue = None
-        if inlayHint_json := json_get_optional_object(obj, "inlayHint"):
+        if (inlayHint_json := json_get_optional_object(obj, "inlayHint")) is not None:
             inlayHint = InlayHintWorkspaceClientCapabilities.from_json(inlayHint_json)
         else:
             inlayHint = None
-        if diagnostics_json := json_get_optional_object(obj, "diagnostics"):
+        if (diagnostics_json := json_get_optional_object(obj, "diagnostics")) is not None:
             diagnostics = DiagnosticWorkspaceClientCapabilities.from_json(diagnostics_json)
         else:
             diagnostics = None
@@ -8273,19 +8273,19 @@ class TextDocumentSyncClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSyncClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if willSave_json := json_get_optional_bool(obj, "willSave"):
+        if (willSave_json := json_get_optional_bool(obj, "willSave")) is not None:
             willSave = willSave_json
         else:
             willSave = None
-        if willSaveWaitUntil_json := json_get_optional_bool(obj, "willSaveWaitUntil"):
+        if (willSaveWaitUntil_json := json_get_optional_bool(obj, "willSaveWaitUntil")) is not None:
             willSaveWaitUntil = willSaveWaitUntil_json
         else:
             willSaveWaitUntil = None
-        if didSave_json := json_get_optional_bool(obj, "didSave"):
+        if (didSave_json := json_get_optional_bool(obj, "didSave")) is not None:
             didSave = didSave_json
         else:
             didSave = None
@@ -8347,43 +8347,43 @@ AnonymousStructure24Keys = Literal["snippetSupport","commitCharactersSupport","d
 
 def parse_AnonymousStructure24(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure24Keys, Any]:
     out: Dict[AnonymousStructure24Keys, Any] = {}
-    if snippetSupport_json := json_get_optional_bool(obj, "snippetSupport"):
+    if (snippetSupport_json := json_get_optional_bool(obj, "snippetSupport")) is not None:
         out["snippetSupport"] = snippetSupport_json
     else:
         out["snippetSupport"] = None
-    if commitCharactersSupport_json := json_get_optional_bool(obj, "commitCharactersSupport"):
+    if (commitCharactersSupport_json := json_get_optional_bool(obj, "commitCharactersSupport")) is not None:
         out["commitCharactersSupport"] = commitCharactersSupport_json
     else:
         out["commitCharactersSupport"] = None
-    if documentationFormat_json := json_get_optional_array(obj, "documentationFormat"):
+    if (documentationFormat_json := json_get_optional_array(obj, "documentationFormat")) is not None:
         out["documentationFormat"] = [MarkupKind(json_assert_type_string(i)) for i in documentationFormat_json]
     else:
         out["documentationFormat"] = None
-    if deprecatedSupport_json := json_get_optional_bool(obj, "deprecatedSupport"):
+    if (deprecatedSupport_json := json_get_optional_bool(obj, "deprecatedSupport")) is not None:
         out["deprecatedSupport"] = deprecatedSupport_json
     else:
         out["deprecatedSupport"] = None
-    if preselectSupport_json := json_get_optional_bool(obj, "preselectSupport"):
+    if (preselectSupport_json := json_get_optional_bool(obj, "preselectSupport")) is not None:
         out["preselectSupport"] = preselectSupport_json
     else:
         out["preselectSupport"] = None
-    if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
+    if (tagSupport_json := json_get_optional_object(obj, "tagSupport")) is not None:
         out["tagSupport"] = parse_AnonymousStructure21(tagSupport_json)
     else:
         out["tagSupport"] = None
-    if insertReplaceSupport_json := json_get_optional_bool(obj, "insertReplaceSupport"):
+    if (insertReplaceSupport_json := json_get_optional_bool(obj, "insertReplaceSupport")) is not None:
         out["insertReplaceSupport"] = insertReplaceSupport_json
     else:
         out["insertReplaceSupport"] = None
-    if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
+    if (resolveSupport_json := json_get_optional_object(obj, "resolveSupport")) is not None:
         out["resolveSupport"] = parse_AnonymousStructure22(resolveSupport_json)
     else:
         out["resolveSupport"] = None
-    if insertTextModeSupport_json := json_get_optional_object(obj, "insertTextModeSupport"):
+    if (insertTextModeSupport_json := json_get_optional_object(obj, "insertTextModeSupport")) is not None:
         out["insertTextModeSupport"] = parse_AnonymousStructure23(insertTextModeSupport_json)
     else:
         out["insertTextModeSupport"] = None
-    if labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport"):
+    if (labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport")) is not None:
         out["labelDetailsSupport"] = labelDetailsSupport_json
     else:
         out["labelDetailsSupport"] = None
@@ -8418,7 +8418,7 @@ AnonymousStructure25Keys = Literal["valueSet"]
 
 def parse_AnonymousStructure25(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure25Keys, Any]:
     out: Dict[AnonymousStructure25Keys, Any] = {}
-    if valueSet_json := json_get_optional_array(obj, "valueSet"):
+    if (valueSet_json := json_get_optional_array(obj, "valueSet")) is not None:
         out["valueSet"] = [CompletionItemKind(json_assert_type_int(i)) for i in valueSet_json]
     else:
         out["valueSet"] = None
@@ -8435,7 +8435,7 @@ AnonymousStructure26Keys = Literal["itemDefaults"]
 
 def parse_AnonymousStructure26(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure26Keys, Any]:
     out: Dict[AnonymousStructure26Keys, Any] = {}
-    if itemDefaults_json := json_get_optional_array(obj, "itemDefaults"):
+    if (itemDefaults_json := json_get_optional_array(obj, "itemDefaults")) is not None:
         out["itemDefaults"] = [json_assert_type_string(i) for i in itemDefaults_json]
     else:
         out["itemDefaults"] = None
@@ -8508,27 +8508,27 @@ class CompletionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if completionItem_json := json_get_optional_object(obj, "completionItem"):
+        if (completionItem_json := json_get_optional_object(obj, "completionItem")) is not None:
             completionItem = parse_AnonymousStructure24(completionItem_json)
         else:
             completionItem = None
-        if completionItemKind_json := json_get_optional_object(obj, "completionItemKind"):
+        if (completionItemKind_json := json_get_optional_object(obj, "completionItemKind")) is not None:
             completionItemKind = parse_AnonymousStructure25(completionItemKind_json)
         else:
             completionItemKind = None
-        if insertTextMode_json := json_get_optional_int(obj, "insertTextMode"):
+        if (insertTextMode_json := json_get_optional_int(obj, "insertTextMode")) is not None:
             insertTextMode = InsertTextMode(insertTextMode_json)
         else:
             insertTextMode = None
-        if contextSupport_json := json_get_optional_bool(obj, "contextSupport"):
+        if (contextSupport_json := json_get_optional_bool(obj, "contextSupport")) is not None:
             contextSupport = contextSupport_json
         else:
             contextSupport = None
-        if completionList_json := json_get_optional_object(obj, "completionList"):
+        if (completionList_json := json_get_optional_object(obj, "completionList")) is not None:
             completionList = parse_AnonymousStructure26(completionList_json)
         else:
             completionList = None
@@ -8577,11 +8577,11 @@ class HoverClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if contentFormat_json := json_get_optional_array(obj, "contentFormat"):
+        if (contentFormat_json := json_get_optional_array(obj, "contentFormat")) is not None:
             contentFormat = [MarkupKind(json_assert_type_string(i)) for i in contentFormat_json]
         else:
             contentFormat = None
@@ -8600,7 +8600,7 @@ AnonymousStructure27Keys = Literal["labelOffsetSupport"]
 
 def parse_AnonymousStructure27(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure27Keys, Any]:
     out: Dict[AnonymousStructure27Keys, Any] = {}
-    if labelOffsetSupport_json := json_get_optional_bool(obj, "labelOffsetSupport"):
+    if (labelOffsetSupport_json := json_get_optional_bool(obj, "labelOffsetSupport")) is not None:
         out["labelOffsetSupport"] = labelOffsetSupport_json
     else:
         out["labelOffsetSupport"] = None
@@ -8617,15 +8617,15 @@ AnonymousStructure28Keys = Literal["documentationFormat","parameterInformation",
 
 def parse_AnonymousStructure28(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure28Keys, Any]:
     out: Dict[AnonymousStructure28Keys, Any] = {}
-    if documentationFormat_json := json_get_optional_array(obj, "documentationFormat"):
+    if (documentationFormat_json := json_get_optional_array(obj, "documentationFormat")) is not None:
         out["documentationFormat"] = [MarkupKind(json_assert_type_string(i)) for i in documentationFormat_json]
     else:
         out["documentationFormat"] = None
-    if parameterInformation_json := json_get_optional_object(obj, "parameterInformation"):
+    if (parameterInformation_json := json_get_optional_object(obj, "parameterInformation")) is not None:
         out["parameterInformation"] = parse_AnonymousStructure27(parameterInformation_json)
     else:
         out["parameterInformation"] = None
-    if activeParameterSupport_json := json_get_optional_bool(obj, "activeParameterSupport"):
+    if (activeParameterSupport_json := json_get_optional_bool(obj, "activeParameterSupport")) is not None:
         out["activeParameterSupport"] = activeParameterSupport_json
     else:
         out["activeParameterSupport"] = None
@@ -8683,15 +8683,15 @@ class SignatureHelpClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if signatureInformation_json := json_get_optional_object(obj, "signatureInformation"):
+        if (signatureInformation_json := json_get_optional_object(obj, "signatureInformation")) is not None:
             signatureInformation = parse_AnonymousStructure28(signatureInformation_json)
         else:
             signatureInformation = None
-        if contextSupport_json := json_get_optional_bool(obj, "contextSupport"):
+        if (contextSupport_json := json_get_optional_bool(obj, "contextSupport")) is not None:
             contextSupport = contextSupport_json
         else:
             contextSupport = None
@@ -8736,11 +8736,11 @@ class DeclarationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DeclarationClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if linkSupport_json := json_get_optional_bool(obj, "linkSupport"):
+        if (linkSupport_json := json_get_optional_bool(obj, "linkSupport")) is not None:
             linkSupport = linkSupport_json
         else:
             linkSupport = None
@@ -8783,11 +8783,11 @@ class DefinitionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if linkSupport_json := json_get_optional_bool(obj, "linkSupport"):
+        if (linkSupport_json := json_get_optional_bool(obj, "linkSupport")) is not None:
             linkSupport = linkSupport_json
         else:
             linkSupport = None
@@ -8834,11 +8834,11 @@ class TypeDefinitionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeDefinitionClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if linkSupport_json := json_get_optional_bool(obj, "linkSupport"):
+        if (linkSupport_json := json_get_optional_bool(obj, "linkSupport")) is not None:
             linkSupport = linkSupport_json
         else:
             linkSupport = None
@@ -8885,11 +8885,11 @@ class ImplementationClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ImplementationClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if linkSupport_json := json_get_optional_bool(obj, "linkSupport"):
+        if (linkSupport_json := json_get_optional_bool(obj, "linkSupport")) is not None:
             linkSupport = linkSupport_json
         else:
             linkSupport = None
@@ -8923,7 +8923,7 @@ class ReferenceClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -8955,7 +8955,7 @@ class DocumentHighlightClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9023,23 +9023,23 @@ class DocumentSymbolClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if symbolKind_json := json_get_optional_object(obj, "symbolKind"):
+        if (symbolKind_json := json_get_optional_object(obj, "symbolKind")) is not None:
             symbolKind = parse_AnonymousStructure18(symbolKind_json)
         else:
             symbolKind = None
-        if hierarchicalDocumentSymbolSupport_json := json_get_optional_bool(obj, "hierarchicalDocumentSymbolSupport"):
+        if (hierarchicalDocumentSymbolSupport_json := json_get_optional_bool(obj, "hierarchicalDocumentSymbolSupport")) is not None:
             hierarchicalDocumentSymbolSupport = hierarchicalDocumentSymbolSupport_json
         else:
             hierarchicalDocumentSymbolSupport = None
-        if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
+        if (tagSupport_json := json_get_optional_object(obj, "tagSupport")) is not None:
             tagSupport = parse_AnonymousStructure19(tagSupport_json)
         else:
             tagSupport = None
-        if labelSupport_json := json_get_optional_bool(obj, "labelSupport"):
+        if (labelSupport_json := json_get_optional_bool(obj, "labelSupport")) is not None:
             labelSupport = labelSupport_json
         else:
             labelSupport = None
@@ -9177,31 +9177,31 @@ class CodeActionClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if codeActionLiteralSupport_json := json_get_optional_object(obj, "codeActionLiteralSupport"):
+        if (codeActionLiteralSupport_json := json_get_optional_object(obj, "codeActionLiteralSupport")) is not None:
             codeActionLiteralSupport = parse_AnonymousStructure30(codeActionLiteralSupport_json)
         else:
             codeActionLiteralSupport = None
-        if isPreferredSupport_json := json_get_optional_bool(obj, "isPreferredSupport"):
+        if (isPreferredSupport_json := json_get_optional_bool(obj, "isPreferredSupport")) is not None:
             isPreferredSupport = isPreferredSupport_json
         else:
             isPreferredSupport = None
-        if disabledSupport_json := json_get_optional_bool(obj, "disabledSupport"):
+        if (disabledSupport_json := json_get_optional_bool(obj, "disabledSupport")) is not None:
             disabledSupport = disabledSupport_json
         else:
             disabledSupport = None
-        if dataSupport_json := json_get_optional_bool(obj, "dataSupport"):
+        if (dataSupport_json := json_get_optional_bool(obj, "dataSupport")) is not None:
             dataSupport = dataSupport_json
         else:
             dataSupport = None
-        if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
+        if (resolveSupport_json := json_get_optional_object(obj, "resolveSupport")) is not None:
             resolveSupport = parse_AnonymousStructure22(resolveSupport_json)
         else:
             resolveSupport = None
-        if honorsChangeAnnotations_json := json_get_optional_bool(obj, "honorsChangeAnnotations"):
+        if (honorsChangeAnnotations_json := json_get_optional_bool(obj, "honorsChangeAnnotations")) is not None:
             honorsChangeAnnotations = honorsChangeAnnotations_json
         else:
             honorsChangeAnnotations = None
@@ -9245,7 +9245,7 @@ class CodeLensClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9286,11 +9286,11 @@ class DocumentLinkClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if tooltipSupport_json := json_get_optional_bool(obj, "tooltipSupport"):
+        if (tooltipSupport_json := json_get_optional_bool(obj, "tooltipSupport")) is not None:
             tooltipSupport = tooltipSupport_json
         else:
             tooltipSupport = None
@@ -9328,7 +9328,7 @@ class DocumentColorClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentColorClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9360,7 +9360,7 @@ class DocumentFormattingClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9392,7 +9392,7 @@ class DocumentRangeFormattingClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9424,7 +9424,7 @@ class DocumentOnTypeFormattingClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9499,19 +9499,19 @@ class RenameClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if prepareSupport_json := json_get_optional_bool(obj, "prepareSupport"):
+        if (prepareSupport_json := json_get_optional_bool(obj, "prepareSupport")) is not None:
             prepareSupport = prepareSupport_json
         else:
             prepareSupport = None
-        if prepareSupportDefaultBehavior_json := json_get_optional_int(obj, "prepareSupportDefaultBehavior"):
+        if (prepareSupportDefaultBehavior_json := json_get_optional_int(obj, "prepareSupportDefaultBehavior")) is not None:
             prepareSupportDefaultBehavior = PrepareSupportDefaultBehavior(prepareSupportDefaultBehavior_json)
         else:
             prepareSupportDefaultBehavior = None
-        if honorsChangeAnnotations_json := json_get_optional_bool(obj, "honorsChangeAnnotations"):
+        if (honorsChangeAnnotations_json := json_get_optional_bool(obj, "honorsChangeAnnotations")) is not None:
             honorsChangeAnnotations = honorsChangeAnnotations_json
         else:
             honorsChangeAnnotations = None
@@ -9534,7 +9534,7 @@ AnonymousStructure31Keys = Literal["valueSet"]
 
 def parse_AnonymousStructure31(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure31Keys, Any]:
     out: Dict[AnonymousStructure31Keys, Any] = {}
-    if valueSet_json := json_get_optional_array(obj, "valueSet"):
+    if (valueSet_json := json_get_optional_array(obj, "valueSet")) is not None:
         out["valueSet"] = [FoldingRangeKind(json_assert_type_string(i)) for i in valueSet_json]
     else:
         out["valueSet"] = None
@@ -9551,7 +9551,7 @@ AnonymousStructure32Keys = Literal["collapsedText"]
 
 def parse_AnonymousStructure32(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure32Keys, Any]:
     out: Dict[AnonymousStructure32Keys, Any] = {}
-    if collapsedText_json := json_get_optional_bool(obj, "collapsedText"):
+    if (collapsedText_json := json_get_optional_bool(obj, "collapsedText")) is not None:
         out["collapsedText"] = collapsedText_json
     else:
         out["collapsedText"] = None
@@ -9625,23 +9625,23 @@ class FoldingRangeClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FoldingRangeClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if rangeLimit_json := json_get_optional_int(obj, "rangeLimit"):
+        if (rangeLimit_json := json_get_optional_int(obj, "rangeLimit")) is not None:
             rangeLimit = rangeLimit_json
         else:
             rangeLimit = None
-        if lineFoldingOnly_json := json_get_optional_bool(obj, "lineFoldingOnly"):
+        if (lineFoldingOnly_json := json_get_optional_bool(obj, "lineFoldingOnly")) is not None:
             lineFoldingOnly = lineFoldingOnly_json
         else:
             lineFoldingOnly = None
-        if foldingRangeKind_json := json_get_optional_object(obj, "foldingRangeKind"):
+        if (foldingRangeKind_json := json_get_optional_object(obj, "foldingRangeKind")) is not None:
             foldingRangeKind = parse_AnonymousStructure31(foldingRangeKind_json)
         else:
             foldingRangeKind = None
-        if foldingRange_json := json_get_optional_object(obj, "foldingRange"):
+        if (foldingRange_json := json_get_optional_object(obj, "foldingRange")) is not None:
             foldingRange = parse_AnonymousStructure32(foldingRange_json)
         else:
             foldingRange = None
@@ -9685,7 +9685,7 @@ class SelectionRangeClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SelectionRangeClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9774,23 +9774,23 @@ class PublishDiagnosticsClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PublishDiagnosticsClientCapabilities":
-        if relatedInformation_json := json_get_optional_bool(obj, "relatedInformation"):
+        if (relatedInformation_json := json_get_optional_bool(obj, "relatedInformation")) is not None:
             relatedInformation = relatedInformation_json
         else:
             relatedInformation = None
-        if tagSupport_json := json_get_optional_object(obj, "tagSupport"):
+        if (tagSupport_json := json_get_optional_object(obj, "tagSupport")) is not None:
             tagSupport = parse_AnonymousStructure33(tagSupport_json)
         else:
             tagSupport = None
-        if versionSupport_json := json_get_optional_bool(obj, "versionSupport"):
+        if (versionSupport_json := json_get_optional_bool(obj, "versionSupport")) is not None:
             versionSupport = versionSupport_json
         else:
             versionSupport = None
-        if codeDescriptionSupport_json := json_get_optional_bool(obj, "codeDescriptionSupport"):
+        if (codeDescriptionSupport_json := json_get_optional_bool(obj, "codeDescriptionSupport")) is not None:
             codeDescriptionSupport = codeDescriptionSupport_json
         else:
             codeDescriptionSupport = None
-        if dataSupport_json := json_get_optional_bool(obj, "dataSupport"):
+        if (dataSupport_json := json_get_optional_bool(obj, "dataSupport")) is not None:
             dataSupport = dataSupport_json
         else:
             dataSupport = None
@@ -9834,7 +9834,7 @@ class CallHierarchyClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CallHierarchyClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -9851,7 +9851,7 @@ AnonymousStructure34Keys = Literal["delta"]
 
 def parse_AnonymousStructure34(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure34Keys, Any]:
     out: Dict[AnonymousStructure34Keys, Any] = {}
-    if delta_json := json_get_optional_bool(obj, "delta"):
+    if (delta_json := json_get_optional_bool(obj, "delta")) is not None:
         out["delta"] = delta_json
     else:
         out["delta"] = None
@@ -9868,11 +9868,11 @@ AnonymousStructure35Keys = Literal["range","full"]
 
 def parse_AnonymousStructure35(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure35Keys, Any]:
     out: Dict[AnonymousStructure35Keys, Any] = {}
-    if range_json := obj.get("range"):
+    if (range_json := obj.get("range")) is not None:
         out["range"] = parse_or_type(range_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure5(json_assert_type_object(v))))
     else:
         out["range"] = None
-    if full_json := obj.get("full"):
+    if (full_json := obj.get("full")) is not None:
         out["full"] = parse_or_type(full_json, (lambda v: json_assert_type_bool(v), lambda v: parse_AnonymousStructure34(json_assert_type_object(v))))
     else:
         out["full"] = None
@@ -9992,7 +9992,7 @@ class SemanticTokensClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SemanticTokensClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -10000,19 +10000,19 @@ class SemanticTokensClientCapabilities():
         tokenTypes = [json_assert_type_string(i) for i in json_get_array(obj, "tokenTypes")]
         tokenModifiers = [json_assert_type_string(i) for i in json_get_array(obj, "tokenModifiers")]
         formats = [TokenFormat(json_assert_type_string(i)) for i in json_get_array(obj, "formats")]
-        if overlappingTokenSupport_json := json_get_optional_bool(obj, "overlappingTokenSupport"):
+        if (overlappingTokenSupport_json := json_get_optional_bool(obj, "overlappingTokenSupport")) is not None:
             overlappingTokenSupport = overlappingTokenSupport_json
         else:
             overlappingTokenSupport = None
-        if multilineTokenSupport_json := json_get_optional_bool(obj, "multilineTokenSupport"):
+        if (multilineTokenSupport_json := json_get_optional_bool(obj, "multilineTokenSupport")) is not None:
             multilineTokenSupport = multilineTokenSupport_json
         else:
             multilineTokenSupport = None
-        if serverCancelSupport_json := json_get_optional_bool(obj, "serverCancelSupport"):
+        if (serverCancelSupport_json := json_get_optional_bool(obj, "serverCancelSupport")) is not None:
             serverCancelSupport = serverCancelSupport_json
         else:
             serverCancelSupport = None
-        if augmentsSyntaxTokens_json := json_get_optional_bool(obj, "augmentsSyntaxTokens"):
+        if (augmentsSyntaxTokens_json := json_get_optional_bool(obj, "augmentsSyntaxTokens")) is not None:
             augmentsSyntaxTokens = augmentsSyntaxTokens_json
         else:
             augmentsSyntaxTokens = None
@@ -10062,7 +10062,7 @@ class LinkedEditingRangeClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LinkedEditingRangeClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -10100,7 +10100,7 @@ class MonikerClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MonikerClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -10136,7 +10136,7 @@ class TypeHierarchyClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TypeHierarchyClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -10170,7 +10170,7 @@ class InlineValueClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
@@ -10211,11 +10211,11 @@ class InlayHintClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlayHintClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if resolveSupport_json := json_get_optional_object(obj, "resolveSupport"):
+        if (resolveSupport_json := json_get_optional_object(obj, "resolveSupport")) is not None:
             resolveSupport = parse_AnonymousStructure22(resolveSupport_json)
         else:
             resolveSupport = None
@@ -10260,11 +10260,11 @@ class DiagnosticClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DiagnosticClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if relatedDocumentSupport_json := json_get_optional_bool(obj, "relatedDocumentSupport"):
+        if (relatedDocumentSupport_json := json_get_optional_bool(obj, "relatedDocumentSupport")) is not None:
             relatedDocumentSupport = relatedDocumentSupport_json
         else:
             relatedDocumentSupport = None
@@ -10501,123 +10501,123 @@ class TextDocumentClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentClientCapabilities":
-        if synchronization_json := json_get_optional_object(obj, "synchronization"):
+        if (synchronization_json := json_get_optional_object(obj, "synchronization")) is not None:
             synchronization = TextDocumentSyncClientCapabilities.from_json(synchronization_json)
         else:
             synchronization = None
-        if completion_json := json_get_optional_object(obj, "completion"):
+        if (completion_json := json_get_optional_object(obj, "completion")) is not None:
             completion = CompletionClientCapabilities.from_json(completion_json)
         else:
             completion = None
-        if hover_json := json_get_optional_object(obj, "hover"):
+        if (hover_json := json_get_optional_object(obj, "hover")) is not None:
             hover = HoverClientCapabilities.from_json(hover_json)
         else:
             hover = None
-        if signatureHelp_json := json_get_optional_object(obj, "signatureHelp"):
+        if (signatureHelp_json := json_get_optional_object(obj, "signatureHelp")) is not None:
             signatureHelp = SignatureHelpClientCapabilities.from_json(signatureHelp_json)
         else:
             signatureHelp = None
-        if declaration_json := json_get_optional_object(obj, "declaration"):
+        if (declaration_json := json_get_optional_object(obj, "declaration")) is not None:
             declaration = DeclarationClientCapabilities.from_json(declaration_json)
         else:
             declaration = None
-        if definition_json := json_get_optional_object(obj, "definition"):
+        if (definition_json := json_get_optional_object(obj, "definition")) is not None:
             definition = DefinitionClientCapabilities.from_json(definition_json)
         else:
             definition = None
-        if typeDefinition_json := json_get_optional_object(obj, "typeDefinition"):
+        if (typeDefinition_json := json_get_optional_object(obj, "typeDefinition")) is not None:
             typeDefinition = TypeDefinitionClientCapabilities.from_json(typeDefinition_json)
         else:
             typeDefinition = None
-        if implementation_json := json_get_optional_object(obj, "implementation"):
+        if (implementation_json := json_get_optional_object(obj, "implementation")) is not None:
             implementation = ImplementationClientCapabilities.from_json(implementation_json)
         else:
             implementation = None
-        if references_json := json_get_optional_object(obj, "references"):
+        if (references_json := json_get_optional_object(obj, "references")) is not None:
             references = ReferenceClientCapabilities.from_json(references_json)
         else:
             references = None
-        if documentHighlight_json := json_get_optional_object(obj, "documentHighlight"):
+        if (documentHighlight_json := json_get_optional_object(obj, "documentHighlight")) is not None:
             documentHighlight = DocumentHighlightClientCapabilities.from_json(documentHighlight_json)
         else:
             documentHighlight = None
-        if documentSymbol_json := json_get_optional_object(obj, "documentSymbol"):
+        if (documentSymbol_json := json_get_optional_object(obj, "documentSymbol")) is not None:
             documentSymbol = DocumentSymbolClientCapabilities.from_json(documentSymbol_json)
         else:
             documentSymbol = None
-        if codeAction_json := json_get_optional_object(obj, "codeAction"):
+        if (codeAction_json := json_get_optional_object(obj, "codeAction")) is not None:
             codeAction = CodeActionClientCapabilities.from_json(codeAction_json)
         else:
             codeAction = None
-        if codeLens_json := json_get_optional_object(obj, "codeLens"):
+        if (codeLens_json := json_get_optional_object(obj, "codeLens")) is not None:
             codeLens = CodeLensClientCapabilities.from_json(codeLens_json)
         else:
             codeLens = None
-        if documentLink_json := json_get_optional_object(obj, "documentLink"):
+        if (documentLink_json := json_get_optional_object(obj, "documentLink")) is not None:
             documentLink = DocumentLinkClientCapabilities.from_json(documentLink_json)
         else:
             documentLink = None
-        if colorProvider_json := json_get_optional_object(obj, "colorProvider"):
+        if (colorProvider_json := json_get_optional_object(obj, "colorProvider")) is not None:
             colorProvider = DocumentColorClientCapabilities.from_json(colorProvider_json)
         else:
             colorProvider = None
-        if formatting_json := json_get_optional_object(obj, "formatting"):
+        if (formatting_json := json_get_optional_object(obj, "formatting")) is not None:
             formatting = DocumentFormattingClientCapabilities.from_json(formatting_json)
         else:
             formatting = None
-        if rangeFormatting_json := json_get_optional_object(obj, "rangeFormatting"):
+        if (rangeFormatting_json := json_get_optional_object(obj, "rangeFormatting")) is not None:
             rangeFormatting = DocumentRangeFormattingClientCapabilities.from_json(rangeFormatting_json)
         else:
             rangeFormatting = None
-        if onTypeFormatting_json := json_get_optional_object(obj, "onTypeFormatting"):
+        if (onTypeFormatting_json := json_get_optional_object(obj, "onTypeFormatting")) is not None:
             onTypeFormatting = DocumentOnTypeFormattingClientCapabilities.from_json(onTypeFormatting_json)
         else:
             onTypeFormatting = None
-        if rename_json := json_get_optional_object(obj, "rename"):
+        if (rename_json := json_get_optional_object(obj, "rename")) is not None:
             rename = RenameClientCapabilities.from_json(rename_json)
         else:
             rename = None
-        if foldingRange_json := json_get_optional_object(obj, "foldingRange"):
+        if (foldingRange_json := json_get_optional_object(obj, "foldingRange")) is not None:
             foldingRange = FoldingRangeClientCapabilities.from_json(foldingRange_json)
         else:
             foldingRange = None
-        if selectionRange_json := json_get_optional_object(obj, "selectionRange"):
+        if (selectionRange_json := json_get_optional_object(obj, "selectionRange")) is not None:
             selectionRange = SelectionRangeClientCapabilities.from_json(selectionRange_json)
         else:
             selectionRange = None
-        if publishDiagnostics_json := json_get_optional_object(obj, "publishDiagnostics"):
+        if (publishDiagnostics_json := json_get_optional_object(obj, "publishDiagnostics")) is not None:
             publishDiagnostics = PublishDiagnosticsClientCapabilities.from_json(publishDiagnostics_json)
         else:
             publishDiagnostics = None
-        if callHierarchy_json := json_get_optional_object(obj, "callHierarchy"):
+        if (callHierarchy_json := json_get_optional_object(obj, "callHierarchy")) is not None:
             callHierarchy = CallHierarchyClientCapabilities.from_json(callHierarchy_json)
         else:
             callHierarchy = None
-        if semanticTokens_json := json_get_optional_object(obj, "semanticTokens"):
+        if (semanticTokens_json := json_get_optional_object(obj, "semanticTokens")) is not None:
             semanticTokens = SemanticTokensClientCapabilities.from_json(semanticTokens_json)
         else:
             semanticTokens = None
-        if linkedEditingRange_json := json_get_optional_object(obj, "linkedEditingRange"):
+        if (linkedEditingRange_json := json_get_optional_object(obj, "linkedEditingRange")) is not None:
             linkedEditingRange = LinkedEditingRangeClientCapabilities.from_json(linkedEditingRange_json)
         else:
             linkedEditingRange = None
-        if moniker_json := json_get_optional_object(obj, "moniker"):
+        if (moniker_json := json_get_optional_object(obj, "moniker")) is not None:
             moniker = MonikerClientCapabilities.from_json(moniker_json)
         else:
             moniker = None
-        if typeHierarchy_json := json_get_optional_object(obj, "typeHierarchy"):
+        if (typeHierarchy_json := json_get_optional_object(obj, "typeHierarchy")) is not None:
             typeHierarchy = TypeHierarchyClientCapabilities.from_json(typeHierarchy_json)
         else:
             typeHierarchy = None
-        if inlineValue_json := json_get_optional_object(obj, "inlineValue"):
+        if (inlineValue_json := json_get_optional_object(obj, "inlineValue")) is not None:
             inlineValue = InlineValueClientCapabilities.from_json(inlineValue_json)
         else:
             inlineValue = None
-        if inlayHint_json := json_get_optional_object(obj, "inlayHint"):
+        if (inlayHint_json := json_get_optional_object(obj, "inlayHint")) is not None:
             inlayHint = InlayHintClientCapabilities.from_json(inlayHint_json)
         else:
             inlayHint = None
-        if diagnostic_json := json_get_optional_object(obj, "diagnostic"):
+        if (diagnostic_json := json_get_optional_object(obj, "diagnostic")) is not None:
             diagnostic = DiagnosticClientCapabilities.from_json(diagnostic_json)
         else:
             diagnostic = None
@@ -10720,11 +10720,11 @@ class NotebookDocumentSyncClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncClientCapabilities":
-        if dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration"):
+        if (dynamicRegistration_json := json_get_optional_bool(obj, "dynamicRegistration")) is not None:
             dynamicRegistration = dynamicRegistration_json
         else:
             dynamicRegistration = None
-        if executionSummarySupport_json := json_get_optional_bool(obj, "executionSummarySupport"):
+        if (executionSummarySupport_json := json_get_optional_bool(obj, "executionSummarySupport")) is not None:
             executionSummarySupport = executionSummarySupport_json
         else:
             executionSummarySupport = None
@@ -10777,7 +10777,7 @@ AnonymousStructure36Keys = Literal["additionalPropertiesSupport"]
 
 def parse_AnonymousStructure36(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure36Keys, Any]:
     out: Dict[AnonymousStructure36Keys, Any] = {}
-    if additionalPropertiesSupport_json := json_get_optional_bool(obj, "additionalPropertiesSupport"):
+    if (additionalPropertiesSupport_json := json_get_optional_bool(obj, "additionalPropertiesSupport")) is not None:
         out["additionalPropertiesSupport"] = additionalPropertiesSupport_json
     else:
         out["additionalPropertiesSupport"] = None
@@ -10809,7 +10809,7 @@ class ShowMessageRequestClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageRequestClientCapabilities":
-        if messageActionItem_json := json_get_optional_object(obj, "messageActionItem"):
+        if (messageActionItem_json := json_get_optional_object(obj, "messageActionItem")) is not None:
             messageActionItem = parse_AnonymousStructure36(messageActionItem_json)
         else:
             messageActionItem = None
@@ -10907,15 +10907,15 @@ class WindowClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WindowClientCapabilities":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if showMessage_json := json_get_optional_object(obj, "showMessage"):
+        if (showMessage_json := json_get_optional_object(obj, "showMessage")) is not None:
             showMessage = ShowMessageRequestClientCapabilities.from_json(showMessage_json)
         else:
             showMessage = None
-        if showDocument_json := json_get_optional_object(obj, "showDocument"):
+        if (showDocument_json := json_get_optional_object(obj, "showDocument")) is not None:
             showDocument = ShowDocumentClientCapabilities.from_json(showDocument_json)
         else:
             showDocument = None
@@ -10974,7 +10974,7 @@ class RegularExpressionsClientCapabilities():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RegularExpressionsClientCapabilities":
         engine = json_get_string(obj, "engine")
-        if version_json := json_get_optional_string(obj, "version"):
+        if (version_json := json_get_optional_string(obj, "version")) is not None:
             version = version_json
         else:
             version = None
@@ -11026,11 +11026,11 @@ class MarkdownClientCapabilities():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MarkdownClientCapabilities":
         parser = json_get_string(obj, "parser")
-        if version_json := json_get_optional_string(obj, "version"):
+        if (version_json := json_get_optional_string(obj, "version")) is not None:
             version = version_json
         else:
             version = None
-        if allowedTags_json := json_get_optional_array(obj, "allowedTags"):
+        if (allowedTags_json := json_get_optional_array(obj, "allowedTags")) is not None:
             allowedTags = [json_assert_type_string(i) for i in allowedTags_json]
         else:
             allowedTags = None
@@ -11134,19 +11134,19 @@ class GeneralClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "GeneralClientCapabilities":
-        if staleRequestSupport_json := json_get_optional_object(obj, "staleRequestSupport"):
+        if (staleRequestSupport_json := json_get_optional_object(obj, "staleRequestSupport")) is not None:
             staleRequestSupport = parse_AnonymousStructure16(staleRequestSupport_json)
         else:
             staleRequestSupport = None
-        if regularExpressions_json := json_get_optional_object(obj, "regularExpressions"):
+        if (regularExpressions_json := json_get_optional_object(obj, "regularExpressions")) is not None:
             regularExpressions = RegularExpressionsClientCapabilities.from_json(regularExpressions_json)
         else:
             regularExpressions = None
-        if markdown_json := json_get_optional_object(obj, "markdown"):
+        if (markdown_json := json_get_optional_object(obj, "markdown")) is not None:
             markdown = MarkdownClientCapabilities.from_json(markdown_json)
         else:
             markdown = None
-        if positionEncodings_json := json_get_optional_array(obj, "positionEncodings"):
+        if (positionEncodings_json := json_get_optional_array(obj, "positionEncodings")) is not None:
             positionEncodings = [PositionEncodingKind(json_assert_type_string(i)) for i in positionEncodings_json]
         else:
             positionEncodings = None
@@ -11217,27 +11217,27 @@ class ClientCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ClientCapabilities":
-        if workspace_json := json_get_optional_object(obj, "workspace"):
+        if (workspace_json := json_get_optional_object(obj, "workspace")) is not None:
             workspace = WorkspaceClientCapabilities.from_json(workspace_json)
         else:
             workspace = None
-        if textDocument_json := json_get_optional_object(obj, "textDocument"):
+        if (textDocument_json := json_get_optional_object(obj, "textDocument")) is not None:
             textDocument = TextDocumentClientCapabilities.from_json(textDocument_json)
         else:
             textDocument = None
-        if notebookDocument_json := json_get_optional_object(obj, "notebookDocument"):
+        if (notebookDocument_json := json_get_optional_object(obj, "notebookDocument")) is not None:
             notebookDocument = NotebookDocumentClientCapabilities.from_json(notebookDocument_json)
         else:
             notebookDocument = None
-        if window_json := json_get_optional_object(obj, "window"):
+        if (window_json := json_get_optional_object(obj, "window")) is not None:
             window = WindowClientCapabilities.from_json(window_json)
         else:
             window = None
-        if general_json := json_get_optional_object(obj, "general"):
+        if (general_json := json_get_optional_object(obj, "general")) is not None:
             general = GeneralClientCapabilities.from_json(general_json)
         else:
             general = None
-        if experimental_json := obj.get("experimental"):
+        if (experimental_json := obj.get("experimental")) is not None:
             experimental = parse_LSPAny(experimental_json)
         else:
             experimental = None
@@ -11359,30 +11359,30 @@ class _InitializeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "_InitializeParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
         processId = parse_or_type(obj["processId"], (lambda v: json_assert_type_int(v), lambda v: json_assert_type_null(v)))
-        if clientInfo_json := json_get_optional_object(obj, "clientInfo"):
+        if (clientInfo_json := json_get_optional_object(obj, "clientInfo")) is not None:
             clientInfo = parse_AnonymousStructure10(clientInfo_json)
         else:
             clientInfo = None
-        if locale_json := json_get_optional_string(obj, "locale"):
+        if (locale_json := json_get_optional_string(obj, "locale")) is not None:
             locale = locale_json
         else:
             locale = None
-        if rootPath_json := obj.get("rootPath"):
+        if (rootPath_json := obj.get("rootPath")) is not None:
             rootPath = parse_or_type(rootPath_json, (lambda v: json_assert_type_string(v), lambda v: json_assert_type_null(v)))
         else:
             rootPath = None
         rootUri = parse_or_type(obj["rootUri"], (lambda v: json_assert_type_string(v), lambda v: json_assert_type_null(v)))
         capabilities = ClientCapabilities.from_json(json_get_object(obj, "capabilities"))
-        if initializationOptions_json := obj.get("initializationOptions"):
+        if (initializationOptions_json := obj.get("initializationOptions")) is not None:
             initializationOptions = parse_LSPAny(initializationOptions_json)
         else:
             initializationOptions = None
-        if trace_json := json_get_optional_string(obj, "trace"):
+        if (trace_json := json_get_optional_string(obj, "trace")) is not None:
             trace = TraceValues(trace_json)
         else:
             trace = None
@@ -11439,7 +11439,7 @@ class WorkspaceFoldersInitializeParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersInitializeParams":
-        if workspaceFolders_json := obj.get("workspaceFolders"):
+        if (workspaceFolders_json := obj.get("workspaceFolders")) is not None:
             workspaceFolders = parse_or_type(workspaceFolders_json, (lambda v: [WorkspaceFolder.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
         else:
             workspaceFolders = None
@@ -11568,34 +11568,34 @@ class InitializeParams(_InitializeParams, WorkspaceFoldersInitializeParams):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
         processId = parse_or_type(obj["processId"], (lambda v: json_assert_type_int(v), lambda v: json_assert_type_null(v)))
-        if clientInfo_json := json_get_optional_object(obj, "clientInfo"):
+        if (clientInfo_json := json_get_optional_object(obj, "clientInfo")) is not None:
             clientInfo = parse_AnonymousStructure10(clientInfo_json)
         else:
             clientInfo = None
-        if locale_json := json_get_optional_string(obj, "locale"):
+        if (locale_json := json_get_optional_string(obj, "locale")) is not None:
             locale = locale_json
         else:
             locale = None
-        if rootPath_json := obj.get("rootPath"):
+        if (rootPath_json := obj.get("rootPath")) is not None:
             rootPath = parse_or_type(rootPath_json, (lambda v: json_assert_type_string(v), lambda v: json_assert_type_null(v)))
         else:
             rootPath = None
         rootUri = parse_or_type(obj["rootUri"], (lambda v: json_assert_type_string(v), lambda v: json_assert_type_null(v)))
         capabilities = ClientCapabilities.from_json(json_get_object(obj, "capabilities"))
-        if initializationOptions_json := obj.get("initializationOptions"):
+        if (initializationOptions_json := obj.get("initializationOptions")) is not None:
             initializationOptions = parse_LSPAny(initializationOptions_json)
         else:
             initializationOptions = None
-        if trace_json := json_get_optional_string(obj, "trace"):
+        if (trace_json := json_get_optional_string(obj, "trace")) is not None:
             trace = TraceValues(trace_json)
         else:
             trace = None
-        if workspaceFolders_json := obj.get("workspaceFolders"):
+        if (workspaceFolders_json := obj.get("workspaceFolders")) is not None:
             workspaceFolders = parse_or_type(workspaceFolders_json, (lambda v: [WorkspaceFolder.from_json(json_assert_type_object(i)) for i in json_assert_type_array(v)], lambda v: json_assert_type_null(v)))
         else:
             workspaceFolders = None
@@ -11642,7 +11642,7 @@ class SaveOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SaveOptions":
-        if includeText_json := json_get_optional_bool(obj, "includeText"):
+        if (includeText_json := json_get_optional_bool(obj, "includeText")) is not None:
             includeText = includeText_json
         else:
             includeText = None
@@ -11704,23 +11704,23 @@ class TextDocumentSyncOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSyncOptions":
-        if openClose_json := json_get_optional_bool(obj, "openClose"):
+        if (openClose_json := json_get_optional_bool(obj, "openClose")) is not None:
             openClose = openClose_json
         else:
             openClose = None
-        if change_json := json_get_optional_int(obj, "change"):
+        if (change_json := json_get_optional_int(obj, "change")) is not None:
             change = TextDocumentSyncKind(change_json)
         else:
             change = None
-        if willSave_json := json_get_optional_bool(obj, "willSave"):
+        if (willSave_json := json_get_optional_bool(obj, "willSave")) is not None:
             willSave = willSave_json
         else:
             willSave = None
-        if willSaveWaitUntil_json := json_get_optional_bool(obj, "willSaveWaitUntil"):
+        if (willSaveWaitUntil_json := json_get_optional_bool(obj, "willSaveWaitUntil")) is not None:
             willSaveWaitUntil = willSaveWaitUntil_json
         else:
             willSaveWaitUntil = None
-        if save_json := obj.get("save"):
+        if (save_json := obj.get("save")) is not None:
             save = parse_or_type(save_json, (lambda v: SaveOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             save = None
@@ -11759,7 +11759,7 @@ AnonymousStructure14Keys = Literal["notebook","cells"]
 def parse_AnonymousStructure14(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure14Keys, Any]:
     out: Dict[AnonymousStructure14Keys, Any] = {}
     out["notebook"] = parse_or_type(obj["notebook"], (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
-    if cells_json := json_get_optional_array(obj, "cells"):
+    if (cells_json := json_get_optional_array(obj, "cells")) is not None:
         out["cells"] = [parse_AnonymousStructure13(json_assert_type_object(i)) for i in cells_json]
     else:
         out["cells"] = None
@@ -11777,7 +11777,7 @@ AnonymousStructure15Keys = Literal["notebook","cells"]
 
 def parse_AnonymousStructure15(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure15Keys, Any]:
     out: Dict[AnonymousStructure15Keys, Any] = {}
-    if notebook_json := obj.get("notebook"):
+    if (notebook_json := obj.get("notebook")) is not None:
         out["notebook"] = parse_or_type(notebook_json, (lambda v: json_assert_type_string(v), lambda v: parse_NotebookDocumentFilter((v))))
     else:
         out["notebook"] = None
@@ -11831,7 +11831,7 @@ class NotebookDocumentSyncOptions():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncOptions":
         notebookSelector = [parse_or_type((i), (lambda v: parse_AnonymousStructure14(json_assert_type_object(v)), lambda v: parse_AnonymousStructure15(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
-        if save_json := json_get_optional_bool(obj, "save"):
+        if (save_json := json_get_optional_bool(obj, "save")) is not None:
             save = save_json
         else:
             save = None
@@ -11881,11 +11881,11 @@ class NotebookDocumentSyncRegistrationOptions(NotebookDocumentSyncOptions):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "NotebookDocumentSyncRegistrationOptions":
         notebookSelector = [parse_or_type((i), (lambda v: parse_AnonymousStructure14(json_assert_type_object(v)), lambda v: parse_AnonymousStructure15(json_assert_type_object(v)))) for i in json_get_array(obj, "notebookSelector")]
-        if save_json := json_get_optional_bool(obj, "save"):
+        if (save_json := json_get_optional_bool(obj, "save")) is not None:
             save = save_json
         else:
             save = None
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -11905,7 +11905,7 @@ AnonymousStructure12Keys = Literal["labelDetailsSupport"]
 
 def parse_AnonymousStructure12(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure12Keys, Any]:
     out: Dict[AnonymousStructure12Keys, Any] = {}
-    if labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport"):
+    if (labelDetailsSupport_json := json_get_optional_bool(obj, "labelDetailsSupport")) is not None:
         out["labelDetailsSupport"] = labelDetailsSupport_json
     else:
         out["labelDetailsSupport"] = None
@@ -11991,23 +11991,23 @@ class CompletionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters"):
+        if (triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters")) is not None:
             triggerCharacters = [json_assert_type_string(i) for i in triggerCharacters_json]
         else:
             triggerCharacters = None
-        if allCommitCharacters_json := json_get_optional_array(obj, "allCommitCharacters"):
+        if (allCommitCharacters_json := json_get_optional_array(obj, "allCommitCharacters")) is not None:
             allCommitCharacters = [json_assert_type_string(i) for i in allCommitCharacters_json]
         else:
             allCommitCharacters = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
-        if completionItem_json := json_get_optional_object(obj, "completionItem"):
+        if (completionItem_json := json_get_optional_object(obj, "completionItem")) is not None:
             completionItem = parse_AnonymousStructure12(completionItem_json)
         else:
             completionItem = None
@@ -12046,7 +12046,7 @@ class HoverOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -12096,15 +12096,15 @@ class SignatureHelpOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters"):
+        if (triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters")) is not None:
             triggerCharacters = [json_assert_type_string(i) for i in triggerCharacters_json]
         else:
             triggerCharacters = None
-        if retriggerCharacters_json := json_get_optional_array(obj, "retriggerCharacters"):
+        if (retriggerCharacters_json := json_get_optional_array(obj, "retriggerCharacters")) is not None:
             retriggerCharacters = [json_assert_type_string(i) for i in retriggerCharacters_json]
         else:
             retriggerCharacters = None
@@ -12139,7 +12139,7 @@ class DefinitionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -12170,7 +12170,7 @@ class ReferenceOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -12201,7 +12201,7 @@ class DocumentHighlightOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -12242,11 +12242,11 @@ class DocumentSymbolOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if label_json := json_get_optional_string(obj, "label"):
+        if (label_json := json_get_optional_string(obj, "label")) is not None:
             label = label_json
         else:
             label = None
@@ -12300,15 +12300,15 @@ class CodeActionOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if codeActionKinds_json := json_get_optional_array(obj, "codeActionKinds"):
+        if (codeActionKinds_json := json_get_optional_array(obj, "codeActionKinds")) is not None:
             codeActionKinds = [CodeActionKind(json_assert_type_string(i)) for i in codeActionKinds_json]
         else:
             codeActionKinds = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -12347,11 +12347,11 @@ class CodeLensOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -12388,11 +12388,11 @@ class DocumentLinkOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -12435,11 +12435,11 @@ class WorkspaceSymbolOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -12472,7 +12472,7 @@ class DocumentFormattingOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -12503,7 +12503,7 @@ class DocumentRangeFormattingOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -12541,7 +12541,7 @@ class DocumentOnTypeFormattingOptions():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingOptions":
         firstTriggerCharacter = json_get_string(obj, "firstTriggerCharacter")
-        if moreTriggerCharacter_json := json_get_optional_array(obj, "moreTriggerCharacter"):
+        if (moreTriggerCharacter_json := json_get_optional_array(obj, "moreTriggerCharacter")) is not None:
             moreTriggerCharacter = [json_assert_type_string(i) for i in moreTriggerCharacter_json]
         else:
             moreTriggerCharacter = None
@@ -12581,11 +12581,11 @@ class RenameOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if prepareProvider_json := json_get_optional_bool(obj, "prepareProvider"):
+        if (prepareProvider_json := json_get_optional_bool(obj, "prepareProvider")) is not None:
             prepareProvider = prepareProvider_json
         else:
             prepareProvider = None
@@ -12622,7 +12622,7 @@ class ExecuteCommandOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -12673,11 +12673,11 @@ class WorkspaceFoldersServerCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceFoldersServerCapabilities":
-        if supported_json := json_get_optional_bool(obj, "supported"):
+        if (supported_json := json_get_optional_bool(obj, "supported")) is not None:
             supported = supported_json
         else:
             supported = None
-        if changeNotifications_json := obj.get("changeNotifications"):
+        if (changeNotifications_json := obj.get("changeNotifications")) is not None:
             changeNotifications = parse_or_type(changeNotifications_json, (lambda v: json_assert_type_string(v), lambda v: json_assert_type_bool(v)))
         else:
             changeNotifications = None
@@ -12738,27 +12738,27 @@ class FileOperationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileOperationOptions":
-        if didCreate_json := json_get_optional_object(obj, "didCreate"):
+        if (didCreate_json := json_get_optional_object(obj, "didCreate")) is not None:
             didCreate = FileOperationRegistrationOptions.from_json(didCreate_json)
         else:
             didCreate = None
-        if willCreate_json := json_get_optional_object(obj, "willCreate"):
+        if (willCreate_json := json_get_optional_object(obj, "willCreate")) is not None:
             willCreate = FileOperationRegistrationOptions.from_json(willCreate_json)
         else:
             willCreate = None
-        if didRename_json := json_get_optional_object(obj, "didRename"):
+        if (didRename_json := json_get_optional_object(obj, "didRename")) is not None:
             didRename = FileOperationRegistrationOptions.from_json(didRename_json)
         else:
             didRename = None
-        if willRename_json := json_get_optional_object(obj, "willRename"):
+        if (willRename_json := json_get_optional_object(obj, "willRename")) is not None:
             willRename = FileOperationRegistrationOptions.from_json(willRename_json)
         else:
             willRename = None
-        if didDelete_json := json_get_optional_object(obj, "didDelete"):
+        if (didDelete_json := json_get_optional_object(obj, "didDelete")) is not None:
             didDelete = FileOperationRegistrationOptions.from_json(didDelete_json)
         else:
             didDelete = None
-        if willDelete_json := json_get_optional_object(obj, "willDelete"):
+        if (willDelete_json := json_get_optional_object(obj, "willDelete")) is not None:
             willDelete = FileOperationRegistrationOptions.from_json(willDelete_json)
         else:
             willDelete = None
@@ -12785,11 +12785,11 @@ AnonymousStructure11Keys = Literal["workspaceFolders","fileOperations"]
 
 def parse_AnonymousStructure11(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure11Keys, Any]:
     out: Dict[AnonymousStructure11Keys, Any] = {}
-    if workspaceFolders_json := json_get_optional_object(obj, "workspaceFolders"):
+    if (workspaceFolders_json := json_get_optional_object(obj, "workspaceFolders")) is not None:
         out["workspaceFolders"] = WorkspaceFoldersServerCapabilities.from_json(workspaceFolders_json)
     else:
         out["workspaceFolders"] = None
-    if fileOperations_json := json_get_optional_object(obj, "fileOperations"):
+    if (fileOperations_json := json_get_optional_object(obj, "fileOperations")) is not None:
         out["fileOperations"] = FileOperationOptions.from_json(fileOperations_json)
     else:
         out["fileOperations"] = None
@@ -13058,143 +13058,143 @@ class ServerCapabilities():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ServerCapabilities":
-        if positionEncoding_json := json_get_optional_string(obj, "positionEncoding"):
+        if (positionEncoding_json := json_get_optional_string(obj, "positionEncoding")) is not None:
             positionEncoding = PositionEncodingKind(positionEncoding_json)
         else:
             positionEncoding = None
-        if textDocumentSync_json := obj.get("textDocumentSync"):
+        if (textDocumentSync_json := obj.get("textDocumentSync")) is not None:
             textDocumentSync = parse_or_type(textDocumentSync_json, (lambda v: TextDocumentSyncOptions.from_json(json_assert_type_object(v)), lambda v: TextDocumentSyncKind(json_assert_type_int(v))))
         else:
             textDocumentSync = None
-        if notebookDocumentSync_json := obj.get("notebookDocumentSync"):
+        if (notebookDocumentSync_json := obj.get("notebookDocumentSync")) is not None:
             notebookDocumentSync = parse_or_type(notebookDocumentSync_json, (lambda v: NotebookDocumentSyncRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: NotebookDocumentSyncOptions.from_json(json_assert_type_object(v))))
         else:
             notebookDocumentSync = None
-        if completionProvider_json := json_get_optional_object(obj, "completionProvider"):
+        if (completionProvider_json := json_get_optional_object(obj, "completionProvider")) is not None:
             completionProvider = CompletionOptions.from_json(completionProvider_json)
         else:
             completionProvider = None
-        if hoverProvider_json := obj.get("hoverProvider"):
+        if (hoverProvider_json := obj.get("hoverProvider")) is not None:
             hoverProvider = parse_or_type(hoverProvider_json, (lambda v: HoverOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             hoverProvider = None
-        if signatureHelpProvider_json := json_get_optional_object(obj, "signatureHelpProvider"):
+        if (signatureHelpProvider_json := json_get_optional_object(obj, "signatureHelpProvider")) is not None:
             signatureHelpProvider = SignatureHelpOptions.from_json(signatureHelpProvider_json)
         else:
             signatureHelpProvider = None
-        if declarationProvider_json := obj.get("declarationProvider"):
+        if (declarationProvider_json := obj.get("declarationProvider")) is not None:
             declarationProvider = parse_or_type(declarationProvider_json, (lambda v: DeclarationRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: DeclarationOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             declarationProvider = None
-        if definitionProvider_json := obj.get("definitionProvider"):
+        if (definitionProvider_json := obj.get("definitionProvider")) is not None:
             definitionProvider = parse_or_type(definitionProvider_json, (lambda v: DefinitionOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             definitionProvider = None
-        if typeDefinitionProvider_json := obj.get("typeDefinitionProvider"):
+        if (typeDefinitionProvider_json := obj.get("typeDefinitionProvider")) is not None:
             typeDefinitionProvider = parse_or_type(typeDefinitionProvider_json, (lambda v: TypeDefinitionRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: TypeDefinitionOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             typeDefinitionProvider = None
-        if implementationProvider_json := obj.get("implementationProvider"):
+        if (implementationProvider_json := obj.get("implementationProvider")) is not None:
             implementationProvider = parse_or_type(implementationProvider_json, (lambda v: ImplementationRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: ImplementationOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             implementationProvider = None
-        if referencesProvider_json := obj.get("referencesProvider"):
+        if (referencesProvider_json := obj.get("referencesProvider")) is not None:
             referencesProvider = parse_or_type(referencesProvider_json, (lambda v: ReferenceOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             referencesProvider = None
-        if documentHighlightProvider_json := obj.get("documentHighlightProvider"):
+        if (documentHighlightProvider_json := obj.get("documentHighlightProvider")) is not None:
             documentHighlightProvider = parse_or_type(documentHighlightProvider_json, (lambda v: DocumentHighlightOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             documentHighlightProvider = None
-        if documentSymbolProvider_json := obj.get("documentSymbolProvider"):
+        if (documentSymbolProvider_json := obj.get("documentSymbolProvider")) is not None:
             documentSymbolProvider = parse_or_type(documentSymbolProvider_json, (lambda v: DocumentSymbolOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             documentSymbolProvider = None
-        if codeActionProvider_json := obj.get("codeActionProvider"):
+        if (codeActionProvider_json := obj.get("codeActionProvider")) is not None:
             codeActionProvider = parse_or_type(codeActionProvider_json, (lambda v: CodeActionOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             codeActionProvider = None
-        if codeLensProvider_json := json_get_optional_object(obj, "codeLensProvider"):
+        if (codeLensProvider_json := json_get_optional_object(obj, "codeLensProvider")) is not None:
             codeLensProvider = CodeLensOptions.from_json(codeLensProvider_json)
         else:
             codeLensProvider = None
-        if documentLinkProvider_json := json_get_optional_object(obj, "documentLinkProvider"):
+        if (documentLinkProvider_json := json_get_optional_object(obj, "documentLinkProvider")) is not None:
             documentLinkProvider = DocumentLinkOptions.from_json(documentLinkProvider_json)
         else:
             documentLinkProvider = None
-        if colorProvider_json := obj.get("colorProvider"):
+        if (colorProvider_json := obj.get("colorProvider")) is not None:
             colorProvider = parse_or_type(colorProvider_json, (lambda v: DocumentColorRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: DocumentColorOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             colorProvider = None
-        if workspaceSymbolProvider_json := obj.get("workspaceSymbolProvider"):
+        if (workspaceSymbolProvider_json := obj.get("workspaceSymbolProvider")) is not None:
             workspaceSymbolProvider = parse_or_type(workspaceSymbolProvider_json, (lambda v: WorkspaceSymbolOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             workspaceSymbolProvider = None
-        if documentFormattingProvider_json := obj.get("documentFormattingProvider"):
+        if (documentFormattingProvider_json := obj.get("documentFormattingProvider")) is not None:
             documentFormattingProvider = parse_or_type(documentFormattingProvider_json, (lambda v: DocumentFormattingOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             documentFormattingProvider = None
-        if documentRangeFormattingProvider_json := obj.get("documentRangeFormattingProvider"):
+        if (documentRangeFormattingProvider_json := obj.get("documentRangeFormattingProvider")) is not None:
             documentRangeFormattingProvider = parse_or_type(documentRangeFormattingProvider_json, (lambda v: DocumentRangeFormattingOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             documentRangeFormattingProvider = None
-        if documentOnTypeFormattingProvider_json := json_get_optional_object(obj, "documentOnTypeFormattingProvider"):
+        if (documentOnTypeFormattingProvider_json := json_get_optional_object(obj, "documentOnTypeFormattingProvider")) is not None:
             documentOnTypeFormattingProvider = DocumentOnTypeFormattingOptions.from_json(documentOnTypeFormattingProvider_json)
         else:
             documentOnTypeFormattingProvider = None
-        if renameProvider_json := obj.get("renameProvider"):
+        if (renameProvider_json := obj.get("renameProvider")) is not None:
             renameProvider = parse_or_type(renameProvider_json, (lambda v: RenameOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             renameProvider = None
-        if foldingRangeProvider_json := obj.get("foldingRangeProvider"):
+        if (foldingRangeProvider_json := obj.get("foldingRangeProvider")) is not None:
             foldingRangeProvider = parse_or_type(foldingRangeProvider_json, (lambda v: FoldingRangeRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: FoldingRangeOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             foldingRangeProvider = None
-        if selectionRangeProvider_json := obj.get("selectionRangeProvider"):
+        if (selectionRangeProvider_json := obj.get("selectionRangeProvider")) is not None:
             selectionRangeProvider = parse_or_type(selectionRangeProvider_json, (lambda v: SelectionRangeRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: SelectionRangeOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             selectionRangeProvider = None
-        if executeCommandProvider_json := json_get_optional_object(obj, "executeCommandProvider"):
+        if (executeCommandProvider_json := json_get_optional_object(obj, "executeCommandProvider")) is not None:
             executeCommandProvider = ExecuteCommandOptions.from_json(executeCommandProvider_json)
         else:
             executeCommandProvider = None
-        if callHierarchyProvider_json := obj.get("callHierarchyProvider"):
+        if (callHierarchyProvider_json := obj.get("callHierarchyProvider")) is not None:
             callHierarchyProvider = parse_or_type(callHierarchyProvider_json, (lambda v: CallHierarchyRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: CallHierarchyOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             callHierarchyProvider = None
-        if linkedEditingRangeProvider_json := obj.get("linkedEditingRangeProvider"):
+        if (linkedEditingRangeProvider_json := obj.get("linkedEditingRangeProvider")) is not None:
             linkedEditingRangeProvider = parse_or_type(linkedEditingRangeProvider_json, (lambda v: LinkedEditingRangeRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: LinkedEditingRangeOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             linkedEditingRangeProvider = None
-        if semanticTokensProvider_json := obj.get("semanticTokensProvider"):
+        if (semanticTokensProvider_json := obj.get("semanticTokensProvider")) is not None:
             semanticTokensProvider = parse_or_type(semanticTokensProvider_json, (lambda v: SemanticTokensRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: SemanticTokensOptions.from_json(json_assert_type_object(v))))
         else:
             semanticTokensProvider = None
-        if monikerProvider_json := obj.get("monikerProvider"):
+        if (monikerProvider_json := obj.get("monikerProvider")) is not None:
             monikerProvider = parse_or_type(monikerProvider_json, (lambda v: MonikerRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: MonikerOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             monikerProvider = None
-        if typeHierarchyProvider_json := obj.get("typeHierarchyProvider"):
+        if (typeHierarchyProvider_json := obj.get("typeHierarchyProvider")) is not None:
             typeHierarchyProvider = parse_or_type(typeHierarchyProvider_json, (lambda v: TypeHierarchyRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: TypeHierarchyOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             typeHierarchyProvider = None
-        if inlineValueProvider_json := obj.get("inlineValueProvider"):
+        if (inlineValueProvider_json := obj.get("inlineValueProvider")) is not None:
             inlineValueProvider = parse_or_type(inlineValueProvider_json, (lambda v: InlineValueRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: InlineValueOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             inlineValueProvider = None
-        if inlayHintProvider_json := obj.get("inlayHintProvider"):
+        if (inlayHintProvider_json := obj.get("inlayHintProvider")) is not None:
             inlayHintProvider = parse_or_type(inlayHintProvider_json, (lambda v: InlayHintRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: InlayHintOptions.from_json(json_assert_type_object(v)), lambda v: json_assert_type_bool(v)))
         else:
             inlayHintProvider = None
-        if diagnosticProvider_json := obj.get("diagnosticProvider"):
+        if (diagnosticProvider_json := obj.get("diagnosticProvider")) is not None:
             diagnosticProvider = parse_or_type(diagnosticProvider_json, (lambda v: DiagnosticRegistrationOptions.from_json(json_assert_type_object(v)), lambda v: DiagnosticOptions.from_json(json_assert_type_object(v))))
         else:
             diagnosticProvider = None
-        if workspace_json := json_get_optional_object(obj, "workspace"):
+        if (workspace_json := json_get_optional_object(obj, "workspace")) is not None:
             workspace = parse_AnonymousStructure11(workspace_json)
         else:
             workspace = None
-        if experimental_json := obj.get("experimental"):
+        if (experimental_json := obj.get("experimental")) is not None:
             experimental = parse_LSPAny(experimental_json)
         else:
             experimental = None
@@ -13280,7 +13280,7 @@ AnonymousStructure0Keys = Literal["name","version"]
 def parse_AnonymousStructure0(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure0Keys, Any]:
     out: Dict[AnonymousStructure0Keys, Any] = {}
     out["name"] = json_get_string(obj, "name")
-    if version_json := json_get_optional_string(obj, "version"):
+    if (version_json := json_get_optional_string(obj, "version")) is not None:
         out["version"] = version_json
     else:
         out["version"] = None
@@ -13323,7 +13323,7 @@ class InitializeResult():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InitializeResult":
         capabilities = ServerCapabilities.from_json(json_get_object(obj, "capabilities"))
-        if serverInfo_json := json_get_optional_object(obj, "serverInfo"):
+        if (serverInfo_json := json_get_optional_object(obj, "serverInfo")) is not None:
             serverInfo = parse_AnonymousStructure0(serverInfo_json)
         else:
             serverInfo = None
@@ -13441,7 +13441,7 @@ class DidChangeConfigurationRegistrationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidChangeConfigurationRegistrationOptions":
-        if section_json := obj.get("section"):
+        if (section_json := obj.get("section")) is not None:
             section = parse_or_type(section_json, (lambda v: json_assert_type_string(v), lambda v: [json_assert_type_string(i) for i in json_assert_type_array(v)]))
         else:
             section = None
@@ -13548,7 +13548,7 @@ class ShowMessageRequestParams():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ShowMessageRequestParams":
         type = MessageType(json_get_int(obj, "type"))
         message = json_get_string(obj, "message")
-        if actions_json := json_get_optional_array(obj, "actions"):
+        if (actions_json := json_get_optional_array(obj, "actions")) is not None:
             actions = [MessageActionItem.from_json(json_assert_type_object(i)) for i in actions_json]
         else:
             actions = None
@@ -13777,7 +13777,7 @@ class DidSaveTextDocumentParams():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DidSaveTextDocumentParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
-        if text_json := json_get_optional_string(obj, "text"):
+        if (text_json := json_get_optional_string(obj, "text")) is not None:
             text = text_json
         else:
             text = None
@@ -13818,7 +13818,7 @@ class TextDocumentSaveRegistrationOptions(TextDocumentRegistrationOptions, SaveO
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "TextDocumentSaveRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if includeText_json := json_get_optional_bool(obj, "includeText"):
+        if (includeText_json := json_get_optional_bool(obj, "includeText")) is not None:
             includeText = includeText_json
         else:
             includeText = None
@@ -14034,7 +14034,7 @@ class FileSystemWatcher():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FileSystemWatcher":
         globPattern = parse_GlobPattern(obj["globPattern"])
-        if kind_json := json_get_optional_int(obj, "kind"):
+        if (kind_json := json_get_optional_int(obj, "kind")) is not None:
             kind = WatchKind(kind_json)
         else:
             kind = None
@@ -14110,7 +14110,7 @@ class PublishDiagnosticsParams():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PublishDiagnosticsParams":
         uri = json_get_string(obj, "uri")
-        if version_json := json_get_optional_int(obj, "version"):
+        if (version_json := json_get_optional_int(obj, "version")) is not None:
             version = version_json
         else:
             version = None
@@ -14153,7 +14153,7 @@ class CompletionContext():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionContext":
         triggerKind = CompletionTriggerKind(json_get_int(obj, "triggerKind"))
-        if triggerCharacter_json := json_get_optional_string(obj, "triggerCharacter"):
+        if (triggerCharacter_json := json_get_optional_string(obj, "triggerCharacter")) is not None:
             triggerCharacter = triggerCharacter_json
         else:
             triggerCharacter = None
@@ -14212,15 +14212,15 @@ class CompletionParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
-        if context_json := json_get_optional_object(obj, "context"):
+        if (context_json := json_get_optional_object(obj, "context")) is not None:
             context = CompletionContext.from_json(context_json)
         else:
             context = None
@@ -14269,11 +14269,11 @@ class CompletionItemLabelDetails():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionItemLabelDetails":
-        if detail_json := json_get_optional_string(obj, "detail"):
+        if (detail_json := json_get_optional_string(obj, "detail")) is not None:
             detail = detail_json
         else:
             detail = None
-        if description_json := json_get_optional_string(obj, "description"):
+        if (description_json := json_get_optional_string(obj, "description")) is not None:
             description = description_json
         else:
             description = None
@@ -14601,75 +14601,75 @@ class CompletionItem():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionItem":
         label = json_get_string(obj, "label")
-        if labelDetails_json := json_get_optional_object(obj, "labelDetails"):
+        if (labelDetails_json := json_get_optional_object(obj, "labelDetails")) is not None:
             labelDetails = CompletionItemLabelDetails.from_json(labelDetails_json)
         else:
             labelDetails = None
-        if kind_json := json_get_optional_int(obj, "kind"):
+        if (kind_json := json_get_optional_int(obj, "kind")) is not None:
             kind = CompletionItemKind(kind_json)
         else:
             kind = None
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [CompletionItemTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if detail_json := json_get_optional_string(obj, "detail"):
+        if (detail_json := json_get_optional_string(obj, "detail")) is not None:
             detail = detail_json
         else:
             detail = None
-        if documentation_json := obj.get("documentation"):
+        if (documentation_json := obj.get("documentation")) is not None:
             documentation = parse_or_type(documentation_json, (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: json_assert_type_string(v)))
         else:
             documentation = None
-        if deprecated_json := json_get_optional_bool(obj, "deprecated"):
+        if (deprecated_json := json_get_optional_bool(obj, "deprecated")) is not None:
             deprecated = deprecated_json
         else:
             deprecated = None
-        if preselect_json := json_get_optional_bool(obj, "preselect"):
+        if (preselect_json := json_get_optional_bool(obj, "preselect")) is not None:
             preselect = preselect_json
         else:
             preselect = None
-        if sortText_json := json_get_optional_string(obj, "sortText"):
+        if (sortText_json := json_get_optional_string(obj, "sortText")) is not None:
             sortText = sortText_json
         else:
             sortText = None
-        if filterText_json := json_get_optional_string(obj, "filterText"):
+        if (filterText_json := json_get_optional_string(obj, "filterText")) is not None:
             filterText = filterText_json
         else:
             filterText = None
-        if insertText_json := json_get_optional_string(obj, "insertText"):
+        if (insertText_json := json_get_optional_string(obj, "insertText")) is not None:
             insertText = insertText_json
         else:
             insertText = None
-        if insertTextFormat_json := json_get_optional_int(obj, "insertTextFormat"):
+        if (insertTextFormat_json := json_get_optional_int(obj, "insertTextFormat")) is not None:
             insertTextFormat = InsertTextFormat(insertTextFormat_json)
         else:
             insertTextFormat = None
-        if insertTextMode_json := json_get_optional_int(obj, "insertTextMode"):
+        if (insertTextMode_json := json_get_optional_int(obj, "insertTextMode")) is not None:
             insertTextMode = InsertTextMode(insertTextMode_json)
         else:
             insertTextMode = None
-        if textEdit_json := obj.get("textEdit"):
+        if (textEdit_json := obj.get("textEdit")) is not None:
             textEdit = parse_or_type(textEdit_json, (lambda v: InsertReplaceEdit.from_json(json_assert_type_object(v)), lambda v: TextEdit.from_json(json_assert_type_object(v))))
         else:
             textEdit = None
-        if textEditText_json := json_get_optional_string(obj, "textEditText"):
+        if (textEditText_json := json_get_optional_string(obj, "textEditText")) is not None:
             textEditText = textEditText_json
         else:
             textEditText = None
-        if additionalTextEdits_json := json_get_optional_array(obj, "additionalTextEdits"):
+        if (additionalTextEdits_json := json_get_optional_array(obj, "additionalTextEdits")) is not None:
             additionalTextEdits = [TextEdit.from_json(json_assert_type_object(i)) for i in additionalTextEdits_json]
         else:
             additionalTextEdits = None
-        if commitCharacters_json := json_get_optional_array(obj, "commitCharacters"):
+        if (commitCharacters_json := json_get_optional_array(obj, "commitCharacters")) is not None:
             commitCharacters = [json_assert_type_string(i) for i in commitCharacters_json]
         else:
             commitCharacters = None
-        if command_json := json_get_optional_object(obj, "command"):
+        if (command_json := json_get_optional_object(obj, "command")) is not None:
             command = Command.from_json(command_json)
         else:
             command = None
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -14736,23 +14736,23 @@ AnonymousStructure2Keys = Literal["commitCharacters","editRange","insertTextForm
 
 def parse_AnonymousStructure2(obj: Mapping[str, JSON_VALUE]) -> Dict[AnonymousStructure2Keys, Any]:
     out: Dict[AnonymousStructure2Keys, Any] = {}
-    if commitCharacters_json := json_get_optional_array(obj, "commitCharacters"):
+    if (commitCharacters_json := json_get_optional_array(obj, "commitCharacters")) is not None:
         out["commitCharacters"] = [json_assert_type_string(i) for i in commitCharacters_json]
     else:
         out["commitCharacters"] = None
-    if editRange_json := obj.get("editRange"):
+    if (editRange_json := obj.get("editRange")) is not None:
         out["editRange"] = parse_or_type(editRange_json, (lambda v: Range.from_json(json_assert_type_object(v)), lambda v: parse_AnonymousStructure1(json_assert_type_object(v))))
     else:
         out["editRange"] = None
-    if insertTextFormat_json := json_get_optional_int(obj, "insertTextFormat"):
+    if (insertTextFormat_json := json_get_optional_int(obj, "insertTextFormat")) is not None:
         out["insertTextFormat"] = InsertTextFormat(insertTextFormat_json)
     else:
         out["insertTextFormat"] = None
-    if insertTextMode_json := json_get_optional_int(obj, "insertTextMode"):
+    if (insertTextMode_json := json_get_optional_int(obj, "insertTextMode")) is not None:
         out["insertTextMode"] = InsertTextMode(insertTextMode_json)
     else:
         out["insertTextMode"] = None
-    if data_json := obj.get("data"):
+    if (data_json := obj.get("data")) is not None:
         out["data"] = parse_LSPAny(data_json)
     else:
         out["data"] = None
@@ -14834,7 +14834,7 @@ class CompletionList():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionList":
         isIncomplete = json_get_bool(obj, "isIncomplete")
-        if itemDefaults_json := json_get_optional_object(obj, "itemDefaults"):
+        if (itemDefaults_json := json_get_optional_object(obj, "itemDefaults")) is not None:
             itemDefaults = parse_AnonymousStructure2(itemDefaults_json)
         else:
             itemDefaults = None
@@ -14931,23 +14931,23 @@ class CompletionRegistrationOptions(TextDocumentRegistrationOptions, CompletionO
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CompletionRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters"):
+        if (triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters")) is not None:
             triggerCharacters = [json_assert_type_string(i) for i in triggerCharacters_json]
         else:
             triggerCharacters = None
-        if allCommitCharacters_json := json_get_optional_array(obj, "allCommitCharacters"):
+        if (allCommitCharacters_json := json_get_optional_array(obj, "allCommitCharacters")) is not None:
             allCommitCharacters = [json_assert_type_string(i) for i in allCommitCharacters_json]
         else:
             allCommitCharacters = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
-        if completionItem_json := json_get_optional_object(obj, "completionItem"):
+        if (completionItem_json := json_get_optional_object(obj, "completionItem")) is not None:
             completionItem = parse_AnonymousStructure12(completionItem_json)
         else:
             completionItem = None
@@ -15000,7 +15000,7 @@ class HoverParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -15078,7 +15078,7 @@ class Hover():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "Hover":
         contents = parse_or_type(obj["contents"], (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: parse_MarkedString((v)), lambda v: [parse_MarkedString((i)) for i in json_assert_type_array(v)]))
-        if range_json := json_get_optional_object(obj, "range"):
+        if (range_json := json_get_optional_object(obj, "range")) is not None:
             range = Range.from_json(range_json)
         else:
             range = None
@@ -15117,7 +15117,7 @@ class HoverRegistrationOptions(TextDocumentRegistrationOptions, HoverOptions):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "HoverRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -15173,7 +15173,7 @@ class ParameterInformation():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ParameterInformation":
         label = parse_or_type(obj["label"], (lambda v: json_assert_type_string(v), lambda v: (json_assert_type_int(json_assert_type_array(v)[0]), json_assert_type_int(json_assert_type_array(v)[1]))))
-        if documentation_json := obj.get("documentation"):
+        if (documentation_json := obj.get("documentation")) is not None:
             documentation = parse_or_type(documentation_json, (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: json_assert_type_string(v)))
         else:
             documentation = None
@@ -15236,15 +15236,15 @@ class SignatureInformation():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureInformation":
         label = json_get_string(obj, "label")
-        if documentation_json := obj.get("documentation"):
+        if (documentation_json := obj.get("documentation")) is not None:
             documentation = parse_or_type(documentation_json, (lambda v: MarkupContent.from_json(json_assert_type_object(v)), lambda v: json_assert_type_string(v)))
         else:
             documentation = None
-        if parameters_json := json_get_optional_array(obj, "parameters"):
+        if (parameters_json := json_get_optional_array(obj, "parameters")) is not None:
             parameters = [ParameterInformation.from_json(json_assert_type_object(i)) for i in parameters_json]
         else:
             parameters = None
-        if activeParameter_json := json_get_optional_int(obj, "activeParameter"):
+        if (activeParameter_json := json_get_optional_int(obj, "activeParameter")) is not None:
             activeParameter = activeParameter_json
         else:
             activeParameter = None
@@ -15322,11 +15322,11 @@ class SignatureHelp():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelp":
         signatures = [SignatureInformation.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "signatures")]
-        if activeSignature_json := json_get_optional_int(obj, "activeSignature"):
+        if (activeSignature_json := json_get_optional_int(obj, "activeSignature")) is not None:
             activeSignature = activeSignature_json
         else:
             activeSignature = None
-        if activeParameter_json := json_get_optional_int(obj, "activeParameter"):
+        if (activeParameter_json := json_get_optional_int(obj, "activeParameter")) is not None:
             activeParameter = activeParameter_json
         else:
             activeParameter = None
@@ -15395,12 +15395,12 @@ class SignatureHelpContext():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpContext":
         triggerKind = SignatureHelpTriggerKind(json_get_int(obj, "triggerKind"))
-        if triggerCharacter_json := json_get_optional_string(obj, "triggerCharacter"):
+        if (triggerCharacter_json := json_get_optional_string(obj, "triggerCharacter")) is not None:
             triggerCharacter = triggerCharacter_json
         else:
             triggerCharacter = None
         isRetrigger = json_get_bool(obj, "isRetrigger")
-        if activeSignatureHelp_json := json_get_optional_object(obj, "activeSignatureHelp"):
+        if (activeSignatureHelp_json := json_get_optional_object(obj, "activeSignatureHelp")) is not None:
             activeSignatureHelp = SignatureHelp.from_json(activeSignatureHelp_json)
         else:
             activeSignatureHelp = None
@@ -15459,11 +15459,11 @@ class SignatureHelpParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if context_json := json_get_optional_object(obj, "context"):
+        if (context_json := json_get_optional_object(obj, "context")) is not None:
             context = SignatureHelpContext.from_json(context_json)
         else:
             context = None
@@ -15525,15 +15525,15 @@ class SignatureHelpRegistrationOptions(TextDocumentRegistrationOptions, Signatur
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SignatureHelpRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters"):
+        if (triggerCharacters_json := json_get_optional_array(obj, "triggerCharacters")) is not None:
             triggerCharacters = [json_assert_type_string(i) for i in triggerCharacters_json]
         else:
             triggerCharacters = None
-        if retriggerCharacters_json := json_get_optional_array(obj, "retriggerCharacters"):
+        if (retriggerCharacters_json := json_get_optional_array(obj, "retriggerCharacters")) is not None:
             retriggerCharacters = [json_assert_type_string(i) for i in retriggerCharacters_json]
         else:
             retriggerCharacters = None
@@ -15589,11 +15589,11 @@ class DefinitionParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -15635,7 +15635,7 @@ class DefinitionRegistrationOptions(TextDocumentRegistrationOptions, DefinitionO
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DefinitionRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -15719,11 +15719,11 @@ class ReferenceParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -15767,7 +15767,7 @@ class ReferenceRegistrationOptions(TextDocumentRegistrationOptions, ReferenceOpt
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ReferenceRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -15819,11 +15819,11 @@ class DocumentHighlightParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -15867,7 +15867,7 @@ class DocumentHighlight():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlight":
         range = Range.from_json(json_get_object(obj, "range"))
-        if kind_json := json_get_optional_int(obj, "kind"):
+        if (kind_json := json_get_optional_int(obj, "kind")) is not None:
             kind = DocumentHighlightKind(kind_json)
         else:
             kind = None
@@ -15906,7 +15906,7 @@ class DocumentHighlightRegistrationOptions(TextDocumentRegistrationOptions, Docu
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentHighlightRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -15951,11 +15951,11 @@ class DocumentSymbolParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -16018,11 +16018,11 @@ class BaseSymbolInformation():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "BaseSymbolInformation":
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [SymbolTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if containerName_json := json_get_optional_string(obj, "containerName"):
+        if (containerName_json := json_get_optional_string(obj, "containerName")) is not None:
             containerName = containerName_json
         else:
             containerName = None
@@ -16116,15 +16116,15 @@ class SymbolInformation(BaseSymbolInformation):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "SymbolInformation":
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [SymbolTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if containerName_json := json_get_optional_string(obj, "containerName"):
+        if (containerName_json := json_get_optional_string(obj, "containerName")) is not None:
             containerName = containerName_json
         else:
             containerName = None
-        if deprecated_json := json_get_optional_bool(obj, "deprecated"):
+        if (deprecated_json := json_get_optional_bool(obj, "deprecated")) is not None:
             deprecated = deprecated_json
         else:
             deprecated = None
@@ -16219,22 +16219,22 @@ class DocumentSymbol():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbol":
         name = json_get_string(obj, "name")
-        if detail_json := json_get_optional_string(obj, "detail"):
+        if (detail_json := json_get_optional_string(obj, "detail")) is not None:
             detail = detail_json
         else:
             detail = None
         kind = SymbolKind(json_get_int(obj, "kind"))
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [SymbolTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if deprecated_json := json_get_optional_bool(obj, "deprecated"):
+        if (deprecated_json := json_get_optional_bool(obj, "deprecated")) is not None:
             deprecated = deprecated_json
         else:
             deprecated = None
         range = Range.from_json(json_get_object(obj, "range"))
         selectionRange = Range.from_json(json_get_object(obj, "selectionRange"))
-        if children_json := json_get_optional_array(obj, "children"):
+        if (children_json := json_get_optional_array(obj, "children")) is not None:
             children = [DocumentSymbol.from_json(json_assert_type_object(i)) for i in children_json]
         else:
             children = None
@@ -16293,11 +16293,11 @@ class DocumentSymbolRegistrationOptions(TextDocumentRegistrationOptions, Documen
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentSymbolRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if label_json := json_get_optional_string(obj, "label"):
+        if (label_json := json_get_optional_string(obj, "label")) is not None:
             label = label_json
         else:
             label = None
@@ -16362,11 +16362,11 @@ class CodeActionContext():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionContext":
         diagnostics = [Diagnostic.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "diagnostics")]
-        if only_json := json_get_optional_array(obj, "only"):
+        if (only_json := json_get_optional_array(obj, "only")) is not None:
             only = [CodeActionKind(json_assert_type_string(i)) for i in only_json]
         else:
             only = None
-        if triggerKind_json := json_get_optional_int(obj, "triggerKind"):
+        if (triggerKind_json := json_get_optional_int(obj, "triggerKind")) is not None:
             triggerKind = CodeActionTriggerKind(triggerKind_json)
         else:
             triggerKind = None
@@ -16423,11 +16423,11 @@ class CodeActionParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -16573,31 +16573,31 @@ class CodeAction():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeAction":
         title = json_get_string(obj, "title")
-        if kind_json := json_get_optional_string(obj, "kind"):
+        if (kind_json := json_get_optional_string(obj, "kind")) is not None:
             kind = CodeActionKind(kind_json)
         else:
             kind = None
-        if diagnostics_json := json_get_optional_array(obj, "diagnostics"):
+        if (diagnostics_json := json_get_optional_array(obj, "diagnostics")) is not None:
             diagnostics = [Diagnostic.from_json(json_assert_type_object(i)) for i in diagnostics_json]
         else:
             diagnostics = None
-        if isPreferred_json := json_get_optional_bool(obj, "isPreferred"):
+        if (isPreferred_json := json_get_optional_bool(obj, "isPreferred")) is not None:
             isPreferred = isPreferred_json
         else:
             isPreferred = None
-        if disabled_json := json_get_optional_object(obj, "disabled"):
+        if (disabled_json := json_get_optional_object(obj, "disabled")) is not None:
             disabled = parse_AnonymousStructure3(disabled_json)
         else:
             disabled = None
-        if edit_json := json_get_optional_object(obj, "edit"):
+        if (edit_json := json_get_optional_object(obj, "edit")) is not None:
             edit = WorkspaceEdit.from_json(edit_json)
         else:
             edit = None
-        if command_json := json_get_optional_object(obj, "command"):
+        if (command_json := json_get_optional_object(obj, "command")) is not None:
             command = Command.from_json(command_json)
         else:
             command = None
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -16670,15 +16670,15 @@ class CodeActionRegistrationOptions(TextDocumentRegistrationOptions, CodeActionO
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeActionRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if codeActionKinds_json := json_get_optional_array(obj, "codeActionKinds"):
+        if (codeActionKinds_json := json_get_optional_array(obj, "codeActionKinds")) is not None:
             codeActionKinds = [CodeActionKind(json_assert_type_string(i)) for i in codeActionKinds_json]
         else:
             codeActionKinds = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -16729,11 +16729,11 @@ class WorkspaceSymbolParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -16833,16 +16833,16 @@ class WorkspaceSymbol(BaseSymbolInformation):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbol":
         name = json_get_string(obj, "name")
         kind = SymbolKind(json_get_int(obj, "kind"))
-        if tags_json := json_get_optional_array(obj, "tags"):
+        if (tags_json := json_get_optional_array(obj, "tags")) is not None:
             tags = [SymbolTag(json_assert_type_int(i)) for i in tags_json]
         else:
             tags = None
-        if containerName_json := json_get_optional_string(obj, "containerName"):
+        if (containerName_json := json_get_optional_string(obj, "containerName")) is not None:
             containerName = containerName_json
         else:
             containerName = None
         location = parse_or_type(obj["location"], (lambda v: Location.from_json(json_assert_type_object(v)), lambda v: parse_AnonymousStructure4(json_assert_type_object(v))))
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -16890,11 +16890,11 @@ class WorkspaceSymbolRegistrationOptions(WorkspaceSymbolOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkspaceSymbolRegistrationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -16940,11 +16940,11 @@ class CodeLensParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -16999,11 +16999,11 @@ class CodeLens():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLens":
         range = Range.from_json(json_get_object(obj, "range"))
-        if command_json := json_get_optional_object(obj, "command"):
+        if (command_json := json_get_optional_object(obj, "command")) is not None:
             command = Command.from_json(command_json)
         else:
             command = None
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -17049,11 +17049,11 @@ class CodeLensRegistrationOptions(TextDocumentRegistrationOptions, CodeLensOptio
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "CodeLensRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -17100,11 +17100,11 @@ class DocumentLinkParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -17171,15 +17171,15 @@ class DocumentLink():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLink":
         range = Range.from_json(json_get_object(obj, "range"))
-        if target_json := json_get_optional_string(obj, "target"):
+        if (target_json := json_get_optional_string(obj, "target")) is not None:
             target = target_json
         else:
             target = None
-        if tooltip_json := json_get_optional_string(obj, "tooltip"):
+        if (tooltip_json := json_get_optional_string(obj, "tooltip")) is not None:
             tooltip = tooltip_json
         else:
             tooltip = None
-        if data_json := obj.get("data"):
+        if (data_json := obj.get("data")) is not None:
             data = parse_LSPAny(data_json)
         else:
             data = None
@@ -17227,11 +17227,11 @@ class DocumentLinkRegistrationOptions(TextDocumentRegistrationOptions, DocumentL
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentLinkRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if resolveProvider_json := json_get_optional_bool(obj, "resolveProvider"):
+        if (resolveProvider_json := json_get_optional_bool(obj, "resolveProvider")) is not None:
             resolveProvider = resolveProvider_json
         else:
             resolveProvider = None
@@ -17300,15 +17300,15 @@ class FormattingOptions():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "FormattingOptions":
         tabSize = json_get_int(obj, "tabSize")
         insertSpaces = json_get_bool(obj, "insertSpaces")
-        if trimTrailingWhitespace_json := json_get_optional_bool(obj, "trimTrailingWhitespace"):
+        if (trimTrailingWhitespace_json := json_get_optional_bool(obj, "trimTrailingWhitespace")) is not None:
             trimTrailingWhitespace = trimTrailingWhitespace_json
         else:
             trimTrailingWhitespace = None
-        if insertFinalNewline_json := json_get_optional_bool(obj, "insertFinalNewline"):
+        if (insertFinalNewline_json := json_get_optional_bool(obj, "insertFinalNewline")) is not None:
             insertFinalNewline = insertFinalNewline_json
         else:
             insertFinalNewline = None
-        if trimFinalNewlines_json := json_get_optional_bool(obj, "trimFinalNewlines"):
+        if (trimFinalNewlines_json := json_get_optional_bool(obj, "trimFinalNewlines")) is not None:
             trimFinalNewlines = trimFinalNewlines_json
         else:
             trimFinalNewlines = None
@@ -17356,7 +17356,7 @@ class DocumentFormattingParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -17398,7 +17398,7 @@ class DocumentFormattingRegistrationOptions(TextDocumentRegistrationOptions, Doc
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentFormattingRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -17446,7 +17446,7 @@ class DocumentRangeFormattingParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -17490,7 +17490,7 @@ class DocumentRangeFormattingRegistrationOptions(TextDocumentRegistrationOptions
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentRangeFormattingRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -17596,7 +17596,7 @@ class DocumentOnTypeFormattingRegistrationOptions(TextDocumentRegistrationOption
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "DocumentOnTypeFormattingRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
         firstTriggerCharacter = json_get_string(obj, "firstTriggerCharacter")
-        if moreTriggerCharacter_json := json_get_optional_array(obj, "moreTriggerCharacter"):
+        if (moreTriggerCharacter_json := json_get_optional_array(obj, "moreTriggerCharacter")) is not None:
             moreTriggerCharacter = [json_assert_type_string(i) for i in moreTriggerCharacter_json]
         else:
             moreTriggerCharacter = None
@@ -17649,7 +17649,7 @@ class RenameParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -17702,11 +17702,11 @@ class RenameRegistrationOptions(TextDocumentRegistrationOptions, RenameOptions):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RenameRegistrationOptions":
         documentSelector = parse_or_type(obj["documentSelector"], (lambda v: parse_DocumentSelector(json_assert_type_array(v)), lambda v: json_assert_type_null(v)))
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
-        if prepareProvider_json := json_get_optional_bool(obj, "prepareProvider"):
+        if (prepareProvider_json := json_get_optional_bool(obj, "prepareProvider")) is not None:
             prepareProvider = prepareProvider_json
         else:
             prepareProvider = None
@@ -17753,7 +17753,7 @@ class PrepareRenameParams(TextDocumentPositionParams):
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PrepareRenameParams":
         textDocument = TextDocumentIdentifier.from_json(json_get_object(obj, "textDocument"))
         position = Position.from_json(json_get_object(obj, "position"))
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -17797,12 +17797,12 @@ class ExecuteCommandParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
         command = json_get_string(obj, "command")
-        if arguments_json := json_get_optional_array(obj, "arguments"):
+        if (arguments_json := json_get_optional_array(obj, "arguments")) is not None:
             arguments = [parse_LSPAny((i)) for i in arguments_json]
         else:
             arguments = None
@@ -17840,7 +17840,7 @@ class ExecuteCommandRegistrationOptions(ExecuteCommandOptions):
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ExecuteCommandRegistrationOptions":
-        if workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress"):
+        if (workDoneProgress_json := json_get_optional_bool(obj, "workDoneProgress")) is not None:
             workDoneProgress = workDoneProgress_json
         else:
             workDoneProgress = None
@@ -17883,7 +17883,7 @@ class ApplyWorkspaceEditParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ApplyWorkspaceEditParams":
-        if label_json := json_get_optional_string(obj, "label"):
+        if (label_json := json_get_optional_string(obj, "label")) is not None:
             label = label_json
         else:
             label = None
@@ -17938,11 +17938,11 @@ class ApplyWorkspaceEditResult():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "ApplyWorkspaceEditResult":
         applied = json_get_bool(obj, "applied")
-        if failureReason_json := json_get_optional_string(obj, "failureReason"):
+        if (failureReason_json := json_get_optional_string(obj, "failureReason")) is not None:
             failureReason = failureReason_json
         else:
             failureReason = None
-        if failedChange_json := json_get_optional_int(obj, "failedChange"):
+        if (failedChange_json := json_get_optional_int(obj, "failedChange")) is not None:
             failedChange = failedChange_json
         else:
             failedChange = None
@@ -18025,15 +18025,15 @@ class WorkDoneProgressBegin():
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressBegin":
         kind = match_string(json_get_string(obj, "kind"), "begin")
         title = json_get_string(obj, "title")
-        if cancellable_json := json_get_optional_bool(obj, "cancellable"):
+        if (cancellable_json := json_get_optional_bool(obj, "cancellable")) is not None:
             cancellable = cancellable_json
         else:
             cancellable = None
-        if message_json := json_get_optional_string(obj, "message"):
+        if (message_json := json_get_optional_string(obj, "message")) is not None:
             message = message_json
         else:
             message = None
-        if percentage_json := json_get_optional_int(obj, "percentage"):
+        if (percentage_json := json_get_optional_int(obj, "percentage")) is not None:
             percentage = percentage_json
         else:
             percentage = None
@@ -18109,15 +18109,15 @@ class WorkDoneProgressReport():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressReport":
         kind = match_string(json_get_string(obj, "kind"), "report")
-        if cancellable_json := json_get_optional_bool(obj, "cancellable"):
+        if (cancellable_json := json_get_optional_bool(obj, "cancellable")) is not None:
             cancellable = cancellable_json
         else:
             cancellable = None
-        if message_json := json_get_optional_string(obj, "message"):
+        if (message_json := json_get_optional_string(obj, "message")) is not None:
             message = message_json
         else:
             message = None
-        if percentage_json := json_get_optional_int(obj, "percentage"):
+        if (percentage_json := json_get_optional_int(obj, "percentage")) is not None:
             percentage = percentage_json
         else:
             percentage = None
@@ -18160,7 +18160,7 @@ class WorkDoneProgressEnd():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressEnd":
         kind = match_string(json_get_string(obj, "kind"), "end")
-        if message_json := json_get_optional_string(obj, "message"):
+        if (message_json := json_get_optional_string(obj, "message")) is not None:
             message = message_json
         else:
             message = None
@@ -18223,7 +18223,7 @@ class LogTraceParams():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LogTraceParams":
         message = json_get_string(obj, "message")
-        if verbose_json := json_get_optional_string(obj, "verbose"):
+        if (verbose_json := json_get_optional_string(obj, "verbose")) is not None:
             verbose = verbose_json
         else:
             verbose = None
@@ -18319,7 +18319,7 @@ class WorkDoneProgressParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "WorkDoneProgressParams":
-        if workDoneToken_json := obj.get("workDoneToken"):
+        if (workDoneToken_json := obj.get("workDoneToken")) is not None:
             workDoneToken = parse_ProgressToken(workDoneToken_json)
         else:
             workDoneToken = None
@@ -18353,7 +18353,7 @@ class PartialResultParams():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "PartialResultParams":
-        if partialResultToken_json := obj.get("partialResultToken"):
+        if (partialResultToken_json := obj.get("partialResultToken")) is not None:
             partialResultToken = parse_ProgressToken(partialResultToken_json)
         else:
             partialResultToken = None
@@ -18413,7 +18413,7 @@ class LocationLink():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "LocationLink":
-        if originSelectionRange_json := json_get_optional_object(obj, "originSelectionRange"):
+        if (originSelectionRange_json := json_get_optional_object(obj, "originSelectionRange")) is not None:
             originSelectionRange = Range.from_json(originSelectionRange_json)
         else:
             originSelectionRange = None
@@ -18454,7 +18454,7 @@ class StaticRegistrationOptions():
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "StaticRegistrationOptions":
-        if id_json := json_get_optional_string(obj, "id"):
+        if (id_json := json_get_optional_string(obj, "id")) is not None:
             id = id_json
         else:
             id = None
@@ -18540,7 +18540,7 @@ class InlineValueVariableLookup():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueVariableLookup":
         range = Range.from_json(json_get_object(obj, "range"))
-        if variableName_json := json_get_optional_string(obj, "variableName"):
+        if (variableName_json := json_get_optional_string(obj, "variableName")) is not None:
             variableName = variableName_json
         else:
             variableName = None
@@ -18587,7 +18587,7 @@ class InlineValueEvaluatableExpression():
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "InlineValueEvaluatableExpression":
         range = Range.from_json(json_get_object(obj, "range"))
-        if expression_json := json_get_optional_string(obj, "expression"):
+        if (expression_json := json_get_optional_string(obj, "expression")) is not None:
             expression = expression_json
         else:
             expression = None
@@ -18654,12 +18654,12 @@ class RelatedFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelatedFullDocumentDiagnosticReport":
         kind = match_string(json_get_string(obj, "kind"), "full")
-        if resultId_json := json_get_optional_string(obj, "resultId"):
+        if (resultId_json := json_get_optional_string(obj, "resultId")) is not None:
             resultId = resultId_json
         else:
             resultId = None
         items = [Diagnostic.from_json(json_assert_type_object(i)) for i in json_get_array(obj, "items")]
-        if relatedDocuments_json := json_get_optional_object(obj, "relatedDocuments"):
+        if (relatedDocuments_json := json_get_optional_object(obj, "relatedDocuments")) is not None:
             relatedDocuments = { json_assert_type_string(key): parse_or_type((value), (lambda v: FullDocumentDiagnosticReport.from_json(json_assert_type_object(v)), lambda v: UnchangedDocumentDiagnosticReport.from_json(json_assert_type_object(v)))) for key, value in relatedDocuments_json.items()}
         else:
             relatedDocuments = None
@@ -18729,7 +18729,7 @@ class RelatedUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "RelatedUnchangedDocumentDiagnosticReport":
         kind = match_string(json_get_string(obj, "kind"), "unchanged")
         resultId = json_get_string(obj, "resultId")
-        if relatedDocuments_json := json_get_optional_object(obj, "relatedDocuments"):
+        if (relatedDocuments_json := json_get_optional_object(obj, "relatedDocuments")) is not None:
             relatedDocuments = { json_assert_type_string(key): parse_or_type((value), (lambda v: FullDocumentDiagnosticReport.from_json(json_assert_type_object(v)), lambda v: UnchangedDocumentDiagnosticReport.from_json(json_assert_type_object(v)))) for key, value in relatedDocuments_json.items()}
         else:
             relatedDocuments = None

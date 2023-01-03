@@ -6,15 +6,14 @@ from gen.generate_capabilities import FeatureInfo, generate_capabilities_py
 from gen.generate_client_requests import generate_client_requests_py
 from gen.generate_enumerations import generate_enumeration_definition
 from gen.generate_structures import _get_referenced_definitions  # type: ignore
-from gen.generate_structures import (generate_structure_definition,
-                                     generate_structures_py)
+from gen.generate_structures import generate_structures_py
 from gen.generator import Generator, LSPGeneratorException
 from gen.schema.anytype import AnyType
 from gen.schema.types import MetaModel, ReferenceType
 from gen.schema.util import JSON_VALUE
 from gen.static.lsp_enum import LSPEnumException
 from gen.static.util import (LSPKeyNotFoundException, LSPLiteralException,
-                             LSPTypeException, LSPUnknownPropertyException)
+                             LSPTypeException)
 
 
 def test_reference_resolver_resolves_reference() -> None:
@@ -574,6 +573,21 @@ def test_generator_generate_structure_definition() -> None:
                         }
                     }
                 ]
+            },
+            {
+                "name": "Test4",
+                "properties": [
+                    {
+                        "name": "test4",
+                        "type": {
+                            "kind": "literal",
+                            "value": {
+                                "properties": []
+                            }
+                        },
+                        "optional": True
+                    }
+                ]
             }
         ],
         "typeAliases": []
@@ -583,10 +597,9 @@ def test_generator_generate_structure_definition() -> None:
 
     names = get_test_default_names()
 
-    # Process class definition
-    exec(generate_structure_definition(generator, model.structures[2]), names)
-    exec(generate_structure_definition(generator, model.structures[1]), names)
-    exec(generate_structure_definition(generator, model.structures[0]), names)
+    structures_py = generate_structures_py(generator)
+    # Skip imports, because they don't work inside the test
+    exec(structures_py[structures_py.index("@dataclass"):], names)
 
     assert eval("issubclass(Test1, Test2)", names)
 
@@ -605,6 +618,9 @@ def test_generator_generate_structure_definition() -> None:
 
     res3 = eval("Test1(test1='Hello', test2=10, test3=True, testopt='Optional')", names)
     assert res3.testopt == "Optional"
+
+    res4 = eval("Test4.from_json({ 'test4': {} })", names)
+    assert res4.test4 == {}
 
 
 def test_generator_get_referenced_definition_anytype() -> None:

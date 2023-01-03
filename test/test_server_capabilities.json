@@ -1,0 +1,46 @@
+{
+    "name": "test_server_capabilities",
+    "initializeResult": {
+        "capabilities": {
+            "workspace": {
+                "fileOperations": {
+                    "didCreate": {
+                        "filters": [
+                            {
+                                "schema": "file",
+                                "pattern": {
+                                    "glob": "**/test/*.py",
+                                    "options": {
+                                        "ignoreCase": true
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "semanticTokensProvider": {
+                "id": "test-semantic-tokens",
+                "documentSelector": [
+                    {
+                        "language": "python",
+                        "scheme": "file",
+                        "pattern": "**/*.py"
+                    }
+                ],
+                "legend": {
+                    "tokenTypes": ["a", "b", "c"],
+                    "tokenModifiers": ["d", "e", "f"]
+                },
+                "full": true,
+                "range": false
+            },
+            "colorProvider": {
+                "id": "test-document-color"
+            },
+            "definitionProvider": {},
+            "hoverProvider": true
+        }
+    },
+    "sequence": []
+}

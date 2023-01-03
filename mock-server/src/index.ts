@@ -1,4 +1,4 @@
-import { Connection, InitializedParams, InitializeParams } from "vscode-languageserver"
+import { Connection, InitializedParams, InitializeParams, InitializeResult } from "vscode-languageserver"
 import { createConnection } from "vscode-languageserver/node";
 
 import { readFileSync } from "fs";
@@ -28,7 +28,7 @@ interface TestMessagesUnordered {
 
 interface TestSetup {
     name: string;
-    defaultInitialize: boolean;
+    initializeResult?: InitializeResult;
     sequence: Array<TestMessage | TestMessagesUnordered>
 }
 
@@ -47,11 +47,15 @@ let templateParams: TemplateParams = {};
 const NOT_HANDLED = Symbol("NOT_HANDLED");
 
 connection.onInitialize((params: InitializeParams) => {
-    return {
-        capabilities: {
-            // TODO: fill accordingly as more tests are added
-        }
-    };
+    if (test.initializeResult) {
+        return test.initializeResult;
+    } else {
+        return {
+            capabilities: {
+                // TODO: fill accordingly as more tests are added
+            }
+        };
+    }
 });
 
 connection.onInitialized((params: InitializedParams) => {})

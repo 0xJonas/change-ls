@@ -39,7 +39,6 @@ class MockWorkspaceRequestHandler(WorkspaceRequestHandler):
         ]
 
     def on_configuration(self, params: ConfigurationParams) -> List[LSPAny]:
-        print("!")
         assert len(params.items) == 2
         assert params.items[0].scopeUri == "file://config"
         assert params.items[0].section == "test-section-1"
@@ -91,7 +90,8 @@ class MockWorkspaceRequestHandler(WorkspaceRequestHandler):
 
 
 async def test_workspace_callbacks() -> None:
-    params = StdIOConnectionParams(launch_command="node mock-server/out/index.js --stdio test/test_workspace_callbacks.json")
+    params = StdIOConnectionParams(
+        launch_command="node mock-server/out/index.js --stdio test/test_workspace_callbacks.json")
     async with Client(params) as client:
         handler = MockWorkspaceRequestHandler()
         client.set_workspace_request_handler(handler)

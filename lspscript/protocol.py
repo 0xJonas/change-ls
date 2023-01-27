@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder
 from logging import DEBUG, Logger
 from sys import getdefaultencoding
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Tuple, Union
 
 from lspscript.types import ErrorCodes, LSPErrorCodes
 from lspscript.types.util import JSON_VALUE
@@ -130,25 +130,22 @@ class LSProtocol(ABC):
 
     def reject_active_requests(self, exc: Exception) -> None:
         if len(self._active_requests) > 0:
-            self._logger.warning(
-                "Dropping %d currently active requests", len(self._active_requests))
+            self._logger.warning("Dropping %d currently active requests", len(self._active_requests))
         for f in self._active_requests.values():
             f.get_loop().call_soon_threadsafe(lambda: f.set_exception(exc))
 
-    def on_data(self, data: bytes) -> None:
-        "Called by subclasses when new data has been received."
-
+    def _read_incoming_json_object(self, data: bytes) -> Optional[Dict[str, JSON_VALUE]]:
         self._read_buffer += data
 
         if not self._pending_header:
             maybe_header = _LSPHeader.from_bytes(self._read_buffer)
             if not maybe_header:
-                return
+                return None
             (self._pending_header, self._content_offset) = maybe_header
 
         if len(self._read_buffer) - self._content_offset < self._pending_header.content_length:
             # Content has not yet been fully received, wait for more data.
-            return
+            return None
 
         content_from = self._content_offset
         content_to = content_from + self._pending_header.content_length
@@ -163,18 +160,32 @@ class LSProtocol(ABC):
                                               self._pending_header.content_length:]
         self._pending_header = None
 
-        json_data = self._decoder.decode(content)
+        return self._decoder.decode(content)
+
+    def _process_incoming_json_object(self, json_data: Mapping[str, JSON_VALUE]) -> None:
         request_id = json_data.get("id")
+        if request_id is not None and (type(request_id) is not str and type(request_id) is not int):
+            self.reject_active_requests(LSPClientException("Received malformed JSON-RPC message"))
+            return None
+
         if (request_id is not None) and (future := self._active_requests.get(request_id)):
             # A result for an active request was received.
             if error := json_data.get("error"):
-                exception = LSPException(
-                    error["code"], error["message"], error.get("data"))
+                if not isinstance(error, Mapping):
+                    self.reject_active_requests(LSPClientException("Received malformed JSON-RPC message"))
+                    return None
+
+                error_code = error.get("code")
+                error_message = error.get("message")
+                if type(error_code) is not int or type(error_message) is not str:
+                    self.reject_active_requests(LSPClientException("Received malformed JSON-RPC message"))
+                    return None
+
+                exception = LSPException(error_code, error_message, error.get("data"))
                 future.get_loop().call_soon_threadsafe(lambda: future.set_exception(exception))
             # No := here, because json_data["result"] can be present but None
             elif "result" in json_data:
-                future.get_loop().call_soon_threadsafe(
-                    lambda: future.set_result(json_data["result"]))
+                future.get_loop().call_soon_threadsafe(lambda: future.set_result(json_data["result"]))
             del self._active_requests[request_id]
 
         else:
@@ -185,7 +196,7 @@ class LSProtocol(ABC):
             def send_result(result: JSON_VALUE) -> None:
                 # send_result should only be to send results for requests,
                 # which means a request_id is required.
-                assert request_id is not None
+                assert type(request_id) is str or type(request_id) is int
                 data = self._create_result_message(request_id, result)
 
                 # The send_result function runs on the main thread, so any interactions
@@ -193,8 +204,18 @@ class LSProtocol(ABC):
                 # event loop is saved in the closure.
                 client_loop.call_soon_threadsafe(lambda: self.write_data(data))
 
-            self._server_message_callback(
-                json_data["method"], json_data.get("params"), send_result)
+            method = json_data.get("method")
+            if type(method) is not str:
+                self.reject_active_requests(LSPClientException("Received malformed JSON-RPC message"))
+                return None
+            self._server_message_callback(method, json_data.get("params"), send_result)
+
+    def on_data(self, data: bytes) -> None:
+        "Called by subclasses when new data has been received."
+
+        json_data = self._read_incoming_json_object(data)
+        if json_data is not None:
+            self._process_incoming_json_object(json_data)
 
     @abstractmethod
     def write_data(self, data: bytes) -> None:

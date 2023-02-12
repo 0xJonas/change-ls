@@ -124,7 +124,7 @@ function processTemplate(template: string): JSONValue {
             throw Error("Template parameter not found");
         }
     }
-    const expandRegExp = /\$\{(\w+)\}/gd;
+    const expandRegExp = /\$\{(\w+)\}/;
     let expandResult = expandRegExp.exec(template);
     while (expandResult) {
         const param = expandResult[1];

@@ -1,0 +1,14 @@
+{
+    "include": ["src/**/*", "test/**/*"],
+    "compilerOptions": {
+        "outDir": "out",
+        "target": "ES6",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "allowJs": false,
+        "sourceMap": true,
+        "strict": true,
+        "alwaysStrict": true,
+        "composite": true
+    }
+}

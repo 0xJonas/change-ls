@@ -10,8 +10,14 @@ authors = [
 ]
 dynamic = ["version"]
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 include = ["lspscript*"]
+
+[tool.setuptools.package-data]
+"lspscript.token_server" = ["*.js", "*.wasm"]
 
 [tool.setuptools.dynamic]
 version = { attr = "lspscript.LSPSCRIPT_VERSION" }

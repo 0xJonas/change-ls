@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from asyncio import (BaseTransport, Future, Protocol, SubprocessProtocol,
-                     SubprocessTransport, Transport, WriteTransport,
-                     get_running_loop)
+from asyncio import (BaseTransport, Event, Future, Protocol,
+                     SubprocessProtocol, SubprocessTransport, Transport,
+                     WriteTransport)
 from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder
 from logging import DEBUG, Logger
@@ -88,22 +88,17 @@ class _LSPHeader:
 
 
 # Signature of a function which takes a str (method), a JSON_VALUE (params) and a function to send a JSON_VALUE back (send_data)
-_ServerMessageCallback = Callable[[
-    str, JSON_VALUE, Callable[[JSON_VALUE], None]], None]
+_ServerMessageCallback = Callable[[str, JSON_VALUE, Callable[[JSON_VALUE], None]], None]
 
 
 class LSProtocol(ABC):
 
     # Maps the ids of currently active requests to their corresponding
-    # Future objects provided by the client. These Future objects come from
-    # a different thread than the LSProtocol, so they must be resolved using
-    # future.get_loop().call_soon_threadsafe(lambda: future.set_result(...))
+    # Future objects provided by the client.
     _active_requests: Dict[Union[int, str], "Future[JSON_VALUE]"]
 
     # Function which is called when data is received with an unknown request id,
     # i.e. when the Language Server sends requests/notifications of its own.
-    # This callable is run on the same thread as the LSProtocol, so it is up to
-    # the callable's provider to ensure thread-safety.
     _server_message_callback: _ServerMessageCallback
 
     _logger: Logger
@@ -115,6 +110,7 @@ class LSProtocol(ABC):
     _content_offset: int
     _request_counter: int
     _connected: bool
+    _disconnect_event: Event
 
     def __init__(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> None:
         self._active_requests = {}
@@ -127,12 +123,13 @@ class LSProtocol(ABC):
         self._content_offset = 0
         self._request_counter = 0
         self._connected = False
+        self._disconnect_event = Event()
 
     def reject_active_requests(self, exc: Exception) -> None:
         if len(self._active_requests) > 0:
             self._logger.warning("Dropping %d currently active requests", len(self._active_requests))
         for f in self._active_requests.values():
-            f.get_loop().call_soon_threadsafe(lambda: f.set_exception(exc))
+            f.set_exception(exc)
 
     def _read_incoming_json_object(self, data: bytes) -> Optional[Dict[str, JSON_VALUE]]:
         self._read_buffer += data
@@ -182,27 +179,22 @@ class LSProtocol(ABC):
                     return None
 
                 exception = LSPException(error_code, error_message, error.get("data"))
-                future.get_loop().call_soon_threadsafe(lambda: future.set_exception(exception))
+                future.set_exception(exception)
             # No := here, because json_data["result"] can be present but None
             elif "result" in json_data:
-                future.get_loop().call_soon_threadsafe(lambda: future.set_result(json_data["result"]))
+                future.set_result(json_data["result"])
             del self._active_requests[request_id]
 
         else:
             # The data does not correspond to an active request. This means the server
             # is sending a request/notification of its own.
-            client_loop = get_running_loop()
 
             def send_result(result: JSON_VALUE) -> None:
                 # send_result should only be to send results for requests,
                 # which means a request_id is required.
                 assert type(request_id) is str or type(request_id) is int
                 data = self._create_result_message(request_id, result)
-
-                # The send_result function runs on the main thread, so any interactions
-                # with the client thread must go through call_soon_threadsafe. The client thread's
-                # event loop is saved in the closure.
-                client_loop.call_soon_threadsafe(lambda: self.write_data(data))
+                self._write_data(data)
 
             method = json_data.get("method")
             if type(method) is not str:
@@ -210,7 +202,7 @@ class LSProtocol(ABC):
                 return None
             self._server_message_callback(method, json_data.get("params"), send_result)
 
-    def on_data(self, data: bytes) -> None:
+    def _on_data(self, data: bytes) -> None:
         "Called by subclasses when new data has been received."
 
         json_data = self._read_incoming_json_object(data)
@@ -218,7 +210,7 @@ class LSProtocol(ABC):
             self._process_incoming_json_object(json_data)
 
     @abstractmethod
-    def write_data(self, data: bytes) -> None:
+    def _write_data(self, data: bytes) -> None:
         pass
 
     def _create_message(self, method: str, id: Optional[Union[str, int]] = None, *, params: JSON_VALUE = None, result: JSON_VALUE = None) -> bytes:
@@ -256,8 +248,7 @@ class LSProtocol(ABC):
         This function should only run on the LSProtocol's thread.
         """
         if not self._connected:
-            future.get_loop().call_soon_threadsafe(lambda: future.set_exception(
-                LSPClientException("No connection to server")))
+            future.set_exception(LSPClientException("No connection to server"))
             return
 
         request_id = self._request_counter
@@ -266,7 +257,7 @@ class LSProtocol(ABC):
         data = self._create_message(method, request_id, params=params)
 
         self._active_requests[request_id] = future
-        self.write_data(data)
+        self._write_data(data)
 
     def send_notification(self, method: str, params: JSON_VALUE) -> None:
         """
@@ -274,12 +265,15 @@ class LSProtocol(ABC):
         This function should only run on the LSProtocol's thread.
         """
         data = self._create_message(method, params=params)
-        self.write_data(data)
+        self._write_data(data)
 
-    def on_connection_lost(self) -> None:
-        # Stop the event_loop so the thread in Client terminates
-        get_running_loop().stop()
+    def _on_connection_lost(self) -> None:
+        self._connected = False
+        self._disconnect_event.set()
         self.reject_active_requests(LSPClientException("Server has stopped."))
+
+    async def wait_for_disconnect(self) -> None:
+        await self._disconnect_event.wait()
 
 
 class LSStreamingProtocol(Protocol, LSProtocol):
@@ -295,14 +289,14 @@ class LSStreamingProtocol(Protocol, LSProtocol):
         self._connected = True
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
-        self.on_connection_lost()
+        self._on_connection_lost()
         if exc:
             raise exc
 
     def data_received(self, data: bytes) -> None:
-        super().on_data(data)
+        super()._on_data(data)
 
-    def write_data(self, data: bytes) -> None:
+    def _write_data(self, data: bytes) -> None:
         self._transport.write(data)
         logger = self._logger.getChild("data")
         if logger.getEffectiveLevel() <= DEBUG:
@@ -327,18 +321,18 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
         self._connected = True
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
-        self.on_connection_lost()
+        self._on_connection_lost()
         if exc:
             raise exc
 
     def pipe_data_received(self, fd: int, data: bytes) -> None:
         if fd == 1:
-            super().on_data(data)
+            super()._on_data(data)
         elif fd == 2:
             self._logger.getChild("server").warning(
                 "Server stderr: %s", str(data, encoding=getdefaultencoding()))
 
-    def write_data(self, data: bytes) -> None:
+    def _write_data(self, data: bytes) -> None:
         self._write_transport.write(data)
         logger = self._logger.getChild("data")
         if logger.getEffectiveLevel() <= DEBUG:

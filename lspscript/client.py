@@ -1,14 +1,12 @@
 import subprocess
 from abc import ABC, abstractmethod
-from asyncio import (AbstractEventLoop, BaseTransport, Future,
-                     get_running_loop, new_event_loop, set_event_loop,
+from asyncio import (AbstractEventLoop, BaseTransport, get_running_loop,
                      wait_for)
 from logging import Logger, getLogger
 from os import getpid
 from pathlib import Path
 from socket import AF_INET
 from sys import argv
-from threading import Thread
 from types import TracebackType
 from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
                     Sequence, Set, Tuple, Type, Union)
@@ -265,13 +263,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     _protocol: Optional[LSProtocol]
     _launch_params: _ServerLaunchParams
     _logger: Logger
-    _comm_thread: Optional[Thread]
-    _comm_thread_event_loop: Optional[AbstractEventLoop]
 
     # Called when the server sends requests/notifications to the client.
-    # This callable will run on the server thread, so it must make sure
-    # to synchronize with the main thread using event_loop.call_soon_threadsafe()
-    # The callable is None until the server is actually launched.
     _server_message_callback: Optional[_ServerMessageCallback]
 
     # Whether or not an 'exit' notification was sent. This is used
@@ -287,8 +280,6 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._state = "disconnected"
         self._protocol = None
         self._launch_params = launch_params
-        self._comm_thread = None
-        self._comm_thread_event_loop = None
         self._exit_sent = False
         self._initialize_params = initialize_params
         self._server_message_callback = None
@@ -301,10 +292,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     def set_workspace_request_handler(self, handler: Optional[WorkspaceRequestHandler]) -> None:
         self._workspace_request_handler = handler
 
-    async def _launch_internal(self) -> None:
-        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback, self._logger)  # type: ignore
-
-    def _client_thread_exception_handler(self, loop: AbstractEventLoop, context: Dict[str, Any]) -> None:
+    def _client_thread_exception_handler(self, _loop: AbstractEventLoop, context: Dict[str, Any]) -> None:
         exception = context.get("exception")
         if exception is None:
             exception = LSPClientException(context["message"])
@@ -312,28 +300,6 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
         if self._protocol:
             self._protocol.reject_active_requests(exception)
-
-    def _client_loop(self, server_ready: "Future[None]") -> None:
-        # Runs on the Client's thread
-        self._logger.info("Server thread started")
-        self._comm_thread_event_loop = new_event_loop()
-        set_event_loop(self._comm_thread_event_loop)
-
-        self._comm_thread_event_loop.set_exception_handler(
-            self._client_thread_exception_handler)
-        self._comm_thread_event_loop.run_until_complete(
-            self._comm_thread_event_loop.create_task(self._launch_internal()))
-        server_ready.get_loop().call_soon_threadsafe(
-            lambda: server_ready.set_result(None))
-
-        self._comm_thread_event_loop.run_forever()
-
-        self._state = "disconnected"
-        if not self._exit_sent:
-            self._logger.critical("Server stopped unexpectedly.")
-            raise LSPClientException("Server stopped unexpectedly.")
-        else:
-            self._logger.info("Client is now disconnected")
 
     def get_state(self) -> ClientState:
         """
@@ -358,28 +324,22 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         Launches the Language Server process.
         """
         self._exit_sent = False
-        main_loop = get_running_loop()
 
         def server_message_callback(method: str, params: JSON_VALUE, send_result: Callable[[JSON_VALUE], None]) -> None:
-            main_loop.call_soon_threadsafe(
-                lambda: self.dispatch_server_message(method, params, send_result))
+            self.dispatch_server_message(method, params, send_result)
 
         self._server_message_callback = server_message_callback
-        server_ready = main_loop.create_future()
-        self._comm_thread = Thread(
-            target=self._client_loop, args=[server_ready])
-        self._comm_thread.start()
-        await server_ready
+        get_running_loop().set_exception_handler(self._client_thread_exception_handler)
+        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback, self._logger)  # type: ignore
         self._state = "uninitialized"
         self._logger.info("Client is now uninitialized")
 
     async def _send_request_internal(self, method: str, params: JSON_VALUE, timeout: Optional[float] = 10.0) -> JSON_VALUE:
-        assert self._comm_thread_event_loop
+        assert self._protocol
 
         future = get_running_loop().create_future()
         self._logger.info("Sending request (%s)", method)
-        self._comm_thread_event_loop.call_soon_threadsafe(
-            lambda: self._protocol and self._protocol.send_request(method, params, future))
+        self._protocol.send_request(method, params, future)
         await wait_for(future, timeout)
 
         assert not future.cancelled()
@@ -409,10 +369,9 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         pass
 
     async def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
-        assert self._comm_thread_event_loop
+        assert self._protocol
         self._logger.info("Sending notification (%s)", method)
-        self._comm_thread_event_loop.call_soon_threadsafe(
-            lambda: self._protocol and self._protocol.send_notification(method, params))
+        self._protocol.send_notification(method, params)
 
     async def send_notification(self, method: str, params: JSON_VALUE) -> None:
         """
@@ -459,20 +418,13 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         if self._state != "shutdown":
             raise LSPClientException("Invalid state, expected 'shutdown'.")
 
-        # We set _exit_sent optimistically before the notification is actually sent.
-        # This has to be set beforehand because otherwise the thread might switch after
-        # the notification was sent, but before _exit_sent is set to True.
-        self._exit_sent = True
-        try:
-            await self._send_notification_internal("exit", None)
-        except:
-            # Something went wrong, so assume we did not actually send the notification.
-            self._exit_sent = False
-            raise
+        await self._send_notification_internal("exit", None)
 
-        assert self._comm_thread
-        self._comm_thread.join(10.0)
-        if self._comm_thread.is_alive():
+        try:
+            assert self._protocol
+            await wait_for(self._protocol.wait_for_disconnect(), 10.0)
+            self._state = "disconnected"
+        except:
             raise LSPClientException("Unable to stop server thread.")
 
     async def __aenter__(self) -> "Client":
@@ -492,21 +444,12 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         return self
 
     async def __aexit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
-        try:
-            if self._state in ["uninitialized", "initializing", "running"]:
-                await self.send_shutdown()
-            if self._state == "shutdown":
-                await self.send_exit()
-            assert self._state == "disconnected"
-            return False
-        except:
-            if self._comm_thread and self._comm_thread.is_alive():
-                # Stop the event loop manually
-                if self._comm_thread_event_loop and self._comm_thread_event_loop.is_running():
-                    self._comm_thread_event_loop.call_soon_threadsafe(
-                        lambda: self._comm_thread_event_loop and self._comm_thread_event_loop.stop())
-                self._comm_thread.join()
-            raise
+        if self._state in ["uninitialized", "initializing", "running"]:
+            await self.send_shutdown()
+        if self._state == "shutdown":
+            await self.send_exit()
+        assert self._state == "disconnected"
+        return False
 
     # -----------------------------
     # Callbacks for server requests

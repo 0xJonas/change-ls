@@ -39,7 +39,7 @@ async def run_dynamic_registration(client: Client, method: str, **kwargs: Any) -
 
     assert not client.check_feature(method, **kwargs)
     # Run the delayed trigger for the registration and require_feature at the same time,
-    # so require_feature actually awaits something immediately returning.
+    # so require_feature actually awaits something instead of immediately returning.
     await gather(schedule_registration(), client.require_feature(method, **kwargs))
     assert client.check_feature(method, **kwargs)
 

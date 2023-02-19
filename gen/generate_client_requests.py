@@ -15,11 +15,12 @@ def _create_message_translation_table() -> Any:
     table["$"] = "s"
     return str.maketrans(table)
 
+
 _message_translation_table = _create_message_translation_table()
 
 
 def _generate_send_request_method(gen: Generator, request: Request) -> str:
-    assert not isinstance(request.params, Tuple) # TODO implement
+    assert not isinstance(request.params, Tuple)  # TODO implement
     result_json_type = gen.get_expected_json_type(request.result)
     if result_json_type:
         result_type_assert = json_type_to_assert_function[result_json_type]
@@ -69,7 +70,7 @@ def _generate_send_notification_method(gen: Generator, notification: Notificatio
     param_type = None
     param_write_expression = None
 
-    assert not isinstance(notification.params, Tuple) # TODO implement
+    assert not isinstance(notification.params, Tuple)  # TODO implement
     if notification.params is None:
         template = dedent_ignore_empty('''\
             async def {name}(self) -> None:
@@ -102,8 +103,10 @@ def _generate_send_notification_method(gen: Generator, notification: Notificatio
 
 
 def generate_client_requests_mixin(gen: Generator) -> str:
-    client_requests = filter(lambda r: r.message_direction == "clientToServer" or r.message_direction == "both",  gen.get_meta_model().requests)
-    client_notifications = filter(lambda n: n.message_direction == "clientToServer" or n.message_direction == "both",  gen.get_meta_model().notifications)
+    client_requests = filter(lambda r: r.message_direction ==
+                             "clientToServer" or r.message_direction == "both",  gen.get_meta_model().requests)
+    client_notifications = filter(lambda n: n.message_direction ==
+                                  "clientToServer" or n.message_direction == "both",  gen.get_meta_model().notifications)
 
     request_methods = map(lambda r: _generate_send_request_method(gen, r), client_requests)
     notification_methods = map(lambda n: _generate_send_notification_method(gen, n), client_notifications)
@@ -131,7 +134,7 @@ def generate_client_requests_mixin(gen: Generator) -> str:
 def _generate_server_request_method(gen: Generator, request: Request) -> str:
     name = request.method.translate(_message_translation_table)
 
-    assert not isinstance(request.params, Tuple) # TODO implement
+    assert not isinstance(request.params, Tuple)  # TODO implement
     if request.params is None:
         param_type = None
         template = dedent_ignore_empty('''\
@@ -165,7 +168,7 @@ def _generate_server_request_method(gen: Generator, request: Request) -> str:
 def _generate_server_request_branches(gen: Generator, requests: Sequence[Request], send_method_name: str) -> List[str]:
     branches: List[str] = []
     for r in requests:
-        assert not isinstance(r.params, Tuple) # TODO implement
+        assert not isinstance(r.params, Tuple)  # TODO implement
         if r.params is None:
             params = ""
         else:
@@ -178,8 +181,7 @@ def _generate_server_request_branches(gen: Generator, requests: Sequence[Request
         branches.append(dedent(f"""\
             elif method == "{r.method}":
                 result = self.on_{r.method.translate(_message_translation_table)}({params})
-                result_json = {gen.generate_write_expression(r.result, "result")}
-                {send_method_name}(result_json)"""))
+                return {gen.generate_write_expression(r.result, "result")}"""))
 
     return branches
 
@@ -187,7 +189,7 @@ def _generate_server_request_branches(gen: Generator, requests: Sequence[Request
 def _generate_server_notification_method(gen: Generator, notification: Notification) -> str:
     name = notification.method.translate(_message_translation_table)
 
-    assert not isinstance(notification.params, Tuple) # TODO implement
+    assert not isinstance(notification.params, Tuple)  # TODO implement
     if notification.params is None:
         param_type = None
         template = dedent_ignore_empty('''\
@@ -220,7 +222,7 @@ def _generate_server_notification_method(gen: Generator, notification: Notificat
 def _generate_server_notification_branches(gen: Generator, notifications: Sequence[Notification]) -> List[str]:
     branches: List[str] = []
     for n in notifications:
-        assert not isinstance(n.params, Tuple) # TODO implement
+        assert not isinstance(n.params, Tuple)  # TODO implement
         if n.params is None:
             params = ""
         else:
@@ -238,8 +240,10 @@ def _generate_server_notification_branches(gen: Generator, notifications: Sequen
 
 
 def generate_server_requests_mixin(gen: Generator) -> str:
-    server_requests = [r for r in gen.get_meta_model().requests if r.message_direction == "serverToClient" or r.message_direction == "both"]
-    server_notifications = [n for n in gen.get_meta_model().notifications if n.message_direction == "serverToClient" or n.message_direction == "both"]
+    server_requests = [r for r in gen.get_meta_model().requests if r.message_direction ==
+                       "serverToClient" or r.message_direction == "both"]
+    server_notifications = [n for n in gen.get_meta_model().notifications if n.message_direction ==
+                            "serverToClient" or n.message_direction == "both"]
 
     request_methods = map(lambda r: _generate_server_request_method(gen, r), server_requests)
     notification_methods = map(lambda n: _generate_server_notification_method(gen, n), server_notifications)
@@ -254,10 +258,14 @@ def generate_server_requests_mixin(gen: Generator) -> str:
 
         {notification_methods}
 
-            def dispatch_server_message(self, method: str, params: JSON_VALUE, send_result: Callable[[JSON_VALUE], None]) -> None:
+            def dispatch_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
                 if False:
                     pass
         {request_branches}
+
+            def dispatch_notification(self, method: str, params: JSON_VALUE) -> None:
+                if False:
+                    pass
         {notification_branches}""")
     return template.format(
         request_methods=indent("\n\n".join(request_methods)),

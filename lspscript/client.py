@@ -13,7 +13,6 @@ from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
 
 from lspscript import LSPSCRIPT_VERSION
 from lspscript.capabilities_mixin import CapabilitiesMixin
-from lspscript.protocol import _ServerMessageCallback  # type: ignore
 from lspscript.protocol import (LSPClientException, LSProtocol,
                                 LSStreamingProtocol, LSSubprocessProtocol)
 from lspscript.types import (ClientCapabilities, InitializedParams,
@@ -40,6 +39,10 @@ _client_names: Set[str] = set()
 _anonymous_client_counter: int = 0
 
 
+_RequestHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], JSON_VALUE]
+_NotificationHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], None]
+
+
 class _ServerLaunchParams(ABC):
     server_path: Optional[Path]
     launch_command: Optional[str]
@@ -57,7 +60,7 @@ class _ServerLaunchParams(ABC):
         self.additional_only = additional_only
 
     @abstractmethod
-    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
         pass
 
 
@@ -89,7 +92,7 @@ class StdIOConnectionParams(_ServerLaunchParams):
         super().__init__(server_path=server_path, additional_args=additional_args,
                          launch_command=launch_command, additional_only=additional_only)
 
-    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
         args = ["--stdio", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -99,11 +102,11 @@ class StdIOConnectionParams(_ServerLaunchParams):
         if self.server_path:
             logger.info("Launching server %s, connection over stdio, with arguments %s",
                         self.server_path, ", ".join(args))
-            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(server_message_callback, logger), self.server_path, *args)
+            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(request_handler, notification_handler, logger), self.server_path, *args)
         elif self.launch_command:
             logger.info(
                 "launching server, connection over stdio, using '%s'", self.launch_command)
-            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(server_message_callback, logger), self.launch_command)
+            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(request_handler, notification_handler, logger), self.launch_command)
         else:
             assert False
 
@@ -142,7 +145,7 @@ class SocketConnectionParams(_ServerLaunchParams):
         self.hostname = hostname
         self.port = port
 
-    async def _launch_server_from_event_loop(self, server_message_callback: _ServerMessageCallback, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
         args = [f"--socket={self.port}", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -161,7 +164,7 @@ class SocketConnectionParams(_ServerLaunchParams):
         loop = get_running_loop()
         logger.info("Connecting to running server at %s:%d",
                     self.hostname, self.port)
-        return await loop.create_connection(lambda: LSStreamingProtocol(server_message_callback, logger), host=self.hostname, port=self.port, family=AF_INET)
+        return await loop.create_connection(lambda: LSStreamingProtocol(request_handler, notification_handler, logger), host=self.hostname, port=self.port, family=AF_INET)
 
 
 class PipeConnectionParams(_ServerLaunchParams):
@@ -264,9 +267,6 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     _launch_params: _ServerLaunchParams
     _logger: Logger
 
-    # Called when the server sends requests/notifications to the client.
-    _server_message_callback: Optional[_ServerMessageCallback]
-
     # Whether or not an 'exit' notification was sent. This is used
     # to distinguish a normal termination of the server from a crash.
     _exit_sent: bool
@@ -282,7 +282,6 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._launch_params = launch_params
         self._exit_sent = False
         self._initialize_params = initialize_params
-        self._server_message_callback = None
 
         if name is None:
             name = _generate_client_name(launch_params)
@@ -325,12 +324,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         """
         self._exit_sent = False
 
-        def server_message_callback(method: str, params: JSON_VALUE, send_result: Callable[[JSON_VALUE], None]) -> None:
-            self.dispatch_server_message(method, params, send_result)
-
-        self._server_message_callback = server_message_callback
         get_running_loop().set_exception_handler(self._client_thread_exception_handler)
-        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self._server_message_callback, self._logger)  # type: ignore
+        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self.dispatch_request, self.dispatch_notification, self._logger)  # type: ignore
         self._state = "uninitialized"
         self._logger.info("Client is now uninitialized")
 

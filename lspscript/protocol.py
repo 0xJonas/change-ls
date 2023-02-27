@@ -150,9 +150,7 @@ class LSProtocol(ABC):
         }
         self._write_data(_json_to_packet(message_json))
 
-    def _try_read_message(self, data: bytes) -> Optional[Dict[str, JSON_VALUE]]:
-        self._read_buffer += data
-
+    def _try_read_message(self) -> Optional[Dict[str, JSON_VALUE]]:
         if not self._pending_header:
             maybe_header = _LSPHeader.try_from_bytes(self._read_buffer)
             if not maybe_header:
@@ -294,15 +292,17 @@ class LSProtocol(ABC):
 
             else:
                 self._send_error_response(None, ErrorCodes.InvalidRequest,
-                                          "At least one of id or 'method' must 'exist'.")
+                                          "At least one of 'id' or 'method' must exist.")
                 return None
 
     def _on_data(self, data: bytes) -> None:
         "Called by subclasses when new data has been received."
 
-        json_data = self._try_read_message(data)
-        if json_data is not None:
+        self._read_buffer += data
+        json_data = self._try_read_message()
+        while json_data is not None:
             self._process_message(json_data)
+            json_data = self._try_read_message()
 
     @abstractmethod
     def _write_data(self, data: bytes) -> None:

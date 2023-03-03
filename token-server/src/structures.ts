@@ -1,8 +1,8 @@
-export interface TokenizeParams {
+export interface TextDocumentTokenizeParams {
     /**
-     * The index grammar to use, as returned by grammar/load.
+     * The initial scope to use. This specifies the grammar.
      */
-    grammarIndex: number;
+    scopeName: string;
 
     /**
      * The raw text to tokenize.
@@ -10,11 +10,11 @@ export interface TokenizeParams {
     text: string;
 }
 
-export interface TokenizeResult {
+export interface TextDocumentTokenizeResult {
     /**
      * The scopes used by this `TokenizeResult`.
      */
-    scopes: number[];
+    scopes: string[];
 
     /**
      * The tokens in the following format:
@@ -24,4 +24,20 @@ export interface TokenizeResult {
      * - sublists at odd indices contain any number of scopes for the previous token, as indices into `scopes`.
      */
     tokens: number[][];
+}
+
+export interface GrammarRequestRawParams {
+
+    /**
+     * The initial scope for which the raw grammar is requested.
+     */
+    scopeName: string;
+}
+
+export interface GrammarRequestRawResult {
+
+    /**
+     * The raw grammar in a format compatible with vscode-textmate.
+     */
+    rawGrammar: string;
 }

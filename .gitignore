@@ -9,3 +9,4 @@ build
 
 mock-server/out
 token-server/out
+tools/github-token

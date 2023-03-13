@@ -148,7 +148,7 @@ scope_to_grammar = {{
 
 
 async def main() -> None:
-    with open("languages.json") as file:
+    with open("../res/languages.json") as file:
         languages = json.load(file)
 
     with open("github-token") as file:

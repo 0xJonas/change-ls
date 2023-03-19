@@ -1,11 +1,15 @@
 from pathlib import Path
 
+import pytest
+
+import lspscript.languages as languages
+from lspscript.tokens import Grammar
 from lspscript.types.enumerations import FileOperationPatternKind
 from lspscript.types.structures import (FileOperationFilter,
                                         FileOperationPattern,
                                         FileOperationPatternOptions,
                                         TextDocumentFilter)
-from lspscript.util import (matches_file_operation_filter,
+from lspscript.util import (install_language, matches_file_operation_filter,
                             matches_text_document_filter)
 
 
@@ -67,3 +71,64 @@ def test_matches_file_operation_filter() -> None:
     assert not matches_file_operation_filter(path4.as_uri(), filter4)
     assert matches_file_operation_filter(path5.as_uri(), filter4)
     assert matches_file_operation_filter(path6.as_uri(), filter4)
+
+
+class MockGrammar(Grammar):
+    content: str
+
+    def __init__(self, scope_name: str, content: str) -> None:
+        super().__init__(scope_name)
+        self.content = content
+
+    def get_content(self) -> str:
+        return self.content
+
+
+def test_install_language_success() -> None:
+    assert ".madeup" not in languages.extension_to_language_id
+    assert "madeup" not in languages.language_id_to_scope
+    assert "source.madeup" not in languages.scope_to_grammar
+
+    grammar = MockGrammar("source.madeup", "")
+    install_language(
+        language_id="madeup",
+        extensions=[".madeup"],
+        grammar=grammar)
+
+    assert languages.extension_to_language_id[".madeup"] == "madeup"
+    assert languages.language_id_to_scope["madeup"] == "source.madeup"
+    assert languages.scope_to_grammar["source.madeup"] == grammar
+
+
+def test_install_language_override() -> None:
+    assert ".c" in languages.extension_to_language_id
+    assert "c" in languages.language_id_to_scope
+    assert "source.c" in languages.scope_to_grammar
+
+    grammar = MockGrammar("source.madeup", "")
+
+    with pytest.raises(ValueError):
+        install_language(
+            language_id="c",
+            extensions=[".madeup"],
+            grammar=grammar)
+
+    with pytest.raises(ValueError):
+        install_language(
+            language_id="madeup",
+            extensions=[".c"],
+            grammar=grammar)
+
+    with pytest.raises(ValueError):
+        install_language(
+            language_id="madeup",
+            extensions=[".madeup"],
+            grammar=MockGrammar("source.c", ""))
+
+    install_language(
+        language_id="c",
+        extensions=[".madeup"],
+        grammar=grammar,
+        allow_override=True)
+
+    assert languages.language_id_to_scope["c"] == "source.madeup"

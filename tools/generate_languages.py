@@ -128,9 +128,14 @@ def generate_extension_map(languages: Dict[str, Any]) -> Dict[str, str]:
 def generate_languages_py(extension_to_language_id: Dict[str, str], language_id_to_scope: Dict[str, str], scope_to_grammar: Dict[str, str]) -> str:
     extension_to_language_id_str = "\n".join(f'    "{key}": "{val}",' for key, val in extension_to_language_id.items())
     language_id_to_scope_str = "\n".join(f'    "{key}": "{val}",' for key, val in language_id_to_scope.items())
-    scope_to_grammar_str = "\n".join(f'    "{key}": "{val}",' for key, val in scope_to_grammar.items())
+    scope_to_grammar_str = "\n".join(
+        f'    "{key}": BuiltInGrammar("{key}", "{val}"),' for key, val in scope_to_grammar.items())
 
     return f"""\
+from typing import Dict
+from .tokens.grammar import Grammar, BuiltInGrammar
+
+
 extension_to_language_id = {{
 {extension_to_language_id_str}
 }}
@@ -141,7 +146,7 @@ language_id_to_scope = {{
 }}
 
 
-scope_to_grammar = {{
+scope_to_grammar: Dict[str, Grammar] = {{
 {scope_to_grammar_str}
 }}
 """

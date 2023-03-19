@@ -4,7 +4,8 @@ from typing import Any, Coroutine, List
 import aiohttp
 import pytest
 
-from lspscript.languages import scope_to_grammar
+import lspscript.languages as languages
+from lspscript.tokens.grammar import BuiltInGrammar
 
 
 @pytest.fixture
@@ -21,7 +22,12 @@ async def check_url(client_session: aiohttp.ClientSession, url: str) -> None:
 
 async def test_grammar_uris_are_accessible(client_session: aiohttp.ClientSession) -> None:
     requests: List[Coroutine[Any, Any, None]] = []
-    for url in scope_to_grammar.values():
-        requests.append(check_url(client_session, url))
+    for grammar in languages.scope_to_grammar.values():
+        if isinstance(grammar, BuiltInGrammar):
+            # Reach into the object for the URL so we can send the requests asynchronously.
+            # grammar.get_content() would be synchronous.
+            requests.append(check_url(client_session, grammar._url))  # type: ignore
 
     asyncio.gather(*requests)
+
+# TODO: grammar completeness

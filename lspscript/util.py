@@ -5,7 +5,8 @@ from pathlib import Path, WindowsPath
 from typing import Generator, List, Optional
 from urllib.parse import urlsplit
 
-from lspscript.languages import extension_to_language_id
+import lspscript.languages as languages
+from lspscript.tokens import Grammar
 from lspscript.types.enumerations import FileOperationPatternKind
 
 from .types.structures import FileOperationFilter, TextDocumentFilter
@@ -81,13 +82,13 @@ def _guess_language_id(path: Path) -> Optional[str]:
     name = path.name
 
     # Check full filename
-    if language_id := extension_to_language_id.get(name):
+    if language_id := languages.extension_to_language_id.get(name):
         return language_id
 
     # Check suffixes, from each . to the end
     start = 0
     while (start := name.find(".", start)) != -1:
-        if language_id := extension_to_language_id.get(name[start:]):
+        if language_id := languages.extension_to_language_id.get(name[start:]):
             return language_id
     return None
 
@@ -162,3 +163,40 @@ def matches_file_operation_filter(uri: str, filter: FileOperationFilter) -> bool
             return False
 
     return True
+
+
+def install_language(*, language_id: str, extensions: List[str], grammar: Grammar, embedded_grammars: List[Grammar] = [], allow_override: bool = False) -> None:
+    """
+    Adds a new language to be used by the library functions.
+
+    Parameters:
+    - `language_id`: The language id of the new language.
+    - `extensions`: List of file extensions associated with the new language.
+    - `grammar`: Main `Grammar` of the new language.
+    - `embedded_grammars`: Additional `Grammars` used by the main grammar.
+    - `allow_override`: Allow overriding of existing language information. Default is `False`.
+    """
+
+    if len(extensions) == 0:
+        raise ValueError("At least one file extension must be given.")
+
+    if not allow_override:
+        if language_id in languages.language_id_to_scope:
+            raise ValueError(f"Language id {language_id} is already in use")
+
+        for e in extensions:
+            if e in languages.extension_to_language_id:
+                raise ValueError(
+                    f"file extension {e} is already defined for language id {languages.extension_to_language_id[e]}.")
+
+        for g in [grammar, *embedded_grammars]:
+            if grammar.get_scope_name() in languages.scope_to_grammar:
+                raise ValueError(f"Grammar scope {grammar.get_scope_name()} is already used")
+
+    for e in extensions:
+        languages.extension_to_language_id[e] = language_id
+
+    languages.language_id_to_scope[language_id] = grammar.get_scope_name()
+
+    for g in [grammar, *embedded_grammars]:
+        languages.scope_to_grammar[g.get_scope_name()] = g

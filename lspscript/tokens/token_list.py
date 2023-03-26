@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, List, Sequence, SupportsIndex, Tuple, Union
+from typing import Any, Sequence, Set, SupportsIndex, Tuple, Union, overload
 
 
 class TokenMatcher(ABC):
@@ -87,7 +87,7 @@ class AnyTokenMatcher(TokenMatcher):
 @dataclass
 class Token(TokenMatcher):
     lexeme: str
-    scopes: List[str]
+    scopes: Set[str]
     offset: int
 
     __slots__ = ["lexeme", "scopes", "offset"]
@@ -98,7 +98,7 @@ class Token(TokenMatcher):
     def matches_token(self, other: "Token") -> bool:
         return self.lexeme == other.lexeme \
             and len(self.scopes) == len(other.scopes) \
-            and all(s1 == s2 for s1, s2 in zip(self.scopes, other.scopes))
+            and self.scopes == other.scopes
 
 
 class TokenList(Tuple[Token, ...]):
@@ -106,7 +106,12 @@ class TokenList(Tuple[Token, ...]):
     def __setitem__(self, index: Any, value: Any) -> None:
         raise NotImplementedError("TokenLists are read-only.")
 
-    def __getitem__(self, index: Union[SupportsIndex, slice]) -> Union[Token, "TokenList"]:
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> Token: ...
+    @overload
+    def __getitem__(self, index: slice) -> "TokenList": ...
+
+    def __getitem__(self, index: Union[SupportsIndex, slice]) -> Union["TokenList", Token]:
         if isinstance(index, slice):
             return TokenList(super().__getitem__(index))
         else:

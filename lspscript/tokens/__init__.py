@@ -1,4 +1,5 @@
-from .grammar import Grammar
+from .grammar import Grammar, GrammarFormat
+from .token_client import tokenize
 from .token_list import (AndTokenMatcher, AnyTokenMatcher, NotTokenMatcher,
                          OrTokenMatcher, Token, TokenList, TokenMatcher, any,
                          lexeme, scope)
@@ -14,5 +15,7 @@ __all__ = (
     "TokenMatcher",
     "any",
     "lexeme",
-    "scope"
+    "scope",
+    "tokenize",
+    "GrammarFormat"
 )

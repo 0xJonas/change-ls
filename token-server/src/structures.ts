@@ -34,10 +34,20 @@ export interface GrammarRequestRawParams {
     scopeName: string;
 }
 
+enum GrammarFormat {
+    JSON = "json",
+    PLIST = "plist"
+}
+
 export interface GrammarRequestRawResult {
 
     /**
      * The raw grammar in a format compatible with vscode-textmate.
      */
     rawGrammar: string;
+
+    /**
+     * The format of the grammar, e.g. json or plist.
+     */
+    format: GrammarFormat;
 }

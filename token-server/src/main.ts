@@ -4,8 +4,7 @@ import { IRawGrammar } from "vscode-textmate/release/rawGrammar";
 import * as oniguruma from "vscode-oniguruma";
 import { TextDocumentTokenizeParams, TextDocumentTokenizeResult, GrammarRequestRawParams, GrammarRequestRawResult } from "./structures";
 
-// import relative to ./out/src/main.js
-import onigWasm from "../../node_modules/vscode-oniguruma/release/onig.wasm";
+import onigWasm from "../node_modules/vscode-oniguruma/release/onig.wasm";
 
 import { stdin, stdout } from "process"
 import { readFile } from "fs/promises";
@@ -16,7 +15,7 @@ type IndexMap = { [scopeName: string]: number};
 
 interface TokenizationState {
     indexMap: IndexMap;
-    currentLine: number;
+    firstLine: boolean;
 }
 
 function updateScopeIndices(currentIndexMap: IndexMap, currentScopes: string[], newScopes: string[]): void {
@@ -34,14 +33,33 @@ function updateTokenizeResult(current: TextDocumentTokenizeResult, lineTokens: v
     for (const token of lineTokens) {
         updateScopeIndices(state.indexMap, current.scopes, token.scopes);
 
-        let deltaLine = first ? 1 : 0;
-        let deltaStart = token.startIndex - currentCol;
-        let length = token.endIndex - token.startIndex;
-        let indices = token.scopes.map(element => state.indexMap[element]);
+        const deltaLine = first && !state.firstLine ? 1 : 0;
+        const deltaStart = token.startIndex - currentCol;
+        const length = token.endIndex - token.startIndex;
+        const indices = token.scopes.map(element => state.indexMap[element]);
         current.tokens.push([deltaLine, deltaStart, length], indices);
 
         currentCol = token.startIndex;
         first = false;
+        state.firstLine = false;
+    }
+}
+
+function findLineBreak(text: string, offset: number): [number, string] {
+    const indexSubstring = text.substring(offset).search(/\r\n|\n|\r/);
+    if (indexSubstring < 0) {
+        return [text.length, ""];
+    }
+
+    const index = offset + indexSubstring;
+    if (text[index] == '\r') {
+        if (text[index + 1] == '\n') {
+            return [index, "\r\n"];
+        } else {
+            return [index, "\r"];
+        }
+    } else {
+        return [index, "\n"];
     }
 }
 
@@ -62,9 +80,9 @@ class TokenServer {
 
     constructor(input: rpc.MessageReader, output: rpc.MessageWriter) {
         this.connection = rpc.createMessageConnection(input, output);
-        this.connection.onRequest(INITIALIZE_REQUEST, this.initialize);
-        this.connection.onRequest(TEXTDOCUMENT_TOKENIZE_REQUEST, this.textDocumentTokenize)
-        this.connection.onNotification(EXIT_NOTIFICATION, this.exit);
+        this.connection.onRequest(INITIALIZE_REQUEST, this.initialize.bind(this));
+        this.connection.onRequest(TEXTDOCUMENT_TOKENIZE_REQUEST, this.textDocumentTokenize.bind(this))
+        this.connection.onNotification(EXIT_NOTIFICATION, this.exit.bind(this));
     }
 
     private async loadOniguruma(): Promise<vsctm.IOnigLib> {
@@ -79,7 +97,7 @@ class TokenServer {
     async initialize(): Promise<void> {
         this.registry = new vsctm.Registry({
             onigLib: this.loadOniguruma(),
-            loadGrammar: this.loadGrammar
+            loadGrammar: this.loadGrammar.bind(this)
         });
     }
 
@@ -89,7 +107,15 @@ class TokenServer {
         }
 
         const result = await this.connection.sendRequest(GRAMMAR_REQUEST_RAW_REQUEST, { "scopeName": scopeName });
-        return vsctm.parseRawGrammar(result.rawGrammar);
+
+        if (result.format == "json") {
+            return <IRawGrammar>JSON.parse(result.rawGrammar);
+        } else if (result.format == "plist") {
+            // parseRawGrammar defaults to PLIST when no filename is given.
+            return vsctm.parseRawGrammar(result.rawGrammar);
+        } else {
+            return null;
+        }
     }
 
     async textDocumentTokenize(params: TextDocumentTokenizeParams): Promise<TextDocumentTokenizeResult> {
@@ -99,7 +125,7 @@ class TokenServer {
 
         const state: TokenizationState = {
             indexMap: {},
-            currentLine: 0
+            firstLine: true
         }
 
         const grammar = await this.registry.loadGrammar(params.scopeName);
@@ -109,24 +135,21 @@ class TokenServer {
 
         let currentOffset = 0;
         let text = params.text;
-        let ruleStack: vsctm.StateStack | null = null;
+        let ruleStack = vsctm.INITIAL;
         let result: TextDocumentTokenizeResult = {
             scopes: [],
             tokens: []
         };
 
         while (currentOffset < text.length) {
-            let lineEnd = text.indexOf("\n", currentOffset);
-            if (lineEnd < 0) {
-                lineEnd = text.length;
-            }
-            const line = text.substring(currentOffset, lineEnd + 1);
+            const [lineBreakIndex, lineBreakString] = findLineBreak(text, currentOffset);
+            const line = text.substring(currentOffset, lineBreakIndex);
             const tokenizeLineResult = grammar.tokenizeLine(line, ruleStack);
 
             updateTokenizeResult(result, tokenizeLineResult.tokens, state);
 
             ruleStack = tokenizeLineResult.ruleStack;
-            currentOffset = lineEnd + 1;
+            currentOffset = lineBreakIndex + lineBreakString.length;
         }
 
         return result;

@@ -3,15 +3,17 @@ import plistlib
 from abc import ABC, abstractmethod
 from http.client import HTTPResponse
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 from urllib.request import Request, urlopen
 
+GrammarFormat = Literal["json", "plist"]
 
-def _extract_scope_name(raw: str, is_json: bool) -> str:
-    if is_json:
+
+def _extract_scope_name(raw: str, format: GrammarFormat) -> str:
+    if format == "json":
         grammar = json.loads(raw)
         return grammar["scopeName"]
-    else:
+    elif format == "plist":
         grammar = plistlib.loads(raw.encode())
         return grammar["scopeName"]
 
@@ -39,16 +41,18 @@ class Grammar(ABC):
     @staticmethod
     def load_from_url(url: str) -> "_UserGrammar":
         content = _fetch_text_from_url(url)
-        scope_name = _extract_scope_name(content, url.endswith(".json"))
-        return _UserGrammar(scope_name, content)
+        format = "json" if url.endswith(".json") else "plist"
+        scope_name = _extract_scope_name(content, format)
+        return _UserGrammar(scope_name, content, format)
 
     @staticmethod
     def load_from_file(path: Path) -> "_UserGrammar":
         with path.open() as file:
             content = file.read()
 
-        scope_name = _extract_scope_name(content, path.suffix == ".json")
-        return _UserGrammar(scope_name, content)
+        format = "json" if path.suffix == ".json" else "plist"
+        scope_name = _extract_scope_name(content, format)
+        return _UserGrammar(scope_name, content, format)
 
     def get_scope_name(self) -> str:
         """
@@ -63,16 +67,28 @@ class Grammar(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_format(self) -> GrammarFormat:
+        """
+        Returns the format of the Grammar's raw content, e.g. "json" or "plist".
+        """
+        pass
+
 
 class _UserGrammar(Grammar):
     _content: str
+    _format: GrammarFormat
 
-    def __init__(self, scope_name: str, content: str) -> None:
+    def __init__(self, scope_name: str, content: str, format: GrammarFormat) -> None:
         super().__init__(scope_name)
         self._content = content
+        self._format = format
 
     def get_content(self) -> str:
         return self._content
+
+    def get_format(self) -> GrammarFormat:
+        return self._format
 
 
 class BuiltInGrammar(Grammar):
@@ -88,3 +104,9 @@ class BuiltInGrammar(Grammar):
             self._content = _fetch_text_from_url(self._url)
 
         return self._content
+
+    def get_format(self) -> GrammarFormat:
+        if self._url.endswith(".json"):
+            return "json"
+        else:
+            return "plist"

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 import lspscript.languages as languages
-from lspscript.tokens import Grammar
+from lspscript.tokens import Grammar, GrammarFormat
 from lspscript.types.enumerations import FileOperationPatternKind
 from lspscript.types.structures import (FileOperationFilter,
                                         FileOperationPattern,
@@ -82,6 +82,9 @@ class MockGrammar(Grammar):
 
     def get_content(self) -> str:
         return self.content
+
+    def get_format(self) -> GrammarFormat:
+        return super().get_format()
 
 
 def test_install_language_success() -> None:

@@ -7,9 +7,8 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "build": "tsc --build && webpack --mode=development",
-    "release": "tsc && webpack --mode=production",
-    "test": "tsc --build && mocha ./out/test/main.js"
+    "build": "webpack --mode=development",
+    "release": "webpack --mode=production"
   },
   "author": "Delphy",
   "license": "MIT",

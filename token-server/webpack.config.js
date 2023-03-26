@@ -3,7 +3,7 @@ const path = require("path");
 module.exports = {
     target: "node",
     entry: {
-        main: "./out/src/main.js",
+        main: "./src/main.ts",
     },
     devtool: "inline-source-map",
     module: {
@@ -11,8 +11,15 @@ module.exports = {
             {
                 "test": /\.wasm/,
                 "use": "file-loader"
+            },
+            {
+                "test": /\.ts/,
+                "use": "ts-loader"
             }
         ]
+    },
+    resolve: {
+        extensions: [".ts", ".js"]
     },
     output: {
         filename: "[name].js",

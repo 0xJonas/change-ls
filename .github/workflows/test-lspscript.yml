@@ -22,17 +22,25 @@ jobs:
     - name: Setup Node.js/npm
       uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 14
         cache: npm
         cache-dependency-path: "**/package-lock.json"
 
-    - name: Install npm Dependencies
+    - name: Install mock-server Dependencies
       run: npm ci
       working-directory: mock-server
 
     - name: Build mock-server
       run: npm run build
       working-directory: mock-server
+
+    - name: Install token-server Dependencies
+      run: npm ci
+      working-directory: token-server
+
+    - name: Build token-server
+      run: npm run build
+      working-directory: token-server
 
     - name: Setup Python ${{ inputs.python-version }}
       uses: actions/setup-python@v4

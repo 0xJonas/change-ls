@@ -39,7 +39,7 @@ enum GrammarFormat {
     PLIST = "plist"
 }
 
-export interface GrammarRequestRawResult {
+export interface _GrammarRequestRawResult {
 
     /**
      * The raw grammar in a format compatible with vscode-textmate.
@@ -51,3 +51,5 @@ export interface GrammarRequestRawResult {
      */
     format: GrammarFormat;
 }
+
+export type GrammarRequestRawResult = _GrammarRequestRawResult | null

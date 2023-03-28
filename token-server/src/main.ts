@@ -108,6 +108,11 @@ class TokenServer {
 
         const result = await this.connection.sendRequest(GRAMMAR_REQUEST_RAW_REQUEST, { "scopeName": scopeName });
 
+        if (!result) {
+            // Grammar was not found
+            return null;
+        }
+
         if (result.format == "json") {
             return <IRawGrammar>JSON.parse(result.rawGrammar);
         } else if (result.format == "plist") {
@@ -160,7 +165,8 @@ class TokenServer {
     }
 
     listen(): void {
-        this.connection.listen()
+        this.connection.onError(e => console.error(e));
+        this.connection.listen();
     }
 }
 

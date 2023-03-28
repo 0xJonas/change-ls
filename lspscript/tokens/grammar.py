@@ -98,6 +98,7 @@ class BuiltInGrammar(Grammar):
     def __init__(self, scope_name: str, url: str) -> None:
         super().__init__(scope_name)
         self._url = url
+        self._content = None
 
     def get_content(self) -> str:
         if self._content is None:

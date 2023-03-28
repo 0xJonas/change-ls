@@ -9,9 +9,8 @@ from pathlib import Path
 from typing import List, Mapping, Optional, Tuple
 
 import lspscript.languages as languages
-from lspscript.protocol import LSPException, LSSubprocessProtocol
+from lspscript.protocol import LSSubprocessProtocol
 from lspscript.tokens.token_list import Token, TokenList
-from lspscript.types.enumerations import LSPErrorCodes
 from lspscript.types.util import (JSON_VALUE, json_assert_type_array,
                                   json_assert_type_int,
                                   json_assert_type_object,
@@ -103,8 +102,17 @@ class _TokenClient:
 
     async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         future: Future[JSON_VALUE] = get_running_loop().create_future()
+        self._logger.info("Sending request (%s)", method)
         self._protocol.send_request(method, params, future)
-        return await future
+
+        await future
+
+        assert not future.cancelled()
+        if exception := future.exception():
+            self._logger.info("Request failed (%s)", method)
+            raise exception
+        else:
+            return future.result()
 
     async def initialize(self) -> None:
         await self.send_request("initialize", None)
@@ -122,13 +130,17 @@ class _TokenClient:
 
     def grammar_request_raw(self, params: JSON_VALUE) -> JSON_VALUE:
         scope_name = json_get_string(json_assert_type_object(params), "scopeName")
+        self._logger.info("Token Server requested grammar %s", scope_name)
+
         if grammar := languages.scope_to_grammar.get(scope_name):
             return {
                 "rawGrammar": grammar.get_content(),
                 "format": grammar.get_format()
             }
         else:
-            raise LSPException(LSPErrorCodes.RequestFailed.value, f"Grammar {scope_name} not found", scope_name)
+            self._logger.warning("Grammar %s not found", scope_name)
+            # raise LSPException(LSPErrorCodes.RequestFailed.value, f"Grammar {scope_name} not found", scope_name)
+            return None
 
     async def send_text_document_tokenize_request(self, params: TextDocumentTokenizeParams) -> TextDocumentTokenizeResult:
         res_json = await self.send_request("textDocument/tokenize", params.to_json())

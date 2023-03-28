@@ -1,33 +1,38 @@
-import asyncio
-from typing import Any, Coroutine, List
+from http.client import HTTPResponse
+from urllib.request import Request, urlopen
 
-import aiohttp
 import pytest
 
 import lspscript.languages as languages
-from lspscript.tokens.grammar import BuiltInGrammar
+import lspscript.tokens as tokens
 
 
-@pytest.fixture
-async def client_session():
-    async with aiohttp.ClientSession() as client:
-        yield client
-        await asyncio.sleep(0.3)
+def check_url(url: str) -> bool:
+    request = Request(url, method="HEAD")
+    with urlopen(request) as response:
+        if not isinstance(response, HTTPResponse):
+            raise ValueError("Expected HTTP/HTTPS URL")
+        return response.status >= 200 and response.status <= 299
 
 
-async def check_url(client_session: aiohttp.ClientSession, url: str) -> None:
-    async with client_session.get(url) as response:
-        assert response.status == 200
-
-
-async def test_grammar_uris_are_accessible(client_session: aiohttp.ClientSession) -> None:
-    requests: List[Coroutine[Any, Any, None]] = []
+@pytest.mark.uses_external_resources
+@pytest.mark.slow
+def test_grammar_uris_are_accessible() -> None:
     for grammar in languages.scope_to_grammar.values():
-        if isinstance(grammar, BuiltInGrammar):
+        if isinstance(grammar, tokens.grammar.BuiltInGrammar):
             # Reach into the object for the URL so we can send the requests asynchronously.
             # grammar.get_content() would be synchronous.
-            requests.append(check_url(client_session, grammar._url))  # type: ignore
+            assert check_url(grammar._url)  # type: ignore
 
-    asyncio.gather(*requests)
 
-# TODO: grammar completeness
+@pytest.mark.uses_external_resources
+@pytest.mark.slow
+async def test_grammar_completeness() -> None:
+    """
+    Run with `pytest --log-cli-level=INFO ./test/test_languages.py::test_grammar_completeness`.
+
+    This test should always pass, its purpose is to see which grammars are loaded for each language id.
+    Grammars which are not found will log a warning.
+    """
+    for language_id in languages.language_id_to_scope.keys():
+        await tokens.tokenize("\n", language_id)

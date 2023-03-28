@@ -54,4 +54,4 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Unit Tests
-      run: python -m pytest test
+      run: python -m pytest -m "not uses_external_resources" test

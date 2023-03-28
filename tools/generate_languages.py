@@ -4,6 +4,7 @@ import plistlib
 from dataclasses import dataclass
 from sys import argv
 from typing import Any, Dict, List, Tuple, Union
+from urllib.parse import quote
 
 from aiohttp import ClientSession
 
@@ -32,7 +33,8 @@ async def generate_permalink_github(client: ClientSession, location: GitHubLocat
     async with client.get(f"/repos/{location.owner}/{location.repo}/git/ref/{location.ref}") as response:
         res = await response.json()
     commit_sha = res['object']['sha']
-    return f"https://raw.githubusercontent.com/{location.owner}/{location.repo}/{commit_sha}/{location.path}"
+    path = quote(f"{location.owner}/{location.repo}/{commit_sha}/{location.path}")
+    return f"https://raw.githubusercontent.com/{path}"
 
 
 async def get_grammar_scope(client: ClientSession, url: str) -> str:
@@ -167,7 +169,7 @@ async def main() -> None:
     with open(argv[1], "w") as file:
         file.write(out_str)
 
-    await asyncio.sleep(0.3)
+    await asyncio.sleep(0.5)
 
 
 if __name__ == "__main__":

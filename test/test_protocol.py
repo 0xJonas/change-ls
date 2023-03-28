@@ -126,3 +126,17 @@ async def test_send_invalid_param_type() -> None:
 
     with raises(LSPException):
         await future
+
+
+async def test_send_request_non_ascii() -> None:
+    client = MockLSProtocol(_empty_request_handler, _empty_notification_handler)
+    server = MockLSProtocol(lambda m, _: "🙂" if m == "test" else "🙁", _empty_notification_handler)
+
+    future = get_running_loop().create_future()
+    client.send_request("test", None, future)
+
+    server.push_input(client.pull_output())
+    client.push_input(server.pull_output())
+
+    res = await future
+    assert res == "🙂"

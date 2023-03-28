@@ -89,9 +89,9 @@ class _LSPHeader:
 
 
 def _json_to_packet(data: JSON_VALUE) -> bytes:
-    content = dumps(data, ensure_ascii=False)
+    content = dumps(data, ensure_ascii=False).encode(encoding="utf-8")
     header = _LSPHeader(len(content))
-    return header.to_bytes() + content.encode(encoding="utf-8")
+    return header.to_bytes() + content
 
 
 _RequestHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], JSON_VALUE]
@@ -378,7 +378,7 @@ class LSStreamingProtocol(Protocol, LSProtocol):
         self._transport.write(data)
         logger = self._logger.getChild("data")
         if logger.getEffectiveLevel() <= DEBUG:
-            logger.debug("Sent %s", str(data, encoding="utf-8"))
+            logger.debug("Sent:\n%s", str(data, encoding="utf-8"))
 
 
 class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):

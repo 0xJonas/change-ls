@@ -363,19 +363,19 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         # This method is used when partial results are requested.
         pass
 
-    async def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
+    def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
         assert self._protocol
         self._logger.info("Sending notification (%s)", method)
         self._protocol.send_notification(method, params)
 
-    async def send_notification(self, method: str, params: JSON_VALUE) -> None:
+    def send_notification(self, method: str, params: JSON_VALUE) -> None:
         """
         Sends a notification to the server. The method and contents of the notification are arbitrary
         and need not be defined in the LSP.
         """
         if self._state != "running":
             raise LSPClientException("Invalid state, expected 'running'.")
-        await self._send_notification_internal(method, params)
+        self._send_notification_internal(method, params)
 
     async def send_initialize(self, params: Optional[InitializeParams] = None, **kwargs: Any) -> InitializeResult:
         if self._state != "uninitialized":
@@ -400,7 +400,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         if self._state != "initializing":
             raise LSPClientException("Invalid state, expected 'initializing'.")
 
-        await self._send_notification_internal("initialized", params.to_json())
+        self._send_notification_internal("initialized", params.to_json())
         self._state = "running"
         self._logger.info("Client is now running")
 
@@ -413,7 +413,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         if self._state != "shutdown":
             raise LSPClientException("Invalid state, expected 'shutdown'.")
 
-        await self._send_notification_internal("exit", None)
+        self._send_notification_internal("exit", None)
 
         try:
             assert self._protocol

@@ -73,26 +73,26 @@ def _generate_send_notification_method(gen: Generator, notification: Notificatio
     assert not isinstance(notification.params, Tuple)  # TODO implement
     if notification.params is None:
         template = dedent_ignore_empty('''\
-            async def {name}(self) -> None:
+            def {name}(self) -> None:
                 """
             {documentation}
 
                 *Generated from the TypeScript documentation*
                 """
-                await self.send_notification("{method}", None)''')
+                self.send_notification("{method}", None)''')
     else:
         param_type = gen.generate_type_annotation(notification.params)
         param_write_expression = gen.generate_write_expression(notification.params, "params")
 
         template = dedent_ignore_empty('''\
-            async def {name}(self, params: {param_type}) -> None:
+            def {name}(self, params: {param_type}) -> None:
                 """
             {documentation}
 
                 *Generated from the TypeScript documentation*
                 """
                 params_json = {param_write_expression}
-                await self.send_notification("{method}", params_json)''')
+                self.send_notification("{method}", params_json)''')
 
     return template.format(
         name="send_" + notification.method.translate(_message_translation_table),
@@ -119,7 +119,7 @@ def generate_client_requests_mixin(gen: Generator) -> str:
                 pass
 
             @abstractmethod
-            async def send_notification(self, method: str, params: JSON_VALUE) -> None:
+            def send_notification(self, method: str, params: JSON_VALUE) -> None:
                 pass
 
         {request_methods}

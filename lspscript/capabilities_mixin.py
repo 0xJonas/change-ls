@@ -224,7 +224,7 @@ class CapabilitiesMixin:
         given feature request.
 
         - `method` is the *registration* method for the feature (might be different from the request/notification method).
-        - Some methods provide a more granular control over the feature. `params` can be used to specify exactly which realization of a feature is requested.
+        - Some methods provide a more granular control over the feature. `kwargs` can be used to specify exactly which realization of a feature is requested.
         """
 
         registrations = self._registrations.get(method)

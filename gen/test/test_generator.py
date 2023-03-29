@@ -885,7 +885,7 @@ class TestClient(ClientRequestsMixin, ServerRequestsMixin):
     async def send_request(self, method, params):
         return "send_request " + params
 
-    async def send_notification(self, method, params):
+    def send_notification(self, method, params):
         self.sentinel = "send_notification " + params
 
     def on_test_server_request(self, params: str) -> str:
@@ -912,9 +912,9 @@ class TestClient(ClientRequestsMixin, ServerRequestsMixin):
     res2 = await test_client.send_test_bidirectional_request("Hello2")
     assert res2 == "send_request Hello2"
 
-    await test_client.send_test_client_notification("Hello1")
+    test_client.send_test_client_notification("Hello1")
     assert test_client.sentinel == "send_notification Hello1"
-    await test_client.send_test_bidirectional_notification("Hello2")
+    test_client.send_test_bidirectional_notification("Hello2")
     assert test_client.sentinel == "send_notification Hello2"
 
     response = test_client.dispatch_request("test/serverRequest", "Bye1")

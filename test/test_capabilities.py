@@ -35,7 +35,7 @@ async def test_server_capabilities() -> None:
 async def run_dynamic_registration(client: Client, method: str, **kwargs: Any) -> None:
     async def schedule_registration() -> None:
         await sleep(0.2)
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
 
     assert not client.check_feature(method, **kwargs)
     # Run the delayed trigger for the registration and require_feature at the same time,

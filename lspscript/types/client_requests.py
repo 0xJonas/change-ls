@@ -13,7 +13,7 @@ class ClientRequestsMixin(ABC):
         pass
 
     @abstractmethod
-    async def send_notification(self, method: str, params: JSON_VALUE) -> None:
+    def send_notification(self, method: str, params: JSON_VALUE) -> None:
         pass
 
     async def send_text_document_implementation(self, params: "ImplementationParams", **kwargs: Any) -> Union["Definition", List["DefinitionLink"], None]:
@@ -644,7 +644,7 @@ class ClientRequestsMixin(ABC):
         result_json = await self.send_request("workspace/executeCommand", params_json, **kwargs)
         return parse_or_type((result_json), (lambda v: parse_LSPAny((v)), lambda v: json_assert_type_null(v)))
 
-    async def send_workspace_did_change_workspace_folders(self, params: "DidChangeWorkspaceFoldersParams") -> None:
+    def send_workspace_did_change_workspace_folders(self, params: "DidChangeWorkspaceFoldersParams") -> None:
         """
         The `workspace/didChangeWorkspaceFolders` notification is sent from the client to the server when the workspace
         folder configuration changes.
@@ -652,9 +652,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("workspace/didChangeWorkspaceFolders", params_json)
+        self.send_notification("workspace/didChangeWorkspaceFolders", params_json)
     
-    async def send_window_work_done_progress_cancel(self, params: "WorkDoneProgressCancelParams") -> None:
+    def send_window_work_done_progress_cancel(self, params: "WorkDoneProgressCancelParams") -> None:
         """
         The `window/workDoneProgress/cancel` notification is sent from  the client to the server to cancel a progress
         initiated on the server side.
@@ -662,9 +662,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("window/workDoneProgress/cancel", params_json)
+        self.send_notification("window/workDoneProgress/cancel", params_json)
     
-    async def send_workspace_did_create_files(self, params: "CreateFilesParams") -> None:
+    def send_workspace_did_create_files(self, params: "CreateFilesParams") -> None:
         """
         The did create files notification is sent from the client to the server when
         files were created from within the client.
@@ -674,9 +674,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("workspace/didCreateFiles", params_json)
+        self.send_notification("workspace/didCreateFiles", params_json)
     
-    async def send_workspace_did_rename_files(self, params: "RenameFilesParams") -> None:
+    def send_workspace_did_rename_files(self, params: "RenameFilesParams") -> None:
         """
         The did rename files notification is sent from the client to the server when
         files were renamed from within the client.
@@ -686,9 +686,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("workspace/didRenameFiles", params_json)
+        self.send_notification("workspace/didRenameFiles", params_json)
     
-    async def send_workspace_did_delete_files(self, params: "DeleteFilesParams") -> None:
+    def send_workspace_did_delete_files(self, params: "DeleteFilesParams") -> None:
         """
         The will delete files request is sent from the client to the server before files are actually
         deleted as long as the deletion is triggered from within the client.
@@ -698,9 +698,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("workspace/didDeleteFiles", params_json)
+        self.send_notification("workspace/didDeleteFiles", params_json)
     
-    async def send_notebook_document_did_open(self, params: "DidOpenNotebookDocumentParams") -> None:
+    def send_notebook_document_did_open(self, params: "DidOpenNotebookDocumentParams") -> None:
         """
         A notification sent when a notebook opens.
         
@@ -709,18 +709,18 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("notebookDocument/didOpen", params_json)
+        self.send_notification("notebookDocument/didOpen", params_json)
     
-    async def send_notebook_document_did_change(self, params: "DidChangeNotebookDocumentParams") -> None:
+    def send_notebook_document_did_change(self, params: "DidChangeNotebookDocumentParams") -> None:
         """
     
     
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("notebookDocument/didChange", params_json)
+        self.send_notification("notebookDocument/didChange", params_json)
     
-    async def send_notebook_document_did_save(self, params: "DidSaveNotebookDocumentParams") -> None:
+    def send_notebook_document_did_save(self, params: "DidSaveNotebookDocumentParams") -> None:
         """
         A notification sent when a notebook document is saved.
         
@@ -729,9 +729,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("notebookDocument/didSave", params_json)
+        self.send_notification("notebookDocument/didSave", params_json)
     
-    async def send_notebook_document_did_close(self, params: "DidCloseNotebookDocumentParams") -> None:
+    def send_notebook_document_did_close(self, params: "DidCloseNotebookDocumentParams") -> None:
         """
         A notification sent when a notebook closes.
         
@@ -740,9 +740,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("notebookDocument/didClose", params_json)
+        self.send_notification("notebookDocument/didClose", params_json)
     
-    async def send_initialized(self, params: "InitializedParams") -> None:
+    def send_initialized(self, params: "InitializedParams") -> None:
         """
         The initialized notification is sent from the client to the
         server after the client is fully initialized and the server
@@ -751,18 +751,18 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("initialized", params_json)
+        self.send_notification("initialized", params_json)
     
-    async def send_exit(self) -> None:
+    def send_exit(self) -> None:
         """
         The exit event is sent from the client to the server to
         ask the server to exit its process.
     
         *Generated from the TypeScript documentation*
         """
-        await self.send_notification("exit", None)
+        self.send_notification("exit", None)
     
-    async def send_workspace_did_change_configuration(self, params: "DidChangeConfigurationParams") -> None:
+    def send_workspace_did_change_configuration(self, params: "DidChangeConfigurationParams") -> None:
         """
         The configuration change notification is sent from the client to the server
         when the client's configuration has changed. The notification contains
@@ -771,9 +771,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("workspace/didChangeConfiguration", params_json)
+        self.send_notification("workspace/didChangeConfiguration", params_json)
     
-    async def send_text_document_did_open(self, params: "DidOpenTextDocumentParams") -> None:
+    def send_text_document_did_open(self, params: "DidOpenTextDocumentParams") -> None:
         """
         The document open notification is sent from the client to the server to signal
         newly opened text documents. The document's truth is now managed by the client
@@ -787,9 +787,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("textDocument/didOpen", params_json)
+        self.send_notification("textDocument/didOpen", params_json)
     
-    async def send_text_document_did_change(self, params: "DidChangeTextDocumentParams") -> None:
+    def send_text_document_did_change(self, params: "DidChangeTextDocumentParams") -> None:
         """
         The document change notification is sent from the client to the server to signal
         changes to a text document.
@@ -797,9 +797,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("textDocument/didChange", params_json)
+        self.send_notification("textDocument/didChange", params_json)
     
-    async def send_text_document_did_close(self, params: "DidCloseTextDocumentParams") -> None:
+    def send_text_document_did_close(self, params: "DidCloseTextDocumentParams") -> None:
         """
         The document close notification is sent from the client to the server when
         the document got closed in the client. The document's truth now exists where
@@ -812,9 +812,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("textDocument/didClose", params_json)
+        self.send_notification("textDocument/didClose", params_json)
     
-    async def send_text_document_did_save(self, params: "DidSaveTextDocumentParams") -> None:
+    def send_text_document_did_save(self, params: "DidSaveTextDocumentParams") -> None:
         """
         The document save notification is sent from the client to the server when
         the document got saved in the client.
@@ -822,9 +822,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("textDocument/didSave", params_json)
+        self.send_notification("textDocument/didSave", params_json)
     
-    async def send_text_document_will_save(self, params: "WillSaveTextDocumentParams") -> None:
+    def send_text_document_will_save(self, params: "WillSaveTextDocumentParams") -> None:
         """
         A document will save notification is sent from the client to the server before
         the document is actually saved.
@@ -832,9 +832,9 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("textDocument/willSave", params_json)
+        self.send_notification("textDocument/willSave", params_json)
     
-    async def send_workspace_did_change_watched_files(self, params: "DidChangeWatchedFilesParams") -> None:
+    def send_workspace_did_change_watched_files(self, params: "DidChangeWatchedFilesParams") -> None:
         """
         The watched files notification is sent from the client to the server when
         the client detects changes to file watched by the language client.
@@ -842,34 +842,34 @@ class ClientRequestsMixin(ABC):
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("workspace/didChangeWatchedFiles", params_json)
+        self.send_notification("workspace/didChangeWatchedFiles", params_json)
     
-    async def send_s_set_trace(self, params: "SetTraceParams") -> None:
+    def send_s_set_trace(self, params: "SetTraceParams") -> None:
         """
     
     
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("$/setTrace", params_json)
+        self.send_notification("$/setTrace", params_json)
     
-    async def send_s_cancel_request(self, params: "CancelParams") -> None:
+    def send_s_cancel_request(self, params: "CancelParams") -> None:
         """
     
     
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("$/cancelRequest", params_json)
+        self.send_notification("$/cancelRequest", params_json)
     
-    async def send_s_progress(self, params: "ProgressParams") -> None:
+    def send_s_progress(self, params: "ProgressParams") -> None:
         """
     
     
         *Generated from the TypeScript documentation*
         """
         params_json = params.to_json()
-        await self.send_notification("$/progress", params_json)
+        self.send_notification("$/progress", params_json)
 
 
 class ServerRequestsMixin(ABC):

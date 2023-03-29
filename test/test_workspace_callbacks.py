@@ -96,29 +96,29 @@ async def test_workspace_callbacks() -> None:
         handler = MockWorkspaceRequestHandler()
         client.set_workspace_request_handler(handler)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_workspace_folders_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_configuration_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_semantic_tokens_refresh_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_inline_value_refresh_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_inlay_hint_refresh_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_diagnostic_refresh_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_code_lens_refresh_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_apply_edit_event.wait(), 2.0)
 
-        await client.send_notification("$/go", None)
+        client.send_notification("$/go", None)
         await wait_for(handler.on_publish_diagnostics_event.wait(), 2.0)

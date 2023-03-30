@@ -1,0 +1,14 @@
+{
+    "name": "Workspace 1, close test-1.py",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-1.py"
+                }
+            }
+        }
+    ]
+}

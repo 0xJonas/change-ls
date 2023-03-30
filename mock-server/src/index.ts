@@ -36,7 +36,17 @@ const connection = createConnection()
 
 function loadTest(path: string): TestSetup {
     const dataRaw = readFileSync(path, { "encoding": "utf-8" })
-    const data = JSON.parse(dataRaw)
+    const data = JSON.parse(dataRaw);
+
+    for (let i = data["sequence"].length - 1; i >= 0; i--) {
+        const element = data["sequence"][i];
+        if (!("includeSequence" in element)) {
+            continue;
+        }
+
+        const includedSetup = loadTest(element["includeSequence"]);
+        data["sequence"].splice(i, 1, ...includedSetup["sequence"]);
+    }
     return data;
 }
 
@@ -52,7 +62,14 @@ connection.onInitialize((params: InitializeParams) => {
     } else {
         return {
             capabilities: {
+                textDocumentSync: {
+                    openClose: true,
+                    change: 1
+                }
                 // TODO: fill accordingly as more tests are added
+            },
+            serverInfo: {
+                name: "LSPScript mock-server"
             }
         };
     }

@@ -8,10 +8,11 @@ from lspscript.tokens import TokenList
 from lspscript.types import (DidCloseTextDocumentParams,
                              OptionalVersionedTextDocumentIdentifier,
                              TextDocumentItem, VersionedTextDocumentIdentifier)
+from lspscript.types.structures import TextDocumentIdentifier
 from lspscript.util import TextDocumentInfo, guess_language_id
 
 
-class TextDocument(TextDocumentInfo, VersionedTextDocumentIdentifier, OptionalVersionedTextDocumentIdentifier, TextDocumentItem):
+class TextDocument(TextDocumentInfo, TextDocumentItem):
     _path: Path
     _encoding: str
     _clients: Dict[str, Client]
@@ -35,8 +36,6 @@ class TextDocument(TextDocumentInfo, VersionedTextDocumentIdentifier, OptionalVe
 
         uri = path.as_uri()
         TextDocumentInfo.__init__(self, uri, language_id)
-        VersionedTextDocumentIdentifier.__init__(self, uri=uri, version=version)
-        OptionalVersionedTextDocumentIdentifier.__init__(self, uri=uri, version=version)
         TextDocumentItem.__init__(self, uri=uri, languageId=language_id, version=version, text=text)
 
     def close(self, client_names: Optional[List[str]] = None) -> None:
@@ -44,7 +43,7 @@ class TextDocument(TextDocumentInfo, VersionedTextDocumentIdentifier, OptionalVe
             client_names = list(self._clients.keys())
 
         for name in client_names:
-            params = DidCloseTextDocumentParams(textDocument=self)
+            params = DidCloseTextDocumentParams(textDocument=self.get_text_document_identifier())
             self._clients[name].send_text_document_did_close(params)
             del self._clients[name]
 
@@ -76,6 +75,14 @@ class TextDocument(TextDocumentInfo, VersionedTextDocumentIdentifier, OptionalVe
             raise AttributeError("Tokens are not loaded for this TextDocument")
         return self._tokens
 
+    def get_text_document_identifier(self) -> TextDocumentIdentifier:
+        return TextDocumentIdentifier(uri=self.uri)
+
+    def get_versioned_text_document_identifier(self) -> VersionedTextDocumentIdentifier:
+        return VersionedTextDocumentIdentifier(uri=self.uri, version=self.version)
+
+    def get_optional_versioned_text_document_identifier(self) -> OptionalVersionedTextDocumentIdentifier:
+        return OptionalVersionedTextDocumentIdentifier(uri=self.uri, version=self.version)
         #
         # text_document.close()
         # text_document.__aexit()__

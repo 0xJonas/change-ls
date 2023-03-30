@@ -1,0 +1,17 @@
+{
+    "name": "Workspace 1, open test-1.py",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-1.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "print(\"Hello, World!\")\n"
+                }
+            }
+        }
+    ]
+}

@@ -11,7 +11,6 @@ from types import TracebackType
 from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
                     Sequence, Set, Tuple, Type, Union)
 
-from lspscript import LSPSCRIPT_VERSION
 from lspscript.capabilities_mixin import CapabilitiesMixin
 from lspscript.protocol import (LSPClientException, LSProtocol,
                                 LSStreamingProtocol, LSSubprocessProtocol)
@@ -33,6 +32,9 @@ from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         WorkDoneProgressCreateParams,
                                         WorkspaceFolder)
 from lspscript.types.util import JSON_VALUE
+
+LSPSCRIPT_VERSION = "0.1.0"
+
 
 # Global list of client names, currently only used for logging purposes.
 _client_names: Set[str] = set()
@@ -265,6 +267,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     _state: ClientState
     _protocol: Optional[LSProtocol]
     _launch_params: _ServerLaunchParams
+    _name: str
     _logger: Logger
 
     # Whether or not an 'exit' notification was sent. This is used
@@ -285,6 +288,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
         if name is None:
             name = _generate_client_name(launch_params)
+        self._name = name
         _client_names.add(name)
         self._logger = getLogger("lspscript.client." + name)
 
@@ -317,6 +321,9 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
                         enter the `"disconnected"` state.
         """
         return self._state
+
+    def get_name(self) -> str:
+        return self._name
 
     async def launch(self) -> None:
         """

@@ -5,6 +5,7 @@ from typing import Any
 from pytest import mark
 
 from lspscript.client import Client, StdIOConnectionParams
+from lspscript.util import TextDocumentInfo
 
 
 async def test_server_capabilities() -> None:
@@ -20,10 +21,10 @@ async def test_server_capabilities() -> None:
                                         file_operations=[repo_uri + "/test/test_capabilities.json"])
 
         assert client.check_feature("textDocument/semanticTokens",
-                                    text_documents=[repo_uri + "/test/test_capabilities.py"])
+                                    text_documents=[TextDocumentInfo(repo_uri + "/test/test_capabilities.py", None)])
         assert not client.check_feature("textDocument/semanticTokens",
-                                        text_documents=[repo_uri + "/test/test_capabilities.py",
-                                                        repo_uri + "test_server_capabilities.json"])
+                                        text_documents=[TextDocumentInfo(repo_uri + "/test/test_capabilities.py", None),
+                                                        TextDocumentInfo(repo_uri + "test_server_capabilities.json", None)])
         assert client.check_feature("textDocument/semanticTokens", semantic_tokens=["full"])
 
         assert client.check_feature("textDocument/documentColor")
@@ -55,6 +56,6 @@ async def test_dynamic_registration() -> None:
                                        file_operations=[repo_uri + "/test/test_capabilities.py",
                                                         repo_uri + "/TEST/test_capabilities.py"])
         await run_dynamic_registration(client, "textDocument/semanticTokens",
-                                       text_documents=[repo_uri + "/test/test_capabilities.py"],
+                                       text_documents=[TextDocumentInfo(repo_uri + "/test/test_capabilities.py", None)],
                                        semantic_tokens=["full"])
         await run_dynamic_registration(client, "textDocument/documentColor")

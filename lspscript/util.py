@@ -78,7 +78,7 @@ def _expand_lsp_glob(lsp_glob: str) -> Generator[str, None, None]:
     return _expand_lsp_glob_rec(lsp_glob, selections, 0, 0)
 
 
-def _guess_language_id(path: Path) -> Optional[str]:
+def guess_language_id(path: Path) -> Optional[str]:
     name = path.name
 
     # Check full filename
@@ -93,21 +93,26 @@ def _guess_language_id(path: Path) -> Optional[str]:
     return None
 
 
-def matches_text_document_filter(uri: str, filter: TextDocumentFilter, language_id: Optional[str] = None) -> bool:
+@dataclass
+class TextDocumentInfo:
+    uri: str
+    language_id: Optional[str]
+
+
+def matches_text_document_filter(info: TextDocumentInfo, filter: TextDocumentFilter) -> bool:
     """
     Checks whether the given `uri` matches the `TextDocumentFilter`.
 
     If `language_id` is not given, it is guessed from the file extension.
     """
 
-    (scheme, _, path_raw, _, _) = urlsplit(uri, scheme="file")
+    (scheme, _, path_raw, _, _) = urlsplit(info.uri, scheme="file")
 
     if "scheme" in filter and filter["scheme"] != scheme:
         return False
 
     if filter_language_id := filter.get("language"):
-        if not language_id:
-            language_id = _guess_language_id(Path(path_raw))
+        language_id = guess_language_id(Path(path_raw)) if not info.language_id else info.language_id
         if not language_id or language_id != filter_language_id:
             return False
 

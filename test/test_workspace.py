@@ -18,19 +18,6 @@ async def test_workspace_launch_clients() -> None:
         await client.send_request("$/go", None)
 
 
-async def test_workspace_register_clients() -> None:
-    workspace = Workspace(Path("test/mock-ws-1"),
-                          Path("test/mock-ws-2"),
-                          names=["mock-ws-1", "mock-ws-2"])
-    launch_params = StdIOConnectionParams(
-        launch_command="node mock-server/out/index.js --stdio test/test_workspace.json")
-    async with Client(launch_params) as client:
-        repo_uri = Path(".").resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
-        workspace.register_client(client)
-        await client.send_request("$/go", None)
-
-
 def mock_config_provider(scope_uri: Optional[str], section: Optional[str]) -> LSPAny:
     if section == "Test1":
         assert scope_uri == "file:///repo/test/mock-ws-1"

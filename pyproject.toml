@@ -20,7 +20,7 @@ include = ["lspscript*"]
 "lspscript.token_server" = ["*.js", "*.wasm"]
 
 [tool.setuptools.dynamic]
-version = { attr = "lspscript.LSPSCRIPT_VERSION" }
+version = { attr = "lspscript.client.LSPSCRIPT_VERSION" }
 
 [tool.pytest.ini_options]
 testpaths = [

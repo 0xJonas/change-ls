@@ -1,6 +1,6 @@
 from asyncio import Event, wait_for
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional
 
 from lspscript.types.enumerations import TextDocumentSyncKind
 from lspscript.types.structures import (CodeActionOptions, CodeLensOptions,
@@ -15,7 +15,7 @@ from lspscript.types.structures import (CodeActionOptions, CodeLensOptions,
                                         ServerCapabilities,
                                         TextDocumentSyncOptions,
                                         Unregistration, WorkspaceSymbolOptions)
-from lspscript.util import (matches_file_operation_filter,
+from lspscript.util import (TextDocumentInfo, matches_file_operation_filter,
                             matches_text_document_filter)
 
 from .types.capabilities import (FeatureRegistration,
@@ -30,112 +30,87 @@ class _FeatureRequest:
     event: Event
 
 
-_FeatureCheckState = Dict[str, Union[List[bool], bool]]
-
-
-def _create_feature_check_state(params: Dict[str, Any]) -> _FeatureCheckState:
-    out: Dict[str, Union[List[bool], bool]] = {}
-    for k in params.keys():
-        if isinstance(params[k], Sequence):
-            out[k] = [False] * len(params[k])
-        else:
-            out[k] = False
-    return out
-
-
-def _update_feature_check_state(request_params: Dict[str, Any], state: _FeatureCheckState, registration: FeatureRegistration) -> None:
-    if "text_documents" in state and registration.document_selector:
+def _registration_fulfils_feature_request(request_params: Dict[str, Any], registration: FeatureRegistration) -> bool:
+    if "text_documents" in request_params and registration.document_selector:
         # TODO does this really need a special member in FeatureRegistration?
 
-        assert isinstance(state["text_documents"], List)
+        text_documents: List[TextDocumentInfo] = request_params["text_documents"]
 
-        for i, t in enumerate(request_params["text_documents"]):
+        for t in text_documents:
+            document_matched = False
             for filter in registration.document_selector:
                 if isinstance(filter, NotebookCellTextDocumentFilter):
                     continue
 
-                # TODO language_id
                 if matches_text_document_filter(t, filter):
-                    state["text_documents"][i] = True
+                    document_matched = True
                     break
+            if not document_matched:
+                return False
 
-    if "file_operations" in state and isinstance(registration.options, FileOperationRegistrationOptions):
-        assert isinstance(state["file_operations"], List)
+    if "file_operations" in request_params and isinstance(registration.options, FileOperationRegistrationOptions):
+        uris: List[str] = request_params["file_operations"]
 
-        for i, t in enumerate(request_params["file_operations"]):
+        for t in uris:
+            uri_matched = False
             for filter in registration.options.filters:
                 if matches_file_operation_filter(t, filter):
-                    state["file_operations"][i] = True
+                    uri_matched = True
                     break
-
-    if "semantic_tokens" in state and isinstance(registration.options, SemanticTokensOptions):
-        assert isinstance(state["semantic_tokens"], List)
-
-        for i, r in enumerate(request_params["semantic_tokens"]):
-            if r == "full" and registration.options.full:
-                state["semantic_tokens"][i] = True
-            elif r == "full/delta" and isinstance(registration.options.full, Dict) and registration.options.full.get("delta"):
-                state["semantic_tokens"][i] = True
-            elif r == "range" and registration.options.range:
-                state["semantic_tokens"][i] = True
-
-    if "code_actions" in state and isinstance(registration.options, CodeActionOptions):
-        assert isinstance(state["code_actions"], List)
-
-        for i, c in enumerate(request_params["code_actions"]):
-            if c in registration.options.codeActionKinds:
-                state["code_actions"][i] = True
-
-    if "code_action_resolve" in state and isinstance(registration.options, CodeActionOptions):
-        if request_params["code_action_resolve"] and registration.options.resolveProvider:
-            state["code_action_resolve"] = True
-
-    if "workspace_commands" in state and isinstance(registration.options, ExecuteCommandOptions):
-        assert isinstance(state["workspace_commands"], List)
-
-        for i, c in enumerate(request_params["workspace_commands"]):
-            if c in registration.options.commands:
-                state["workspace_commands"][i] = True
-
-    if "completion_item_resolve" in state and isinstance(registration.options, CompletionOptions):
-        if request_params["completion_item_resolve"] and registration.options.resolveProvider:
-            state["completion_item_resolve"] = True
-
-    if "completion_item_label_details" in state and isinstance(registration.options, CompletionOptions):
-        if request_params["completion_item_label_details"] and registration.options.completionItem and registration.options.completionItem.get("labelDetailsSupport"):
-            state["completion_item_label_details"] = True
-
-    if "inlay_hint_resolve" in state and isinstance(registration.options, InlayHintOptions):
-        if request_params["inlay_hint_resolve"] and registration.options.resolveProvider:
-            state["inlay_hint_resolve"] = True
-
-    if "workspace_diagnostic" in state and isinstance(registration.options, DiagnosticOptions):
-        if request_params["workspace_diagnostic"] and registration.options.workspaceDiagnostics:
-            state["workspace_diagnostic"] = True
-
-    if "workspace_symbol_resolve" in state and isinstance(registration.options, WorkspaceSymbolOptions):
-        if request_params["workspace_symbol_resolve"] and registration.options.resolveProvider:
-            state["workspace_symbol_resolve"] = True
-
-    if "code_lens_resolve" in state and isinstance(registration.options, CodeLensOptions):
-        if request_params["code_lens_resolve"] and registration.options.resolveProvider:
-            state["code_lens_resolve"] = True
-
-    if "document_link_resolve" in state and isinstance(registration.options, DocumentLinkOptions):
-        if request_params["document_link_resolve"] and registration.options.resolveProvider:
-            state["document_link_resolve"] = True
-
-
-def _check_feature_check_fulfilled(state: _FeatureCheckState) -> bool:
-    # Note: If a state is empty (i.e. when the FeatureRequest does not contain any
-    # parameters), this is supposed to return True.
-    for k in state.keys():
-        val = state[k]
-        if isinstance(val, List):
-            if not all(val):
+            if not uri_matched:
                 return False
-        elif not val:
+
+    if "semantic_tokens" in request_params and isinstance(registration.options, SemanticTokensOptions):
+        for r in request_params["semantic_tokens"]:
+            if r == "full" and not registration.options.full:
+                return False
+            elif r == "full/delta" and not (isinstance(registration.options.full, Dict) and registration.options.full.get("delta")):
+                return False
+            elif r == "range" and not registration.options.range:
+                return False
+
+    if "code_actions" in request_params and isinstance(registration.options, CodeActionOptions):
+        for c in request_params["code_actions"]:
+            if c not in registration.options.codeActionKinds:
+                return False
+
+    if "code_action_resolve" in request_params and isinstance(registration.options, CodeActionOptions):
+        if request_params["code_action_resolve"] and not registration.options.resolveProvider:
             return False
+
+    if "workspace_commands" in request_params and isinstance(registration.options, ExecuteCommandOptions):
+        for c in request_params["workspace_commands"]:
+            if c not in registration.options.commands:
+                return False
+
+    if "completion_item_resolve" in request_params and isinstance(registration.options, CompletionOptions):
+        if request_params["completion_item_resolve"] and not registration.options.resolveProvider:
+            return False
+
+    if "completion_item_label_details" in request_params and isinstance(registration.options, CompletionOptions):
+        if request_params["completion_item_label_details"] and not (registration.options.completionItem and registration.options.completionItem.get("labelDetailsSupport")):
+            return False
+
+    if "inlay_hint_resolve" in request_params and isinstance(registration.options, InlayHintOptions):
+        if request_params["inlay_hint_resolve"] and not registration.options.resolveProvider:
+            return False
+
+    if "workspace_diagnostic" in request_params and isinstance(registration.options, DiagnosticOptions):
+        if request_params["workspace_diagnostic"] and not registration.options.workspaceDiagnostics:
+            return False
+
+    if "workspace_symbol_resolve" in request_params and isinstance(registration.options, WorkspaceSymbolOptions):
+        if request_params["workspace_symbol_resolve"] and not registration.options.resolveProvider:
+            return False
+
+    if "code_lens_resolve" in request_params and isinstance(registration.options, CodeLensOptions):
+        if request_params["code_lens_resolve"] and not registration.options.resolveProvider:
+            return False
+
+    if "document_link_resolve" in request_params and isinstance(registration.options, DocumentLinkOptions):
+        if request_params["document_link_resolve"] and not registration.options.resolveProvider:
+            return False
+
     return True
 
 
@@ -231,15 +206,7 @@ class CapabilitiesMixin:
         if not registrations or len(registrations) == 0:
             return False
 
-        state = _create_feature_check_state(kwargs)
-
-        for r in registrations:
-            _update_feature_check_state(kwargs, state, r)
-
-        # If the feature_request contains only a method and nothing else,
-        # this will set the event, since at least one registration for that
-        # method exists (otherwise we would have already returned).
-        if _check_feature_check_fulfilled(state):
+        if any(_registration_fulfils_feature_request(kwargs, r) for r in registrations):
             return True
         else:
             return False

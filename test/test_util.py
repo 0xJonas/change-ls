@@ -11,36 +11,39 @@ from lspscript.types.structures import (FileOperationFilter,
                                         TextDocumentFilter)
 from lspscript.util import (install_language, matches_file_operation_filter,
                             matches_text_document_filter)
+from lspscript.workspace import Workspace
 
 
-def test_matches_text_document_filter() -> None:
+@pytest.fixture
+def test_workspace() -> Workspace:
+    return Workspace(Path(".").absolute())
+
+
+def test_matches_text_document_filter(test_workspace: Workspace) -> None:
     filter1: TextDocumentFilter = {
-        "pattern": "**/test.py"
+        "pattern": "**/test_*.py"
     }
 
-    base = Path(".").absolute()
-    path1 = base / "test/test.py"
-    path2 = base / "test/test.json"
-    path3 = base / "test/test.ts"
+    with test_workspace.open_text_document(Path("test/test_util.py")) as doc1,\
+            test_workspace.open_text_document(Path("test/test_empty.json")) as doc2:
 
-    assert matches_text_document_filter(path1.as_uri(), filter1)
-    assert not matches_text_document_filter(path2.as_uri(), filter1)
+        assert matches_text_document_filter(doc1, filter1)
+        assert not matches_text_document_filter(doc2, filter1)
 
-    filter2: TextDocumentFilter = {
-        "language": "python",
-        "scheme": "file"
-    }
+        filter2: TextDocumentFilter = {
+            "language": "python",
+            "scheme": "file"
+        }
 
-    assert matches_text_document_filter(path1.as_uri(), filter2)
-    assert not matches_text_document_filter(path2.as_uri(), filter2)
+        assert matches_text_document_filter(doc1, filter2)
+        assert not matches_text_document_filter(doc2, filter2)
 
-    filter3: TextDocumentFilter = {
-        "pattern": "**/test.{py,json}"
-    }
+        filter3: TextDocumentFilter = {
+            "pattern": "**/test_{util,empty}.json"
+        }
 
-    assert matches_text_document_filter(path1.as_uri(), filter3)
-    assert matches_text_document_filter(path2.as_uri(), filter3)
-    assert not matches_text_document_filter(path3.as_uri(), filter3)
+        assert not matches_text_document_filter(doc1, filter3)
+        assert matches_text_document_filter(doc2, filter3)
 
 
 def test_matches_file_operation_filter() -> None:

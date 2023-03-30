@@ -1,1 +1,10 @@
-LSPSCRIPT_VERSION = "0.1.0"
+from .client import Client, WorkspaceRequestHandler
+from .text_document import TextDocument
+from .workspace import Workspace
+
+__all__ = [
+    "Client",
+    "WorkspaceRequestHandler",
+    "Workspace",
+    "TextDocument"
+]

@@ -13,6 +13,7 @@ from lspscript.types.structures import (CodeActionOptions, CodeLensOptions,
                                         Registration, SaveOptions,
                                         SemanticTokensOptions,
                                         ServerCapabilities,
+                                        TextDocumentChangeRegistrationOptions,
                                         TextDocumentSyncOptions,
                                         Unregistration, WorkspaceSymbolOptions)
 from lspscript.util import (TextDocumentInfo, matches_file_operation_filter,
@@ -46,6 +47,14 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
                     document_matched = True
                     break
             if not document_matched:
+                return False
+
+    if "sync_kind" in request_params:
+        if isinstance(registration.options, TextDocumentChangeRegistrationOptions):
+            if request_params["sync_kind"] != registration.options.syncKind:
+                return False
+        elif isinstance(registration.options, TextDocumentSyncOptions):
+            if request_params["sync_kind"] != registration.options.change:
                 return False
 
     if "file_operations" in request_params and isinstance(registration.options, FileOperationRegistrationOptions):
@@ -126,15 +135,18 @@ def _text_document_sync_options_to_feature_registrations(options: TextDocumentSy
     out: List[FeatureRegistration] = []
 
     if options.openClose:
-        out.append(FeatureRegistration(None, "textDocument/didOpen", None, options.openClose))
-        out.append(FeatureRegistration(None, "textDocument/didClose", None, options.openClose))
+        out.append(FeatureRegistration(None, "textDocument/didOpen", None, options))
+        out.append(FeatureRegistration(None, "textDocument/didClose", None, options))
 
     if options.save:
-        out.append(FeatureRegistration(None, "textDocument/didSave", None, options.save))
+        out.append(FeatureRegistration(None, "textDocument/didSave", None, options))
     if options.willSave:
-        out.append(FeatureRegistration(None, "textDocument/willSave", None, options.willSave))
+        out.append(FeatureRegistration(None, "textDocument/willSave", None, options))
     if options.willSaveWaitUntil:
-        out.append(FeatureRegistration(None, "textDocument/willSaveWaitUntil", None, options.willSaveWaitUntil))
+        out.append(FeatureRegistration(None, "textDocument/willSaveWaitUntil", None, options))
+
+    if options.change is not None and options.change != TextDocumentSyncKind.None_:
+        out.append(FeatureRegistration(None, "textDocument/didChange", None, options))
 
     return out
 

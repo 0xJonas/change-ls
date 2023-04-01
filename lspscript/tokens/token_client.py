@@ -190,7 +190,6 @@ async def tokenize(text: str, language_id: str, *, include_whitespace: bool = Fa
     offset = 0
     tokens: List[Token] = []
     for (delta_line, delta_col, length), scopes_indices in zip(result.tokens[::2], result.tokens[1::2]):
-        print(delta_line, delta_col, length)
         for _ in range(delta_line):
             line_break_index, line_break_str = _find_line_break(text, offset)
 

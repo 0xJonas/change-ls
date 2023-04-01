@@ -1,4 +1,4 @@
-import { Connection, InitializedParams, InitializeParams, InitializeResult } from "vscode-languageserver"
+import { Connection, InitializedParams, InitializeParams, InitializeResult, TextDocumentSyncKind } from "vscode-languageserver"
 import { createConnection } from "vscode-languageserver/node";
 
 import { readFileSync } from "fs";
@@ -64,7 +64,7 @@ connection.onInitialize((params: InitializeParams) => {
             capabilities: {
                 textDocumentSync: {
                     openClose: true,
-                    change: 1
+                    change: TextDocumentSyncKind.Full
                 }
                 // TODO: fill accordingly as more tests are added
             },

@@ -36,18 +36,3 @@ async def test_workspace_configuration_provider() -> None:
         launch_command="node mock-server/out/index.js --stdio test/test_configuration_provider.json")
     async with workspace.launch_client(launch_params) as client:
         await client.send_request("$/go", None)
-
-
-async def test_workspace_text_documents_open_close() -> None:
-    workspace = Workspace(Path("test/mock-ws-1"))
-    launch_params = StdIOConnectionParams(
-        launch_command="node mock-server/out/index.js --stdio test/test_workspace_text_document.json")
-    async with workspace.launch_client(launch_params) as client:
-        repo_uri = Path(".").resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
-
-        with workspace.open_text_document(Path("test-1.py")) as doc:
-            assert doc.text == 'print("Hello, World!")\n'
-            assert doc.language_id == "python"
-            assert doc.version == 0
-            assert doc.uri == repo_uri + "/test/mock-ws-1/test-1.py"

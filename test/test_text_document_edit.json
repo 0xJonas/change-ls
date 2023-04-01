@@ -1,0 +1,20 @@
+{
+    "name": "test_workspace_text_document",
+    "sequence": [
+        { "includeSequence": "test/open-ws-1-test-1.json" },
+        {
+            "type": "notification",
+            "method": "textDocument/didChange",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-1.py",
+                    "version": 1
+                },
+                "contentChanges": [{
+                    "text": "print(\"Good morning, World!\")\n"
+                }]
+            }
+        },
+        { "includeSequence": "test/close-ws-1-test-1.json" }
+    ]
+}

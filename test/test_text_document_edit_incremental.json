@@ -1,0 +1,41 @@
+{
+    "name": "test_workspace_text_document",
+    "initializeResult": {
+        "capabilities": {
+            "textDocumentSync": {
+                "openClose": true,
+                "change": 2
+            }
+        }
+    },
+    "sequence": [
+        { "includeSequence": "test/open-ws-1-test-1.json" },
+        {
+            "type": "notification",
+            "method": "textDocument/didChange",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-1.py",
+                    "version": 1
+                },
+                "contentChanges": [
+                    {
+                        "range": {
+                            "start": { "line": 0, "character": 7 },
+                            "end": { "line": 0, "character": 12 }
+                        },
+                        "text": "Hi"
+                    },
+                    {
+                        "range": {
+                            "start": { "line": 0, "character": 0 },
+                            "end": { "line": 0, "character": 5 }
+                        },
+                        "text": "logging.info"
+                    }
+                ]
+            }
+        },
+        { "includeSequence": "test/close-ws-1-test-1.json" }
+    ]
+}

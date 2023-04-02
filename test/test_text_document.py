@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generator
 
 import pytest
 
@@ -9,7 +9,7 @@ from lspscript.text_document import TextDocument
 
 
 @pytest.fixture
-async def mock_document_1(request: pytest.FixtureRequest) -> AsyncGenerator[TextDocument, None]:
+async def mock_workspace_1(request: pytest.FixtureRequest) -> AsyncGenerator[Workspace, None]:
     test_sequence_marker = request.node.get_closest_marker('test_sequence')
     assert test_sequence_marker
     test_sequence = test_sequence_marker.args[0]
@@ -20,9 +20,13 @@ async def mock_document_1(request: pytest.FixtureRequest) -> AsyncGenerator[Text
     async with workspace.launch_client(launch_params) as client:
         repo_uri = Path(".").resolve().as_uri()
         await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+        yield workspace
 
-        with workspace.open_text_document(Path("test-1.py")) as doc:
-            yield doc
+
+@pytest.fixture
+async def mock_document_1(mock_workspace_1: Workspace) -> AsyncGenerator[TextDocument, None]:
+    with mock_workspace_1.open_text_document(Path("test-1.py")) as doc:
+        yield doc
 
 
 @pytest.mark.test_sequence("test/test_text_document_open_close.json")
@@ -72,3 +76,22 @@ async def test_text_document_edit_tokens(mock_document_1: TextDocument) -> None:
     mock_document_1.edit_tokens("'Hi, World!'", 2, 5)  # Note the single quotes
     mock_document_1.commit_edits()
     assert mock_document_1.text == "logging.info('Hi, World!')\n"
+
+
+@pytest.fixture
+def temp_file_path() -> Generator[Path, None, None]:
+    path = Path("./test/mock-ws-1/tempfile.py")
+    with path.open("w") as file:
+        file.write("print('Hi!')\n")
+    yield path.absolute()
+    path.unlink()
+
+
+@pytest.mark.test_sequence("test/test_text_document_save.json")
+async def test_text_document_save(temp_file_path: Path, mock_workspace_1: Workspace) -> None:
+    with mock_workspace_1.open_text_document(temp_file_path) as doc:
+        doc.edit("Bye", 7, 9)
+        doc.commit_edits()
+        await doc.save()
+        with temp_file_path.open() as file:
+            assert file.read() == "print('Good Bye!')\n"

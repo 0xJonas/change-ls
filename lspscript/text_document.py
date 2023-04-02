@@ -1,3 +1,4 @@
+import asyncio
 from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,10 +11,13 @@ from lspscript.tokens import TokenList, tokenize
 from lspscript.types import (DidCloseTextDocumentParams,
                              OptionalVersionedTextDocumentIdentifier,
                              TextDocumentItem, VersionedTextDocumentIdentifier)
-from lspscript.types.enumerations import TextDocumentSyncKind
-from lspscript.types.structures import (DidChangeTextDocumentParams, Position,
+from lspscript.types.enumerations import (TextDocumentSaveReason,
+                                          TextDocumentSyncKind)
+from lspscript.types.structures import (DidChangeTextDocumentParams,
+                                        DidSaveTextDocumentParams, Position,
                                         Range, TextDocumentContentChangeEvent,
-                                        TextDocumentIdentifier)
+                                        TextDocumentIdentifier, TextEdit,
+                                        WillSaveTextDocumentParams)
 from lspscript.util import TextDocumentInfo, guess_language_id
 
 
@@ -22,6 +26,12 @@ class _Edit:
     from_offset: int
     to_offset: int
     new_text: str
+
+    @classmethod
+    def from_text_edit(cls, text_edit: TextEdit, line_offsets: List[int]) -> "_Edit":
+        from_offset = line_offsets[text_edit.range.start.line] + text_edit.range.start.character
+        to_offset = line_offsets[text_edit.range.end.line] + text_edit.range.end.character
+        return cls(from_offset, to_offset, text_edit.newText)
 
     def overlaps(self, other: "_Edit") -> bool:
         return (
@@ -150,6 +160,16 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     def get_optional_versioned_text_document_identifier(self) -> OptionalVersionedTextDocumentIdentifier:
         return OptionalVersionedTextDocumentIdentifier(uri=self.uri, version=self.version)
 
+    def _queue_edit(self, new_edit: _Edit) -> None:
+        insertion_point = bisect_left(self._pending_edits, new_edit)
+
+        if insertion_point > 0 and self._pending_edits[insertion_point - 1].overlaps(new_edit):
+            raise ValueError(f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point - 1]}'")
+        if insertion_point < len(self._pending_edits) - 1 and self._pending_edits[insertion_point + 1].overlaps(new_edit):
+            raise ValueError(f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point + 1]}'")
+
+        self._pending_edits.insert(insertion_point, new_edit)
+
     @overload
     def edit(self, new_text: str, from_offset: int, to_offset: int) -> None: ...
 
@@ -177,15 +197,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             raise IndexError(
                 f"edit() offsets are out of bounds: from_offset {from_offset}, to_offset {to_offset}, document length {len(self.text)}")
 
-        new_edit = _Edit(from_offset, to_offset, new_text)
-        insertion_point = bisect_left(self._pending_edits, new_edit)
-
-        if insertion_point > 0 and self._pending_edits[insertion_point - 1].overlaps(new_edit):
-            raise ValueError(f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point - 1]}'")
-        if insertion_point < len(self._pending_edits) - 1 and self._pending_edits[insertion_point + 1].overlaps(new_edit):
-            raise ValueError(f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point + 1]}'")
-
-        self._pending_edits.insert(insertion_point, new_edit)
+        self._queue_edit(_Edit(from_offset, to_offset, new_text))
 
     @overload
     def edit_tokens(self, new_text: str, from_index: int) -> None: ...
@@ -262,7 +274,47 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     def discard_edits(self) -> None:
         self._pending_edits = []
 
-        #
-        # save()
-        # - textDocument/willSave
-        # - textDocument/willSaveWaitUntil
+    async def save(self) -> None:
+        """
+        Saves the `TextDocument` to disc.
+
+        The LSP defines the `textDocument/willSaveWaitUntil` request, which can modify the document
+        during saving. If any of the language servers try to perform illegal (overlapping) edits at this point,
+        this method will raise an Exception and the document WILL NOT get saved. If this becomes an issue,
+        the contents of `textDocument.text` may need to be saved manually using the standard Python I/O functions.
+        """
+        will_save_params = WillSaveTextDocumentParams(
+            textDocument=self.get_text_document_identifier(), reason=TextDocumentSaveReason.Manual)
+
+        # textDocument/willSave
+        for client in self._clients.values():
+            if not client.check_feature("textDocument/willSave"):
+                continue
+            client.send_text_document_will_save(will_save_params)
+
+        # textDocument/willSaveWaitUntil
+        requests = [client.send_text_document_will_save_wait_until(will_save_params)
+                    for client in self._clients.values()
+                    if client.check_feature("textDocument/willSaveWaitUntil")]
+        edit_lists: List[Optional[List[TextEdit]]] = await asyncio.gather(*requests)
+
+        for edit_list in edit_lists:
+            if not edit_list:
+                continue
+            for e in edit_list:
+                self._queue_edit(_Edit.from_text_edit(e, self._line_offsets))
+        self.commit_edits()
+
+        # Actual saving
+        with self._path.open("w", encoding=self._encoding) as file:
+            file.write(self.text)
+
+        # textDocument/didSave
+        did_save_params = DidSaveTextDocumentParams(textDocument=self.get_text_document_identifier())
+        did_save_params_include_text = DidSaveTextDocumentParams(
+            textDocument=self.get_text_document_identifier(), text=self.text)
+        for client in self._clients.values():
+            if client.check_feature("textDocument/didSave", include_text=True):
+                client.send_text_document_did_save(did_save_params_include_text)
+            elif client.check_feature("textDocument/didSave", include_text=False):
+                client.send_text_document_did_save(did_save_params)

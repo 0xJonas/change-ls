@@ -1,0 +1,104 @@
+{
+    "name": "test_text_document_save",
+    "initializeResult": {
+        "capabilities": {
+            "textDocumentSync": {
+                "openClose": true,
+                "change": 1,
+                "save": {
+                    "includeText": true
+                },
+                "willSave": true,
+                "willSaveWaitUntil": true
+            }
+        }
+    },
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/tempfile.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "print('Hi!')\n"
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didChange",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/tempfile.py",
+                    "version": 1
+                },
+                "contentChanges": [{
+                    "text": "print('Bye!')\n"
+                }]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/willSave",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/tempfile.py"
+                },
+                "reason": 1
+            }
+        },
+        {
+            "type": "request",
+            "method": "textDocument/willSaveWaitUntil",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/tempfile.py"
+                },
+                "reason": 1
+            },
+            "result": [
+                {
+                    "range": {
+                        "start": { "line": 0, "character": 7 },
+                        "end": { "line": 0, "character": 7 }
+                    },
+                    "newText": "Good "
+                }
+            ]
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didChange",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/tempfile.py",
+                    "version": 2
+                },
+                "contentChanges": [{
+                    "text": "print('Good Bye!')\n"
+                }]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didSave",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/tempfile.py"
+                },
+                "text": "print('Good Bye!')\n"
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/tempfile.py"
+                }
+            }
+        }
+    ]
+}

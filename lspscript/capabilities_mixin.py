@@ -14,6 +14,7 @@ from lspscript.types.structures import (CodeActionOptions, CodeLensOptions,
                                         SemanticTokensOptions,
                                         ServerCapabilities,
                                         TextDocumentChangeRegistrationOptions,
+                                        TextDocumentSaveRegistrationOptions,
                                         TextDocumentSyncOptions,
                                         Unregistration, WorkspaceSymbolOptions)
 from lspscript.util import (TextDocumentInfo, matches_file_operation_filter,
@@ -57,6 +58,11 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
             if request_params["sync_kind"] != registration.options.change:
                 return False
 
+    if "include_text" in request_params and (isinstance(registration.options, SaveOptions)
+                                             or isinstance(registration.options, TextDocumentSaveRegistrationOptions)):
+        if request_params["include_text"] != bool(registration.options.includeText):
+            return False
+
     if "file_operations" in request_params and isinstance(registration.options, FileOperationRegistrationOptions):
         uris: List[str] = request_params["file_operations"]
 
@@ -84,7 +90,7 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
                 return False
 
     if "code_action_resolve" in request_params and isinstance(registration.options, CodeActionOptions):
-        if request_params["code_action_resolve"] and not registration.options.resolveProvider:
+        if request_params["code_action_resolve"] != bool(registration.options.resolveProvider):
             return False
 
     if "workspace_commands" in request_params and isinstance(registration.options, ExecuteCommandOptions):
@@ -93,31 +99,31 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
                 return False
 
     if "completion_item_resolve" in request_params and isinstance(registration.options, CompletionOptions):
-        if request_params["completion_item_resolve"] and not registration.options.resolveProvider:
+        if request_params["completion_item_resolve"] != bool(registration.options.resolveProvider):
             return False
 
     if "completion_item_label_details" in request_params and isinstance(registration.options, CompletionOptions):
-        if request_params["completion_item_label_details"] and not (registration.options.completionItem and registration.options.completionItem.get("labelDetailsSupport")):
+        if request_params["completion_item_label_details"] != (registration.options.completionItem and registration.options.completionItem.get("labelDetailsSupport")):
             return False
 
     if "inlay_hint_resolve" in request_params and isinstance(registration.options, InlayHintOptions):
-        if request_params["inlay_hint_resolve"] and not registration.options.resolveProvider:
+        if request_params["inlay_hint_resolve"] != bool(registration.options.resolveProvider):
             return False
 
     if "workspace_diagnostic" in request_params and isinstance(registration.options, DiagnosticOptions):
-        if request_params["workspace_diagnostic"] and not registration.options.workspaceDiagnostics:
+        if request_params["workspace_diagnostic"] != bool(registration.options.workspaceDiagnostics):
             return False
 
     if "workspace_symbol_resolve" in request_params and isinstance(registration.options, WorkspaceSymbolOptions):
-        if request_params["workspace_symbol_resolve"] and not registration.options.resolveProvider:
+        if request_params["workspace_symbol_resolve"] != bool(registration.options.resolveProvider):
             return False
 
     if "code_lens_resolve" in request_params and isinstance(registration.options, CodeLensOptions):
-        if request_params["code_lens_resolve"] and not registration.options.resolveProvider:
+        if request_params["code_lens_resolve"] != bool(registration.options.resolveProvider):
             return False
 
     if "document_link_resolve" in request_params and isinstance(registration.options, DocumentLinkOptions):
-        if request_params["document_link_resolve"] and not registration.options.resolveProvider:
+        if request_params["document_link_resolve"] != bool(registration.options.resolveProvider):
             return False
 
     return True
@@ -139,7 +145,7 @@ def _text_document_sync_options_to_feature_registrations(options: TextDocumentSy
         out.append(FeatureRegistration(None, "textDocument/didClose", None, options))
 
     if options.save:
-        out.append(FeatureRegistration(None, "textDocument/didSave", None, options))
+        out.append(FeatureRegistration(None, "textDocument/didSave", None, options.save))
     if options.willSave:
         out.append(FeatureRegistration(None, "textDocument/willSave", None, options))
     if options.willSaveWaitUntil:

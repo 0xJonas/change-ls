@@ -18,12 +18,14 @@ from lspscript.types import (ClientCapabilities, InitializedParams,
                              InitializeParams, InitializeResult)
 from lspscript.types.client_requests import (ClientRequestsMixin,
                                              ServerRequestsMixin)
-from lspscript.types.enumerations import MessageType
+from lspscript.types.enumerations import MessageType, PositionEncodingKind
 from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         ApplyWorkspaceEditResult, CancelParams,
-                                        ConfigurationParams, LogMessageParams,
-                                        LogTraceParams, LSPAny,
-                                        MessageActionItem, ProgressParams,
+                                        ConfigurationParams,
+                                        GeneralClientCapabilities,
+                                        LogMessageParams, LogTraceParams,
+                                        LSPAny, MessageActionItem,
+                                        ProgressParams,
                                         PublishDiagnosticsParams,
                                         RegistrationParams, ShowDocumentParams,
                                         ShowDocumentResult, ShowMessageParams,
@@ -222,7 +224,9 @@ def get_default_client_capabilities() -> ClientCapabilities:
     Returns the `ClientCapabilities` which are used for the default
     `InitializeParams` (see `get_default_initialize_params`).
     """
-    return ClientCapabilities()
+    return ClientCapabilities(
+        general=GeneralClientCapabilities(
+            positionEncodings=[PositionEncodingKind.UTF8]))
 
 
 def get_default_initialize_params() -> InitializeParams:

@@ -1,11 +1,6 @@
 from pathlib import Path
 
 from lspscript.tokens import Grammar, Token, lexeme, tokenize
-# Because pytest-asyncio shuts down the event loop after each test, while the
-# token-server keeps running, we need to manually stop the token-server. This
-# is to avoid an exception on subsequent tests, due to the global token-client
-# instance using an event loop that was already shut down.
-from lspscript.tokens.token_client import _stop_token_client  # type: ignore
 from lspscript.util import install_language
 
 
@@ -18,7 +13,6 @@ function test begin
 end
 """
     tokens = await tokenize(text, "mock")
-    _stop_token_client()
 
     assert len(tokens) == 9
     assert tokens[0] == Token("function", set(["source.mock", "meta.function", "storage.type.function"]), 0)
@@ -41,7 +35,6 @@ function test begin
 end
 """
     tokens = await tokenize(text, "mock", include_whitespace=True)
-    _stop_token_client()
 
     assert len(tokens) == 19
     assert tokens[0] == Token("function", set(["source.mock", "meta.function", "storage.type.function"]), 0)
@@ -70,7 +63,6 @@ async def test_tokenization_line_breaks_lf() -> None:
     install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
     text = "function test begin\n    a = b + c\nend\n"
     tokens = await tokenize(text, "mock", include_whitespace=True)
-    _stop_token_client()
 
     assert len(tokens) == 19
     assert tokens[5] % lexeme("\n")
@@ -83,7 +75,6 @@ async def test_tokenization_line_breaks_cr() -> None:
     install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
     text = "function test begin\r    a = b + c\rend\r"
     tokens = await tokenize(text, "mock", include_whitespace=True)
-    _stop_token_client()
 
     assert len(tokens) == 19
     assert tokens[5] % lexeme("\r")
@@ -96,7 +87,6 @@ async def test_tokenization_line_breaks_crlf() -> None:
     install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
     text = "function test begin\r\n    a = b + c\r\nend\r\n"
     tokens = await tokenize(text, "mock", include_whitespace=True)
-    _stop_token_client()
 
     assert len(tokens) == 19
     assert tokens[5] % lexeme("\r\n")

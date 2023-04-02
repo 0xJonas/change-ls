@@ -202,6 +202,7 @@ class LSProtocol(ABC):
             # TODO raise something?
             return
         future.set_result(result)
+        del self._active_requests[id]
 
     def _process_notification(self, method: str, params: Union[List[JSON_VALUE], Mapping[str, JSON_VALUE], None]) -> None:
         self._notification_handler(method, params)
@@ -228,6 +229,7 @@ class LSProtocol(ABC):
                 # TODO raise something?
                 return
             future.set_exception(LSPException(code, message, data))
+            del self._active_requests[id]
         else:
             raise LSPException(code, message, data)
 

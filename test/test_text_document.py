@@ -65,7 +65,6 @@ def test_text_documents_disallowed_edits(mock_document_1: TextDocument) -> None:
         mock_document_1.edit("Error", 12, length=100)
 
 
-@pytest.mark.skip
 @pytest.mark.test_sequence("test/test_text_document_edit_tokens.json")
 async def test_text_document_edit_tokens(mock_document_1: TextDocument) -> None:
     await mock_document_1.load_tokens()

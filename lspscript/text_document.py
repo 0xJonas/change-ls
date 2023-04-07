@@ -3,7 +3,7 @@ from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
-from typing import Dict, List, Optional, Type, overload
+from typing import Callable, Dict, List, Optional, Type, overload
 
 from lspscript.client import Client
 from lspscript.lsp_exception import LSPScriptException
@@ -11,7 +11,8 @@ from lspscript.tokens import TokenList, tokenize
 from lspscript.types import (DidCloseTextDocumentParams,
                              OptionalVersionedTextDocumentIdentifier,
                              TextDocumentItem, VersionedTextDocumentIdentifier)
-from lspscript.types.enumerations import (TextDocumentSaveReason,
+from lspscript.types.enumerations import (PositionEncodingKind,
+                                          TextDocumentSaveReason,
                                           TextDocumentSyncKind)
 from lspscript.types.structures import (DidChangeTextDocumentParams,
                                         DidSaveTextDocumentParams, Position,
@@ -78,6 +79,48 @@ def _calculate_line_offsets(text: str) -> List[int]:
         line_offsets.append(offset)
         offset = _skip_to_next_line(text, offset)
     return line_offsets
+
+
+def _utf_8_character_length(char: int) -> int:
+    if char <= 0x7f:
+        return 1
+    elif char <= 0x7ff:
+        return 2
+    elif char <= 0xffff:
+        return 3
+    else:
+        return 4
+
+
+def _utf_16_character_length(char: int) -> int:
+    if char <= 0xffff:
+        return 1
+    else:
+        return 2
+
+
+_code_units_to_character_length: Dict[PositionEncodingKind, Callable[[int], int]] = {
+    PositionEncodingKind.UTF8: _utf_8_character_length,
+    PositionEncodingKind.UTF16: _utf_16_character_length,
+    PositionEncodingKind.UTF32: lambda _: 1,
+}
+
+
+def _code_units_to_offset(reference: str, code_units: int, encoding: PositionEncodingKind) -> int:
+    get_character_length = _code_units_to_character_length[encoding]
+    counter = 0
+    for i, c in enumerate(reference):
+        if counter == code_units:
+            return i
+        if counter > code_units:
+            raise IndexError(f"Code unit {code_units} is not a valid codepoint boundary.")
+        counter += get_character_length(ord(c))
+    return len(reference)
+
+
+def _offset_to_code_units(reference: str, offset: int, encoding: PositionEncodingKind) -> int:
+    get_character_length = _code_units_to_character_length[encoding]
+    return sum(get_character_length(ord(c)) for c in reference[:offset])
 
 
 class TextDocument(TextDocumentInfo, TextDocumentItem):
@@ -318,3 +361,32 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
                 client.send_text_document_did_save(did_save_params_include_text)
             elif client.check_feature("textDocument/didSave", include_text=False):
                 client.send_text_document_did_save(did_save_params)
+
+    def position_to_offset(self, position: Position, client_name: Optional[str] = None) -> int:
+        if position.line >= len(self._line_offsets):
+            raise IndexError(f"Line {position.line} is out of bounds")
+
+        start_offset = self._line_offsets[position.line]
+        end_offset = (self._line_offsets[position.line + 1]
+                      if position.line < len(self._line_offsets) else len(self.text))
+        reference_string = self.text[start_offset:end_offset]
+
+        if position.character >= len(reference_string):
+            raise IndexError(f"Position at line {position.line} character {position.character} does not exist")
+
+        encoding = self._get_client(client_name).get_position_encoding_kind()
+        return start_offset + _code_units_to_offset(reference_string, position.character, encoding)
+
+    def offset_to_position(self, offset: int, client_name: Optional[str] = None) -> Position:
+        if offset >= len(self.text):
+            raise IndexError(f"Offset {offset} is out of bounds.")
+
+        line = bisect_right(self._line_offsets, offset) - 1
+
+        start_offset = self._line_offsets[line]
+        end_offset = self._line_offsets[line + 1] if line < len(self._line_offsets) else len(self.text)
+        reference_string = self.text[start_offset:end_offset]
+        encoding = self._get_client(client_name).get_position_encoding_kind()
+        character = _offset_to_code_units(reference_string, offset - self._line_offsets[line], encoding)
+
+        return Position(line=line, character=character)

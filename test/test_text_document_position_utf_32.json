@@ -1,0 +1,15 @@
+{
+    "name": "test_workspace_text_document",
+    "initializeResult": {
+        "capabilities": {
+            "textDocumentSync": {
+                "openClose": true
+            },
+            "positionEncoding": "utf-32"
+        }
+    },
+    "sequence": [
+        { "includeSequence": "test/open-ws-1-test-2.json" },
+        { "includeSequence": "test/close-ws-1-test-2.json" }
+    ]
+}

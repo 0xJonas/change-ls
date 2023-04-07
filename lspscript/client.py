@@ -226,7 +226,7 @@ def get_default_client_capabilities() -> ClientCapabilities:
     """
     return ClientCapabilities(
         general=GeneralClientCapabilities(
-            positionEncodings=[PositionEncodingKind.UTF8]))
+            positionEncodings=[PositionEncodingKind.UTF32, PositionEncodingKind.UTF8, PositionEncodingKind.UTF16]))
 
 
 def get_default_initialize_params() -> InitializeParams:
@@ -456,6 +456,16 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
             await self.send_exit()
         assert self._state == "disconnected"
         return False
+
+    def get_position_encoding_kind(self) -> PositionEncodingKind:
+        if self._state not in ["initializing", "running"]:
+            raise LSPClientException("Invalid state, expected 'initializing' or 'running'.")
+        assert self._server_capabilities
+        out = self._server_capabilities.positionEncoding
+        if not out:
+            return PositionEncodingKind.UTF16
+        else:
+            return out
 
     # -----------------------------
     # Callbacks for server requests

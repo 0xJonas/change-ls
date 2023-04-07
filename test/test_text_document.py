@@ -6,6 +6,7 @@ import pytest
 from lspscript import Workspace
 from lspscript.client import StdIOConnectionParams
 from lspscript.text_document import TextDocument
+from lspscript.types import Position
 
 
 @pytest.fixture
@@ -26,6 +27,12 @@ async def mock_workspace_1(request: pytest.FixtureRequest) -> AsyncGenerator[Wor
 @pytest.fixture
 async def mock_document_1(mock_workspace_1: Workspace) -> AsyncGenerator[TextDocument, None]:
     with mock_workspace_1.open_text_document(Path("test-1.py")) as doc:
+        yield doc
+
+
+@pytest.fixture
+async def mock_document_2(mock_workspace_1: Workspace) -> AsyncGenerator[TextDocument, None]:
+    with mock_workspace_1.open_text_document(Path("test-2.py"), encoding="utf-8") as doc:
         yield doc
 
 
@@ -95,3 +102,48 @@ async def test_text_document_save(temp_file_path: Path, mock_workspace_1: Worksp
         await doc.save()
         with temp_file_path.open() as file:
             assert file.read() == "print('Good Bye!')\n"
+
+
+@pytest.mark.test_sequence("test/test_text_document_position_utf_8.json")
+def test_text_document_position_utf_8(mock_document_2: TextDocument) -> None:
+    assert mock_document_2.position_to_offset(Position(line=1, character=11)) == 23
+    assert mock_document_2.position_to_offset(Position(line=1, character=14)) == 24
+    assert mock_document_2.position_to_offset(Position(line=2, character=11)) == 39
+    assert mock_document_2.position_to_offset(Position(line=2, character=15)) == 40
+
+    assert mock_document_2.offset_to_position(23) == Position(line=1, character=11)
+    assert mock_document_2.offset_to_position(24) == Position(line=1, character=14)
+    assert mock_document_2.offset_to_position(39) == Position(line=2, character=11)
+    assert mock_document_2.offset_to_position(40) == Position(line=2, character=15)
+
+    with pytest.raises(IndexError):
+        mock_document_2.position_to_offset(Position(line=1, character=13))
+
+
+@pytest.mark.test_sequence("test/test_text_document_position_utf_16.json")
+def test_text_document_position_utf_16(mock_document_2: TextDocument) -> None:
+    assert mock_document_2.position_to_offset(Position(line=1, character=11)) == 23
+    assert mock_document_2.position_to_offset(Position(line=1, character=12)) == 24
+    assert mock_document_2.position_to_offset(Position(line=2, character=11)) == 39
+    assert mock_document_2.position_to_offset(Position(line=2, character=13)) == 40
+
+    assert mock_document_2.offset_to_position(23) == Position(line=1, character=11)
+    assert mock_document_2.offset_to_position(24) == Position(line=1, character=12)
+    assert mock_document_2.offset_to_position(39) == Position(line=2, character=11)
+    assert mock_document_2.offset_to_position(40) == Position(line=2, character=13)
+
+    with pytest.raises(IndexError):
+        mock_document_2.position_to_offset(Position(line=2, character=12))
+
+
+@pytest.mark.test_sequence("test/test_text_document_position_utf_32.json")
+def test_text_document_position_utf_32(mock_document_2: TextDocument) -> None:
+    assert mock_document_2.position_to_offset(Position(line=1, character=11)) == 23
+    assert mock_document_2.position_to_offset(Position(line=1, character=12)) == 24
+    assert mock_document_2.position_to_offset(Position(line=2, character=11)) == 39
+    assert mock_document_2.position_to_offset(Position(line=2, character=12)) == 40
+
+    assert mock_document_2.offset_to_position(23) == Position(line=1, character=11)
+    assert mock_document_2.offset_to_position(24) == Position(line=1, character=12)
+    assert mock_document_2.offset_to_position(39) == Position(line=2, character=11)
+    assert mock_document_2.offset_to_position(40) == Position(line=2, character=12)

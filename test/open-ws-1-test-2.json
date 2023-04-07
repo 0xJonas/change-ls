@@ -1,0 +1,17 @@
+{
+    "name": "Workspace 1, open test-1.py",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-2.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "def main():\n    print(\"∂ϕ\")\n    print(\"𐐀𐐐\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+                }
+            }
+        }
+    ]
+}

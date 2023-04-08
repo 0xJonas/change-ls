@@ -85,6 +85,14 @@ async def test_text_document_edit_tokens(mock_document_1: TextDocument) -> None:
     assert mock_document_1.text == "logging.info('Hi, World!')\n"
 
 
+@pytest.mark.test_sequence("test/test_text_document_insertions.json")
+def test_text_document_insertions(mock_document_1: TextDocument) -> None:
+    mock_document_1.insert('print("123")\n', 23)
+    mock_document_1.insert('print("456")\n', 23)
+    mock_document_1.commit_edits()
+    assert mock_document_1.text == 'print("Hello, World!")\nprint("123")\nprint("456")\n'
+
+
 @pytest.fixture
 def temp_file_path() -> Generator[Path, None, None]:
     path = Path("./test/mock-ws-1/tempfile.py")

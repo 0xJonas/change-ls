@@ -1,5 +1,5 @@
 {
-    "name": "test_workspace_text_document",
+    "name": "test_text_document_position_utf_16",
     "initializeResult": {
         "capabilities": {
             "textDocumentSync": {

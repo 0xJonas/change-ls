@@ -1,5 +1,5 @@
 {
-    "name": "test_workspace_text_document",
+    "name": "test_text_document_edit_tokens",
     "sequence": [
         { "includeSequence": "test/open-ws-1-test-1.json" },
         {

@@ -1,6 +1,6 @@
 import asyncio
-from bisect import bisect_left, bisect_right
-from dataclasses import dataclass
+from bisect import bisect_right
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import TracebackType
 from typing import Callable, Dict, List, Optional, Type, overload
@@ -26,7 +26,7 @@ from lspscript.util import TextDocumentInfo, guess_language_id
 class _Edit:
     from_offset: int
     to_offset: int
-    new_text: str
+    new_text: str = field(compare=False)
 
     @classmethod
     def from_text_edit(cls, text_edit: TextEdit, line_offsets: List[int]) -> "_Edit":
@@ -35,11 +35,15 @@ class _Edit:
         return cls(from_offset, to_offset, text_edit.newText)
 
     def overlaps(self, other: "_Edit") -> bool:
-        return (
-            self.from_offset <= other.from_offset and self.to_offset > other.from_offset
-            or self.from_offset < other.to_offset and self.to_offset >= other.to_offset
-            or self.from_offset >= other.from_offset and self.to_offset <= other.to_offset
-        )
+        covers_from_offset = self.from_offset <= other.from_offset and self.to_offset > other.from_offset
+        covers_to_offset = self.from_offset < other.to_offset and self.to_offset >= other.to_offset
+
+        # The '<' when comparing to_offset ensures that zero-length edits at the same position
+        # will not overlap. Per the LSP-spec, these edits are applied in the order they are received.
+        # The cases where to_overlap is equal are already covered by the other conditions.
+        covers_both = self.from_offset >= other.from_offset and self.to_offset < other.to_offset
+
+        return covers_from_offset or covers_to_offset or covers_both
 
     def as_text_document_content_change_event(self, line_offsets: List[int]) -> TextDocumentContentChangeEvent:
         from_line = bisect_right(line_offsets, self.from_offset) - 1
@@ -68,14 +72,15 @@ def _skip_to_next_line(text: str, offset: int) -> int:
             return i + 2
         if text[i] in ["\n", "\r"]:
             return i + 1
-    return len(text)
+    return -1
 
 
 def _calculate_line_offsets(text: str) -> List[int]:
     offset = 0
-    text_len = len(text)
     line_offsets: List[int] = []
-    while offset < text_len:
+    # This loop will include trailing newlines. This is intentional because it
+    # is needed for edits at the end of the file.
+    while offset >= 0:
         line_offsets.append(offset)
         offset = _skip_to_next_line(text, offset)
     return line_offsets
@@ -204,7 +209,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         return OptionalVersionedTextDocumentIdentifier(uri=self.uri, version=self.version)
 
     def _queue_edit(self, new_edit: _Edit) -> None:
-        insertion_point = bisect_left(self._pending_edits, new_edit)
+        # Use bisect_right, so insertions at the same position are applied in insertion order.
+        insertion_point = bisect_right(self._pending_edits, new_edit)
 
         if insertion_point > 0 and self._pending_edits[insertion_point - 1].overlaps(new_edit):
             raise ValueError(f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point - 1]}'")
@@ -236,7 +242,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         if to_offset < from_offset:
             raise IndexError(f"'to_offset' ({to_offset}) must be greater or equal to 'from_offset' ({from_offset})")
 
-        if from_offset < 0 or to_offset >= len(self.text):
+        if from_offset < 0 or from_offset > len(self.text) or to_offset < 0 or to_offset > len(self.text):
             raise IndexError(
                 f"edit() offsets are out of bounds: from_offset {from_offset}, to_offset {to_offset}, document length {len(self.text)}")
 
@@ -286,8 +292,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             # The edits are reversed because, unlike commit_edits, ContentChangeEvents are applied one
             # at a time, in the order they are received. So in order for edits earlier in the document
             # to not invalidate later edits, the edits are entered in reverse order.
-            contentChanges = [edit.as_text_document_content_change_event(
-                self._line_offsets) for edit in reversed(self._pending_edits)]
+            contentChanges = [edit.as_text_document_content_change_event(self._line_offsets)
+                              for edit in reversed(self._pending_edits)]
         else:
             # Document Sync is disabled for this client
             return

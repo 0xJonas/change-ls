@@ -1,5 +1,5 @@
 {
-    "name": "test_text_document_edit_incremental",
+    "name": "test_text_document_insertions",
     "initializeResult": {
         "capabilities": {
             "textDocumentSync": {
@@ -21,17 +21,17 @@
                 "contentChanges": [
                     {
                         "range": {
-                            "start": { "line": 0, "character": 7 },
-                            "end": { "line": 0, "character": 12 }
+                            "start": { "line": 1, "character": 0 },
+                            "end": { "line": 1, "character": 0 }
                         },
-                        "text": "Hi"
+                        "text": "print(\"456\")\n"
                     },
                     {
                         "range": {
-                            "start": { "line": 0, "character": 0 },
-                            "end": { "line": 0, "character": 5 }
+                            "start": { "line": 1, "character": 0 },
+                            "end": { "line": 1, "character": 0 }
                         },
-                        "text": "logging.info"
+                        "text": "print(\"123\")\n"
                     }
                 ]
             }

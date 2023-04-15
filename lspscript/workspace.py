@@ -4,8 +4,7 @@ from typing import Callable, Dict, List, Optional, Sequence
 
 from lspscript.text_document import TextDocument
 
-from .client import _ServerLaunchParams  # type: ignore
-from .client import (Client, WorkspaceRequestHandler,
+from .client import (Client, ServerLaunchParams, WorkspaceRequestHandler,
                      get_default_initialize_params)
 from .types.structures import (ConfigurationParams, DidOpenTextDocumentParams,
                                InitializeParams, LSPAny,
@@ -23,6 +22,14 @@ def _path_is_relative_to(path: Path, root: Path) -> bool:
 
 
 class Workspace(WorkspaceRequestHandler):
+    """
+    A :class:`Workspace` contains one or more workspace roots and provides access to the roots' files,
+    as well as managing Language servers for these files.
+
+    :param roots: The :class:`Path`\\ s to the roots of the workspace. The ``Paths`` must be directories.
+    :param names: An optional list of names for the workspace roots. If given, there must be a name for each root.
+    """
+
     _roots: List[Path]
     _root_names: List[str]
     _clients: Dict[str, Client]
@@ -40,7 +47,16 @@ class Workspace(WorkspaceRequestHandler):
     def _get_workspace_folders(self) -> List[WorkspaceFolder]:
         return [WorkspaceFolder(uri=path.as_uri(), name=name) for path, name in zip(self._roots, self._root_names)]
 
-    def launch_client(self, params: _ServerLaunchParams, name: Optional[str] = None, initialize_params: Optional[InitializeParams] = None) -> Client:
+    def create_client(self, params: ServerLaunchParams, name: Optional[str] = None, initialize_params: Optional[InitializeParams] = None) -> Client:
+        """
+        Creates a :class:`Client` associated with this :class:`Workspace`, which manages a language server.
+
+        :param params: The :class:`ServerLaunchParams` which will be used to start the language server.
+        :param name: The name for the language server. This name can later be used to reference the server started by the returned ``Client``.
+            If no name is given, a name will be automatically generated.
+        :param initialize_params: The :class:`InitializeParams` which should be used to start the server. If no parameters are given,
+            the value returned from :func:`get_default_initialize_params()` is used.
+        """
         if not initialize_params:
             initialize_params = get_default_initialize_params()
         initialize_params.workspaceFolders = self._get_workspace_folders()
@@ -49,9 +65,6 @@ class Workspace(WorkspaceRequestHandler):
         return client
 
     def _register_client(self, client: Client) -> None:
-        """
-        Registers an existing `Client` with this `Workspace`.
-        """
         name = client.get_name()
         if name in self._clients.values():
             raise ValueError(
@@ -61,6 +74,14 @@ class Workspace(WorkspaceRequestHandler):
         client.set_workspace_request_handler(self)
 
     def set_configuration_provider(self, configuration_provider: Optional[ConfigurationProvider]) -> None:
+        """
+        Sets the :data:`ConfigurationProvider` for this :class:`Workspace`.
+
+        The ``ConfigurationProvider`` manages any configurations that a language server might need.
+
+        :param configuration_provider: The ``ConfigurationProvider`` to be used. Can be ``None`` to clear
+            the current provider.
+        """
         self._configuration_provider = configuration_provider
 
     def _resolve_path_in_workspace(self, path: Path) -> Path:
@@ -80,7 +101,13 @@ class Workspace(WorkspaceRequestHandler):
 
     def open_text_document(self, path: Path, client_names: Optional[List[str]] = None, *, encoding: Optional[str] = None, language_id: Optional[str] = None) -> TextDocument:
         """
-        Opens a `TextDocument` from this `Workspace`.
+        Opens a :class:`TextDocument` from this :class:`Workspace`.
+
+        :param path: The :class:`Path` from which to load the document.
+        :param client_names: List of names of :class:`Client`\\ s in which to open the ``TextDocument``. Methods of ``TextDocument`` which
+            send requests to a language server can only be sent servers which are managed by one of these ``Clients``.
+        :param encoding: The encoding of the document.
+        :param language_id: The language id of the document. If this is not given, it is guessed from the file extension.
         """
         if client_names is None:
             client_names = list(self._clients.keys())

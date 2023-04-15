@@ -18,7 +18,7 @@ async def mock_workspace_1(request: pytest.FixtureRequest) -> AsyncGenerator[Wor
     workspace = Workspace(Path("test/mock-ws-1"))
     launch_params = StdIOConnectionParams(
         launch_command=f"node mock-server/out/index.js --stdio {test_sequence}")
-    async with workspace.launch_client(launch_params) as client:
+    async with workspace.create_client(launch_params) as client:
         repo_uri = Path(".").resolve().as_uri()
         await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
         yield workspace

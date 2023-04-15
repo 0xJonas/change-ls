@@ -6,6 +6,7 @@ build
 **/*.egg-info
 **/__pycache__
 **/node_modules
+doc/build
 
 mock-server/out
 token-server/out

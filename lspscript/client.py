@@ -47,7 +47,7 @@ _RequestHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_V
 _NotificationHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], None]
 
 
-class _ServerLaunchParams(ABC):
+class ServerLaunchParams(ABC):
     server_path: Optional[Path]
     launch_command: Optional[str]
     additional_args: Sequence[str]
@@ -68,7 +68,7 @@ class _ServerLaunchParams(ABC):
         pass
 
 
-class StdIOConnectionParams(_ServerLaunchParams):
+class StdIOConnectionParams(ServerLaunchParams):
     """Launch parameters which launch a language server with stdio communication."""
 
     def __init__(self, *,
@@ -115,7 +115,7 @@ class StdIOConnectionParams(_ServerLaunchParams):
             assert False
 
 
-class SocketConnectionParams(_ServerLaunchParams):
+class SocketConnectionParams(ServerLaunchParams):
     """Launch parameters which launch a language server with tcp socket communication."""
 
     hostname: str
@@ -171,7 +171,7 @@ class SocketConnectionParams(_ServerLaunchParams):
         return await loop.create_connection(lambda: LSStreamingProtocol(request_handler, notification_handler, logger), host=self.hostname, port=self.port, family=AF_INET)
 
 
-class PipeConnectionParams(_ServerLaunchParams):
+class PipeConnectionParams(ServerLaunchParams):
     # Unix:
     #   event_loop.create_unix_connection(...)
     # Win:
@@ -244,7 +244,7 @@ def get_default_initialize_params() -> InitializeParams:
         capabilities=get_default_client_capabilities())
 
 
-def _generate_client_name(launch_params: _ServerLaunchParams) -> str:
+def _generate_client_name(launch_params: ServerLaunchParams) -> str:
     global _anonymous_client_counter
     if launch_params.server_path:
         basename = launch_params.server_path.stem
@@ -270,7 +270,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     _state: ClientState
     _protocol: Optional[LSProtocol]
-    _launch_params: _ServerLaunchParams
+    _launch_params: ServerLaunchParams
     _name: str
     _logger: Logger
 
@@ -281,7 +281,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     _initialize_params: InitializeParams
     _workspace_request_handler: Optional[WorkspaceRequestHandler]
 
-    def __init__(self, launch_params: _ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params(), name: Optional[str] = None) -> None:
+    def __init__(self, launch_params: ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params(), name: Optional[str] = None) -> None:
         super().__init__()
 
         self._state = "disconnected"

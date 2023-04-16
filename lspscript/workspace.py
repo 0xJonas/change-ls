@@ -24,9 +24,9 @@ def _path_is_relative_to(path: Path, root: Path) -> bool:
 class Workspace(WorkspaceRequestHandler):
     """
     A :class:`Workspace` contains one or more workspace roots and provides access to the roots' files,
-    as well as managing Language servers for these files.
+    as well as managing Language Servers for these files.
 
-    :param roots: The :class:`Path`\\ s to the roots of the workspace. The ``Paths`` must be directories.
+    :param roots: The :class:`Paths <pathlib.Path>` to the roots of the workspace. The ``Paths`` must be directories.
     :param names: An optional list of names for the workspace roots. If given, there must be a name for each root.
     """
 
@@ -103,10 +103,13 @@ class Workspace(WorkspaceRequestHandler):
         """
         Opens a :class:`TextDocument` from this :class:`Workspace`.
 
-        :param path: The :class:`Path` from which to load the document.
-        :param client_names: List of names of :class:`Client`\\ s in which to open the ``TextDocument``. Methods of ``TextDocument`` which
-            send requests to a language server can only be sent servers which are managed by one of these ``Clients``.
-        :param encoding: The encoding of the document.
+        :param path: The :class:`Path` from which to load the document. If this is an absolute path, it is opened directly, although a warning will be
+            issued, if the path is not actually part of one of the workspace roots. If ``path`` is a relative path, it is combined with each workspace
+            root and checked if the resulting full path points to an existing file. If no file or more than one file is found this way, a ``FileNotFoundError``
+            will be raised.
+        :param client_names: List of names of :class:`Clients <lspscript.Client>` in which to open the ``TextDocument``. Methods of ``TextDocument`` which
+            send requests to a language server can only be sent by servers which are managed by one of these ``Clients``.
+        :param encoding: The encoding of the document. If ``encoding`` is ``None``, :func:`locale.getencoding` is used, similar to Python's :func:`open`.
         :param language_id: The language id of the document. If this is not given, it is guessed from the file extension.
         """
         if client_names is None:

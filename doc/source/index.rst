@@ -5,3 +5,4 @@ Welcome to LSPScript's documentation!
 
    setup
    reference/workspace
+   reference/text_document

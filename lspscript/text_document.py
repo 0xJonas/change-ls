@@ -342,6 +342,18 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     def edit_tokens(self, new_text: str, from_index: int, *, num_tokens: int) -> None: ...
 
     def edit_tokens(self, new_text: str, from_index: int, to_index: Optional[int] = None, *, num_tokens: Optional[int] = None) -> None:
+        """
+        Similar to :meth:`edit()`, but takes it's range from indices into the :attr:`tokens` list. This method
+        requires that :meth:`load_tokens()` was called before. It provides the following overloads:
+
+        * ``edit_tokens(new_text, from_index)`` edits the range token at ``tokens[from_index]``.
+
+        * ``edit_tokens(new_text, from_index, to_index)`` edits the range starting at the beginning of ``tokens[from_index]``
+            and ends at the end of ``tokens[to_index - 1]``.
+
+        * ``edit_tokens(new_text, from_index, num_tokens=num_tokens)`` edits the range starting at the beginning of ``tokens[from_index]``
+            and ends at the end of ``tokens[from_index + num_tokens - 1]``.
+        """
         if to_index is None:
             if num_tokens is None:
                 to_index = from_index + 1

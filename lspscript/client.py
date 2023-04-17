@@ -48,6 +48,18 @@ _NotificationHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, J
 
 
 class ServerLaunchParams(ABC):
+    """
+    Abstract base class for parameters to launch a language server.
+
+    The following concrete subclasses are available, each establishing the communication in a different way:
+
+    * :class:`StdIOConnectionParams`: Communicate with the language server over standard input/output streams.
+
+    * :class:`SocketConnectionParams`: Communicate over TCP sockets.
+
+    * :class:`PipeConnectionParams`: Communicate over named pipes.
+    """
+
     server_path: Optional[Path]
     launch_command: Optional[str]
     additional_args: Sequence[str]
@@ -221,8 +233,8 @@ class WorkspaceRequestHandler(ABC):
 
 def get_default_client_capabilities() -> ClientCapabilities:
     """
-    Returns the `ClientCapabilities` which are used for the default
-    `InitializeParams` (see `get_default_initialize_params`).
+    Returns the :class:`ClientCapabilities` which are used for the default
+    :class:`InitializeParams` (see `get_default_initialize_params`).
     """
     return ClientCapabilities(
         general=GeneralClientCapabilities(
@@ -231,8 +243,8 @@ def get_default_client_capabilities() -> ClientCapabilities:
 
 def get_default_initialize_params() -> InitializeParams:
     """
-    Returns the `InitializeParams` which will be used when a Client is
-    constructed without explicit `InitializeParams`.
+    Returns the :class:`InitializeParams` which will be used when a :class:`Client` is
+    constructed without explicit ``InitializeParams``.
     """
     return InitializeParams(
         processId=getpid(),
@@ -265,8 +277,53 @@ ClientState = Literal["disconnected", "uninitialized",
 
 
 class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
-    # Manages capabilities (client and server).
-    # Handles dispatching requests/responses/notifications.
+    """
+    A Client manages the low-level communication with a language server using the Language Server Protocol.
+
+    To obtain an instance of a ``Client``, call :meth:`~Workspace.create_client()` on a :class:`Workspace` instance
+    with appropriate :class:`ServerLaunchParams`. ``Clients`` are also context managers, so it is recommended to start
+    ``Clients`` in a ``with`` statement like this::
+
+        launch_params = StdIOLaunchParams(...)
+        with workspace.create_client(launch_params) as client:
+            assert client.get_state() == "running
+
+    The ``Client`` class provides methods for each request in the
+    `LSP <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>`_
+    that is sent from the client to the server. The types used in the parameters to these requests are
+    available under ``lspscript.types``. However, users may find it easier to use the abstractions
+    provided by :class:`Workspace`, :class:`TextDocument`, etc. The ``send_*`` methods which send a request
+    (i.e. expect a response from the server) also provide the following keyword arguments:
+
+    * ``timeout``: A timeout in seconds after which the request is considered to have failed. A value of ``None``
+        indicates an infinite timeout. The default timeout is 10 seconds.
+
+    Depending on which features the language server advertises in its :class:`InitializeResult`, a
+    subset of the requests/notification of the LSP are available. To check whether a language server
+    supports a particular request, the :meth:`check_feature()` method can be used.
+
+    It is also possible to go through the launch and shutdown processes for the language server manually.
+    A ``Client`` has the following lifecycle:
+
+    * ``"disconnected"``: No server process is running. When a server process is launched with :meth:`launch()`,
+        the server enters the ``"uninitialized"`` state.
+
+    * ``"uninitialized"``: The server is running, but no *initialize* request has been sent with :meth:`send_initialize()`.
+        After the *initialize* request has been sent, the ``Client`` enters the ``"initializing"`` state.
+
+    * ``"initializing"``: The ``Client`` has received the result of the *initialize* request, but has not yet sent the
+        *initialized* notification (with :meth:`send_initialized()`). Doing so will put the ``Client`` in the ``"running"`` state.
+
+    * ``"running"``: The server is running and ready to receive requests. Calling :meth:`send_shutdown()` to send
+        a *shutdown* request will put the ``Client`` in the ``"shutdown"`` state.
+
+    * ``"shutdown"``: The server is shutting down. Sending an *exit* notification using :meth:`send_exit()`
+        will cause the ``Client`` to enter the ``"disconnected"`` state.
+
+    The context manager functions are state-agnostic, so the ``Client`` will always be in the ``"running"`` state
+    inside a ``with`` statement and always in the ``"disconnected"`` state after the ``with`` statement is exited.
+    To facilitate this, the language server process may be relaunched.
+    """
 
     _state: ClientState
     _protocol: Optional[LSProtocol]
@@ -310,19 +367,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     def get_state(self) -> ClientState:
         """
-        Returns the current state of the `Client`.
-
-        Possible values:
-        - `"disconnected"`: No server process is running. When a server process is launched with `client.launch()`,
-                            the server enters the `"uninitialized"` state.
-        - `"uninitialized"`: The server is running, but no 'initialize' request has been sent. After the 'initialize'
-                             request has been sent, the `Client` enters the `"initializing"` state.
-        - `"initializing"`: The `Client` has received the result of the 'initialize' request, but has not yet sent the
-                            'initialized' notification. Doing so will put the `Client` in the `"running"` state.
-        - `"running"`: The server is running and ready to receive requests. Sending a 'shutdown' request
-                       will put the `Client` in the `shutdown` state.
-        - `"shutdown"`: The server is shutting down. Sending an 'exit' notification will cause the `Client` to
-                        enter the `"disconnected"` state.
+        Returns the current state of the ``Client``.
         """
         return self._state
 
@@ -332,6 +377,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     async def launch(self) -> None:
         """
         Launches the Language Server process.
+
+        The next step in the launch process is to call :meth:`send_initialize()`.
         """
         self._exit_sent = False
 
@@ -360,10 +407,9 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         Sends a request to the server and returns the result.
         The method and contents of the request are arbitrary and need not be defined in the LSP.
 
-        Keyword arguments:
-        - `timeout`: Number of seconds after which the request must be resolved. A value of
-          `None` indicates an infinite timeout. If the request is not resolved before the given
-          `timeout`, an `asyncio.exceptions.TimeoutError` is raised (not to be confused with `TimeoutError(OSError)`).
+        :param timeout: Number of seconds after which the request must be resolved. A value of
+            ``None`` indicates an infinite timeout. If the request is not resolved before the given
+            timeout, an ``asyncio.exceptions.TimeoutError`` is raised (not to be confused with ``TimeoutError(OSError)``).
         """
         if self._state != "running":
             raise LSPClientException("Invalid state, expected 'running'.")
@@ -458,6 +504,10 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         return False
 
     def get_position_encoding_kind(self) -> PositionEncodingKind:
+        """
+        Returns the :class:`PositionEncodingKind` used by the language server.
+        """
+
         if self._state not in ["initializing", "running"]:
             raise LSPClientException("Invalid state, expected 'initializing' or 'running'.")
         assert self._server_capabilities

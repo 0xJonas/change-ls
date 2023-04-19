@@ -81,26 +81,29 @@ class ServerLaunchParams(ABC):
 
 
 class StdIOConnectionParams(ServerLaunchParams):
-    """Launch parameters which launch a language server with stdio communication."""
+    """
+    Launch parameters which launch a language server with stdio communication.
+
+    The :class:`Client` will send messages to the server's stdin and receive
+    responses on the server's stdout.
+
+    Either ``server_path`` or ``launch_command`` must be set.
+
+    :param server_path: Path to the server binary.
+    :param launch_command: Shell command to launch the language server. If this is given, only this command
+        is run, without any additional arguments. Therefore, the ``launch_command`` needs to make sure that
+        the server is started with stdio communication, e.g. by passing ``--stdio`` for some node.js-based servers.
+    :param additional_args: List of additional commandline arguments passed to the server.
+    :param additional_only: Only add the arguments inside ``additional_args``, do not add any default arguments.
+        By default, ``StdIOConnectionParams`` adds ``--stdio`` and ``cliendProcessId=<pid>``, as recommended by
+        the LSP spec.
+    """
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
                  launch_command: Optional[str] = None,
                  additional_args: Sequence[str] = [],
                  additional_only: bool = False) -> None:
-        """Constructs a new StdIOConnectionParams instance. This instance can then be
-        used to launch a new client/server connection.
-
-        Either `server_path` or `launch_command` must be set.
-
-        Parameters:
-        - `server_path`: The path were the language server executable is located.
-        - `launch_command`: Shell command to start the server. If a launch command is given,
-          no additional arguments are appended. This means that the caller may also need
-          to add `--stdio` to the command to select a connection via standard input/output streams.
-        - `additional_args`: List of additional arguments to pass to the server.
-        - `additional_only`: Do not send any standard arguments, only those in `additional_args`."""
-
         if not server_path and not launch_command:
             raise ValueError(
                 "Either server_path or launch_command need to be set.")

@@ -185,6 +185,14 @@ class CapabilitiesMixin:
                 options = capabilities.textDocumentSync
             registration_list += _text_document_sync_options_to_feature_registrations(options)
 
+        # workspace/diagnostics is a special case inside the registration options for textDocument/diagnostics.
+        # While it would be possible to handle this in the generator, it would be a lot of effort because
+        # capabilities.diagnosticProvider is an OR-type. Since this is the only case of this pattern, it is
+        # currently easier to just add the FeatureRegistration manually.
+        if capabilities.diagnosticProvider and capabilities.diagnosticProvider.workspaceDiagnostics:
+            registration_list.append(FeatureRegistration(
+                None, "workspace/diagnostics", None, capabilities.diagnosticProvider))
+
         self._registrations = {}
         for r in registration_list:
             if r.method not in self._registrations:
@@ -216,8 +224,55 @@ class CapabilitiesMixin:
         Checks whether the features currently registered by the server can fulfill the
         given feature request.
 
-        - `method` is the *registration* method for the feature (might be different from the request/notification method).
-        - Some methods provide a more granular control over the feature. `kwargs` can be used to specify exactly which realization of a feature is requested.
+        :param method: The *registration* method for the feature (might be different from the request/notification method).
+
+        :param text_documents: List of :class:`TextDocuments <TextDocument>` for which this feature should be checked.
+        :type text_documents: List[TextDocumentInfo]
+
+        :param sync_kind: How to synchronize ``TextDocument`` content with the language server over *textDocument/didChange*
+            notifications.
+        :type sync_kind: TextDocumentSyncKind
+
+        :param include_text: Whether a ``TextDocuments`` content should be sent for *textDocument/didSave* notifications.
+        :type include_text: bool
+
+        :param file_operations: Uris of documents, for which file operation messages should be sent. Used with
+            *workspace/willCreateFiles*, *workspace/didCreateFiles*, *workspace/willRenameFiles*, *workspace/didRenameFiles*,
+            *workspace/willDeleteFiles*, *workspace/didDeleteFiles*
+        :type file_operations: List[str]
+
+        :param semantic_tokens: Which of *textDocument/semanticTokens/full*, *textDocument/semanticTokens/range* and
+            *textDocument/semanticTokens/delta* is required. Note the the registration ``method`` for these requests is
+            *textDocument/semanticTokens*.
+        :type semantic_tokens: List[Literal["full", "delta", "range]]
+
+        :param code_actions: Which kinds of code actions are required. Used with *textDocument/codeAction*.
+        :type code_actions: List[CodeActionKind]
+
+        :param code_action_resolve: Whether the *codeAction/resolve* request is supported. Used with *textDocument/codeAction*.
+        :type code_action_resolve: bool
+
+        :param workspace_commands: Which workspace commands are required. Used with *workspace/executeCommand*.
+        :type workspace_commands: List[str]
+
+        :param completion_item_resolve: Whether the *completionItem/resolve* request is supported. Used with *textDocument/completion*.
+        :type completion_item_resolve: bool
+
+        :param completion_item_label_details: Whether the server supports the :attr:`CompletionItem.labelDetails` field.
+            Used with *textDocument/completion*.
+        :type completion_item_label_details: bool
+
+        :param inlay_hint_resolve: Whether the *inlayHint/resolve* request is supported. Used with *textDocument/inlayHint*.
+        :type inlay_hint_resolve: bool
+
+        :param workspace_symbol_resolve: Whether the *workspaceSymbol/resolve* request is supported. Used with *workspace/symbol*.
+        :type workspace_symbol_resolve: bool
+
+        :param code_lens_resolve: Whether the *codeLens/resolve* request is supported. Used with *textDocument/codeLens*.
+        :type code_lens_resolve: bool
+
+        :param document_link_resolve: Whether the *documentLink/resolve* request is supported. Used with *textDocument/documentLink*.
+        :type document_link_resolve: bool
         """
 
         registrations = self._registrations.get(method)
@@ -245,10 +300,11 @@ class CapabilitiesMixin:
         should be used when a language server registers some of its features dynamically, since the client
         potentially has to wait until the language server is ready to provide the feature.
 
-        - `method` is the *registration* method for the feature (might be different from the request/notification method).
-        - Some methods provide a more granular control over the feature. `params` can be used to specify exactly which realization of a feature is requested.
-        - `timeout` specifies how long to wait for a dynamic registration. Use `None` to wait indefinitly.
-        When the `timeout` is reached without a matching registration, an `asyncio.TimeoutError` is raised.
+        For a list of additional keyword parameters see :meth:`check_feature()`.
+
+        :param method: The *registration* method for the feature (might be different from the request/notification method).
+        :param timeout: How long to wait for a dynamic registration. Use `None` to wait indefinitly.
+            When the ``timeout`` is reached without a matching registration, an ``asyncio.TimeoutError`` is raised.
         """
         if self.check_feature(method, **kwargs):
             return

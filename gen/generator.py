@@ -263,7 +263,7 @@ class Generator:
             return self._generate_parse_expression_tuple(val.content, arg)
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return f"parse_{self._anonymous_structure_names[val.content.value]}({arg})"
+            return f"_parse_{self._anonymous_structure_names[val.content.value]}({arg})"
         elif val.kind == "stringLiteral":
             assert isinstance(val.content, StringLiteralType)
             return f'match_string({arg}, "{val.content.value}")'
@@ -425,7 +425,7 @@ class Generator:
             return f"list({name})"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return f"write_{self._anonymous_structure_names[val.content.value]}({name})"
+            return f"_write_{self._anonymous_structure_names[val.content.value]}({name})"
         elif val.kind == "stringLiteral":
             assert isinstance(val.content, StringLiteralType)
             return '"' + val.content.value + '"'
@@ -468,6 +468,13 @@ class Generator:
         else:
             assert False  # Broken MapKeyType
 
+    def _generate_type_annotation_literal(self, literal: StructureLiteralType) -> str:
+        if len(literal.value.properties) == 0:
+            property_names = None
+        else:
+            property_names = ",".join('"' + p.name + '"' for p in literal.value.properties)
+        return f"Dict[Literal[{property_names}], Any]"
+
     def generate_type_annotation(self, val: AnyType) -> str:
         """Generates a type annotation for the given `AnyType`."""
 
@@ -505,7 +512,7 @@ class Generator:
             return f"Tuple[{', '.join(item_annotations)}]"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            return f"Dict[{self._anonymous_structure_names[val.content.value]}Keys, Any]"
+            return self._generate_type_annotation_literal(val.content)
         elif val.kind == "stringLiteral":
             return "str"
         elif val.kind == "integerLiteral":

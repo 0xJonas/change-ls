@@ -60,24 +60,16 @@ def _generate_property_write_statement(gen: Generator, prop: Property, obj_name:
     return write_statement
 
 
-def _generate_anonymous_structure_key_type_alias(gen: Generator, val: StructureLiteral) -> str:
-    name = f"{gen.get_anonymous_type_name(val)}Keys"
-    if len(val.properties) == 0:
-        return name + " = Literal[None]"
-
-    type_names = ['"' + p.name + '"' for p in val.properties]
-    return f"{name} = Literal[{','.join(type_names)}]"
-
-
 def _generate_anonymous_structure_read_fun(gen: Generator, val: StructureLiteral) -> str:
     read_statements = [_generate_property_read_statement(gen, p, "obj", True, "out") for p in val.properties]
     template = dedent("""\
-        def parse_{name}(obj: Mapping[str, JSON_VALUE]) -> Dict[{name}Keys, Any]:
-            out: Dict[{name}Keys, Any] = {{}}
+        def _parse_{name}(obj: Mapping[str, JSON_VALUE]) -> {type}:
+            out: {type} = {{}}
         {statements}
             return out""")
     return template.format(
         name=gen.get_anonymous_type_name(val),
+        type=gen.generate_type_annotation(AnyType("literal", StructureLiteralType(val))),
         statements=indent("\n".join(read_statements)))
 
 
@@ -85,25 +77,23 @@ def _generate_anonymous_structure_write_fun(gen: Generator, val: StructureLitera
     write_statements = [_generate_property_write_statement(gen, p, "out", True, "obj") for p in val.properties]
 
     template = dedent("""\
-        def write_{name}(obj: Dict[{name}Keys, Any]) -> JSON_VALUE:
+        def _write_{name}(obj: {type}) -> JSON_VALUE:
             out: JSON_VALUE = {{}}
         {statements}
             return out""")
 
     return template.format(
         name=gen.get_anonymous_type_name(val),
+        type=gen.generate_type_annotation(AnyType("literal", StructureLiteralType(val))),
         statements=indent("\n".join(write_statements)))
 
 
 def generate_anonymous_structure_definition(gen: Generator, val: StructureLiteral) -> str:
     template = dedent_ignore_empty("""\
-        {key_type_alias}
-
         {read_fun}
 
         {write_fun}""")
     return template.format(
-        key_type_alias=_generate_anonymous_structure_key_type_alias(gen, val),
         read_fun=_generate_anonymous_structure_read_fun(gen, val),
         write_fun=_generate_anonymous_structure_write_fun(gen, val))
 
@@ -122,15 +112,34 @@ def _generate_property_declaration(gen: Generator, prop: Property) -> str:
     return f"{documentation}{escape_keyword(prop.name)}: {type_annotation}"
 
 
-def _generate_structure_init_method_documentation(properties: Tuple[Property, ...]) -> str:
-    docstring_lines: List[str] = []
-    for p in properties:
+def _build_documentation_with_prefix(prefix: str, documentation: str) -> str:
+    if len(documentation) == 0:
+        return ""
+
+    lines = documentation.splitlines()
+    first_line = prefix + lines[0]
+    return first_line + "\n" + "\n".join("    " + l for l in lines[1:])
+
+
+def _generate_anonymous_structure_documentation(gen: Generator, val: StructureLiteral) -> str:
+    docstring_parts: List[str] = ["`dict` with the following keys:\n"]
+    for p in val.properties:
+        prefix = f"* `'{p.name}'` (type `{gen.generate_type_annotation(p.type)}`): "
+
         if not p.documentation:
-            continue
-        lines = p.documentation.splitlines()
-        docstring_lines.append(f"- {p.name}: {lines[0]}")
-        docstring_lines += ["    " + l for l in lines[1:]]
-    return "\n".join(docstring_lines)
+            docstring_parts.append(prefix)
+        else:
+            docstring_parts.append(_build_documentation_with_prefix(prefix, p.documentation))
+    return "\n\n".join(docstring_parts)
+
+
+def _generate_property_documentation(gen: Generator, property: Property) -> str:
+    documentation = ""
+    if property.documentation:
+        documentation += property.documentation
+    if isinstance(property.type.content, StructureLiteralType):
+        documentation += "\n\n" + _generate_anonymous_structure_documentation(gen, property.type.content.value)
+    return _build_documentation_with_prefix(f":param {property.name}: ", documentation)
 
 
 def _generate_structure_init_method(gen: Generator, properties: Tuple[Property, ...]) -> str:
@@ -149,14 +158,10 @@ def _generate_structure_init_method(gen: Generator, properties: Tuple[Property, 
 
     template = dedent('''\
         def __init__(self, *, {parameters}) -> None:
-            """
-        {documentation}
-            """
         {assignments}''')
 
     return template.format(
         parameters=", ".join(parameters),
-        documentation=indent(_generate_structure_init_method_documentation(properties)),
         assignments=indent("\n".join(assignments)))
 
 
@@ -226,7 +231,12 @@ def generate_structure_definition(gen: Generator, struct: Structure) -> str:
 
     properties = tuple(gen.collect_structure_properties(struct))
 
-    return _generate_structure_definition_generic(gen, struct.name, struct.documentation, properties, tuple(superclasses))
+    property_documentations = "\n".join(_generate_property_documentation(gen, p) for p in properties)
+    if struct.documentation:
+        documentation = struct.documentation + "\n\n" + property_documentations
+    else:
+        documentation = property_documentations
+    return _generate_structure_definition_generic(gen, struct.name, documentation, properties, tuple(superclasses))
 
 
 def generate_andtype_definition(gen: Generator, val: AndType) -> str:
@@ -456,6 +466,11 @@ def generate_structures_py(gen: Generator) -> str:
             definitions.append(generate_andtype_definition(gen, t))
 
     template = dedent_ignore_empty("""\
+        # DO NOT EDIT THIS FILE DIRECTLY!
+        #
+        # This file was automatically generated, so any edits to it will get overwritten.
+        # To change the content of this file, make changes to the generator.
+
         from .util import *
         from .enumerations import *
 

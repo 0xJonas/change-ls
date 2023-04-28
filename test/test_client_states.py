@@ -32,3 +32,36 @@ async def test_client_context_manager_normal() -> None:
         launch_command="node mock-server/out/index.js --stdio test/test_empty.json")
     async with Client(params) as client:
         assert client.get_state() == "running"
+
+
+async def test_client_state_callbacks() -> None:
+    marker = 0
+
+    def set_marker(val: int) -> None:
+        nonlocal marker
+        marker = val
+
+    params = StdIOConnectionParams(
+        launch_command="node mock-server/out/index.js --stdio test/test_empty.json")
+    client = Client(params)
+
+    client.register_state_callback("uninitialized", lambda: set_marker(1))
+    client.register_state_callback("initializing", lambda: set_marker(2))
+    client.register_state_callback("running", lambda: set_marker(3))
+    client.register_state_callback("shutdown", lambda: set_marker(4))
+    client.register_state_callback("disconnected", lambda: set_marker(5))
+
+    await client.launch()
+    assert marker == 1
+
+    await client.send_initialize(InitializeParams(processId=getpid(), rootUri=None, capabilities=ClientCapabilities()))
+    assert marker == 2
+
+    await client.send_initialized(InitializedParams())
+    assert marker == 3
+
+    await client.send_shutdown()
+    assert marker == 4
+
+    await client.send_exit()
+    assert marker == 5

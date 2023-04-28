@@ -340,6 +340,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     _initialize_params: InitializeParams
     _workspace_request_handler: Optional[WorkspaceRequestHandler]
+    _state_callbacks: Dict[ClientState, List[Callable[[], None]]]
 
     def __init__(self, launch_params: ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params(), name: Optional[str] = None) -> None:
         super().__init__()
@@ -355,6 +356,13 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._name = name
         _client_names.add(name)
         self._logger = getLogger("lspscript.client." + name)
+        self._state_callbacks = {
+            "disconnected": [],
+            "uninitialized": [],
+            "initializing": [],
+            "running": [],
+            "shutdown": [],
+        }
 
     def set_workspace_request_handler(self, handler: Optional[WorkspaceRequestHandler]) -> None:
         self._workspace_request_handler = handler
@@ -368,11 +376,26 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         if self._protocol:
             self._protocol.reject_active_requests(exception)
 
+    def _set_state(self, state: ClientState) -> None:
+        self._state = state
+        for callback in self._state_callbacks[state]:
+            callback()
+
     def get_state(self) -> ClientState:
         """
         Returns the current state of the ``Client``.
         """
         return self._state
+
+    def register_state_callback(self, state: ClientState, callback: Callable[[], None]) -> None:
+        """
+        Registers a callback to run when the ``Client`` enters a given state.
+
+        :param state: The state at which the callback should be called.
+        :param callback: The callback. This should be a function receiving no arguments and
+            return no value.
+        """
+        self._state_callbacks[state].append(callback)
 
     def get_name(self) -> str:
         return self._name
@@ -387,7 +410,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
         get_running_loop().set_exception_handler(self._client_thread_exception_handler)
         (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self.dispatch_request, self.dispatch_notification, self._logger)  # type: ignore
-        self._state = "uninitialized"
+        self._set_state("uninitialized")
         self._logger.info("Client is now uninitialized")
 
     async def _send_request_internal(self, method: str, params: JSON_VALUE, timeout: Optional[float] = 10.0) -> JSON_VALUE:
@@ -452,7 +475,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         out = InitializeResult.from_json(out_json)
         self._set_server_capabilities(out.capabilities)
 
-        self._state = "initializing"
+        self._set_state("initializing")
         self._logger.info("Client is now initializing")
         return out
 
@@ -461,12 +484,12 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
             raise LSPClientException("Invalid state, expected 'initializing'.")
 
         self._send_notification_internal("initialized", params.to_json())
-        self._state = "running"
+        self._set_state("running")
         self._logger.info("Client is now running")
 
     async def send_shutdown(self, **kwargs: Any) -> None:
         await super().send_shutdown(**kwargs)
-        self._state = "shutdown"
+        self._set_state("shutdown")
         self._logger.info("Client is now shutting down")
 
     async def send_exit(self) -> None:
@@ -478,7 +501,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         try:
             assert self._protocol
             await wait_for(self._protocol.wait_for_disconnect(), 10.0)
-            self._state = "disconnected"
+            self._set_state("disconnected")
         except:
             raise LSPClientException("Unable to stop server thread.")
 

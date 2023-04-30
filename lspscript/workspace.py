@@ -2,7 +2,7 @@ import warnings
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence
 
-from lspscript.text_document import TextDocument
+import lspscript.text_document as td
 
 from .client import (Client, ServerLaunchParams, WorkspaceRequestHandler,
                      get_default_initialize_params)
@@ -34,6 +34,7 @@ class Workspace(WorkspaceRequestHandler):
     _root_names: List[str]
     _clients: Dict[str, Client]
     _configuration_provider: Optional[ConfigurationProvider]
+    _opened_text_documents: Dict[str, "td.TextDocument"]
 
     def __init__(self, *roots: Path, names: Optional[Sequence[str]] = None) -> None:
         self._roots = [p.resolve() for p in roots]
@@ -43,6 +44,7 @@ class Workspace(WorkspaceRequestHandler):
             self._root_names = [r.stem for r in roots]
         self._clients = {}
         self._configuration_provider = None
+        self._opened_text_documents = {}
 
     def _get_workspace_folders(self) -> List[WorkspaceFolder]:
         return [WorkspaceFolder(uri=path.as_uri(), name=name) for path, name in zip(self._roots, self._root_names)]
@@ -65,13 +67,28 @@ class Workspace(WorkspaceRequestHandler):
         return client
 
     def _register_client(self, client: Client) -> None:
+        def send_did_open_notifications() -> None:
+            for doc in self._opened_text_documents.values():
+                if not client.check_feature("textDocument/didOpen", text_documents=[doc]):
+                    continue
+                client.send_text_document_did_open(DidOpenTextDocumentParams(textDocument=doc))
+
+        def unregister_client() -> None:
+            client.set_workspace_request_handler(None)
+            del self._clients[client.get_name()]
+
         name = client.get_name()
         if name in self._clients.values():
-            raise ValueError(
-                f"A Client with the same name '{name}' was already registered with this Workspace")
+            raise ValueError(f"A Client with the same name '{name}' was already registered with this Workspace")
 
         self._clients[name] = client
         client.set_workspace_request_handler(self)
+        client.register_state_callback("running", send_did_open_notifications)
+        client.register_state_callback("disconnected", unregister_client)
+
+    @property
+    def clients(self) -> Dict[str, Client]:
+        return self._clients
 
     def set_configuration_provider(self, configuration_provider: Optional[ConfigurationProvider]) -> None:
         """
@@ -99,31 +116,42 @@ class Workspace(WorkspaceRequestHandler):
                     f"Path is ambiguous in workspace: '{str(path)}' can be any of {[str(p) for p in existing_paths]}")
             return existing_paths[0].resolve()
 
-    def open_text_document(self, path: Path, client_names: Optional[List[str]] = None, *, encoding: Optional[str] = None, language_id: Optional[str] = None) -> TextDocument:
+    def open_text_document(self, path: Path, *, encoding: Optional[str] = None, language_id: Optional[str] = None) -> "td.TextDocument":
         """
         Opens a :class:`TextDocument` from this :class:`Workspace`.
+
+        When ``open_text_document`` is called with the path of a document that is currently open, the call will return the existing instance.
+        ``TextDocuments`` keep a reference count, so each document needs to be closed the same number of times it has been opened.
 
         :param path: The :class:`Path` from which to load the document. If this is an absolute path, it is opened directly, although a warning will be
             issued, if the path is not actually part of one of the workspace roots. If ``path`` is a relative path, it is combined with each workspace
             root and checked if the resulting full path points to an existing file. If no file or more than one file is found this way, a ``FileNotFoundError``
             will be raised.
-        :param client_names: List of names of :class:`Clients <lspscript.Client>` in which to open the ``TextDocument``. Methods of ``TextDocument`` which
-            send requests to a language server can only be sent by servers which are managed by one of these ``Clients``.
         :param encoding: The encoding of the document. If ``encoding`` is ``None``, :func:`locale.getencoding` is used, similar to Python's :func:`open`.
         :param language_id: The language id of the document. If this is not given, it is guessed from the file extension.
         """
-        if client_names is None:
-            client_names = list(self._clients.keys())
-        clients = {name: self._clients[name] for name in client_names}
 
         full_path = self._resolve_path_in_workspace(path)
-        text_document = TextDocument(full_path, clients, language_id, 0, encoding)
+        uri = full_path.as_uri()
 
-        for client in clients.values():
+        if text_document := self._opened_text_documents.get(uri):
+            if encoding is not None and encoding != text_document.encoding:
+                raise ValueError(f"Textdocument {path} was already opened with encoding {text_document.encoding}.")
+            if language_id is not None and language_id != text_document.language_id:
+                raise ValueError(
+                    f"Textdocument {path} was already opened with language_id {text_document.language_id}.")
+
+            text_document._reopen()  # type: ignore
+            return text_document
+
+        text_document = td.TextDocument(full_path, self, language_id, 0, encoding)
+
+        for client in self._clients.values():
             if not client.check_feature("textDocument/didOpen", text_documents=[text_document]):
                 continue
             client.send_text_document_did_open(DidOpenTextDocumentParams(textDocument=text_document))
 
+        self._opened_text_documents[uri] = text_document
         return text_document
 
     def _get_client(self, client_name: Optional[str]) -> Client:

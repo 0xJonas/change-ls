@@ -5,6 +5,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Callable, Dict, List, Optional, Type, overload
 
+import lspscript.workspace as ws
 from lspscript.client import Client
 from lspscript.lsp_exception import LSPScriptException
 from lspscript.tokens import TokenList, tokenize
@@ -40,7 +41,7 @@ class _Edit:
 
         # The '<' when comparing to_offset ensures that zero-length edits at the same position
         # will not overlap. Per the LSP-spec, these edits are applied in the order they are received.
-        # The cases where to_overlap is equal are already covered by the other conditions.
+        # The cases where to_offset is equal are already covered by the other conditions.
         covers_both = self.from_offset >= other.from_offset and self.to_offset < other.to_offset
 
         return covers_from_offset or covers_to_offset or covers_both
@@ -184,13 +185,15 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     _path: Path
     _encoding: str
     _clients: Dict[str, Client]
+    _workspace: "ws.Workspace"
     _tokens: Optional[TokenList]
     _pending_edits: List[_Edit]
     _line_offsets: List[int]
+    _reference_count: int
 
     language_id: str
 
-    def __init__(self, path: Path, clients: Dict[str, Client], language_id: Optional[str] = None, version: int = 0, encoding: Optional[str] = None) -> None:
+    def __init__(self, path: Path, workspace: "ws.Workspace", language_id: Optional[str] = None, version: int = 0, encoding: Optional[str] = None) -> None:
         self._path = path
         with path.open(encoding=encoding) as file:
             text = file.read()
@@ -202,29 +205,44 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
                 raise LSPScriptException(f"Unable to determine language id for '{str(path)}'")
             language_id = guessed_id
 
-        self._clients = clients
+        self._workspace = workspace
         self._tokens = None
         self._pending_edits = []
         self._line_offsets = _calculate_line_offsets(text)
+        self._reference_count = 1
 
         uri = path.as_uri()
         TextDocumentInfo.__init__(self, uri, language_id)
         TextDocumentItem.__init__(self, uri=uri, languageId=language_id, version=version, text=text)
 
-    def close(self, client_names: Optional[List[str]] = None) -> None:
+    def _reopen(self) -> None:
+        self._reference_count += 1
+
+    def _final_close(self) -> None:
+        for client in self._workspace.clients.values():
+            params = DidCloseTextDocumentParams(textDocument=self.get_text_document_identifier())
+            client.send_text_document_did_close(params)
+        del self._workspace._opened_text_documents[self.uri]  # type: ignore
+
+    def is_closed(self) -> bool:
+        return self._reference_count <= 0
+
+    def _check_closed(self) -> None:
+        if self.is_closed():
+            raise LSPScriptException("TextDocument is closed")
+
+    def close(self) -> None:
         """
-        Manually closes the document for the given ``Clients``. These ``Clients`` can no longer be
-        used by methods which call a language server.
+        Manually closes this ``TextDocument``. If a ``TextDocument`` has been opened multiple times,
+        it needs to be closed that many times to fully close it.
 
         It is preferred to use a ``with`` statement instead of manually closing the ``TextDocument``
         """
-        if client_names is None:
-            client_names = list(self._clients.keys())
+        self._check_closed()
 
-        for name in client_names:
-            params = DidCloseTextDocumentParams(textDocument=self.get_text_document_identifier())
-            self._clients[name].send_text_document_did_close(params)
-            del self._clients[name]
+        self._reference_count -= 1
+        if self._reference_count <= 0:
+            self._final_close()
 
     def __enter__(self) -> "TextDocument":
         return self
@@ -234,15 +252,16 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         return False
 
     def _get_client(self, client_name: Optional[str]) -> Client:
-        if not self._clients:
-            raise LSPScriptException("TextDocument is not open in any Client")
+        clients = self._workspace.clients
+        if not clients:
+            raise LSPScriptException("No Client available")
 
         if not client_name:
-            if len(self._clients) == 1:
-                return list(self._clients.values())[0]
+            if len(clients) == 1:
+                return list(clients.values())[0]
             else:
                 raise ValueError("Unable to identify Client without a name.")
-        return self._clients[client_name]
+        return clients[client_name]
 
     @property
     def encoding(self) -> str:
@@ -263,6 +282,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         :param include_whitespace: If this is ``True``, whitespace-only tokens are included in ``tokens``, otherwise
             they are removed.
         """
+        self._check_closed()
         self._tokens = await tokenize(self.text, self.language_id, include_whitespace=include_whitespace)
 
     def get_text_document_identifier(self) -> TextDocumentIdentifier:
@@ -320,6 +340,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             ``text[to_offset]`` is not changed.
         :param length: The length of the selected range.
         """
+        self._check_closed()
+
         if to_offset is None:
             if length is None:
                 raise IndexError("One of 'to_offset' and 'length' must be given.")
@@ -425,6 +447,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         This function will NOT save the document to file, this needs to be done separately by calling
         :meth:`save()`.
         """
+        self._check_closed()
+
         text_offset = 0
         segments: List[str] = []
         for edit in self._pending_edits:
@@ -437,7 +461,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
         self.text = "".join(segments)
         self.version += 1
-        for client in self._clients.values():
+        for client in self._workspace.clients.values():
             self._handle_text_change(client)
         self._pending_edits = []
         self._tokens = None
@@ -446,6 +470,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         """
         Discards the currently queued edits.
         """
+        self._check_closed()
         self._pending_edits = []
 
     async def save(self) -> None:
@@ -459,18 +484,22 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             this method will raise an Exception and the document WILL NOT get saved. If this becomes an issue,
             the contents of :attr:`~TextDocument.text` may need to be saved manually using the standard Python I/O functions.
         """
+        self._check_closed()
+
+        clients = self._workspace.clients
+
         will_save_params = WillSaveTextDocumentParams(
             textDocument=self.get_text_document_identifier(), reason=TextDocumentSaveReason.Manual)
 
         # textDocument/willSave
-        for client in self._clients.values():
+        for client in clients.values():
             if not client.check_feature("textDocument/willSave"):
                 continue
             client.send_text_document_will_save(will_save_params)
 
         # textDocument/willSaveWaitUntil
         requests = [client.send_text_document_will_save_wait_until(will_save_params)
-                    for client in self._clients.values()
+                    for client in clients.values()
                     if client.check_feature("textDocument/willSaveWaitUntil")]
         edit_lists: List[Optional[List[TextEdit]]] = await asyncio.gather(*requests)
 
@@ -489,7 +518,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         did_save_params = DidSaveTextDocumentParams(textDocument=self.get_text_document_identifier())
         did_save_params_include_text = DidSaveTextDocumentParams(
             textDocument=self.get_text_document_identifier(), text=self.text)
-        for client in self._clients.values():
+        for client in clients.values():
             if client.check_feature("textDocument/didSave", include_text=True):
                 client.send_text_document_did_save(did_save_params_include_text)
             elif client.check_feature("textDocument/didSave", include_text=False):
@@ -504,6 +533,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             which affect how the ``Position`` is interpreted. If the ``TextDocument`` is only open in a single
             ``Client``, this parameter is optional.
         """
+        self._check_closed()
+
         if position.line >= len(self._line_offsets):
             raise IndexError(f"Line {position.line} is out of bounds")
 
@@ -527,6 +558,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             which affect how the ``Position`` is interpreted. If the ``TextDocument`` is only open in a single
             ``Client``, this parameter is optional.
         """
+        self._check_closed()
+
         if offset >= len(self.text):
             raise IndexError(f"Offset {offset} is out of bounds.")
 

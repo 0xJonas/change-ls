@@ -3,9 +3,8 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 
-from lspscript import Workspace
+from lspscript import TextDocument, Workspace
 from lspscript.client import StdIOConnectionParams
-from lspscript.text_document import TextDocument
 from lspscript.types import Position
 
 
@@ -155,3 +154,18 @@ def test_text_document_position_utf_32(mock_document_2: TextDocument) -> None:
     assert mock_document_2.offset_to_position(24) == Position(line=1, character=12)
     assert mock_document_2.offset_to_position(39) == Position(line=2, character=11)
     assert mock_document_2.offset_to_position(40) == Position(line=2, character=12)
+
+
+@pytest.mark.test_sequence("test/test_text_document_open_close_twice.json")
+async def test_text_document_reopen(mock_workspace_1: Workspace) -> None:
+    doc1 = mock_workspace_1.open_text_document(Path("test-1.py"))
+    doc2 = mock_workspace_1.open_text_document(Path("test-1.py"))
+    assert doc1 is doc2
+    doc2.close()
+    doc1.close()
+
+    doc3 = mock_workspace_1.open_text_document(Path("test-1.py"), language_id="python")
+    assert doc3 is not doc1
+    with pytest.raises(ValueError):
+        mock_workspace_1.open_text_document(Path("test-1.py"), language_id="javascript")
+    doc3.close()

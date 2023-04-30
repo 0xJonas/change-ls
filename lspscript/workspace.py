@@ -1,6 +1,8 @@
+import asyncio
 import warnings
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence
+from types import TracebackType
+from typing import Callable, Dict, List, Optional, Sequence, Type
 
 import lspscript.text_document as td
 
@@ -25,6 +27,20 @@ class Workspace(WorkspaceRequestHandler):
     """
     A :class:`Workspace` contains one or more workspace roots and provides access to the roots' files,
     as well as managing Language Servers for these files.
+
+    A ``Workspace`` is a context manager. If a ``Workspace`` is used with a ``with`` statement, all resources
+    associated with the ``Workspace`` will be closed when exiting the block. This includes all opened
+    :class:`TextDocuments <TextDocument>` and all started :class:`Clients <Client>`::
+
+        async with Workspace(Path("...")) as ws:
+            params = StdIOConnectionParams(...)
+            await ws.launch_client(params)
+            doc = ws.open_text_document(Path(...))
+            # ...
+
+    ``Clients`` and
+    ``TextDocuments`` are also context managers themselves, if you need a more fine-grained control over
+    resources.
 
     :param roots: The :class:`Paths <pathlib.Path>` to the roots of the workspace. The ``Paths`` must be directories.
     :param names: An optional list of names for the workspace roots. If given, there must be a name for each root.
@@ -51,7 +67,19 @@ class Workspace(WorkspaceRequestHandler):
 
     def create_client(self, params: ServerLaunchParams, name: Optional[str] = None, initialize_params: Optional[InitializeParams] = None) -> Client:
         """
+        Like :meth:`launch_client`, but does not immediately start the underlying language server.
+        """
+        if not initialize_params:
+            initialize_params = get_default_initialize_params()
+        initialize_params.workspaceFolders = self._get_workspace_folders()
+        client = Client(params, initialize_params, name)
+        self._register_client(client)
+        return client
+
+    async def launch_client(self, params: ServerLaunchParams, name: Optional[str] = None, initialize_params: Optional[InitializeParams] = None) -> Client:
+        """
         Creates a :class:`Client` associated with this :class:`Workspace`, which manages a language server.
+        The underlying language server is started immediatly, so the returned ``Client`` will be in the ``"running"`` state.
 
         :param params: The :class:`ServerLaunchParams` which will be used to start the language server.
         :param name: The name for the language server. This name can later be used to reference the server started by the returned ``Client``.
@@ -59,11 +87,8 @@ class Workspace(WorkspaceRequestHandler):
         :param initialize_params: The :class:`InitializeParams` which should be used to start the server. If no parameters are given,
             the value returned from :func:`get_default_initialize_params()` is used.
         """
-        if not initialize_params:
-            initialize_params = get_default_initialize_params()
-        initialize_params.workspaceFolders = self._get_workspace_folders()
-        client = Client(params, initialize_params, name)
-        self._register_client(client)
+        client = self.create_client(params, name, initialize_params)
+        await client.__aenter__()
         return client
 
     def _register_client(self, client: Client) -> None:
@@ -153,6 +178,21 @@ class Workspace(WorkspaceRequestHandler):
 
         self._opened_text_documents[uri] = text_document
         return text_document
+
+    async def __aenter__(self) -> "Workspace":
+        return self
+
+    async def __aexit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
+        for doc in list(reversed(self._opened_text_documents.values())):
+            doc._final_close()  # type: ignore
+        self._opened_text_documents = {}
+
+        futures = [client.__aexit__(exc_type, exc_value, traceback)
+                   for client in list(reversed(self._clients.values()))]
+        await asyncio.gather(*futures)
+        self._clients = {}
+
+        return False
 
     def _get_client(self, client_name: Optional[str]) -> Client:
         if not client_name:

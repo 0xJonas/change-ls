@@ -134,19 +134,12 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     A :class:`TextDocument` is a single file in a :class:`Workspace`, which can be edited or queried for information.
 
     ``TextDocuments`` are not instantiated directly, but are instead obtained by calling
-    :meth:`~Workspace.open_text_document()` on a ``Workspace`` instance. When a ``TextDocument``
-    is opened this way, all ``Clients`` which were specified on the call to ``open_text_document()``
-    (defaults to all currently running ``Clients``) are notified that this ``TextDocument`` is now
-    managed by LSPScript. ``TextDocuments`` are context managers and the recommended way to handle them
-    is using a ``with`` statement::
+    :meth:`~Workspace.open_text_document()` on a ``Workspace`` instance. The ``Workspace`` will automatically
+    close the ``TextDocoment`` when it itself is closed. It is also possible to use the ``TextDocument`` itself
+    with a ``with`` statement, or to close it manually using :meth:`close()`.
 
-        with workspace.open_text_document(Path("script.py")) as doc:
-            ...
-
-    Once the ``with`` statement is exited, the ``TextDocument`` is closed for all ``Clients``
-    it was opened with. It is also possible to manually close a ``TextDocument`` by calling :meth:`close()`.
-    Once a ``TextDocument`` is closed for a ``Client``, this ``Client`` can no longer be used
-    by methods which call a language server.
+    Methods on a ``TextDocument`` can make use of all :class:`Clients <Client>` opened in the workspace it
+    originated from. This includes ``Clients`` started after the ``TextDocument`` was opened.
 
     ``TextDocument`` inherits from :class:`TextDocumentInfo` and :class:`TextDocumentItem` and can
     therefore by used anywhere an instance of one of these classes is required.
@@ -222,6 +215,10 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         for client in self._workspace.clients.values():
             params = DidCloseTextDocumentParams(textDocument=self.get_text_document_identifier())
             client.send_text_document_did_close(params)
+
+        # Set the reference_count to 0 explicitly, so documents from a closed
+        # Workspace return True on is_closed().
+        self._reference_count = 0
         del self._workspace._opened_text_documents[self.uri]  # type: ignore
 
     def is_closed(self) -> bool:

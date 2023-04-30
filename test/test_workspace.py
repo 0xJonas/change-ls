@@ -36,3 +36,19 @@ async def test_workspace_configuration_provider() -> None:
         launch_command="node mock-server/out/index.js --stdio test/test_configuration_provider.json")
     async with workspace.create_client(launch_params) as client:
         await client.send_request("$/go", None)
+
+
+async def test_workspace_context_manager() -> None:
+    async with Workspace(Path("test/mock-ws-1")) as ws:
+        launch_params = StdIOConnectionParams(
+            launch_command="node mock-server/out/index.js --stdio test/test_text_document_open_close.json")
+        client = await ws.launch_client(launch_params)
+        assert client.get_state() == "running"
+
+        repo_uri = Path(".").resolve().as_uri()
+        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+
+        doc = ws.open_text_document(Path("test-1.py"))
+
+    assert doc.is_closed()
+    assert client.get_state() == "disconnected"

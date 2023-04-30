@@ -283,13 +283,10 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     """
     A Client manages the low-level communication with a language server using the Language Server Protocol.
 
-    To obtain an instance of a ``Client``, call :meth:`~Workspace.create_client()` on a :class:`Workspace` instance
-    with appropriate :class:`ServerLaunchParams`. ``Clients`` are also context managers, so it is recommended to start
-    ``Clients`` in a ``with`` statement like this::
-
-        launch_params = StdIOLaunchParams(...)
-        with workspace.create_client(launch_params) as client:
-            assert client.get_state() == "running
+    To obtain an instance of a ``Client``, call :meth:`~Workspace.launch_client()` on a :class:`Workspace` instance
+    with appropriate :class:`ServerLaunchParams`. This will create a ``Client`` associated with the ``Workspace``,
+    which will be connected to a language server and shut down when the ``Workspace`` is closed. The ``Client``
+    itself is also a context manager, so it can closed independently of the ``Workspace``.
 
     The ``Client`` class provides methods for each request in the
     `LSP <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>`_
@@ -306,7 +303,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     supports a particular request, the :meth:`check_feature()` method can be used.
 
     It is also possible to go through the launch and shutdown processes for the language server manually.
-    A ``Client`` has the following lifecycle:
+    To do this, first obtain a ``Client`` without automatically starting the language server by calling
+    :meth:`Workspace.create_client`. Then perform the following operation:
 
     * ``"disconnected"``: No server process is running. When a server process is launched with :meth:`launch()`,
         the server enters the ``"uninitialized"`` state.

@@ -1,4 +1,3 @@
-# import logging
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,14 +33,15 @@ class FileCreateExpectation:
 
 
 @pytest.mark.parametrize(["input", "expectation"], [
-    (FileCreateInput("./test/test_create_file.json", Path("temp_doc.py"), False, False, False), FileCreateExpectation(None, True)),
+    (FileCreateInput("./test/file_operations/test_create_file.json", Path("temp_doc.py"), False, False, False),
+     FileCreateExpectation(None, True)),
     (FileCreateInput("./test/test_empty.json", Path("test-1.py"), False, False, False),
      FileCreateExpectation(FileExistsError, False)),
-    (FileCreateInput("./test/test_scratch_document_open_close.json", Path("test-1.py"), False, True, False),
+    (FileCreateInput("./test/file_operations/test_scratch_document_open_close.json", Path("test-1.py"), False, True, False),
      FileCreateExpectation(None, False)),
-    (FileCreateInput("./test/test_create_file_overwrite.json", Path("test-1.py"), True, False, False),
+    (FileCreateInput("./test/file_operations/test_create_file_overwrite.json", Path("test-1.py"), True, False, False),
      FileCreateExpectation(None, True)),
-    (FileCreateInput("./test/test_create_file_overwrite_open.json", Path("test-1.py"), True, False, True),
+    (FileCreateInput("./test/file_operations/test_create_file_overwrite_open.json", Path("test-1.py"), True, False, True),
      FileCreateExpectation(None, True)),
 ])
 async def test_file_create(scratch_workspace_path: Path, input: FileCreateInput, expectation: FileCreateExpectation) -> None:
@@ -96,15 +96,15 @@ class FileRenameExpectation:
 
 
 @pytest.mark.parametrize(["input", "expectation"], [
-    (FileRenameInput("./test/test_rename_file.json", Path("test-1.py"), Path("destination.py"), False, False, False, False),
+    (FileRenameInput("./test/file_operations/test_rename_file.json", Path("test-1.py"), Path("destination.py"), False, False, False, False),
      FileRenameExpectation(None, 'print("Hello, World!")\n')),
-    (FileRenameInput("./test/test_rename_file_error.json", Path("test-1.py"), Path("test-2.py"), False, False, False, False),
+    (FileRenameInput("./test/file_operations/test_rename_file_error.json", Path("test-1.py"), Path("test-2.py"), False, False, False, False),
      FileRenameExpectation(FileExistsError, '')),
-    (FileRenameInput("./test/test_scratch_document_open_close.json", Path("test-2.py"), Path("test-1.py"), False, True, False, False),
+    (FileRenameInput("./test/file_operations/test_scratch_document_open_close.json", Path("test-2.py"), Path("test-1.py"), False, True, False, False),
      FileRenameExpectation(None, 'print("Hello, World!")\n')),
-    (FileRenameInput("test/test_rename_file_overwrite.json", Path("test-1.py"), Path("test-2.py"), True, False, False, False),
+    (FileRenameInput("test/file_operations/test_rename_file_overwrite.json", Path("test-1.py"), Path("test-2.py"), True, False, False, False),
      FileRenameExpectation(None, 'print("Hello, World!")\n')),
-    (FileRenameInput("test/test_rename_file_overwrite_open.json", Path("test-1.py"), Path("test-2.py"), True, False, True, True),
+    (FileRenameInput("test/file_operations/test_rename_file_overwrite_open.json", Path("test-1.py"), Path("test-2.py"), True, False, True, True),
      FileRenameExpectation(None, 'print("Hello, World!")\n')),
 ])
 async def test_file_rename(scratch_workspace_path: Path, input: FileRenameInput, expectation: FileRenameExpectation) -> None:
@@ -162,8 +162,10 @@ class DeleteFileExpectation:
 
 
 @pytest.mark.parametrize(["input", "expectation"], [
-    (DeleteFileInput("test/test_delete_file.json", Path("test-1.py"), False, False), DeleteFileExpectation(None)),
-    (DeleteFileInput("test/test_delete_file_open.json", Path("test-1.py"), False, True), DeleteFileExpectation(None)),
+    (DeleteFileInput("test/file_operations/test_delete_file.json", Path("test-1.py"), False, False),
+     DeleteFileExpectation(None)),
+    (DeleteFileInput("test/file_operations/test_delete_file_open.json", Path("test-1.py"), False, True),
+     DeleteFileExpectation(None)),
     (DeleteFileInput("test/test_empty.json", Path("does_not_exist.py"), False, False), DeleteFileExpectation(FileNotFoundError)),
     (DeleteFileInput("test/test_empty.json", Path("does_not_exist.py"), True, False), DeleteFileExpectation(None))
 ])

@@ -35,7 +35,7 @@ async def mock_document_2(mock_workspace_1: Workspace) -> AsyncGenerator[TextDoc
         yield doc
 
 
-@pytest.mark.test_sequence("test/test_text_document_open_close.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_open_close.json")
 def test_text_documents_open_close(mock_document_1: TextDocument) -> None:
     assert mock_document_1.text == 'print("Hello, World!")\n'
     assert mock_document_1.language_id == "python"
@@ -45,7 +45,7 @@ def test_text_documents_open_close(mock_document_1: TextDocument) -> None:
     assert mock_document_1.uri == repo_uri + "/test/mock-ws-1/test-1.py"
 
 
-@pytest.mark.test_sequence("test/test_text_document_edit.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_edit.json")
 def test_text_document_edit(mock_document_1: TextDocument) -> None:
     mock_document_1.edit("Good morning", 7, 12)
     mock_document_1.commit_edits()
@@ -53,7 +53,7 @@ def test_text_document_edit(mock_document_1: TextDocument) -> None:
     assert mock_document_1.version == 1
 
 
-@pytest.mark.test_sequence("test/test_text_document_edit_incremental.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_edit_incremental.json")
 def test_text_document_edit_incremental(mock_document_1: TextDocument) -> None:
     mock_document_1.edit("Hi", 7, 12)
     mock_document_1.edit("logging.info", 0, length=5)
@@ -62,7 +62,7 @@ def test_text_document_edit_incremental(mock_document_1: TextDocument) -> None:
     assert mock_document_1.version == 1
 
 
-@pytest.mark.test_sequence("test/test_text_document_open_close.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_open_close.json")
 def test_text_documents_disallowed_edits(mock_document_1: TextDocument) -> None:
     mock_document_1.edit("Good morning", 7, 12)
 
@@ -75,7 +75,7 @@ def test_text_documents_disallowed_edits(mock_document_1: TextDocument) -> None:
         mock_document_1.edit("Error", 12, length=100)
 
 
-@pytest.mark.test_sequence("test/test_text_document_edit_tokens.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_edit_tokens.json")
 async def test_text_document_edit_tokens(mock_document_1: TextDocument) -> None:
     await mock_document_1.load_tokens()
     mock_document_1.edit_tokens("logging.info", 0)
@@ -84,7 +84,7 @@ async def test_text_document_edit_tokens(mock_document_1: TextDocument) -> None:
     assert mock_document_1.text == "logging.info('Hi, World!')\n"
 
 
-@pytest.mark.test_sequence("test/test_text_document_insertions.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_insertions.json")
 def test_text_document_insertions(mock_document_1: TextDocument) -> None:
     mock_document_1.insert('print("123")\n', 23)
     mock_document_1.insert('print("456")\n', 23)
@@ -101,7 +101,7 @@ def temp_file_path() -> Generator[Path, None, None]:
     path.unlink()
 
 
-@pytest.mark.test_sequence("test/test_text_document_save.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_save.json")
 async def test_text_document_save(temp_file_path: Path, mock_workspace_1: Workspace) -> None:
     with mock_workspace_1.open_text_document(temp_file_path) as doc:
         doc.edit("Bye", 7, 9)
@@ -111,7 +111,7 @@ async def test_text_document_save(temp_file_path: Path, mock_workspace_1: Worksp
             assert file.read() == "print('Good Bye!')\n"
 
 
-@pytest.mark.test_sequence("test/test_text_document_position_utf_8.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_position_utf_8.json")
 def test_text_document_position_utf_8(mock_document_2: TextDocument) -> None:
     assert mock_document_2.position_to_offset(Position(line=1, character=11)) == 23
     assert mock_document_2.position_to_offset(Position(line=1, character=14)) == 24
@@ -127,7 +127,7 @@ def test_text_document_position_utf_8(mock_document_2: TextDocument) -> None:
         mock_document_2.position_to_offset(Position(line=1, character=13))
 
 
-@pytest.mark.test_sequence("test/test_text_document_position_utf_16.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_position_utf_16.json")
 def test_text_document_position_utf_16(mock_document_2: TextDocument) -> None:
     assert mock_document_2.position_to_offset(Position(line=1, character=11)) == 23
     assert mock_document_2.position_to_offset(Position(line=1, character=12)) == 24
@@ -143,7 +143,7 @@ def test_text_document_position_utf_16(mock_document_2: TextDocument) -> None:
         mock_document_2.position_to_offset(Position(line=2, character=12))
 
 
-@pytest.mark.test_sequence("test/test_text_document_position_utf_32.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_position_utf_32.json")
 def test_text_document_position_utf_32(mock_document_2: TextDocument) -> None:
     assert mock_document_2.position_to_offset(Position(line=1, character=11)) == 23
     assert mock_document_2.position_to_offset(Position(line=1, character=12)) == 24
@@ -156,7 +156,7 @@ def test_text_document_position_utf_32(mock_document_2: TextDocument) -> None:
     assert mock_document_2.offset_to_position(40) == Position(line=2, character=12)
 
 
-@pytest.mark.test_sequence("test/test_text_document_open_close_twice.json")
+@pytest.mark.test_sequence("test/text_document/test_text_document_open_close_twice.json")
 async def test_text_document_reopen(mock_workspace_1: Workspace) -> None:
     doc1 = mock_workspace_1.open_text_document(Path("test-1.py"))
     doc2 = mock_workspace_1.open_text_document(Path("test-1.py"))

@@ -29,12 +29,6 @@ class _Edit:
     to_offset: int
     new_text: str = field(compare=False)
 
-    @classmethod
-    def from_text_edit(cls, text_edit: TextEdit, line_offsets: List[int]) -> "_Edit":
-        from_offset = line_offsets[text_edit.range.start.line] + text_edit.range.start.character
-        to_offset = line_offsets[text_edit.range.end.line] + text_edit.range.end.character
-        return cls(from_offset, to_offset, text_edit.newText)
-
     def overlaps(self, other: "_Edit") -> bool:
         covers_from_offset = self.from_offset <= other.from_offset and self.to_offset > other.from_offset
         covers_to_offset = self.from_offset < other.to_offset and self.to_offset >= other.to_offset
@@ -210,6 +204,27 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
     def _reopen(self) -> None:
         self._reference_count += 1
+
+    def _set_path(self, new_path: Path) -> None:
+        del self._workspace._opened_text_documents[self.uri]  # type: ignore
+        self._path = new_path
+        self.uri = new_path.as_uri()
+
+    async def rename_file(self, new_path: Path, *, overwrite: bool = False, ignore_if_exists: bool = False) -> None:
+        """
+        Renames this :class:`TextDocument` to ``new_path``.
+
+        See :meth:`Workspace.rename_text_document`.
+        """
+        await self._workspace.rename_text_document(self._path, new_path, overwrite=overwrite, ignore_if_exists=ignore_if_exists)
+
+    async def delete_file(self) -> None:
+        """
+        Deletes this :class:`TextDocument`. This will automatically close the document.
+
+        See :meth:`Workspace.delete_text_document()`.
+        """
+        await self._workspace.delete_text_document(self._path)
 
     def _final_close(self) -> None:
         for client in self._workspace.clients.values():
@@ -412,6 +427,22 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             assert length is not None
             self.edit("", from_offset, length=length)
 
+    def push_text_edit(self, text_edit: TextEdit) -> None:
+        """
+        Queue an edit which performs the given :class:`TextEdit`.
+        """
+        from_offset = self.position_to_offset(text_edit.range.start)
+        to_offset = self.position_to_offset(text_edit.range.end)
+        self.edit(text_edit.newText, from_offset, to_offset)
+
+    def _edit_to_text_document_change_event(self, edit: _Edit) -> TextDocumentContentChangeEvent:
+        from_position = self.offset_to_position(edit.from_offset)
+        to_position = self.offset_to_position(edit.to_offset)
+        return {
+            "text": edit.new_text,
+            "range": Range(start=from_position, end=to_position)
+        }
+
     def _handle_text_change(self, client: Client) -> None:
         if client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Full):
             contentChanges: List[TextDocumentContentChangeEvent] = [{"text": self.text}]
@@ -419,7 +450,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             # The edits are reversed because, unlike commit_edits, ContentChangeEvents are applied one
             # at a time, in the order they are received. So in order for edits earlier in the document
             # to not invalidate later edits, the edits are entered in reverse order.
-            contentChanges = [edit.as_text_document_content_change_event(self._line_offsets)
+            contentChanges = [self._edit_to_text_document_change_event(edit)
                               for edit in reversed(self._pending_edits)]
         else:
             # Document Sync is disabled for this client
@@ -504,8 +535,9 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             if not edit_list:
                 continue
             for e in edit_list:
-                self._queue_edit(_Edit.from_text_edit(e, self._line_offsets))
-        self.commit_edits()
+                self.push_text_edit(e)
+        if len(self._pending_edits) > 0:
+            self.commit_edits()
 
         # Actual saving
         with self._path.open("w", encoding=self._encoding) as file:
@@ -563,7 +595,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         line = bisect_right(self._line_offsets, offset) - 1
 
         start_offset = self._line_offsets[line]
-        end_offset = self._line_offsets[line + 1] if line < len(self._line_offsets) else len(self.text)
+        end_offset = self._line_offsets[line + 1] if line < len(self._line_offsets) - 1 else len(self.text)
         reference_string = self.text[start_offset:end_offset]
         encoding = self._get_client(client_name).get_position_encoding_kind()
         character = _offset_to_code_units(reference_string, offset - self._line_offsets[line], encoding)

@@ -1,0 +1,44 @@
+{
+    "name": "test_delete_file",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "print(\"Hello, World!\")\n"
+                }
+            }
+        },
+        {
+            "type": "request",
+            "method": "workspace/willDeleteFiles",
+            "params": {
+                "files": [
+                    { "uri": "${WORKSPACE_URI}/test-1.py" }
+                ]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py"
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "workspace/didDeleteFiles",
+            "params": {
+                "files": [
+                    { "uri": "${WORKSPACE_URI}/test-1.py" }
+                ]
+            }
+        }
+    ]
+}

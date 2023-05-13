@@ -1,0 +1,44 @@
+{
+    "name": "test_create_file",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "workspace/willCreateFiles",
+            "params": {
+                "files": [
+                    { "uri": "${WORKSPACE_URI}/temp_doc.py" }
+                ]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "workspace/didCreateFiles",
+            "params": {
+                "files": [
+                    { "uri": "${WORKSPACE_URI}/temp_doc.py" }
+                ]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/temp_doc.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": ""
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/temp_doc.py"
+                }
+            }
+        }
+    ]
+}

@@ -18,10 +18,13 @@ from lspscript.types import (ClientCapabilities, InitializedParams,
                              InitializeParams, InitializeResult)
 from lspscript.types.client_requests import (ClientRequestsMixin,
                                              ServerRequestsMixin)
-from lspscript.types.enumerations import MessageType, PositionEncodingKind
+from lspscript.types.enumerations import (FailureHandlingKind, MessageType,
+                                          PositionEncodingKind,
+                                          ResourceOperationKind)
 from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         ApplyWorkspaceEditResult, CancelParams,
                                         ConfigurationParams,
+                                        FileOperationClientCapabilities,
                                         GeneralClientCapabilities,
                                         LogMessageParams, LogTraceParams,
                                         LSPAny, MessageActionItem,
@@ -32,6 +35,8 @@ from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         ShowMessageRequestParams,
                                         UnregistrationParams,
                                         WorkDoneProgressCreateParams,
+                                        WorkspaceClientCapabilities,
+                                        WorkspaceEditClientCapabilities,
                                         WorkspaceFolder)
 from lspscript.types.util import JSON_VALUE
 
@@ -241,7 +246,18 @@ def get_default_client_capabilities() -> ClientCapabilities:
     """
     return ClientCapabilities(
         general=GeneralClientCapabilities(
-            positionEncodings=[PositionEncodingKind.UTF32, PositionEncodingKind.UTF8, PositionEncodingKind.UTF16]))
+            positionEncodings=[PositionEncodingKind.UTF32, PositionEncodingKind.UTF8, PositionEncodingKind.UTF16]),
+        workspace=WorkspaceClientCapabilities(
+            workspaceEdit=WorkspaceEditClientCapabilities(
+                documentChanges=True,
+                resourceOperations=[ResourceOperationKind.Create,
+                                    ResourceOperationKind.Rename,
+                                    ResourceOperationKind.Delete],
+                failureHandling=FailureHandlingKind.Abort),
+            fileOperations=FileOperationClientCapabilities(
+                willCreate=True, didCreate=True,
+                willRename=True, didRename=True,
+                willDelete=True, didDelete=True)))
 
 
 def get_default_initialize_params() -> InitializeParams:

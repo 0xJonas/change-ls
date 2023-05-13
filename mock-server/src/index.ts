@@ -65,6 +65,28 @@ connection.onInitialize((params: InitializeParams) => {
                 textDocumentSync: {
                     openClose: true,
                     change: TextDocumentSyncKind.Full
+                },
+                workspace: {
+                    fileOperations: {
+                        willCreate: {
+                            filters: [{ pattern: { glob: "**/*" } }]
+                        },
+                        didCreate: {
+                            filters: [{ pattern: { glob: "**/*" } }]
+                        },
+                        willRename: {
+                            filters: [{ pattern: { glob: "**/*" } }]
+                        },
+                        didRename: {
+                            filters: [{ pattern: { glob: "**/*" } }]
+                        },
+                        willDelete: {
+                            filters: [{ pattern: { glob: "**/*" } }]
+                        },
+                        didDelete: {
+                            filters: [{ pattern: { glob: "**/*" } }]
+                        },
+                    }
                 }
                 // TODO: fill accordingly as more tests are added
             },

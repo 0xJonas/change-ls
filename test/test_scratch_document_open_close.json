@@ -1,0 +1,26 @@
+{
+    "name": "test_scratch_document_open_close",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "print(\"Hello, World!\")\n"
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py"
+                }
+            }
+        }
+    ]
+}

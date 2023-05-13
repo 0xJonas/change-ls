@@ -1,0 +1,17 @@
+{
+    "name": "test_rename_file_error",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "workspace/willRenameFiles",
+            "params": {
+                "files": [
+                    {
+                        "oldUri": "${WORKSPACE_URI}/test-1.py",
+                        "newUri": "${WORKSPACE_URI}/destination.py"
+                    }
+                ]
+            }
+        }
+    ]
+}

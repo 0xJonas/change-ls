@@ -1,0 +1,50 @@
+{
+    "name": "test_rename_file_overwrite",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "workspace/willRenameFiles",
+            "params": {
+                "files": [
+                    {
+                        "oldUri": "${WORKSPACE_URI}/test-1.py",
+                        "newUri": "${WORKSPACE_URI}/test-2.py"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "workspace/didRenameFiles",
+            "params": {
+                "files": [
+                    {
+                        "oldUri": "${WORKSPACE_URI}/test-1.py",
+                        "newUri": "${WORKSPACE_URI}/test-2.py"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-2.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "print(\"Hello, World!\")\n"
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-2.py"
+                }
+            }
+        }
+    ]
+}

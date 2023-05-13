@@ -41,7 +41,7 @@ async def test_workspace_configuration_provider() -> None:
 async def test_workspace_context_manager() -> None:
     async with Workspace(Path("test/mock-ws-1")) as ws:
         launch_params = StdIOConnectionParams(
-            launch_command="node mock-server/out/index.js --stdio test/test_text_document_open_close.json")
+            launch_command="node mock-server/out/index.js --stdio test/text_document/test_text_document_open_close.json")
         client = await ws.launch_client(launch_params)
         assert client.get_state() == "running"
 

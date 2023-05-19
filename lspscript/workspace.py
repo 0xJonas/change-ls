@@ -169,6 +169,13 @@ class Workspace(WorkspaceRequestHandler):
         else:
             # This also takes care of string paths
             (_, _, path_component, _, _) = urlsplit(path, scheme="file")
+            if len(path_component) >= 3 and path_component[2] == ":":
+                # Uris which originate from windows paths have a '/' before the
+                # drive letter and are not recognized as absolute paths. So if we
+                # detect that the first segment is a drive, we remove the leading
+                # '/' so path is actually absolute.
+                path_component = path_component[1:]
+
             full_path = self._resolve_path_in_workspace(Path(path_component))
             uri = path
 

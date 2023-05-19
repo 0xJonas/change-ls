@@ -1,0 +1,60 @@
+{
+    "name": "test_workspace_edit_changes",
+    "sequence": [
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "print(\"Hello, World!\")\n"
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didChange",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py",
+                    "version": 1
+                },
+                "contentChanges": [{
+                    "text": "print(\"Good morning, World!\")\n"
+                }]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py"
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py",
+                    "languageId": "python",
+                    "version": 0,
+                    "text": "print(\"Good morning, World!\")\n"
+                }
+            }
+        },
+        {
+            "type": "notification",
+            "method": "textDocument/didClose",
+            "params": {
+                "textDocument": {
+                    "uri": "${WORKSPACE_URI}/test-1.py"
+                }
+            }
+        }
+    ]
+}

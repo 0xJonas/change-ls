@@ -1,8 +1,13 @@
+import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Any, Generator, Optional
+
+import pytest
 
 from lspscript.client import StdIOConnectionParams
-from lspscript.types.structures import LSPAny
+from lspscript.types.structures import (
+    CreateFile, DeleteFile, LSPAny, OptionalVersionedTextDocumentIdentifier,
+    Position, Range, RenameFile, TextDocumentEdit, TextEdit, WorkspaceEdit)
 from lspscript.workspace import Workspace
 
 
@@ -52,3 +57,67 @@ async def test_workspace_context_manager() -> None:
 
     assert doc.is_closed()
     assert client.get_state() == "disconnected"
+
+
+@pytest.fixture
+def scratch_workspace_path() -> Generator[Path, Any, None]:
+    scratch_path = Path("./.temp/mock-ws-1/")
+    shutil.copytree(Path("./test/mock-ws-1/"), scratch_path)
+    yield scratch_path
+    shutil.rmtree(scratch_path)
+
+
+async def test_workspace_edit_changes(scratch_workspace_path: Path) -> None:
+    doc_path = Path("test-1.py")
+    doc_uri = (scratch_workspace_path / doc_path).resolve().as_uri()
+    async with Workspace(scratch_workspace_path) as ws:
+        launch_params = StdIOConnectionParams(
+            launch_command="node mock-server/out/index.js --stdio test/test_workspace_edit_changes.json")
+        client = await ws.launch_client(launch_params)
+
+        workspace_uri = scratch_workspace_path.resolve().as_uri()
+        await client.send_request("$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}})
+
+        edit = WorkspaceEdit(changes={
+            doc_uri: [
+                TextEdit(range=Range(start=Position(line=0, character=7), end=Position(line=0, character=12)),
+                         newText="Good morning")
+            ]
+        })
+
+        await ws.perform_edit_and_save(edit)
+
+        doc = ws.open_text_document(doc_path)
+        assert doc.text == 'print("Good morning, World!")\n'
+
+
+async def test_workspace_edit_document_changes(scratch_workspace_path: Path) -> None:
+    doc1_path = Path("test-1.py")
+    doc1_uri = (scratch_workspace_path / doc1_path).resolve().as_uri()
+    temp_doc1_path = Path("temp_doc1.py")
+    temp_doc1_uri = (scratch_workspace_path / temp_doc1_path).resolve().as_uri()
+    temp_doc2_path = Path("temp_doc2.py")
+    temp_doc2_uri = (scratch_workspace_path / temp_doc2_path).resolve().as_uri()
+
+    async with Workspace(scratch_workspace_path) as ws:
+        launch_params = StdIOConnectionParams(
+            launch_command="node mock-server/out/index.js --stdio test/test_workspace_edit_document_changes.json")
+        client = await ws.launch_client(launch_params)
+
+        workspace_uri = scratch_workspace_path.resolve().as_uri()
+        await client.send_request("$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}})
+
+        edit = WorkspaceEdit(documentChanges=[
+            TextDocumentEdit(textDocument=OptionalVersionedTextDocumentIdentifier(uri=doc1_uri, version=0), edits=[
+                TextEdit(range=Range(start=Position(line=0, character=7), end=Position(line=0, character=12)),
+                         newText="Good morning")
+            ]),
+            CreateFile(kind="create", uri=temp_doc1_uri),
+            RenameFile(kind="rename", oldUri=temp_doc1_uri, newUri=temp_doc2_uri),
+            DeleteFile(kind="delete", uri=temp_doc2_uri)
+        ])
+
+        await ws.perform_edit_and_save(edit)
+
+        doc = ws.open_text_document(doc1_path)
+        assert doc.text == 'print("Good morning, World!")\n'

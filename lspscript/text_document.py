@@ -228,6 +228,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
     def _final_close(self) -> None:
         for client in self._workspace.clients.values():
+            if not client.check_feature("textDocument/didClose", text_documents=[self]):
+                continue
             params = DidCloseTextDocumentParams(textDocument=self.get_text_document_identifier())
             client.send_text_document_did_close(params)
 

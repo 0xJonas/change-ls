@@ -1,4 +1,5 @@
 {
     "name": "test_empty",
+    "initializeResult": {"capabilities": {}},
     "sequence": []
 }

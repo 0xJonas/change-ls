@@ -1,0 +1,26 @@
+{
+    "name": "test_symbol_implementation",
+    "sequence": [
+        { "includeSequence": "./test/open-ws-1-test-2.json" },
+        {
+            "type": "request",
+            "method": "textDocument/implementation",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-2.py"
+                },
+                "position": { "line": 0, "character": 4 }
+            },
+            "result": [
+                {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-2.py",
+                    "range": {
+                        "start": { "line": 0, "character": 4 },
+                        "end": { "line": 0, "character": 8 }
+                    }
+                }
+            ]
+        },
+        { "includeSequence": "./test/close-ws-1-test-2.json" }
+    ]
+}

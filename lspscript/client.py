@@ -24,15 +24,21 @@ from lspscript.types.enumerations import (FailureHandlingKind, MessageType,
 from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         ApplyWorkspaceEditResult, CancelParams,
                                         ConfigurationParams,
+                                        DeclarationClientCapabilities,
+                                        DefinitionClientCapabilities,
                                         FileOperationClientCapabilities,
                                         GeneralClientCapabilities,
+                                        ImplementationClientCapabilities,
                                         LogMessageParams, LogTraceParams,
                                         LSPAny, MessageActionItem,
                                         ProgressParams,
                                         PublishDiagnosticsParams,
+                                        ReferenceClientCapabilities,
                                         RegistrationParams, ShowDocumentParams,
                                         ShowDocumentResult, ShowMessageParams,
                                         ShowMessageRequestParams,
+                                        TextDocumentClientCapabilities,
+                                        TypeDefinitionClientCapabilities,
                                         UnregistrationParams,
                                         WorkDoneProgressCreateParams,
                                         WorkspaceClientCapabilities,
@@ -257,7 +263,13 @@ def get_default_client_capabilities() -> ClientCapabilities:
             fileOperations=FileOperationClientCapabilities(
                 willCreate=True, didCreate=True,
                 willRename=True, didRename=True,
-                willDelete=True, didDelete=True)))
+                willDelete=True, didDelete=True)),
+        textDocument=TextDocumentClientCapabilities(
+            references=ReferenceClientCapabilities(),
+            declaration=DeclarationClientCapabilities(linkSupport=True),
+            definition=DefinitionClientCapabilities(linkSupport=True),
+            typeDefinition=TypeDefinitionClientCapabilities(linkSupport=True),
+            implementation=ImplementationClientCapabilities(linkSupport=True)))
 
 
 def get_default_initialize_params() -> InitializeParams:

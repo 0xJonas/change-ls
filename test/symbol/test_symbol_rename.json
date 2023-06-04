@@ -1,0 +1,44 @@
+{
+    "name": "test_symbol_rename",
+    "sequence": [
+        { "includeSequence": "./test/open-ws-1-test-2.json" },
+        {
+            "type": "request",
+            "method": "textDocument/rename",
+            "params": {
+                "newName": "test",
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-2.py"
+                },
+                "position": { "line": 0, "character": 4 }
+            },
+            "result": {
+                "documentChanges": [
+                    {
+                        "textDocument": {
+                            "uri": "${REPO_URI}/test/mock-ws-1/test-2.py",
+                            "version": 1
+                        },
+                        "edits": [
+                            {
+                                "range": {
+                                    "start": { "line": 0, "character": 4 },
+                                    "end": { "line": 0, "character": 8 }
+                                },
+                                "newText": "test"
+                            },
+                            {
+                                "range": {
+                                    "start": { "line": 6, "character": 4 },
+                                    "end": { "line": 6, "character": 8 }
+                                },
+                                "newText": "test"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        { "includeSequence": "./test/close-ws-1-test-2.json" }
+    ]
+}

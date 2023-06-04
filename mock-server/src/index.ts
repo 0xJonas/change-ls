@@ -87,7 +87,13 @@ connection.onInitialize((params: InitializeParams) => {
                             filters: [{ pattern: { glob: "**/*" } }]
                         },
                     }
-                }
+                },
+                renameProvider: true,
+                referencesProvider: true,
+                declarationProvider: true,
+                definitionProvider: true,
+                typeDefinitionProvider: true,
+                implementationProvider: true
                 // TODO: fill accordingly as more tests are added
             },
             serverInfo: {
@@ -153,7 +159,7 @@ function handleCustomRequests(method: string, params: JSONValue): any {
  * @param template The template to be expanded
  * @returns The resulting JSONValue, which might by any type if there was a replacement
  */
-function processTemplate(template: string): JSONValue {
+function processTemplateString(template: string): JSONValue {
     const replaceRegExp = /^#\{(\w+)\}$/;
     const replaceResult = template.match(replaceRegExp);
     if (replaceResult) {
@@ -180,6 +186,18 @@ function processTemplate(template: string): JSONValue {
     return template;
 }
 
+function processTemplate(val: JSONValue): JSONValue {
+    if (typeof val == "string") {
+        return processTemplateString(val);
+    } else if (val instanceof Array) {
+        return val.map(element => processTemplate(element));
+    } else if (val != null && typeof val == "object") {
+        return Object.fromEntries(Object.entries(val).map(entry => [processTemplateString(entry[0]), processTemplate(entry[1])]));
+    } else {
+        return val;
+    }
+}
+
 function matchArrays(ref: Array<JSONValue>, test: Array<JSONValue>): boolean {
     if (ref.length !== test.length) {
         return false;
@@ -193,15 +211,14 @@ function matchArrays(ref: Array<JSONValue>, test: Array<JSONValue>): boolean {
 }
 
 function matchObjects(ref: { [key: string]: JSONValue }, test: { [key: string]: JSONValue }): boolean {
-    for (let keyTemplate in ref) {
-        const key = processTemplate(keyTemplate);
+    for (let key in ref) {
         if (!(typeof key === "string")) {
             throw Error("Replacement templates in object keys must expand to a string value");
         }
         if (!(key in test)) {
             return false;
         }
-        if (!matchDeepEqual(ref[keyTemplate], test[key])) {
+        if (!matchDeepEqual(ref[key], test[key])) {
             return false;
         }
     }
@@ -209,10 +226,6 @@ function matchObjects(ref: { [key: string]: JSONValue }, test: { [key: string]: 
 }
 
 function matchDeepEqual(ref: JSONValue, test: JSONValue): boolean {
-    if (typeof ref === "string") {
-        ref = processTemplate(ref);
-    }
-
     const refType = typeof ref;
     const testType = typeof test;
     if (refType !== testType) {
@@ -242,7 +255,8 @@ function matchMessage(msg: TestMessage, method: string, params?: JSONValue): boo
         if (params === undefined) {
             return false;
         }
-        return matchDeepEqual(msg.params, params);
+        const expected = processTemplate(msg.params);
+        return matchDeepEqual(expected, params);
     } else {
         return params === undefined;
     }
@@ -280,7 +294,11 @@ connection.onRequest(async (method: string, params: any) => {
             if (msg.intermediate) {
                 await processIntermediate(msg.intermediate);
             }
-            return msg.result;
+            if (msg.result) {
+                return processTemplate(msg.result);
+            } else {
+                return msg.result;
+            }
         } else if (msg.type == "request-unordered") {
             if (unorderedReceived.length == 0) {
                 unorderedReceived = Array(msg.content.length)
@@ -302,7 +320,11 @@ connection.onRequest(async (method: string, params: any) => {
                     if (option.intermediate) {
                         processIntermediate(option.intermediate);
                     }
-                    return option.result;
+                    if (option.result) {
+                        return processTemplate(option.result);
+                    } else {
+                        return option.result;
+                    }
                 }
             }
             assert(false) // Nothing matched
@@ -321,7 +343,7 @@ function processRequestResult(result?: JSONValue, expectedResult?: JSONValue) {
         assert(expectedResult === undefined)
     } else {
         assert(expectedResult !== undefined);
-        assert(matchDeepEqual(expectedResult, result));
+        assert(matchDeepEqual(processTemplate(expectedResult), result));
     }
 }
 

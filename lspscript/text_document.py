@@ -5,6 +5,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Callable, Dict, List, Optional, Type, overload
 
+import lspscript.symbol as sym
 import lspscript.workspace as ws
 from lspscript.client import Client
 from lspscript.lsp_exception import LSPScriptException
@@ -12,8 +13,8 @@ from lspscript.tokens import TokenList, tokenize
 from lspscript.types import (DidCloseTextDocumentParams,
                              OptionalVersionedTextDocumentIdentifier,
                              TextDocumentItem, VersionedTextDocumentIdentifier)
-from lspscript.types.enumerations import (PositionEncodingKind,
-                                          TextDocumentSaveReason,
+from lspscript.types.enumerations import (PositionEncodingKind, SymbolKind,
+                                          SymbolTag, TextDocumentSaveReason,
                                           TextDocumentSyncKind)
 from lspscript.types.structures import (DidChangeTextDocumentParams,
                                         DidSaveTextDocumentParams, Position,
@@ -603,3 +604,24 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         character = _offset_to_code_units(reference_string, offset - self._line_offsets[line], encoding)
 
         return Position(line=line, character=character)
+
+    def create_symbol_at(self, start: int, end: int, kind: SymbolKind, *,
+                         tags: Optional[List[SymbolTag]] = None, container_name: Optional[str] = None,
+                         client_name: Optional[str] = None) -> sym.CustomSymbol:
+        """
+        Creates a :class:`CustomSymbol` at the specified location. It is the caller's responsibility
+        to ensure that the given range actually contains something that can be used as a symbol.
+
+        The name of the symbol is derived from the selected text.
+
+        :param start: Offset into :attr:`text` for the first character of the symbol.
+        :param end: Offset into :attr:`text` for the first character no longer part of the symbol
+        :param kind: The :class:`SymbolKind` for the symbol.
+        :param tags: A list of :class:`SymbolTags <SymbolTag>` for the symbol.
+        :param container_name: Name of a containing symbol. This is NOT used to form a hierarchy, so it can be
+            any arbitrary string.
+        :param client_name: The name of the :class:`Client` with which this symbol should be associated. This
+            is the ``Client`` which will receive the request sent by the methods of the symbol.
+        """
+        client = self._get_client(client_name)
+        return sym.CustomSymbol(client, self, (start, end), kind, tags, container_name)

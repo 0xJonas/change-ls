@@ -6,7 +6,7 @@ from lspscript.util import install_language
 
 async def test_tokenization_no_whitespace() -> None:
     grammar = Grammar.load_from_file(Path("test/mock_grammar.json"))
-    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
+    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_overwrite=True)
     text = """\
 function test begin
     a = b + c
@@ -28,7 +28,7 @@ end
 
 async def test_tokenization_whitespace() -> None:
     grammar = Grammar.load_from_file(Path("test/mock_grammar.json"))
-    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
+    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_overwrite=True)
     text = """\
 function test begin
     a = b + c
@@ -60,7 +60,7 @@ end
 
 async def test_tokenization_line_breaks_lf() -> None:
     grammar = Grammar.load_from_file(Path("test/mock_grammar.json"))
-    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
+    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_overwrite=True)
     text = "function test begin\n    a = b + c\nend\n"
     tokens = await tokenize(text, "mock", include_whitespace=True)
 
@@ -72,7 +72,7 @@ async def test_tokenization_line_breaks_lf() -> None:
 
 async def test_tokenization_line_breaks_cr() -> None:
     grammar = Grammar.load_from_file(Path("test/mock_grammar.json"))
-    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
+    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_overwrite=True)
     text = "function test begin\r    a = b + c\rend\r"
     tokens = await tokenize(text, "mock", include_whitespace=True)
 
@@ -84,7 +84,7 @@ async def test_tokenization_line_breaks_cr() -> None:
 
 async def test_tokenization_line_breaks_crlf() -> None:
     grammar = Grammar.load_from_file(Path("test/mock_grammar.json"))
-    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_override=True)
+    install_language(language_id="mock", extensions=[".mock"], grammar=grammar, allow_overwrite=True)
     text = "function test begin\r\n    a = b + c\r\nend\r\n"
     tokens = await tokenize(text, "mock", include_whitespace=True)
 

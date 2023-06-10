@@ -170,22 +170,28 @@ def matches_file_operation_filter(uri: str, filter: FileOperationFilter) -> bool
     return True
 
 
-def install_language(*, language_id: str, extensions: List[str], grammar: Grammar, embedded_grammars: List[Grammar] = [], allow_override: bool = False) -> None:
+def install_language(*, language_id: str, extensions: List[str] = [], grammar: Optional[Grammar] = None, embedded_grammars: List[Grammar] = [], allow_overwrite: bool = False) -> None:
     """
     Adds a new language to be used by the library functions.
 
-    Parameters:
-    - `language_id`: The language id of the new language.
-    - `extensions`: List of file extensions associated with the new language.
-    - `grammar`: Main `Grammar` of the new language.
-    - `embedded_grammars`: Additional `Grammars` used by the main grammar.
-    - `allow_override`: Allow overriding of existing language information. Default is `False`.
+
+    :param language_id: The language id of the new language.
+    :param extensions: List of file extensions associated with the new language.
+    :param grammar: Main :class:`Grammar` of the new language.
+    :param embedded_grammars: Additional ``Grammars`` used by the main grammar.
+    :param allow_overwrite: Allow overriding of existing language information. Default is ``False``.
+        When overwriting properties for existing languages, only the properties which were actually
+        supplied are overwritten.
     """
 
     if len(extensions) == 0:
         raise ValueError("At least one file extension must be given.")
 
-    if not allow_override:
+    grammars = list(embedded_grammars)
+    if grammar:
+        grammars.append(grammar)
+
+    if not allow_overwrite:
         if language_id in languages.language_id_to_scope:
             raise ValueError(f"Language id {language_id} is already in use")
 
@@ -194,14 +200,15 @@ def install_language(*, language_id: str, extensions: List[str], grammar: Gramma
                 raise ValueError(
                     f"file extension {e} is already defined for language id {languages.extension_to_language_id[e]}.")
 
-        for g in [grammar, *embedded_grammars]:
-            if grammar.get_scope_name() in languages.scope_to_grammar:
-                raise ValueError(f"Grammar scope {grammar.get_scope_name()} is already used")
+        for g in grammars:
+            if g.get_scope_name() in languages.scope_to_grammar:
+                raise ValueError(f"Grammar scope {g.get_scope_name()} is already used")
 
     for e in extensions:
         languages.extension_to_language_id[e] = language_id
 
-    languages.language_id_to_scope[language_id] = grammar.get_scope_name()
+    if grammar:
+        languages.language_id_to_scope[language_id] = grammar.get_scope_name()
 
-    for g in [grammar, *embedded_grammars]:
+    for g in grammars:
         languages.scope_to_grammar[g.get_scope_name()] = g

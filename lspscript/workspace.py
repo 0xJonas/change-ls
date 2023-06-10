@@ -51,6 +51,9 @@ class Workspace(WorkspaceRequestHandler):
 
     :param roots: The :class:`Paths <pathlib.Path>` to the roots of the workspace. The ``Paths`` must be directories.
     :param names: An optional list of names for the workspace roots. If given, there must be a name for each root.
+    :param default_encoding: The default character encoding used when opening ``TextDocuments``. Some Workspace
+        method rely on this setting because they might need to open ``TextDocuments`` behind the scenes, e.g.
+        :meth:`~Workspace.perform_edit_and_save()`.
     """
 
     _roots: List[Path]
@@ -59,7 +62,9 @@ class Workspace(WorkspaceRequestHandler):
     _configuration_provider: Optional[ConfigurationProvider]
     _opened_text_documents: Dict[str, "td.TextDocument"]
 
-    def __init__(self, *roots: Path, names: Optional[Sequence[str]] = None) -> None:
+    default_encoding: str
+
+    def __init__(self, *roots: Path, names: Optional[Sequence[str]] = None, default_encoding: str = "utf-8") -> None:
         # pathlib.Path.resolve() does not work correctly on windows, so
         # we use abspath in addition to resolve to deal with both making
         # the path absolute and resolving symlinks. Also, it gets us
@@ -69,6 +74,7 @@ class Workspace(WorkspaceRequestHandler):
             self._root_names = list(names)
         else:
             self._root_names = [r.stem for r in roots]
+        self.default_encoding = default_encoding
         self._clients = {}
         self._configuration_provider = None
         self._opened_text_documents = {}
@@ -213,6 +219,9 @@ class Workspace(WorkspaceRequestHandler):
 
         if not full_path.exists():
             raise FileNotFoundError(f"File not found in workspace: '{str(path)}'")
+
+        if not encoding:
+            encoding = self.default_encoding
 
         text_document = td.TextDocument(full_path, self, language_id, 0, encoding)
 

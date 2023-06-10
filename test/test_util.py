@@ -135,6 +135,6 @@ def test_install_language_override() -> None:
         language_id="c",
         extensions=[".madeup"],
         grammar=grammar,
-        allow_override=True)
+        allow_overwrite=True)
 
     assert languages.language_id_to_scope["c"] == "source.madeup"

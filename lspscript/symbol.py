@@ -13,13 +13,24 @@ from lspscript.types.structures import (DeclarationParams, DefinitionParams,
                                         ReferenceContext, ReferenceParams,
                                         RenameParams, TextDocumentIdentifier,
                                         TypeDefinitionParams, WorkspaceEdit)
-from lspscript.util import TextDocumentInfo
 
 
 @dataclass
 class _SymbolAnchor:
-    info: TextDocumentInfo
+    text_document: "td.TextDocument"
     position: Position
+
+    _original_uri: str
+    _original_version: int
+
+    def __init__(self, text_document: "td.TextDocument", position: Position) -> None:
+        self.text_document = text_document
+        self.position = position
+        self._original_uri = text_document.uri
+        self._original_version = text_document.version
+
+    def is_valid(self) -> bool:
+        return self.text_document.uri == self._original_uri and self.text_document.version == self._original_version
 
 
 @dataclass
@@ -42,11 +53,11 @@ class _Symbol(ABC):
         This edit can be applied by calling :meth:`Workspace.perform_edit_and_save()`.
         """
         anchor = self._get_anchor()
-        if not self._client.check_feature("textDocument/rename", text_documents=[anchor.info]):
+        if not self._client.check_feature("textDocument/rename", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support renaming.")
 
         params = RenameParams(
-            textDocument=TextDocumentIdentifier(uri=anchor.info.uri), position=anchor.position, newName=new_name)
+            textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position, newName=new_name)
         return await self._client.send_text_document_rename(params)
 
     async def find_references(self, *, include_declaration: bool = True) -> LocationList:
@@ -56,11 +67,11 @@ class _Symbol(ABC):
         :param include_declaration: Whether to include the declaration of the symbol in the returned list of locations.
         """
         anchor = self._get_anchor()
-        if not self._client.check_feature("textDocument/references", text_documents=[anchor.info]):
+        if not self._client.check_feature("textDocument/references", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_references.")
 
         res = await self._client.send_text_document_references(ReferenceParams(
-            textDocument=TextDocumentIdentifier(uri=anchor.info.uri),
+            textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
             position=anchor.position,
             context=ReferenceContext(includeDeclaration=include_declaration)))
         if res is None:
@@ -76,11 +87,11 @@ class _Symbol(ABC):
             text_document, (start, end) = (await symbol.find_declaration()).get_single_entry()
         """
         anchor = self._get_anchor()
-        if not self._client.check_feature("textDocument/declaration", text_documents=[anchor.info]):
+        if not self._client.check_feature("textDocument/declaration", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_declaration.")
 
         res = await self._client.send_text_document_declaration(
-            DeclarationParams(textDocument=TextDocumentIdentifier(uri=anchor.info.uri), position=anchor.position))
+            DeclarationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
         return LocationList.from_lsp_locations(self._workspace, res)
@@ -94,11 +105,11 @@ class _Symbol(ABC):
             text_document, (start, end) = (await symbol.find_definition()).get_single_entry()
         """
         anchor = self._get_anchor()
-        if not self._client.check_feature("textDocument/definition", text_documents=[anchor.info]):
+        if not self._client.check_feature("textDocument/definition", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_definition.")
 
         res = await self._client.send_text_document_definition(
-            DefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.info.uri), position=anchor.position))
+            DefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
         return LocationList.from_lsp_locations(self._workspace, res)
@@ -112,11 +123,11 @@ class _Symbol(ABC):
             text_document, (start, end) = (await symbol.find_type_definition()).get_single_entry()
         """
         anchor = self._get_anchor()
-        if not self._client.check_feature("textDocument/typeDefinition", text_documents=[anchor.info]):
+        if not self._client.check_feature("textDocument/typeDefinition", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_type_definition.")
 
         res = await self._client.send_text_document_type_definition(
-            TypeDefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.info.uri), position=anchor.position))
+            TypeDefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
         return LocationList.from_lsp_locations(self._workspace, res)
@@ -130,11 +141,11 @@ class _Symbol(ABC):
             text_document, (start, end) = (await symbol.find_implementation()).get_single_entry()
         """
         anchor = self._get_anchor()
-        if not self._client.check_feature("textDocument/implementation", text_documents=[anchor.info]):
+        if not self._client.check_feature("textDocument/implementation", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_implementation.")
 
         res = await self._client.send_text_document_implementation(
-            ImplementationParams(textDocument=TextDocumentIdentifier(uri=anchor.info.uri), position=anchor.position))
+            ImplementationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
         return LocationList.from_lsp_locations(self._workspace, res)
@@ -158,7 +169,9 @@ class CustomSymbol(_Symbol):
         self.container_name = container_name
 
         position = text_document.offset_to_position(range[0], client.get_name())
-        self._anchor = _SymbolAnchor(TextDocumentInfo(text_document.uri, text_document.language_id), position)
+        self._anchor = _SymbolAnchor(text_document, position)
 
     def _get_anchor(self) -> _SymbolAnchor:
+        if not self._anchor.is_valid():
+            raise LSPScriptException("Symbol is no longer valid")
         return self._anchor

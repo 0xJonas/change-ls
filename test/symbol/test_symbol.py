@@ -4,12 +4,32 @@ from typing import AsyncGenerator
 import pytest
 
 from lspscript.client import StdIOConnectionParams
+from lspscript.lsp_exception import LSPScriptException
 from lspscript.symbol import CustomSymbol
 from lspscript.types.enumerations import SymbolKind
 from lspscript.types.structures import (
     OptionalVersionedTextDocumentIdentifier, Position, Range, TextDocumentEdit,
     TextEdit, WorkspaceEdit)
 from lspscript.workspace import Workspace
+
+
+async def test_symbol_invalid_anchor() -> None:
+    async with Workspace(Path("test/mock-ws-1")) as ws:
+        launch_params = StdIOConnectionParams(
+            launch_command=f"node mock-server/out/index.js --stdio test/symbol/test_symbol_invalid_anchor.json")
+        client = await ws.launch_client(launch_params)
+
+        repo_uri = Path(".").resolve().as_uri()
+        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+
+        doc = ws.open_text_document(Path("./test-2.py"), encoding="utf-8")
+        symbol = doc.create_symbol_at(4, 8, SymbolKind.Function)
+
+        doc.edit("changed", 4, 8)
+        doc.commit_edits()
+
+        with pytest.raises(LSPScriptException):
+            await symbol.find_references()
 
 
 @pytest.fixture

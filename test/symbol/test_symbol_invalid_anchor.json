@@ -1,0 +1,20 @@
+{
+    "name": "test_symbol_invalid_anchor",
+    "sequence": [
+        { "includeSequence": "./test/open-ws-1-test-2.json" },
+        {
+            "type": "notification",
+            "method": "textDocument/didChange",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-2.py",
+                    "version": 1
+                },
+                "contentChanges": [{
+                    "text": "def changed():\n    print(\"∂ϕ\")\n    print(\"𐐀𐐐\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+                }]
+            }
+        },
+        { "includeSequence": "./test/close-ws-1-test-2.json" }
+    ]
+}

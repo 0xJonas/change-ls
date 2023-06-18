@@ -1,11 +1,12 @@
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Tuple
 
 import pytest
 
-from lspscript.client import StdIOConnectionParams
+from lspscript.client import Client, StdIOConnectionParams
 from lspscript.lsp_exception import LSPScriptException
-from lspscript.symbol import CustomSymbol
+from lspscript.symbol import (CustomSymbol, UnresolvedWorkspaceSymbol,
+                              WorkspaceSymbol)
 from lspscript.types.enumerations import SymbolKind
 from lspscript.types.structures import (
     OptionalVersionedTextDocumentIdentifier, Position, Range, TextDocumentEdit,
@@ -33,7 +34,7 @@ async def test_symbol_invalid_anchor() -> None:
 
 
 @pytest.fixture
-async def custom_symbol(request: pytest.FixtureRequest) -> AsyncGenerator[CustomSymbol, None]:
+async def mock_ws_1(request: pytest.FixtureRequest) -> AsyncGenerator[Tuple[Workspace, Client], None]:
     test_sequence_marker = request.node.get_closest_marker('test_sequence')
     assert test_sequence_marker
     test_sequence = test_sequence_marker.args[0]
@@ -44,9 +45,14 @@ async def custom_symbol(request: pytest.FixtureRequest) -> AsyncGenerator[Custom
 
         repo_uri = Path(".").resolve().as_uri()
         await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+        yield ws, client
 
-        doc = ws.open_text_document(Path("./test-2.py"), encoding="utf-8")
-        yield doc.create_symbol_at(4, 8, SymbolKind.Function)
+
+@pytest.fixture
+async def custom_symbol(mock_ws_1: Tuple[Workspace, Client]) -> AsyncGenerator[CustomSymbol, None]:
+    ws, _ = mock_ws_1
+    doc = ws.open_text_document(Path("./test-2.py"), encoding="utf-8")
+    yield doc.create_symbol_at(4, 8, SymbolKind.Function)
 
 
 @pytest.mark.test_sequence("test/symbol/test_symbol_rename.json")
@@ -115,3 +121,62 @@ async def test_symbol_find_implementation(custom_symbol: CustomSymbol) -> None:
     assert doc.uri.endswith("test/mock-ws-1/test-2.py")
     assert start == 4
     assert end == 8
+
+
+@pytest.mark.test_sequence("test/symbol/test_query_symbols_no_resolve.json")
+async def test_query_symbols_no_resolve(mock_ws_1: Tuple[Workspace, Client]) -> None:
+    ws, _ = mock_ws_1
+
+    unresolved_symbols = await ws.query_symbols("main", resolve=False)
+    assert len(unresolved_symbols) == 1
+
+    sym = unresolved_symbols[0]
+    assert isinstance(sym, UnresolvedWorkspaceSymbol)
+    assert sym.name == "main"
+    assert sym.kind == SymbolKind.Function
+    assert sym.uri == Path("test/mock-ws-1/test-2.py").resolve().as_uri()
+    assert sym.tags == []
+    assert sym.container_name is None
+
+
+@pytest.mark.test_sequence("test/symbol/test_query_symbols_resolve.json")
+async def test_query_symbols_resolve(mock_ws_1: Tuple[Workspace, Client]) -> None:
+    ws, _ = mock_ws_1
+
+    symbols = await ws.query_symbols("main", resolve=True)
+    assert len(symbols) == 1
+
+    with symbols[0] as sym:
+        assert isinstance(sym, WorkspaceSymbol)
+        assert sym.name == "main"
+        assert sym.kind == SymbolKind.Function
+        assert sym.uri == Path("test/mock-ws-1/test-2.py").resolve().as_uri()
+        assert sym.tags == []
+        assert sym.container_name == "test-2.py"
+        assert sym.range == (4, 8)
+
+    with pytest.raises(LSPScriptException):
+        # Symbol was closed
+        await sym.find_references()
+
+
+@pytest.mark.test_sequence("test/symbol/test_load_all_symbols.json")
+async def test_load_all_symbols(mock_ws_1: Tuple[Workspace, Client]) -> None:
+    ws, _ = mock_ws_1
+
+    unresolved_symbols = await ws.load_all_symbols()
+    assert len(unresolved_symbols) == 2
+
+    assert isinstance(unresolved_symbols[0], UnresolvedWorkspaceSymbol)
+    assert unresolved_symbols[0].name == "print"
+    assert unresolved_symbols[0].kind == SymbolKind.Function
+    assert unresolved_symbols[0].uri == Path("test/mock-ws-1/test-1.py").resolve().as_uri()
+    assert unresolved_symbols[0].tags == []
+    assert unresolved_symbols[0].container_name is None
+
+    assert isinstance(unresolved_symbols[1], UnresolvedWorkspaceSymbol)
+    assert unresolved_symbols[1].name == "main"
+    assert unresolved_symbols[1].kind == SymbolKind.Function
+    assert unresolved_symbols[1].uri == Path("test/mock-ws-1/test-2.py").resolve().as_uri()
+    assert unresolved_symbols[1].tags == []
+    assert unresolved_symbols[1].container_name is None

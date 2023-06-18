@@ -3,9 +3,11 @@ import os.path
 import warnings
 from pathlib import Path
 from types import TracebackType
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import (Callable, Dict, List, Literal, Optional, Sequence, Tuple,
+                    Type, Union, overload)
 from urllib.parse import urlsplit
 
+import lspscript.symbol as symbol
 import lspscript.text_document as td
 from lspscript.lsp_exception import LSPScriptException
 
@@ -17,7 +19,8 @@ from .types.structures import (ConfigurationParams, CreateFile,
                                FileDelete, FileRename, InitializeParams,
                                LSPAny, PublishDiagnosticsParams, RenameFile,
                                RenameFilesParams, TextDocumentEdit, TextEdit,
-                               WorkspaceEdit, WorkspaceFolder)
+                               WorkspaceEdit, WorkspaceFolder,
+                               WorkspaceSymbolParams)
 
 ConfigurationProvider = Callable[[Optional[str], Optional[str]], LSPAny]
 
@@ -515,6 +518,60 @@ class Workspace(WorkspaceRequestHandler):
         :param ignore_if_not_exists: Whether to raise a :class:`FileNotFoundError` if the ``path`` does not exist.
         """
         await self._handle_delete_file(path, recursive, ignore_if_not_exists, expect_directory=True)
+
+    async def _query_unresolved_symbols(self, query: str, client_name: Optional[str]) -> List["symbol.UnresolvedWorkspaceSymbol"]:
+        client = self._get_client(client_name)
+        if not client.check_feature("workspace/symbol"):
+            raise LSPScriptException(f"Client {client.get_name()} does not support querying workspace symbols.")
+        raw_result = await client.send_workspace_symbol(WorkspaceSymbolParams(query=query))
+        if raw_result is None:
+            return []
+
+        return [symbol.UnresolvedWorkspaceSymbol(client, self, sym) for sym in raw_result]
+
+    @overload
+    async def query_symbols(self, query: str, *,
+                            resolve: Literal[True], client_name: Optional[str] = None) -> List["symbol.WorkspaceSymbol"]: ...
+
+    @overload
+    async def query_symbols(self, query: str, *,
+                            resolve: Literal[False], client_name: Optional[str] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]: ...
+
+    async def query_symbols(self, query: str, *, resolve: bool = True, client_name: Optional[str] = None) -> Union[List["symbol.WorkspaceSymbol"], List["symbol.UnresolvedWorkspaceSymbol"]]:
+        """
+        Queries the ``Workspace`` for symbols using the given query string.
+
+        :param query: The query to use. The exact format depends on the language server.
+        :param resolve: Whether to automatically resolve the symbols returned by the server. If this is ``True``,
+            this method will return a list of :class:`WorkspaceSymbols <symbol.WorkspaceSymbol>` otherwise it returns a list
+            of :class:`UnresolvedWorkspaceSymbols <UnresolvedWorkspaceSymbol>`. Setting ``resolve`` to ``False`` means
+            that the language server potentially has to do less work if not all symbols returned by the query are actually
+            needed, as well as less :class:`TextDocuments <TextDocument>` are opened.
+        :param client_name: The name of the :class:`Client` which should send the LSP-request to its language server.
+            If only one client is created in this ``Workspace``, this information is optional.
+        """
+
+        if query == "":
+            warnings.warn(
+                "Querying symbols with an empty query will return ALL symbols in the workspace. Consider using load_all_symbols() instead.")
+
+        unresolved_symbols = await self._query_unresolved_symbols(query, client_name)
+        if resolve:
+            requests = [sym.resolve() for sym in unresolved_symbols]
+            return await asyncio.gather(*requests)
+        else:
+            return unresolved_symbols
+
+    async def load_all_symbols(self, *, client_name: Optional[str] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]:
+        """
+        Returns all symbols in this ``Workspace``. The symbols are returned as a List
+        of :class:`UnresolvedWorkspaceSymbols <UnresolvedWorkspaceSymbol>` so they need to
+        be resolved before they can be used as a regular :class:`Symbol`.
+
+        :param client_name: The name of the :class:`Client` which should send the LSP-request to its language server.
+            If only one client is created in this ``Workspace``, this information is optional.
+        """
+        return await self._query_unresolved_symbols("", client_name)
 
     def on_workspace_folders(self) -> List[WorkspaceFolder]:
         return self._get_workspace_folders()

@@ -1,0 +1,49 @@
+{
+    "name": "test_query_symbols_no_resolve",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "workspace/symbol",
+            "params": {
+                "query": "main"
+            },
+            "result": [
+                {
+                    "name": "main",
+                    "kind": 12,
+                    "location": {
+                        "uri" :"${REPO_URI}/test/mock-ws-1/test-2.py"
+                    },
+                    "data": "test-2.py@1"
+                }
+            ]
+        },
+        {
+            "type": "request",
+            "method": "workspaceSymbol/resolve",
+            "params": {
+                "name": "main",
+                "kind": 12,
+                "location": {
+                    "uri" :"${REPO_URI}/test/mock-ws-1/test-2.py"
+                },
+                "data": "test-2.py@1"
+            },
+            "result": {
+                "name": "main",
+                "kind": 12,
+                "location": {
+                    "uri" :"${REPO_URI}/test/mock-ws-1/test-2.py",
+                    "range": {
+                        "start": { "line": 0, "character": 4 },
+                        "end": { "line": 0, "character": 8 }
+                    }
+                },
+                "containerName": "test-2.py",
+                "data": "test-2.py@1"
+            }
+        },
+        { "includeSequence": "./test/open-ws-1-test-2.json" },
+        { "includeSequence": "./test/close-ws-1-test-2.json" }
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "name": "test_query_symbols_no_resolve",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "workspace/symbol",
+            "params": {
+                "query": "main"
+            },
+            "result": [
+                {
+                    "name": "main",
+                    "kind": 12,
+                    "location": {
+                        "uri" :"${REPO_URI}/test/mock-ws-1/test-2.py"
+                    },
+                    "data": "test-2.py@1"
+                }
+            ]
+        }
+    ]
+}

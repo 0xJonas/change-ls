@@ -86,14 +86,15 @@ connection.onInitialize((params: InitializeParams) => {
                         didDelete: {
                             filters: [{ pattern: { glob: "**/*" } }]
                         },
-                    }
+                    },
                 },
                 renameProvider: true,
                 referencesProvider: true,
                 declarationProvider: true,
                 definitionProvider: true,
                 typeDefinitionProvider: true,
-                implementationProvider: true
+                implementationProvider: true,
+                workspaceSymbolProvider: { resolveProvider: true }
                 // TODO: fill accordingly as more tests are added
             },
             serverInfo: {

@@ -44,6 +44,7 @@ async def test_location_list_iteration() -> None:
         assert doc2.is_closed()
 
 
+@pytest.mark.filterwarnings("ignore::lspscript.text_document.DroppedChangesWarning")
 async def test_location_list_document_edits() -> None:
     async with Workspace(Path("./test/mock-ws-1")) as ws:
         doc1 = ws.open_text_document(Path("test-1.py"))

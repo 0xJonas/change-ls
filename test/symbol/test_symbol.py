@@ -14,6 +14,7 @@ from lspscript.types.structures import (
 from lspscript.workspace import Workspace
 
 
+@pytest.mark.filterwarnings("ignore::lspscript.text_document.DroppedChangesWarning")
 async def test_symbol_invalid_anchor() -> None:
     async with Workspace(Path("test/mock-ws-1")) as ws:
         launch_params = StdIOConnectionParams(

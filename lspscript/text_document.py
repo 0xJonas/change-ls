@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 from bisect import bisect_right
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -60,6 +61,13 @@ class _Edit:
             return f"Delete characters in range [{self.from_offset}:{self.to_offset}]"
         else:
             return f"Change characters in range [{self.from_offset}:{self.to_offset}] to {self.new_text}"
+
+
+class DroppedChangesWarning(Warning):
+    """
+    Warning category used when dropping changes when closing a TextDocument.
+    """
+    ...
 
 
 def _skip_to_next_line(text: str, offset: int) -> int:
@@ -178,6 +186,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     _pending_edits: List[_Edit]
     _line_offsets: List[int]
     _reference_count: int
+    _content_saved: bool
 
     language_id: str
 
@@ -198,6 +207,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         self._pending_edits = []
         self._line_offsets = _calculate_line_offsets(text)
         self._reference_count = 1
+        self._content_saved = True
 
         uri = path.as_uri()
         TextDocumentInfo.__init__(self, uri, language_id)
@@ -228,6 +238,15 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         await self._workspace.delete_text_document(self._path)
 
     def _final_close(self) -> None:
+        if len(self._pending_edits) > 0:
+            warnings.warn(
+                f"Dropping {len(self._pending_edits)} uncommitted edits for Textdocument '{self.uri}'. Call text_document.commit_edits() followed by text_document.save() to save the changes.",
+                DroppedChangesWarning)
+        if not self._content_saved:
+            warnings.warn(
+                f"TextDocument {self.uri} has unsaved changes. Call text_document.save() to save the changes.",
+                DroppedChangesWarning)
+
         for client in self._workspace.clients.values():
             if not client.check_feature("textDocument/didClose", text_documents=[self]):
                 continue
@@ -496,6 +515,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             self._handle_text_change(client)
         self._pending_edits = []
         self._tokens = None
+        self._content_saved = False
 
     def discard_edits(self) -> None:
         """
@@ -555,6 +575,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
                 client.send_text_document_did_save(did_save_params_include_text)
             elif client.check_feature("textDocument/didSave", include_text=False):
                 client.send_text_document_did_save(did_save_params)
+
+        self._content_saved = True
 
     def position_to_offset(self, position: Position, client_name: Optional[str] = None) -> int:
         """

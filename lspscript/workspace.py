@@ -186,7 +186,7 @@ class Workspace(WorkspaceRequestHandler):
                 path_component = path_component[1:]
 
             full_path = self._resolve_path_in_workspace(Path(path_component))
-            uri = path
+            uri = full_path.as_uri()
 
         return (full_path, uri)
 

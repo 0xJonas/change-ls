@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from asyncio import (BaseTransport, Event, Future, Protocol,
                      SubprocessProtocol, SubprocessTransport, Transport,
@@ -33,6 +34,10 @@ class LSPException(Exception):
 
 
 class LSPClientException(Exception):
+    pass
+
+
+class LSPUnknownIdWarning(Warning):
     pass
 
 
@@ -198,8 +203,7 @@ class LSProtocol(ABC):
     def _process_response(self, id: Union[int, str], result: JSON_VALUE) -> None:
         future = self._active_requests.get(id)
         if not future:
-            # Unsolicited response
-            # TODO raise something?
+            warnings.warn(f"Received response for unknown request id {id}.", LSPUnknownIdWarning)
             return
         future.set_result(result)
         del self._active_requests[id]
@@ -225,8 +229,7 @@ class LSProtocol(ABC):
         if id is not None:
             future = self._active_requests.get(id)
             if not future:
-                # Unsolicited response
-                # TODO raise something?
+                warnings.warn(f"Received error for unknown request id {id}.", LSPUnknownIdWarning)
                 return
             future.set_exception(LSPException(code, message, data))
             del self._active_requests[id]

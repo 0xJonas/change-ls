@@ -1,7 +1,9 @@
+import warnings
 from asyncio import Event, wait_for
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from lspscript.protocol import LSPUnknownIdWarning
 from lspscript.types.enumerations import TextDocumentSyncKind
 from lspscript.types.structures import (CodeActionOptions, CodeLensOptions,
                                         CompletionOptions, DiagnosticOptions,
@@ -208,16 +210,15 @@ class CapabilitiesMixin:
         self._registrations[feature_registration.method].append(feature_registration)
 
     def _remove_dynamic_registration(self, unregistration: Unregistration) -> None:
-        registrations = self._registrations.get(unregistration.method)
-        if not registrations:
-            # No registration with that id
-            # TODO raise something?
-            return
+        registrations = self._registrations.get(unregistration.method, [])
 
         for i, r in enumerate(registrations):
             if r.id and r.id == unregistration.id:
                 del registrations[i]
                 return
+
+        warnings.warn(
+            f"Dynamic registration {unregistration.id} for {unregistration.method} could not be removed because it was not found.", LSPUnknownIdWarning)
 
     def check_feature(self, method: str, **kwargs: Any) -> bool:
         """

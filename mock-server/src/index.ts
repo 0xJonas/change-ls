@@ -94,7 +94,8 @@ connection.onInitialize((params: InitializeParams) => {
                 definitionProvider: true,
                 typeDefinitionProvider: true,
                 implementationProvider: true,
-                workspaceSymbolProvider: { resolveProvider: true }
+                workspaceSymbolProvider: { resolveProvider: true },
+                documentSymbolProvider: true
                 // TODO: fill accordingly as more tests are added
             },
             serverInfo: {

@@ -181,3 +181,28 @@ async def test_load_all_symbols(mock_ws_1: Tuple[Workspace, Client]) -> None:
     assert unresolved_symbols[1].uri == Path("test/mock-ws-1/test-2.py").resolve().as_uri()
     assert unresolved_symbols[1].tags == []
     assert unresolved_symbols[1].container_name is None
+
+
+@pytest.mark.test_sequence("test/symbol/test_load_outline.json")
+async def test_load_outline(mock_ws_1: Tuple[Workspace, Client]) -> None:
+    ws, _ = mock_ws_1
+
+    doc = ws.open_text_document(Path("test-2.py"))
+    await doc.load_outline()
+    outline = doc.get_loaded_outline()
+
+    assert len(outline) == 1
+    assert outline[0].name == "main"
+    assert outline[0].uri == doc.uri
+    assert outline[0].range == (4, 8)
+    assert outline[0].symbol_range == (4, 8)
+    assert outline[0].context_range == (0, 11)
+    assert outline[0].detail == "def main() -> None"
+    assert outline[0].kind == SymbolKind.Function
+    assert outline[0].children is not None
+    assert len(outline[0].children) == 2
+    for c in outline[0].children:
+        assert c.name == "print"
+        assert c.uri == doc.uri
+        assert c.kind == SymbolKind.Variable
+        assert c.children is None

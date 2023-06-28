@@ -18,8 +18,9 @@ from lspscript.types.enumerations import (PositionEncodingKind, SymbolKind,
                                           SymbolTag, TextDocumentSaveReason,
                                           TextDocumentSyncKind)
 from lspscript.types.structures import (DidChangeTextDocumentParams,
-                                        DidSaveTextDocumentParams, Position,
-                                        Range, TextDocumentContentChangeEvent,
+                                        DidSaveTextDocumentParams,
+                                        DocumentSymbolParams, Position, Range,
+                                        TextDocumentContentChangeEvent,
                                         TextDocumentIdentifier, TextEdit,
                                         WillSaveTextDocumentParams)
 from lspscript.util import TextDocumentInfo, guess_language_id
@@ -183,6 +184,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     _clients: Dict[str, Client]
     _workspace: "ws.Workspace"
     _tokens: Optional[TokenList]
+    _outlines: Dict[str, List["sym.DocumentSymbol"]]
     _pending_edits: List[_Edit]
     _line_offsets: List[int]
     _reference_count: int
@@ -204,6 +206,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
         self._workspace = workspace
         self._tokens = None
+        self._outlines = {}
         self._pending_edits = []
         self._line_offsets = _calculate_line_offsets(text)
         self._reference_count = 1
@@ -294,7 +297,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             if len(clients) == 1:
                 return list(clients.values())[0]
             else:
-                raise ValueError("Unable to identify Client without a name.")
+                raise LSPScriptException("Unable to identify Client without a name.")
         return clients[client_name]
 
     @property
@@ -304,7 +307,8 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     @property
     def tokens(self) -> TokenList:
         if not self._tokens:
-            raise AttributeError("Tokens are not loaded for this TextDocument")
+            raise AttributeError(
+                "Tokens are not loaded for this TextDocument. Use load_tokens() to fill the tokens property.")
         return self._tokens
 
     async def load_tokens(self, *, include_whitespace: bool = False) -> None:
@@ -318,6 +322,53 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         """
         self._check_closed()
         self._tokens = await tokenize(self.text, self.language_id, include_whitespace=include_whitespace)
+
+    def get_loaded_outline(self, client_name: Optional[str] = None) -> List["sym.DocumentSymbol"]:
+        """
+        Returns a previously loaded outline.
+
+        :param client_name: The name of the :class:`Client` to retrieve the outline for. If only one ``Client``
+            is open in the current :class:`Workspace`, this parameter is optional.
+        """
+
+        if client_name is None:
+            if len(self._workspace.clients) == 0:
+                raise AttributeError(
+                    "No outline is loaded for this TextDocument because the Workspace does not have any open Clients.")
+            elif len(self._workspace.clients) == 1:
+                client_name = next(iter(self._workspace.clients.keys()))
+            else:
+                raise AttributeError(
+                    "Outline is ambiguous because the Workspace has multiple open Clients. Use test_document.outline(client_name) to select the outline for a specific Client.")
+
+        out = self._outlines.get(client_name)
+        if out is None:
+            raise AttributeError(
+                f"No outline is loaded for Client {client_name}. Use load_outline('{client_name}') to fill the outline property.")
+        else:
+            return out
+
+    async def load_outline(self, *, client_name: Optional[str] = None) -> None:
+        """
+        Loads the document outline (list of symbols defined in the document, maybe hierarchical) for a given :class:`Client`.
+
+        After an outline is loaded, it can be retrieved by calling :meth:`~TextDocument.get_loaded_outline()`. An
+        outline is valid as long as the ``TextDocumnet`` is not changed.
+
+        :param client_name: The name of the ``Client`` to load the document outline for. If only one ``Client`` is open
+            in the :class:`Workspace`, this parameter is optional.
+        """
+
+        client = self._get_client(client_name)
+        if not client.check_feature("textDocument/documentSymbol", text_document=self):
+            raise LSPScriptException(f"Client {client_name} does not support document outlines.")
+
+        res = await client.send_text_document_document_symbol(DocumentSymbolParams(textDocument=self.get_text_document_identifier()))
+        if res is None:
+            raise LSPScriptException(f"Client {client_name} returned an empty outline.")
+
+        outline = [sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res]
+        self._outlines[client.get_name()] = outline
 
     def get_text_document_identifier(self) -> TextDocumentIdentifier:
         """
@@ -515,6 +566,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
             self._handle_text_change(client)
         self._pending_edits = []
         self._tokens = None
+        self._outlines = {}
         self._content_saved = False
 
     def discard_edits(self) -> None:

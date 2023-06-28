@@ -1,0 +1,57 @@
+{
+    "name": "test_load_outline",
+    "sequence": [
+        { "includeSequence": "test/open-ws-1-test-2.json" },
+        {
+            "type": "request",
+            "method": "textDocument/documentSymbol",
+            "params": {
+                "textDocument": {
+                    "uri": "${REPO_URI}/test/mock-ws-1/test-2.py"
+                }
+            },
+            "result": [
+                {
+                    "name": "main",
+                    "detail": "def main() -> None",
+                    "kind": 12,
+                    "range": {
+                        "start": { "line": 0, "character": 0 },
+                        "end": { "line": 0, "character": 11 }
+                    },
+                    "selectionRange": {
+                        "start": { "line": 0, "character": 4 },
+                        "end": { "line": 0, "character": 8 }
+                    },
+                    "children": [
+                        {
+                            "name": "print",
+                            "kind": 13,
+                            "range": {
+                                "start": { "line": 1, "character": 4 },
+                                "end": { "line": 1, "character": 9 }
+                            },
+                            "selectionRange": {
+                                "start": { "line": 1, "character": 4 },
+                                "end": { "line": 1, "character": 9 }
+                            }
+                        },
+                        {
+                            "name": "print",
+                            "kind": 13,
+                            "range": {
+                                "start": { "line": 2, "character": 4 },
+                                "end": { "line": 2, "character": 9 }
+                            },
+                            "selectionRange": {
+                                "start": { "line": 2, "character": 4 },
+                                "end": { "line": 2, "character": 9 }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        { "includeSequence": "test/close-ws-1-test-2.json" }
+    ]
+}

@@ -395,3 +395,139 @@ class WorkspaceSymbol(UnresolvedWorkspaceSymbol, Symbol):
         if not self._is_closed:
             self._anchor.text_document.close()
         self._is_closed = True
+
+
+class DocumentSymbol(Symbol):
+    """
+    A :class:`Symbol` which is part of a :class:`TextDocument`'s outline.
+
+    In addition to the base properties provided by ``Symbol``, ``DocumentSymbol`` adds
+    the following properties:
+
+    .. property:: detail
+        :type: Optional[str]
+
+        Additional details for this symbol, e.g. the signature of a function.
+
+    .. property:: symbol_range
+        :type: Tuple[int, int]
+
+        The range of this symbol, identical to :attr:`Symbol.range`.
+
+    .. property:: context_range
+        :type: Tuple[int, int]
+
+        The range of this symbol with additional context included, e.g. visibility modifiers or comments.
+
+    .. property:: parent
+        :type: Optional[DocumentSymbol]
+
+        The parent symbol. Unline :attr:`Symbol.container_name` this property and :attr:`~DocumentSymbol.children` do
+        form a hierarchy.
+
+    .. property:: children
+        :type: Optional[List[DocumentSymbol]]
+
+        The children of this symbol. If there are no children, this property can be either ``None`` or ``[]``, depending
+        on whether the language server wants to indicate that a symbol is empty but can theoretically have children
+        (e.g. a class without properties).
+    """
+
+    _text_document: "td.TextDocument"
+    _lsp_symbol: Union[lsptypes.DocumentSymbol, lsptypes.SymbolInformation]
+    _tags: List[SymbolTag]
+    _context_range: Tuple[int, int]
+    _symbol_range: Tuple[int, int]
+    _parent: Optional["DocumentSymbol"]
+    _children: Optional[List["DocumentSymbol"]]
+    _anchor: _SymbolAnchor
+
+    def __init__(self, client: Client, workspace: "ws.Workspace", text_document: "td.TextDocument",
+                 lsp_symbol: Union[lsptypes.DocumentSymbol, lsptypes.SymbolInformation], parent: Optional["DocumentSymbol"]) -> None:
+        self._client = client
+        self._workspace = workspace
+        self._text_document = text_document
+        self._lsp_symbol = lsp_symbol
+        self._tags = list(lsp_symbol.tags) if lsp_symbol.tags else []
+        self._parent = parent
+
+        if isinstance(lsp_symbol, lsptypes.DocumentSymbol):
+            if lsp_symbol.children is not None:
+                self._children = [DocumentSymbol(client, workspace, text_document, child, self)
+                                  for child in lsp_symbol.children]
+            else:
+                self._children = None
+
+            if lsp_symbol.deprecated:
+                self._tags.append(SymbolTag.Deprecated)
+
+            self._context_range = (text_document.position_to_offset(lsp_symbol.range.start),
+                                   text_document.position_to_offset(lsp_symbol.range.end))
+            self._symbol_range = (text_document.position_to_offset(lsp_symbol.selectionRange.start),
+                                  text_document.position_to_offset(lsp_symbol.selectionRange.end))
+
+            self._anchor = _SymbolAnchor(text_document, lsp_symbol.selectionRange.start)
+        else:
+            self._children = None
+            self._context_range = (text_document.position_to_offset(lsp_symbol.location.range.start),
+                                   text_document.position_to_offset(lsp_symbol.location.range.end))
+            self._symbol_range = self._context_range
+
+            self._anchor = _SymbolAnchor(text_document, lsp_symbol.location.range.start)
+
+    def _get_anchor(self) -> _SymbolAnchor:
+        if not self._anchor.is_valid():
+            raise LSPScriptException("Symbol is no longer valid")
+        return self._anchor
+
+    @property
+    def name(self) -> str:
+        return self._lsp_symbol.name
+
+    @property
+    def uri(self) -> str:
+        return self._text_document.uri
+
+    @property
+    def range(self) -> Tuple[int, int]:
+        return self.symbol_range
+
+    @property
+    def symbol_range(self) -> Tuple[int, int]:
+        return self._symbol_range
+
+    @property
+    def context_range(self) -> Tuple[int, int]:
+        return self._context_range
+
+    @property
+    def detail(self) -> Optional[str]:
+        if isinstance(self._lsp_symbol, lsptypes.DocumentSymbol):
+            return self._lsp_symbol.detail
+        else:
+            return None
+
+    @property
+    def kind(self) -> SymbolKind:
+        return self._lsp_symbol.kind
+
+    @property
+    def tags(self) -> List[SymbolTag]:
+        return self._lsp_symbol.tags if self._lsp_symbol.tags is not None else []
+
+    @property
+    def container_name(self) -> Optional[str]:
+        if self._parent is not None:
+            return self._parent.name
+        elif isinstance(self._lsp_symbol, lsptypes.SymbolInformation):
+            return self._lsp_symbol.containerName
+        else:
+            return None
+
+    @property
+    def parent(self) -> Optional["DocumentSymbol"]:
+        return self._parent
+
+    @property
+    def children(self) -> Optional[List["DocumentSymbol"]]:
+        return self._children

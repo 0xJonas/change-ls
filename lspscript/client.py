@@ -27,6 +27,7 @@ from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         ConfigurationParams,
                                         DeclarationClientCapabilities,
                                         DefinitionClientCapabilities,
+                                        DocumentSymbolClientCapabilities,
                                         FileOperationClientCapabilities,
                                         GeneralClientCapabilities,
                                         ImplementationClientCapabilities,
@@ -252,6 +253,16 @@ def get_default_client_capabilities() -> ClientCapabilities:
     Returns the :class:`ClientCapabilities` which are used for the default
     :class:`InitializeParams` (see `get_default_initialize_params`).
     """
+    all_symbols_kinds = [
+        SymbolKind.Array, SymbolKind.Boolean, SymbolKind.Class, SymbolKind.Constant,
+        SymbolKind.Constructor, SymbolKind.Enum, SymbolKind.EnumMember, SymbolKind.Event,
+        SymbolKind.Field, SymbolKind.File, SymbolKind.Function, SymbolKind.Interface,
+        SymbolKind.Key, SymbolKind.Method, SymbolKind.Module, SymbolKind.Namespace,
+        SymbolKind.Null, SymbolKind.Number, SymbolKind.Object, SymbolKind.Operator,
+        SymbolKind.Package, SymbolKind.Property, SymbolKind.String, SymbolKind.Struct,
+        SymbolKind.TypeParameter, SymbolKind.Variable]
+    all_symbol_tags = [SymbolTag.Deprecated]
+
     return ClientCapabilities(
         general=GeneralClientCapabilities(
             positionEncodings=[PositionEncodingKind.UTF32, PositionEncodingKind.UTF8, PositionEncodingKind.UTF16]),
@@ -267,22 +278,19 @@ def get_default_client_capabilities() -> ClientCapabilities:
                 willRename=True, didRename=True,
                 willDelete=True, didDelete=True),
             symbol=WorkspaceSymbolClientCapabilities(
-                symbolKind={"valueSet": [
-                    SymbolKind.Array, SymbolKind.Boolean, SymbolKind.Class, SymbolKind.Constant,
-                    SymbolKind.Constructor, SymbolKind.Enum, SymbolKind.EnumMember, SymbolKind.Event,
-                    SymbolKind.Field, SymbolKind.File, SymbolKind.Function, SymbolKind.Interface,
-                    SymbolKind.Key, SymbolKind.Method, SymbolKind.Module, SymbolKind.Namespace,
-                    SymbolKind.Null, SymbolKind.Number, SymbolKind.Object, SymbolKind.Operator,
-                    SymbolKind.Package, SymbolKind.Property, SymbolKind.String, SymbolKind.Struct,
-                    SymbolKind.TypeParameter, SymbolKind.Variable]},
-                tagSupport={"valueSet": [SymbolTag.Deprecated]},
+                symbolKind={"valueSet": all_symbols_kinds},
+                tagSupport={"valueSet": all_symbol_tags},
                 resolveSupport={"properties": ["location.range", "containerName", "tags"]})),
         textDocument=TextDocumentClientCapabilities(
             references=ReferenceClientCapabilities(),
             declaration=DeclarationClientCapabilities(linkSupport=True),
             definition=DefinitionClientCapabilities(linkSupport=True),
             typeDefinition=TypeDefinitionClientCapabilities(linkSupport=True),
-            implementation=ImplementationClientCapabilities(linkSupport=True),))
+            implementation=ImplementationClientCapabilities(linkSupport=True),
+            documentSymbol=DocumentSymbolClientCapabilities(
+                symbolKind={"valueSet": all_symbols_kinds},
+                tagSupport={"valueSet": all_symbol_tags},
+                hierarchicalDocumentSymbolSupport=True)))
 
 
 def get_default_initialize_params() -> InitializeParams:

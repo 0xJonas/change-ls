@@ -688,3 +688,13 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     def on_s_progress(self, params: ProgressParams) -> None:
         pass
+
+    def __str__(self) -> str:
+        return f"Client {self._name}"
+
+    def __repr__(self) -> str:
+        values = {
+            "name": self._name,
+            "state": self._state
+        }
+        return f"{object.__repr__(self)} {values!r}"

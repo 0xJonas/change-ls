@@ -55,7 +55,7 @@ class Workspace(WorkspaceRequestHandler):
     :param roots: The :class:`Paths <pathlib.Path>` to the roots of the workspace. The ``Paths`` must be directories.
     :param names: An optional list of names for the workspace roots. If given, there must be a name for each root.
     :param default_encoding: The default character encoding used when opening ``TextDocuments``. Some Workspace
-        method rely on this setting because they might need to open ``TextDocuments`` behind the scenes, e.g.
+        methods rely on this setting because they might need to open ``TextDocuments`` behind the scenes, e.g.
         :meth:`~Workspace.perform_edit_and_save()`.
     """
 
@@ -609,3 +609,9 @@ class Workspace(WorkspaceRequestHandler):
     def on_publish_diagnostics(self, params: PublishDiagnosticsParams) -> None:
         # TODO
         pass
+
+    def __str__(self) -> str:
+        return ", ".join(f"'{n}': {r}" for n, r in zip(self._root_names, self._roots))
+
+    def __repr__(self) -> str:
+        return f"{object.__repr__(self)} {self!s}"

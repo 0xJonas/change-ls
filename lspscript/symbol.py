@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import TracebackType
-from typing import List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import lspscript.text_document as td
 import lspscript.types.structures as lsptypes
@@ -114,12 +114,25 @@ class Symbol(ABC):
     @abstractmethod
     def container_name(self) -> Optional[str]: ...
 
+    def is_valid(self) -> bool:
+        """
+        Checks whether a ``Symbol`` is still valid.
+        Symbols are invalidated when their underlying :class:`TextDocument`
+        changes.
+        """
+        return self._get_anchor().is_valid()
+
+    def _assert_valid(self) -> None:
+        if not self.is_valid():
+            raise LSPScriptException("Symbol is no longer valid")
+
     async def get_rename_workspace_edit(self, new_name: str) -> Optional[WorkspaceEdit]:
         """
         Returns a :class:`WorkspaceEdit` which renames this ``Symbol`` to ``new_name``.
 
         This edit can be applied by calling :meth:`Workspace.perform_edit_and_save()`.
         """
+        self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/rename", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support renaming.")
@@ -134,6 +147,7 @@ class Symbol(ABC):
 
         :param include_declaration: Whether to include the declaration of the symbol in the returned list of locations.
         """
+        self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/references", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_references.")
@@ -154,6 +168,7 @@ class Symbol(ABC):
 
             text_document, (start, end) = (await symbol.find_declaration()).get_single_entry()
         """
+        self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/declaration", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_declaration.")
@@ -172,6 +187,7 @@ class Symbol(ABC):
 
             text_document, (start, end) = (await symbol.find_definition()).get_single_entry()
         """
+        self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/definition", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_definition.")
@@ -190,6 +206,7 @@ class Symbol(ABC):
 
             text_document, (start, end) = (await symbol.find_type_definition()).get_single_entry()
         """
+        self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/typeDefinition", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_type_definition.")
@@ -208,6 +225,7 @@ class Symbol(ABC):
 
             text_document, (start, end) = (await symbol.find_implementation()).get_single_entry()
         """
+        self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/implementation", text_documents=[anchor.text_document]):
             raise LSPScriptException(f"Client {self._client.get_name()} does not support find_implementation.")
@@ -217,6 +235,31 @@ class Symbol(ABC):
         if res is None:
             res = []
         return LocationList.from_lsp_locations(self._workspace, res)
+
+    def __str__(self) -> str:
+        if self.is_valid():
+            anchor = self._get_anchor()
+            return f"{self.name}@{anchor.text_document.uri}:{anchor.position.line}:{anchor.position.character}"
+        else:
+            return "INVALIDED SYMBOL!"
+
+    def _get_repr_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "uri": self.uri,
+            "range": self.range,
+            "kind": self.kind,
+            "tags": self.tags,
+            "container_name": self.container_name
+        }
+
+    def __repr__(self) -> str:
+        if self.is_valid():
+            status = " "
+        else:
+            status = " INVALIDED SYMBOL! "
+
+        return f"{object.__repr__(self)}{status}{self._get_repr_dict()!r}"
 
 
 class CustomSymbol(Symbol):
@@ -251,8 +294,6 @@ class CustomSymbol(Symbol):
         self._anchor = _SymbolAnchor(text_document, position)
 
     def _get_anchor(self) -> _SymbolAnchor:
-        if not self._anchor.is_valid():
-            raise LSPScriptException("Symbol is no longer valid")
         return self._anchor
 
     @property
@@ -340,6 +381,21 @@ class UnresolvedWorkspaceSymbol:
     def container_name(self) -> Optional[str]:
         return self._lsp_workspace_symbol.containerName
 
+    def __str__(self) -> str:
+        return f"{self.name}@{self.uri}"
+
+    def _get_repr_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "uri": self.uri,
+            "kind": self.kind,
+            "tags": self.tags,
+            "container_name": self.container_name
+        }
+
+    def __repr__(self) -> str:
+        return f"{object.__repr__(self)} {self._get_repr_dict()!r}"
+
 
 class WorkspaceSymbol(UnresolvedWorkspaceSymbol, Symbol):
     """
@@ -371,8 +427,6 @@ class WorkspaceSymbol(UnresolvedWorkspaceSymbol, Symbol):
         self._is_closed = False
 
     def _get_anchor(self) -> _SymbolAnchor:
-        if not self._anchor.is_valid():
-            raise LSPScriptException("Symbol is no longer valid")
         return self._anchor
 
     @property
@@ -476,8 +530,6 @@ class DocumentSymbol(Symbol):
             self._anchor = _SymbolAnchor(text_document, lsp_symbol.location.range.start)
 
     def _get_anchor(self) -> _SymbolAnchor:
-        if not self._anchor.is_valid():
-            raise LSPScriptException("Symbol is no longer valid")
         return self._anchor
 
     @property
@@ -531,3 +583,20 @@ class DocumentSymbol(Symbol):
     @property
     def children(self) -> Optional[List["DocumentSymbol"]]:
         return self._children
+
+    def __repr__(self) -> str:
+        if self.is_valid():
+            status = " "
+        else:
+            status = " INVALIDED SYMBOL! "
+
+        values = self._get_repr_dict()
+        values.update({
+            "symbol_range": self.symbol_range,
+            "context_range": self.context_range,
+            # Use the informal str representation for parent and children
+            # to not print huge sections of the document outline every time.
+            "parent": str(self.parent),
+            "children": [str(c) for c in self.children] if self.children else None
+        })
+        return f"{object.__repr__(self)}{status}{values!r}"

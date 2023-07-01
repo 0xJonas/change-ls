@@ -173,3 +173,9 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
         if len(self._text_documents) != 1 or len(self._data[self._text_documents[0].uri]) != 1:
             raise LSPScriptException("LocationList contains more than one entry.")
         return self._text_documents[0], self._data[self._text_documents[0].uri][0]
+
+    def __str__(self) -> str:
+        return repr(self)
+
+    def __repr__(self) -> str:
+        return repr(self._data)

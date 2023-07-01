@@ -699,3 +699,21 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         """
         client = self._get_client(client_name)
         return sym.CustomSymbol(client, self, (start, end), kind, tags, container_name)
+
+    def __str__(self) -> str:
+        return self.uri
+
+    def __repr__(self) -> str:
+        # text and tokens would dominate the output if they
+        # were printed in their entirety, so we use the default
+        # object representation instead.
+        values = {
+            "text": object.__repr__(self.text),
+            "uri": self.uri,
+            "version": self.version,
+            "language_id": self.language_id,
+            "encoding": self.encoding,
+            "tokens": object.__repr__(self.tokens) if self._tokens else None,
+        }
+
+        return f"{object.__repr__(self)} {values!r}"

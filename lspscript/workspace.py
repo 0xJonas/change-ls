@@ -531,11 +531,11 @@ class Workspace(WorkspaceRequestHandler):
 
     @overload
     async def query_symbols(self, query: str, *,
-                            resolve: Literal[True], client_name: Optional[str] = None) -> List["symbol.WorkspaceSymbol"]: ...
+                            resolve: Literal[True] = True, client_name: Optional[str] = None) -> List["symbol.WorkspaceSymbol"]: ...
 
     @overload
     async def query_symbols(self, query: str, *,
-                            resolve: Literal[False], client_name: Optional[str] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]: ...
+                            resolve: Literal[False] = False, client_name: Optional[str] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]: ...
 
     async def query_symbols(self, query: str, *, resolve: bool = True, client_name: Optional[str] = None) -> Union[List["symbol.WorkspaceSymbol"], List["symbol.UnresolvedWorkspaceSymbol"]]:
         """

@@ -144,7 +144,7 @@ async def test_query_symbols_no_resolve(mock_ws_1: Tuple[Workspace, Client]) -> 
 async def test_query_symbols_resolve(mock_ws_1: Tuple[Workspace, Client]) -> None:
     ws, _ = mock_ws_1
 
-    symbols = await ws.query_symbols("main", resolve=True)
+    symbols = await ws.query_symbols("main")
     assert len(symbols) == 1
 
     with symbols[0] as sym:

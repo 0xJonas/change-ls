@@ -596,14 +596,14 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
         # textDocument/willSave
         for client in clients.values():
-            if not client.check_feature("textDocument/willSave"):
+            if not client.check_feature("textDocument/willSave", text_document=self):
                 continue
             client.send_text_document_will_save(will_save_params)
 
         # textDocument/willSaveWaitUntil
         requests = [client.send_text_document_will_save_wait_until(will_save_params)
                     for client in clients.values()
-                    if client.check_feature("textDocument/willSaveWaitUntil")]
+                    if client.check_feature("textDocument/willSaveWaitUntil", text_document=self)]
         edit_lists: List[Optional[List[TextEdit]]] = await asyncio.gather(*requests)
 
         for edit_list in edit_lists:
@@ -623,9 +623,9 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         did_save_params_include_text = DidSaveTextDocumentParams(
             textDocument=self.get_text_document_identifier(), text=self.text)
         for client in clients.values():
-            if client.check_feature("textDocument/didSave", include_text=True):
+            if client.check_feature("textDocument/didSave", include_text=True, text_document=self):
                 client.send_text_document_did_save(did_save_params_include_text)
-            elif client.check_feature("textDocument/didSave", include_text=False):
+            elif client.check_feature("textDocument/didSave", include_text=False, text_document=self):
                 client.send_text_document_did_save(did_save_params)
 
         self._content_saved = True
@@ -678,6 +678,46 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         character = _offset_to_code_units(reference_string, offset - self._line_offsets[line], encoding)
 
         return Position(line=line, character=character)
+
+    def offset_to_token_index(self, offset: int) -> Optional[int]:
+        """
+        Converts an offset into :attr:`text` into an offset into :attr:`tokens`.
+
+        Returns None if there is no token at the given offset, e.g. if the offset points
+        to whitespace and tokens were loaded without whitespace.
+
+        :param offset: The offset to convert.
+        """
+
+        if offset < 0 or offset >= len(self.text):
+            raise ValueError("offset is out of bounds.")
+
+        # Inline bisection because the key parameter for bisect_left is not supported until Python 3.10.
+        # Also, this bisection algorithm has some adjustments to make it fit better for tokens.
+
+        tokens = self.tokens
+        left = 0
+        right = len(tokens)
+        middle = 0
+
+        if tokens[left].offset > offset or tokens[right - 1].offset + len(tokens[right - 1].lexeme) <= offset:
+            return None
+
+        while left < right - 1:
+            middle = (left + right) // 2
+            current_offset = tokens[middle].offset
+            if current_offset == offset:
+                left = middle
+                break
+            elif current_offset < offset:
+                left = middle
+            else:
+                right = middle
+
+        if left >= 0 and left < len(tokens) and tokens[left].offset + len(tokens[left].lexeme) > offset:
+            return left
+        else:
+            return None
 
     def create_symbol_at(self, start: int, end: int, kind: SymbolKind, *,
                          tags: Optional[List[SymbolTag]] = None, container_name: Optional[str] = None,

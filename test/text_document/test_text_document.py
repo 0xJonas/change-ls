@@ -195,3 +195,14 @@ async def test_text_document_reopen(mock_workspace_1: Workspace) -> None:
     with pytest.raises(ValueError):
         mock_workspace_1.open_text_document(Path("test-1.py"), language_id="javascript")
     doc3.close()
+
+
+@pytest.mark.test_sequence("test/text_document/test_text_document_open_close.json")
+async def test_text_document_offset_to_token_index(mock_document_1: TextDocument) -> None:
+    await mock_document_1.load_tokens()
+
+    assert len(mock_document_1.text) == 23
+    assert mock_document_1.offset_to_token_index(22) is None
+    assert mock_document_1.offset_to_token_index(0) == 0
+    assert mock_document_1.offset_to_token_index(4) == 0
+    assert mock_document_1.offset_to_token_index(21) == 5

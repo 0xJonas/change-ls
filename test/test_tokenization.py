@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from lspscript.tokens import Grammar, Token, lexeme, tokenize
+from lspscript.tokens import Grammar, SyntacticToken, lexeme, tokenize
 from lspscript.util import install_language
 
 
@@ -15,15 +15,15 @@ end
     tokens = await tokenize(text, "mock")
 
     assert len(tokens) == 9
-    assert tokens[0] == Token("function", set(["source.mock", "meta.function", "storage.type.function"]), 0)
-    assert tokens[1] == Token("test", set(["source.mock", "meta.function", "entity.name.function"]), 9)
-    assert tokens[2] == Token("begin", set(["source.mock", "meta.function", "keyword.other.begin"]), 14)
-    assert tokens[3] == Token("a", set(["source.mock", "meta.function", "variable.other"]), 24)
-    assert tokens[4] == Token("=", set(["source.mock", "meta.function", "keyword.operator.assignment"]), 26)
-    assert tokens[5] == Token("b", set(["source.mock", "meta.function", "variable.other"]), 28)
-    assert tokens[6] == Token("+", set(["source.mock", "meta.function", "keyword.operator.arithmetic"]), 30)
-    assert tokens[7] == Token("c", set(["source.mock", "meta.function", "variable.other"]), 32)
-    assert tokens[8] == Token("end", set(["source.mock", "meta.function", "keyword.other.end"]), 34)
+    assert tokens[0] == SyntacticToken("function", 0, {"source.mock", "meta.function", "storage.type.function"})
+    assert tokens[1] == SyntacticToken("test", 9, {"source.mock", "meta.function", "entity.name.function"})
+    assert tokens[2] == SyntacticToken("begin", 14, {"source.mock", "meta.function", "keyword.other.begin"})
+    assert tokens[3] == SyntacticToken("a", 24, {"source.mock", "meta.function", "variable.other"},)
+    assert tokens[4] == SyntacticToken("=", 26, {"source.mock", "meta.function", "keyword.operator.assignment"})
+    assert tokens[5] == SyntacticToken("b", 28, {"source.mock", "meta.function", "variable.other"},)
+    assert tokens[6] == SyntacticToken("+", 30, {"source.mock", "meta.function", "keyword.operator.arithmetic"})
+    assert tokens[7] == SyntacticToken("c", 32, {"source.mock", "meta.function", "variable.other"},)
+    assert tokens[8] == SyntacticToken("end", 34, {"source.mock", "meta.function", "keyword.other.end"})
 
 
 async def test_tokenization_whitespace() -> None:
@@ -37,25 +37,25 @@ end
     tokens = await tokenize(text, "mock", include_whitespace=True)
 
     assert len(tokens) == 19
-    assert tokens[0] == Token("function", set(["source.mock", "meta.function", "storage.type.function"]), 0)
-    assert tokens[1] == Token(" ", set(["source.mock", "meta.function"]), 8)
-    assert tokens[2] == Token("test", set(["source.mock", "meta.function", "entity.name.function"]), 9)
-    assert tokens[3] == Token(" ", set(["source.mock", "meta.function"]), 13)
-    assert tokens[4] == Token("begin", set(["source.mock", "meta.function", "keyword.other.begin"]), 14)
-    assert tokens[5] == Token("\n", set(["source.mock"]), 19)
-    assert tokens[6] == Token("    ", set(["source.mock", "meta.function"]), 20)
-    assert tokens[7] == Token("a", set(["source.mock", "meta.function", "variable.other"]), 24)
-    assert tokens[8] == Token(" ", set(["source.mock", "meta.function"]), 25)
-    assert tokens[9] == Token("=", set(["source.mock", "meta.function", "keyword.operator.assignment"]), 26)
-    assert tokens[10] == Token(" ", set(["source.mock", "meta.function"]), 27)
-    assert tokens[11] == Token("b", set(["source.mock", "meta.function", "variable.other"]), 28)
-    assert tokens[12] == Token(" ", set(["source.mock", "meta.function"]), 29)
-    assert tokens[13] == Token("+", set(["source.mock", "meta.function", "keyword.operator.arithmetic"]), 30)
-    assert tokens[14] == Token(" ", set(["source.mock", "meta.function"]), 31)
-    assert tokens[15] == Token("c", set(["source.mock", "meta.function", "variable.other"]), 32)
-    assert tokens[16] == Token("\n", set(["source.mock"]), 33)
-    assert tokens[17] == Token("end", set(["source.mock", "meta.function", "keyword.other.end"]), 34)
-    assert tokens[18] == Token("\n", set(["source.mock"]), 37)
+    assert tokens[0] == SyntacticToken("function", 0, {"source.mock", "meta.function", "storage.type.function"})
+    assert tokens[1] == SyntacticToken(" ", 8, {"source.mock", "meta.function"})
+    assert tokens[2] == SyntacticToken("test", 9, {"source.mock", "meta.function", "entity.name.function"})
+    assert tokens[3] == SyntacticToken(" ", 13, {"source.mock", "meta.function"})
+    assert tokens[4] == SyntacticToken("begin", 14, {"source.mock", "meta.function", "keyword.other.begin"})
+    assert tokens[5] == SyntacticToken("\n", 19, {"source.mock"})
+    assert tokens[6] == SyntacticToken("    ", 20, {"source.mock", "meta.function"})
+    assert tokens[7] == SyntacticToken("a", 24, {"source.mock", "meta.function", "variable.other"})
+    assert tokens[8] == SyntacticToken(" ", 25, {"source.mock", "meta.function"})
+    assert tokens[9] == SyntacticToken("=", 26, {"source.mock", "meta.function", "keyword.operator.assignment"})
+    assert tokens[10] == SyntacticToken(" ", 27, {"source.mock", "meta.function"})
+    assert tokens[11] == SyntacticToken("b", 28, {"source.mock", "meta.function", "variable.other"})
+    assert tokens[12] == SyntacticToken(" ", 29, {"source.mock", "meta.function"})
+    assert tokens[13] == SyntacticToken("+", 30, {"source.mock", "meta.function", "keyword.operator.arithmetic"})
+    assert tokens[14] == SyntacticToken(" ", 31, {"source.mock", "meta.function"})
+    assert tokens[15] == SyntacticToken("c", 32, {"source.mock", "meta.function", "variable.other"})
+    assert tokens[16] == SyntacticToken("\n", 33, {"source.mock"})
+    assert tokens[17] == SyntacticToken("end", 34, {"source.mock", "meta.function", "keyword.other.end"})
+    assert tokens[18] == SyntacticToken("\n", 37, {"source.mock"})
 
 
 async def test_tokenization_line_breaks_lf() -> None:

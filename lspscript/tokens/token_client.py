@@ -13,7 +13,7 @@ from typing import List, Mapping, Optional, Tuple
 
 import lspscript.languages as languages
 from lspscript.protocol import LSSubprocessProtocol
-from lspscript.tokens.token_list import Token, TokenList
+from lspscript.tokens.token_list import SyntacticToken, TokenList
 from lspscript.types.util import (JSON_VALUE, json_assert_type_array,
                                   json_assert_type_int,
                                   json_assert_type_object,
@@ -225,7 +225,7 @@ async def tokenize(text: str, language_id: str, *, include_whitespace: bool = Fa
         instance.send_text_document_tokenize_request(params), _token_client_event_loop))
 
     offset = 0
-    tokens: List[Token] = []
+    tokens: List[SyntacticToken] = []
     for (delta_line, delta_col, length), scopes_indices in zip(result.tokens[::2], result.tokens[1::2]):
         for _ in range(delta_line):
             line_break_index, line_break_str = _find_line_break(text, offset)
@@ -233,7 +233,7 @@ async def tokenize(text: str, language_id: str, *, include_whitespace: bool = Fa
             # Because vscode-textmate does weird stuff with newlines, they are
             # skipped in the token server and synthesized here instead.
             if include_whitespace:
-                tokens.append(Token(line_break_str, set([scope_name]), line_break_index))
+                tokens.append(SyntacticToken(line_break_str, line_break_index, {scope_name}))
 
             offset = line_break_index + len(line_break_str)
 
@@ -246,11 +246,11 @@ async def tokenize(text: str, language_id: str, *, include_whitespace: bool = Fa
 
         scopes = set(result.scopes[i] for i in scopes_indices)
 
-        tokens.append(Token(lexeme, scopes, offset))
+        tokens.append(SyntacticToken(lexeme, offset, scopes))
 
     # Include potential trailing newline
     line_break_index, line_break_str = _find_line_break(text, offset)
     if line_break_str and include_whitespace:
-        tokens.append(Token(line_break_str, set([scope_name]), line_break_index))
+        tokens.append(SyntacticToken(line_break_str, line_break_index, {scope_name}))
 
     return TokenList(tokens)

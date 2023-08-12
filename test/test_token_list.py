@@ -5,16 +5,16 @@ from lspscript.tokens import *
 
 def test_token_list_is_read_only() -> None:
     token_list = TokenList([
-        Token("test1", ["source.test", "scope.1"], 0),
-        Token("test2", ["source.test", "scope.2"], 5)
+        SyntacticToken("test1", 0, {"source.test", "scope.1"}),
+        SyntacticToken("test2", 5, {"source.test", "scope.2"})
     ])
 
     with pytest.raises(NotImplementedError):
-        token_list[0] = Token("new", ["source.test", "scope.1"], 0)
+        token_list[0] = SyntacticToken("new", 0, {"source.test", "scope.1"})
 
 
 def test_token_matching() -> None:
-    token = Token("test1", ["source.test", "scope.1"], 0)
+    token = SyntacticToken("test1", 0, {"source.test", "scope.1"})
     assert token % lexeme("test1")
     assert token % scope("scope.1")
     assert not token % lexeme("test2")
@@ -22,7 +22,7 @@ def test_token_matching() -> None:
 
 
 def test_and_token_matcher() -> None:
-    token = Token("test1", ["source.test", "scope.1"], 0)
+    token = SyntacticToken("test1", 0, {"source.test", "scope.1"})
     assert token % (lexeme("test1") & scope("source.test"))
     assert not token % (lexeme("test2") & scope("source.test"))
     assert not token % (lexeme("test1") & scope("source.fail"))
@@ -30,7 +30,7 @@ def test_and_token_matcher() -> None:
 
 
 def test_or_token_matcher() -> None:
-    token = Token("test1", ["source.test", "scope.1"], 0)
+    token = SyntacticToken("test1", 0, {"source.test", "scope.1"})
     assert token % (lexeme("test1") | scope("source.test"))
     assert token % (lexeme("test2") | scope("source.test"))
     assert token % (lexeme("test1") | scope("source.fail"))
@@ -38,15 +38,15 @@ def test_or_token_matcher() -> None:
 
 
 def test_not_token_matcher() -> None:
-    token = Token("test1", ["source.test", "scope.1"], 0)
+    token = SyntacticToken("test1", 0, {"source.test", "scope.1"})
     assert token % ~lexeme("test2")
     assert not token % ~lexeme("test1")
 
 
 def test_token_list_matching() -> None:
     token_list = TokenList([
-        Token("test1", ["source.test", "scope.1"], 0),
-        Token("test2", ["source.test", "scope.2"], 5)
+        SyntacticToken("test1", 0, {"source.test", "scope.1"}),
+        SyntacticToken("test2", 5, {"source.test", "scope.2"})
     ])
 
     assert not token_list % []

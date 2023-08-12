@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Sequence, Set, SupportsIndex, Tuple, Union, overload
+from typing import (Any, Optional, Sequence, Set, SupportsIndex, Tuple, Union,
+                    overload)
 
 
 class TokenMatcher(ABC):
 
     @abstractmethod
-    def matches_token(self, token: "Token") -> bool:
+    def matches_token(self, token: "_BaseToken") -> bool:
         pass
 
     def __and__(self, other: "TokenMatcher") -> "AndTokenMatcher":
@@ -26,7 +27,7 @@ class LexemeTokenMatcher(TokenMatcher):
         super().__init__()
         self.lexeme = lexeme
 
-    def matches_token(self, token: "Token") -> bool:
+    def matches_token(self, token: "_BaseToken") -> bool:
         return self.lexeme == token.lexeme
 
 
@@ -37,8 +38,36 @@ class ScopeTokenMatcher(TokenMatcher):
         super().__init__()
         self.scope = scope
 
-    def matches_token(self, token: "Token") -> bool:
+    def matches_token(self, token: "_BaseToken") -> bool:
+        if not isinstance(token, SyntacticToken):
+            return False
         return self.scope in token.scopes
+
+
+class SemanticTypeTokenMatcher(TokenMatcher):
+    sem_type: str
+
+    def __init__(self, sem_type: str) -> None:
+        super().__init__()
+        self.sem_type = sem_type
+
+    def matches_token(self, token: "_BaseToken") -> bool:
+        if not isinstance(token, _BaseSemanticToken):
+            return False
+        return self.sem_type == token.sem_type
+
+
+class SemanticModifierTokenMatcher(TokenMatcher):
+    sem_modifier: str
+
+    def __init__(self, sem_modifier: str) -> None:
+        super().__init__()
+        self.sem_modifier = sem_modifier
+
+    def matches_token(self, token: "_BaseToken") -> bool:
+        if not isinstance(token, _BaseSemanticToken):
+            return False
+        return self.sem_modifier in token.sem_modifiers
 
 
 class AndTokenMatcher(TokenMatcher):
@@ -50,7 +79,7 @@ class AndTokenMatcher(TokenMatcher):
         self.left = left
         self.right = right
 
-    def matches_token(self, token: "Token") -> bool:
+    def matches_token(self, token: "_BaseToken") -> bool:
         return self.left.matches_token(token) and self.right.matches_token(token)
 
 
@@ -63,7 +92,7 @@ class OrTokenMatcher(TokenMatcher):
         self.left = left
         self.right = right
 
-    def matches_token(self, token: "Token") -> bool:
+    def matches_token(self, token: "_BaseToken") -> bool:
         return self.left.matches_token(token) or self.right.matches_token(token)
 
 
@@ -74,44 +103,90 @@ class NotTokenMatcher(TokenMatcher):
         super().__init__()
         self.matcher = matcher
 
-    def matches_token(self, token: "Token") -> bool:
+    def matches_token(self, token: "_BaseToken") -> bool:
         return not self.matcher.matches_token(token)
 
 
 class AnyTokenMatcher(TokenMatcher):
 
-    def matches_token(self, _: "Token") -> bool:
+    def matches_token(self, _: "_BaseToken") -> bool:
         return True
 
 
 @dataclass
-class Token(TokenMatcher):
+class _BaseToken(TokenMatcher):
     lexeme: str
-    scopes: Set[str]
     offset: int
 
-    __slots__ = ["lexeme", "scopes", "offset"]
+    __slots__ = ["lexeme", "offset"]
 
     def __mod__(self, other: TokenMatcher) -> bool:
         return other.matches_token(self)
 
-    def matches_token(self, other: "Token") -> bool:
-        return self.lexeme == other.lexeme \
-            and len(self.scopes) == len(other.scopes) \
-            and self.scopes == other.scopes
+    @property
+    def start_offset(self) -> int:
+        return self.offset
+
+    @property
+    def end_offset(self) -> int:
+        return self.offset + len(self.lexeme)
+
+    def matches_token(self, other: "_BaseToken") -> bool:
+        return self.lexeme == other.lexeme
 
 
-class TokenList(Tuple[Token, ...]):
+@dataclass
+class _BaseSemanticToken(_BaseToken):
+    sem_type: Optional[str]
+    sem_modifiers: Set[str]
+
+    __slots__ = ["sem_type", "sem_modifiers"]
+
+    def matches_token(self, other: "_BaseToken") -> bool:
+        if not isinstance(other, _BaseSemanticToken):
+            return False
+        return (super().matches_token(other)
+                and self.sem_type == other.sem_type
+                and self.sem_modifiers == other.sem_modifiers)
+
+
+@dataclass
+class SemanticToken(_BaseSemanticToken):
+    ...
+
+
+@dataclass
+class SyntacticToken(_BaseSemanticToken, TokenMatcher):
+    lexeme: str
+    offset: int
+    scopes: Set[str]
+
+    __slots__ = ["scopes"]
+
+    def __init__(self, lexeme: str, offset: int, scopes: Set[str], sem_type: Optional[str] = None, sem_modifiers: Set[str] = set()) -> None:
+        self.lexeme = lexeme
+        self.offset = offset
+        self.scopes = scopes
+        self.sem_type = sem_type
+        self.sem_modifiers = set(sem_modifiers)
+
+    def matches_token(self, other: "SyntacticToken") -> bool:
+        return (self.lexeme == other.lexeme
+                and len(self.scopes) == len(other.scopes)
+                and self.scopes == other.scopes)
+
+
+class TokenList(Tuple[SyntacticToken, ...]):
 
     def __setitem__(self, index: Any, value: Any) -> None:
         raise NotImplementedError("TokenLists are read-only.")
 
     @overload
-    def __getitem__(self, index: SupportsIndex) -> Token: ...
+    def __getitem__(self, index: SupportsIndex) -> SyntacticToken: ...
     @overload
     def __getitem__(self, index: slice) -> "TokenList": ...
 
-    def __getitem__(self, index: Union[SupportsIndex, slice]) -> Union["TokenList", Token]:
+    def __getitem__(self, index: Union[SupportsIndex, slice]) -> Union["TokenList", SyntacticToken]:
         if isinstance(index, slice):
             return TokenList(super().__getitem__(index))
         else:
@@ -129,6 +204,14 @@ def lexeme(lexeme: str) -> LexemeTokenMatcher:
 
 def scope(scope: str) -> ScopeTokenMatcher:
     return ScopeTokenMatcher(scope)
+
+
+def sem_type(sem_type: str) -> SemanticTypeTokenMatcher:
+    return SemanticTypeTokenMatcher(sem_type)
+
+
+def sem_modifier(sem_modifier: str) -> SemanticModifierTokenMatcher:
+    return SemanticModifierTokenMatcher(sem_modifier)
 
 
 def any() -> AnyTokenMatcher:

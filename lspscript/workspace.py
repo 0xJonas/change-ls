@@ -116,7 +116,7 @@ class Workspace(WorkspaceRequestHandler):
             for doc in self._opened_text_documents.values():
                 if not client.check_feature("textDocument/didOpen", text_documents=[doc]):
                     continue
-                client.send_text_document_did_open(DidOpenTextDocumentParams(textDocument=doc))
+                client.send_text_document_did_open(DidOpenTextDocumentParams(textDocument=doc.get_text_document_item()))
 
         def unregister_client() -> None:
             client.set_workspace_request_handler(None)
@@ -231,7 +231,8 @@ class Workspace(WorkspaceRequestHandler):
         for client in self._clients.values():
             if not client.check_feature("textDocument/didOpen", text_documents=[text_document]):
                 continue
-            client.send_text_document_did_open(DidOpenTextDocumentParams(textDocument=text_document))
+            client.send_text_document_did_open(DidOpenTextDocumentParams(
+                textDocument=text_document.get_text_document_item()))
 
         self._opened_text_documents[uri] = text_document
         return text_document

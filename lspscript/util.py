@@ -93,10 +93,21 @@ def guess_language_id(path: Path) -> Optional[str]:
     return None
 
 
-@dataclass
 class TextDocumentInfo:
-    uri: str
-    language_id: Optional[str]
+    _uri: str
+    _language_id: Optional[str]
+
+    def __init__(self, uri: str, language_id: Optional[str]) -> None:
+        self._uri = uri
+        self._language_id = language_id
+
+    @property
+    def uri(self) -> str:
+        return self._uri
+
+    @property
+    def language_id(self) -> Optional[str]:
+        return self._language_id
 
 
 def matches_text_document_filter(info: TextDocumentInfo, filter: TextDocumentFilter) -> bool:

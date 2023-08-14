@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import (Any, Optional, Sequence, Set, SupportsIndex, Tuple, Union,
-                    overload)
+from typing import (Any, Generic, Optional, Sequence, Set, SupportsIndex,
+                    Tuple, TypeVar, Union, overload)
 
 
 class TokenMatcher(ABC):
@@ -176,17 +176,20 @@ class SyntacticToken(_BaseSemanticToken, TokenMatcher):
                 and self.scopes == other.scopes)
 
 
-class TokenList(Tuple[SyntacticToken, ...]):
+_TokenType = TypeVar("_TokenType", bound=_BaseToken)
+
+
+class TokenList(Generic[_TokenType], Tuple[_TokenType, ...]):
 
     def __setitem__(self, index: Any, value: Any) -> None:
         raise NotImplementedError("TokenLists are read-only.")
 
     @overload
-    def __getitem__(self, index: SupportsIndex) -> SyntacticToken: ...
+    def __getitem__(self, index: SupportsIndex) -> _TokenType: ...
     @overload
-    def __getitem__(self, index: slice) -> "TokenList": ...
+    def __getitem__(self, index: slice) -> "TokenList[_TokenType]": ...
 
-    def __getitem__(self, index: Union[SupportsIndex, slice]) -> Union["TokenList", SyntacticToken]:
+    def __getitem__(self, index: Union[SupportsIndex, slice]) -> Union["TokenList[_TokenType]", _TokenType]:
         if isinstance(index, slice):
             return TokenList(super().__getitem__(index))
         else:

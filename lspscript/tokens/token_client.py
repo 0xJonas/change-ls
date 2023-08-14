@@ -217,7 +217,7 @@ def _find_line_break(text: str, offset: int) -> Tuple[int, str]:
     return len(text), ""
 
 
-async def tokenize(text: str, language_id: str, *, include_whitespace: bool = False) -> TokenList:
+async def tokenize(text: str, language_id: str, *, include_whitespace: bool = False) -> TokenList[SyntacticToken]:
     scope_name = languages.language_id_to_scope[language_id]
     params = TextDocumentTokenizeParams(scope_name, text)
     instance = await _get_token_client()

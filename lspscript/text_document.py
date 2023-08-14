@@ -4,13 +4,14 @@ from bisect import bisect_right
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import TracebackType
-from typing import Callable, Dict, List, Optional, Type, overload
+from typing import Callable, Dict, List, Literal, Optional, Type, overload
 
 import lspscript.symbol as sym
 import lspscript.workspace as ws
 from lspscript.client import Client
 from lspscript.lsp_exception import LSPScriptException
 from lspscript.tokens import TokenList, tokenize
+from lspscript.tokens.token_list import SyntacticToken
 from lspscript.types import (DidCloseTextDocumentParams,
                              OptionalVersionedTextDocumentIdentifier,
                              TextDocumentItem, VersionedTextDocumentIdentifier)
@@ -133,7 +134,7 @@ def _offset_to_code_units(reference: str, offset: int, encoding: PositionEncodin
     return sum(get_character_length(ord(c)) for c in reference[:offset])
 
 
-class TextDocument(TextDocumentInfo, TextDocumentItem):
+class TextDocument(TextDocumentInfo):
     """
     A :class:`TextDocument` is a single file in a :class:`Workspace`, which can be edited or queried for information.
 
@@ -144,9 +145,6 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
     Methods on a ``TextDocument`` can make use of all :class:`Clients <Client>` opened in the workspace it
     originated from. This includes ``Clients`` started after the ``TextDocument`` was opened.
-
-    ``TextDocument`` inherits from :class:`TextDocumentInfo` and :class:`TextDocumentItem` and can
-    therefore by used anywhere an instance of one of these classes is required.
 
     .. attribute:: text
         :type: str
@@ -179,23 +177,32 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         The tokens for this document. This attribute is only populated after :meth:`load_tokens` has been called.
     """
 
+    _text: str
+    _version: int
+
     _path: Path
     _encoding: str
     _clients: Dict[str, Client]
     _workspace: "ws.Workspace"
-    _tokens: Optional[TokenList]
+    _tokens: Optional[TokenList[SyntacticToken]]
     _outlines: Dict[str, List["sym.DocumentSymbol"]]
     _pending_edits: List[_Edit]
     _line_offsets: List[int]
     _reference_count: int
     _content_saved: bool
 
+    # Cache for position_to_offset, to speed up processing of semantic tokens
+    _cached_line: int
+    _cached_version: int
+    _cached_start_offset: int
+    _cached_reference_string: str
+
     language_id: str
 
     def __init__(self, path: Path, workspace: "ws.Workspace", language_id: Optional[str] = None, version: int = 0, encoding: Optional[str] = None) -> None:
         self._path = path
         with path.open(encoding=encoding) as file:
-            text = file.read()
+            self._text = file.read()
             self._encoding = file.encoding
 
         if not language_id:
@@ -204,17 +211,22 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
                 raise LSPScriptException(f"Unable to determine language id for '{str(path)}'")
             language_id = guessed_id
 
+        self._version = version
         self._workspace = workspace
         self._tokens = None
         self._outlines = {}
         self._pending_edits = []
-        self._line_offsets = _calculate_line_offsets(text)
+        self._line_offsets = _calculate_line_offsets(self._text)
         self._reference_count = 1
         self._content_saved = True
 
+        self._cached_line = -1
+        self._cached_version = -1
+        self._cached_start_offset = -1
+        self._cached_reference_string = ""
+
         uri = path.as_uri()
         TextDocumentInfo.__init__(self, uri, language_id)
-        TextDocumentItem.__init__(self, uri=uri, languageId=language_id, version=version, text=text)
 
     def _reopen(self) -> None:
         self._reference_count += 1
@@ -222,7 +234,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
     def _set_path(self, new_path: Path) -> None:
         del self._workspace._opened_text_documents[self.uri]  # type: ignore
         self._path = new_path
-        self.uri = new_path.as_uri()
+        self._uri = new_path.as_uri()
 
     async def rename_file(self, new_path: Path, *, overwrite: bool = False, ignore_if_exists: bool = False) -> None:
         """
@@ -301,17 +313,25 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         return clients[client_name]
 
     @property
+    def text(self) -> str:
+        return self._text
+
+    @property
+    def version(self) -> int:
+        return self._version
+
+    @property
     def encoding(self) -> str:
         return self._encoding
 
     @property
-    def tokens(self) -> TokenList:
+    def tokens(self) -> TokenList[SyntacticToken]:
         if not self._tokens:
             raise AttributeError(
                 "Tokens are not loaded for this TextDocument. Use load_tokens() to fill the tokens property.")
         return self._tokens
 
-    async def load_tokens(self, *, include_whitespace: bool = False) -> None:
+    async def load_tokens(self, mode: Literal["enrich", "syntactic", "semantic"] = "enrich", *, include_whitespace: bool = False, client_name: Optional[str] = None) -> None:
         """
         Tokenizes this ``TextDocument``. After this method is called, :attr:`tokens` will contain the computed tokens.
 
@@ -353,7 +373,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         Loads the document outline (list of symbols defined in the document, maybe hierarchical) for a given :class:`Client`.
 
         After an outline is loaded, it can be retrieved by calling :meth:`~TextDocument.get_loaded_outline()`. An
-        outline is valid as long as the ``TextDocumnet`` is not changed.
+        outline is valid as long as the ``TextDocument`` is not changed.
 
         :param client_name: The name of the ``Client`` to load the document outline for. If only one ``Client`` is open
             in the :class:`Workspace`, this parameter is optional.
@@ -370,6 +390,12 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         outline = [sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res]
         self._outlines[client.get_name()] = outline
 
+    def get_text_document_item(self) -> TextDocumentItem:
+        """
+        Returns a :class:`TextDocumentItem` for this ``TextDocument``.
+        """
+        return TextDocumentItem(uri=self.uri, languageId=self.language_id, version=self._version, text=self._text)
+
     def get_text_document_identifier(self) -> TextDocumentIdentifier:
         """
         Returns a :class:`TextDocumentIdentifier` for this ``TextDocument``.
@@ -380,7 +406,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         """
         Returns a :class:`VersionedTextDocumentIdentifier` for this ``TextDocument``.
         """
-        return VersionedTextDocumentIdentifier(uri=self.uri, version=self.version)
+        return VersionedTextDocumentIdentifier(uri=self.uri, version=self._version)
 
     def get_optional_versioned_text_document_identifier(self) -> OptionalVersionedTextDocumentIdentifier:
         """
@@ -388,7 +414,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         The returned instance will always have its :attr:`~OptionalVersionedTextDocumentIdentifier.version`
         attribute filled.
         """
-        return OptionalVersionedTextDocumentIdentifier(uri=self.uri, version=self.version)
+        return OptionalVersionedTextDocumentIdentifier(uri=self.uri, version=self._version)
 
     def _queue_edit(self, new_edit: _Edit) -> None:
         # Use bisect_right, so insertions at the same position are applied in insertion order.
@@ -435,9 +461,9 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         if to_offset < from_offset:
             raise IndexError(f"'to_offset' ({to_offset}) must be greater or equal to 'from_offset' ({from_offset})")
 
-        if from_offset < 0 or from_offset > len(self.text) or to_offset < 0 or to_offset > len(self.text):
+        if from_offset < 0 or from_offset > len(self._text) or to_offset < 0 or to_offset > len(self._text):
             raise IndexError(
-                f"edit() offsets are out of bounds: from_offset {from_offset}, to_offset {to_offset}, document length {len(self.text)}")
+                f"edit() offsets are out of bounds: from_offset {from_offset}, to_offset {to_offset}, document length {len(self._text)}")
 
         self._queue_edit(_Edit(from_offset, to_offset, new_text))
 
@@ -518,7 +544,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
     def _handle_text_change(self, client: Client) -> None:
         if client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Full):
-            contentChanges: List[TextDocumentContentChangeEvent] = [{"text": self.text}]
+            contentChanges: List[TextDocumentContentChangeEvent] = [{"text": self._text}]
         elif client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Incremental):
             # The edits are reversed because, unlike commit_edits, ContentChangeEvents are applied one
             # at a time, in the order they are received. So in order for edits earlier in the document
@@ -554,14 +580,14 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         segments: List[str] = []
         for edit in self._pending_edits:
             if text_offset < edit.from_offset:
-                segments.append(self.text[text_offset:edit.from_offset])
+                segments.append(self._text[text_offset:edit.from_offset])
             segments.append(edit.new_text)
             text_offset = edit.to_offset
-        if text_offset < len(self.text):
-            segments.append(self.text[text_offset:])
+        if text_offset < len(self._text):
+            segments.append(self._text[text_offset:])
 
-        self.text = "".join(segments)
-        self.version += 1
+        self._text = "".join(segments)
+        self._version += 1
         for client in self._workspace.clients.values():
             self._handle_text_change(client)
         self._pending_edits = []
@@ -616,12 +642,12 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
 
         # Actual saving
         with self._path.open("w", encoding=self._encoding) as file:
-            file.write(self.text)
+            file.write(self._text)
 
         # textDocument/didSave
         did_save_params = DidSaveTextDocumentParams(textDocument=self.get_text_document_identifier())
         did_save_params_include_text = DidSaveTextDocumentParams(
-            textDocument=self.get_text_document_identifier(), text=self.text)
+            textDocument=self.get_text_document_identifier(), text=self._text)
         for client in clients.values():
             if client.check_feature("textDocument/didSave", include_text=True, text_document=self):
                 client.send_text_document_did_save(did_save_params_include_text)
@@ -641,16 +667,25 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         """
         self._check_closed()
 
-        if position.line >= len(self._line_offsets):
-            raise IndexError(f"Line {position.line} is out of bounds")
+        if self._version == self._cached_version and position.line == self._cached_line:
+            start_offset = self._cached_start_offset
+            reference_string = self._cached_reference_string
+        else:
+            if position.line >= len(self._line_offsets):
+                raise IndexError(f"Line {position.line} is out of bounds")
 
-        start_offset = self._line_offsets[position.line]
-        end_offset = (self._line_offsets[position.line + 1]
-                      if position.line < len(self._line_offsets) else len(self.text))
-        reference_string = self.text[start_offset:end_offset]
+            start_offset = self._line_offsets[position.line]
+            end_offset = (self._line_offsets[position.line + 1]
+                          if position.line < len(self._line_offsets) else len(self._text))
+            reference_string = self._text[start_offset:end_offset]
 
-        if position.character >= len(reference_string):
-            raise IndexError(f"Position at line {position.line} character {position.character} does not exist")
+            if position.character >= len(reference_string):
+                raise IndexError(f"Position at line {position.line} character {position.character} does not exist")
+
+            self._cached_version = self._version
+            self._cached_line = position.line
+            self._cached_start_offset = start_offset
+            self._cached_reference_string = reference_string
 
         encoding = self._get_client(client_name).get_position_encoding_kind()
         return start_offset + _code_units_to_offset(reference_string, position.character, encoding)
@@ -666,14 +701,14 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         """
         self._check_closed()
 
-        if offset >= len(self.text):
+        if offset >= len(self._text):
             raise IndexError(f"Offset {offset} is out of bounds.")
 
         line = bisect_right(self._line_offsets, offset) - 1
 
         start_offset = self._line_offsets[line]
-        end_offset = self._line_offsets[line + 1] if line < len(self._line_offsets) - 1 else len(self.text)
-        reference_string = self.text[start_offset:end_offset]
+        end_offset = self._line_offsets[line + 1] if line < len(self._line_offsets) - 1 else len(self._text)
+        reference_string = self._text[start_offset:end_offset]
         encoding = self._get_client(client_name).get_position_encoding_kind()
         character = _offset_to_code_units(reference_string, offset - self._line_offsets[line], encoding)
 
@@ -689,7 +724,7 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         :param offset: The offset to convert.
         """
 
-        if offset < 0 or offset >= len(self.text):
+        if offset < 0 or offset >= len(self._text):
             raise ValueError("offset is out of bounds.")
 
         # Inline bisection because the key parameter for bisect_left is not supported until Python 3.10.
@@ -748,9 +783,9 @@ class TextDocument(TextDocumentInfo, TextDocumentItem):
         # were printed in their entirety, so we use the default
         # object representation instead.
         values = {
-            "text": object.__repr__(self.text),
+            "text": object.__repr__(self._text),
             "uri": self.uri,
-            "version": self.version,
+            "version": self._version,
             "language_id": self.language_id,
             "encoding": self.encoding,
             "tokens": object.__repr__(self.tokens) if self._tokens else None,

@@ -21,7 +21,7 @@ from lspscript.types.client_requests import (ClientRequestsMixin,
 from lspscript.types.enumerations import (FailureHandlingKind, MessageType,
                                           PositionEncodingKind,
                                           ResourceOperationKind, SymbolKind,
-                                          SymbolTag)
+                                          SymbolTag, TokenFormat)
 from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         ApplyWorkspaceEditResult, CancelParams,
                                         ConfigurationParams,
@@ -36,8 +36,10 @@ from lspscript.types.structures import (ApplyWorkspaceEditParams,
                                         ProgressParams,
                                         PublishDiagnosticsParams,
                                         ReferenceClientCapabilities,
-                                        RegistrationParams, ShowDocumentParams,
-                                        ShowDocumentResult, ShowMessageParams,
+                                        RegistrationParams,
+                                        SemanticTokensClientCapabilities,
+                                        ShowDocumentParams, ShowDocumentResult,
+                                        ShowMessageParams,
                                         ShowMessageRequestParams,
                                         TextDocumentClientCapabilities,
                                         TypeDefinitionClientCapabilities,
@@ -290,7 +292,17 @@ def get_default_client_capabilities() -> ClientCapabilities:
             documentSymbol=DocumentSymbolClientCapabilities(
                 symbolKind={"valueSet": all_symbols_kinds},
                 tagSupport={"valueSet": all_symbol_tags},
-                hierarchicalDocumentSymbolSupport=True)))
+                hierarchicalDocumentSymbolSupport=True),
+            semanticTokens=SemanticTokensClientCapabilities(
+                requests={"full": {"delta": True}},
+                tokenTypes=["namespace", "type", "class", "enum", "interface",
+                            "struct", "typeParameter", "parameter", "variable", "property",
+                            "enumMember", "event", "function", "method", "macro",
+                            "keyword", "modifier", "comment", "string", "number",
+                            "regexp", "operator", "decorator"],
+                tokenModifiers=["declaration", "definition", "readonly", "static", "deprecated",
+                                "abstract", "async", "modification", "documentation", "defaultLibrary"],
+                formats=[TokenFormat.Relative])))
 
 
 def get_default_initialize_params() -> InitializeParams:

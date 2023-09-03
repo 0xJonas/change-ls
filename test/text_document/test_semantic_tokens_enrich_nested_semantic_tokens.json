@@ -1,0 +1,18 @@
+{
+    "name": "test_semantic_tokens_enrich_nested_semantic_tokens",
+    "sequence": [
+        { "includeSequence": "test/open-ws-1-test-1.json" },
+        {
+            "type": "request",
+            "method": "textDocument/semanticTokens/full",
+            "params": {
+                "textDocument": { "uri": "${REPO_URI}/test/mock-ws-1/test-1.py" }
+            },
+            "result": {
+                "resultId": "res-1",
+                "data": [0,0,22,0,2, 0,6,15,3,0]
+            }
+        },
+        { "includeSequence": "test/close-ws-1-test-1.json" }
+    ]
+}

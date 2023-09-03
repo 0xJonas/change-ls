@@ -11,6 +11,8 @@ import lspscript.workspace as ws
 from lspscript.client import Client
 from lspscript.lsp_exception import LSPScriptException
 from lspscript.tokens import TokenList, tokenize
+from lspscript.tokens.semantic_tokens_mixin import (SemanticTokensMixin,
+                                                    enrich_syntactic_tokens)
 from lspscript.tokens.token_list import SyntacticToken
 from lspscript.types import (DidCloseTextDocumentParams,
                              OptionalVersionedTextDocumentIdentifier,
@@ -134,7 +136,7 @@ def _offset_to_code_units(reference: str, offset: int, encoding: PositionEncodin
     return sum(get_character_length(ord(c)) for c in reference[:offset])
 
 
-class TextDocument(TextDocumentInfo):
+class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     """
     A :class:`TextDocument` is a single file in a :class:`Workspace`, which can be edited or queried for information.
 
@@ -227,6 +229,7 @@ class TextDocument(TextDocumentInfo):
 
         uri = path.as_uri()
         TextDocumentInfo.__init__(self, uri, language_id)
+        SemanticTokensMixin.__init__(self)
 
     def _reopen(self) -> None:
         self._reference_count += 1
@@ -337,11 +340,32 @@ class TextDocument(TextDocumentInfo):
 
         .. important:: Tokenization requires that a compatible version of node.js is available on ``PATH``.
 
+        :param mode: Which types of tokens should be loaded. Must be one of the following strings:
+
+            * ``"auto"``: Automatically select one of the available modes based on which features are provided by the language server
+                and installed languages. This is the default.
+
+            * ``"enrich"``: Load both syntactic and semantic tokens and enrich the syntactic tokens in :attr:`tokens` with semantic information
+                from the semantic tokens.
+
+            * ``"syntactic"``: Load only syntactic tokens. The tokens can be accessed via the :attr:`tokens` property.
+
+            * ``"semantic"``: Load only semantic tokens.
+
         :param include_whitespace: If this is ``True``, whitespace-only tokens are included in ``tokens``, otherwise
             they are removed.
+        :param client_name: The name of the :class:`Client` to load the semantic tokens from. If only one ``Client`` is
+            open in the current :class:`Workspace`, this parameter is optional.
         """
         self._check_closed()
-        self._tokens = await tokenize(self.text, self.language_id, include_whitespace=include_whitespace)
+
+        if mode in ["enrich", "syntactic"]:
+            self._tokens = await tokenize(self.text, self.language_id, include_whitespace=include_whitespace)
+        if mode in ["enrich", "semantic"]:
+            await self._load_semantic_tokens(client_name)
+        if mode == "enrich":
+            assert self._tokens is not None
+            enrich_syntactic_tokens(self._tokens, self.get_loaded_semantic_tokens(client_name))
 
     def get_loaded_outline(self, client_name: Optional[str] = None) -> List["sym.DocumentSymbol"]:
         """
@@ -592,6 +616,7 @@ class TextDocument(TextDocumentInfo):
             self._handle_text_change(client)
         self._pending_edits = []
         self._tokens = None
+        self._loaded_semantic_tokens = {}
         self._outlines = {}
         self._content_saved = False
 

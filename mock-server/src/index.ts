@@ -95,7 +95,14 @@ connection.onInitialize((params: InitializeParams) => {
                 typeDefinitionProvider: true,
                 implementationProvider: true,
                 workspaceSymbolProvider: { resolveProvider: true },
-                documentSymbolProvider: true
+                documentSymbolProvider: true,
+                semanticTokensProvider: {
+                    legend: {
+                        tokenTypes: ["function", "parameter", "variable", "string"],
+                        tokenModifiers: ["definition", "defaultLibrary"]
+                    },
+                    full: { delta: true }
+                }
                 // TODO: fill accordingly as more tests are added
             },
             serverInfo: {

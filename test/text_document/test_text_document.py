@@ -83,7 +83,7 @@ def test_text_documents_disallowed_edits(mock_document_1: TextDocument) -> None:
 @pytest.mark.test_sequence("test/text_document/test_text_document_edit_tokens.json")
 @pytest.mark.filterwarnings("ignore::lspscript.text_document.DroppedChangesWarning")
 async def test_text_document_edit_tokens(mock_document_1: TextDocument) -> None:
-    await mock_document_1.load_tokens()
+    await mock_document_1.load_tokens("syntactic")
     mock_document_1.edit_tokens("logging.info", 0)
     mock_document_1.edit_tokens("'Hi, World!'", 2, 5)  # Note the single quotes
     mock_document_1.commit_edits()
@@ -199,7 +199,7 @@ async def test_text_document_reopen(mock_workspace_1: Workspace) -> None:
 
 @pytest.mark.test_sequence("test/text_document/test_text_document_open_close.json")
 async def test_text_document_offset_to_token_index(mock_document_1: TextDocument) -> None:
-    await mock_document_1.load_tokens()
+    await mock_document_1.load_tokens("syntactic")
 
     assert len(mock_document_1.text) == 23
     assert mock_document_1.offset_to_token_index(22) is None

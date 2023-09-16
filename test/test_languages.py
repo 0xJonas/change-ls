@@ -3,8 +3,9 @@ from urllib.request import Request, urlopen
 
 import pytest
 
-import lspscript.languages as languages
-import lspscript.tokens as tokens
+import change_ls._languages as languages
+from change_ls.tokens import tokenize
+from change_ls.tokens._grammar import BuiltInGrammar
 
 
 def check_url(url: str) -> bool:
@@ -19,7 +20,7 @@ def check_url(url: str) -> bool:
 @pytest.mark.slow
 def test_grammar_uris_are_accessible() -> None:
     for grammar in languages.scope_to_grammar.values():
-        if isinstance(grammar, tokens.grammar.BuiltInGrammar):
+        if isinstance(grammar, BuiltInGrammar):
             # Reach into the object for the URL so we can send the requests asynchronously.
             # grammar.get_content() would be synchronous.
             assert check_url(grammar._url)  # type: ignore
@@ -35,4 +36,4 @@ async def test_grammar_completeness() -> None:
     Grammars which are not found will log a warning.
     """
     for language_id in languages.language_id_to_scope.keys():
-        await tokens.tokenize("\n", language_id)
+        await tokenize("\n", language_id)

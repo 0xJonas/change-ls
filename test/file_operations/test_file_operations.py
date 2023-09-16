@@ -5,8 +5,7 @@ from typing import Any, Generator, Optional, Type
 
 import pytest
 
-from lspscript import Workspace
-from lspscript.client import StdIOConnectionParams
+from change_ls import StdIOConnectionParams, Workspace
 
 
 @pytest.fixture

@@ -186,7 +186,7 @@ def generate_capabilities_py(gen: Generator, feature_infos: Dict[str, FeatureInf
 
         from typing import List, Optional
         from dataclasses import dataclass
-        from .structures import *
+        from ._structures import *
 
 
         @dataclass

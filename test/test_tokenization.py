@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from lspscript.tokens import Grammar, SyntacticToken, lexeme, tokenize
-from lspscript.util import install_language
+from change_ls import install_language
+from change_ls.tokens import Grammar, SyntacticToken, lexeme, tokenize
 
 
 async def test_tokenization_no_whitespace() -> None:

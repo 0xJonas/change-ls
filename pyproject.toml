@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lspscript"
+name = "change-ls"
 requires-python = ">=3.8"
 authors = [
     { name = "Delphy", email = "delphi1024@gmail.com" }
@@ -14,13 +14,13 @@ dynamic = ["version"]
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["lspscript*"]
+include = ["change_ls*"]
 
 [tool.setuptools.package-data]
-"lspscript.token_server" = ["*.js", "*.wasm"]
+"change_ls.token_server" = ["*.js", "*.wasm"]
 
 [tool.setuptools.dynamic]
-version = { attr = "lspscript.client.LSPSCRIPT_VERSION" }
+version = { attr = "change_ls.client.CHANGE_LS_VERSION" }
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -29,6 +29,6 @@ testpaths = [
 asyncio_mode = "auto"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "uses_external_resources: marks tests which interact with resources outside the LSPScript repo, e.g. external grammar files",
+    "uses_external_resources: marks tests which interact with resources outside the change-ls repo, e.g. external grammar files",
     "test_sequence: used to pass a test sequence file to a fixture"
 ]

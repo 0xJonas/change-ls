@@ -1,0 +1,2 @@
+class ChangeLSError(Exception):
+    pass

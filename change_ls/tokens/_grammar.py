@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Literal, Optional
 from urllib.request import Request, urlopen
 
-from lspscript.lsp_exception import LSPScriptException
+from change_ls._change_ls_error import ChangeLSError
 
 GrammarFormat = Literal["json", "plist"]
 
@@ -26,7 +26,7 @@ def _fetch_text_from_url(url: str) -> str:
         if not isinstance(response, HTTPResponse):
             raise ValueError("Expected HTTP/HTTPS URL")
         if response.status < 200 or response.status > 299:
-            raise LSPScriptException(f"Request failed: status {response.status} {response.reason}")
+            raise ChangeLSError(f"Request failed: status {response.status} {response.reason}")
 
         return response.read().decode()
 

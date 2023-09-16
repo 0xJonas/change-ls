@@ -4,9 +4,8 @@ from typing import Callable, Mapping, Sequence, Union
 
 from pytest import raises
 
-from lspscript.protocol import LSPException, LSProtocol
-from lspscript.types.enumerations import ErrorCodes
-from lspscript.types.util import JSON_VALUE
+from change_ls._protocol import LSPException, LSProtocol
+from change_ls.types import JSON_VALUE, ErrorCodes
 
 _ParamType = Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]
 _RequestHandler = Callable[[str, _ParamType], JSON_VALUE]

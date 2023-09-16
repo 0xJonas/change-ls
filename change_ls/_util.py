@@ -5,11 +5,10 @@ from pathlib import Path, WindowsPath
 from typing import Generator, List, Optional
 from urllib.parse import urlsplit
 
-import lspscript.languages as languages
-from lspscript.tokens import Grammar
-from lspscript.types.enumerations import FileOperationPatternKind
-
-from .types.structures import FileOperationFilter, TextDocumentFilter
+import change_ls._languages as languages
+from change_ls.tokens import Grammar
+from change_ls.types import (FileOperationFilter, FileOperationPatternKind,
+                             TextDocumentFilter)
 
 
 @dataclass

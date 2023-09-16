@@ -3,9 +3,9 @@
 # This file was automatically generated, so any edits to it will get overwritten.
 # To change the content of this file, make changes to the generator.
 
-from .util import *
-from .enumerations import *
-from .structures import *
+from ._util import *
+from ._enumerations import *
+from ._structures import *
 
 from abc import ABC, abstractmethod
 from typing import Any

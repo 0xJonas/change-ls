@@ -1,6 +1,6 @@
 import pytest
 
-from lspscript.tokens import *
+from change_ls.tokens import *
 
 
 def test_token_list_is_read_only() -> None:

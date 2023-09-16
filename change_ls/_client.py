@@ -11,47 +11,41 @@ from types import TracebackType
 from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
                     Sequence, Set, Tuple, Type, Union)
 
-from lspscript.capabilities_mixin import CapabilitiesMixin
-from lspscript.protocol import (LSPClientException, LSProtocol,
-                                LSStreamingProtocol, LSSubprocessProtocol)
-from lspscript.types import (ClientCapabilities, InitializedParams,
-                             InitializeParams, InitializeResult)
-from lspscript.types.client_requests import (ClientRequestsMixin,
-                                             ServerRequestsMixin)
-from lspscript.types.enumerations import (FailureHandlingKind, MessageType,
-                                          PositionEncodingKind,
-                                          ResourceOperationKind, SymbolKind,
-                                          SymbolTag, TokenFormat)
-from lspscript.types.structures import (ApplyWorkspaceEditParams,
-                                        ApplyWorkspaceEditResult, CancelParams,
-                                        ConfigurationParams,
-                                        DeclarationClientCapabilities,
-                                        DefinitionClientCapabilities,
-                                        DocumentSymbolClientCapabilities,
-                                        FileOperationClientCapabilities,
-                                        GeneralClientCapabilities,
-                                        ImplementationClientCapabilities,
-                                        LogMessageParams, LogTraceParams,
-                                        LSPAny, MessageActionItem,
-                                        ProgressParams,
-                                        PublishDiagnosticsParams,
-                                        ReferenceClientCapabilities,
-                                        RegistrationParams,
-                                        SemanticTokensClientCapabilities,
-                                        ShowDocumentParams, ShowDocumentResult,
-                                        ShowMessageParams,
-                                        ShowMessageRequestParams,
-                                        TextDocumentClientCapabilities,
-                                        TypeDefinitionClientCapabilities,
-                                        UnregistrationParams,
-                                        WorkDoneProgressCreateParams,
-                                        WorkspaceClientCapabilities,
-                                        WorkspaceEditClientCapabilities,
-                                        WorkspaceFolder,
-                                        WorkspaceSymbolClientCapabilities)
-from lspscript.types.util import JSON_VALUE
+from change_ls._capabilities_mixin import CapabilitiesMixin
+from change_ls._protocol import (LSPClientException, LSProtocol,
+                                 LSStreamingProtocol, LSSubprocessProtocol)
+from change_ls.types import (JSON_VALUE, ApplyWorkspaceEditParams,
+                             ApplyWorkspaceEditResult, CancelParams,
+                             ClientCapabilities, ConfigurationParams,
+                             DeclarationClientCapabilities,
+                             DefinitionClientCapabilities,
+                             DocumentSymbolClientCapabilities,
+                             FailureHandlingKind,
+                             FileOperationClientCapabilities,
+                             GeneralClientCapabilities,
+                             ImplementationClientCapabilities,
+                             InitializedParams, InitializeParams,
+                             InitializeResult, LogMessageParams,
+                             LogTraceParams, LSPAny, MessageActionItem,
+                             MessageType, PositionEncodingKind, ProgressParams,
+                             PublishDiagnosticsParams,
+                             ReferenceClientCapabilities, RegistrationParams,
+                             ResourceOperationKind,
+                             SemanticTokensClientCapabilities,
+                             ShowDocumentParams, ShowDocumentResult,
+                             ShowMessageParams, ShowMessageRequestParams,
+                             SymbolKind, SymbolTag,
+                             TextDocumentClientCapabilities, TokenFormat,
+                             TypeDefinitionClientCapabilities,
+                             UnregistrationParams,
+                             WorkDoneProgressCreateParams,
+                             WorkspaceClientCapabilities,
+                             WorkspaceEditClientCapabilities, WorkspaceFolder,
+                             WorkspaceSymbolClientCapabilities)
+from change_ls.types._client_requests import (ClientRequestsMixin,
+                                              ServerRequestsMixin)
 
-LSPSCRIPT_VERSION = "0.1.0"
+CHANGE_LS_VERSION = "0.1.0"
 
 
 # Global list of client names, currently only used for logging purposes.
@@ -313,8 +307,8 @@ def get_default_initialize_params() -> InitializeParams:
     return InitializeParams(
         processId=getpid(),
         clientInfo={
-            "name": "[LSPScript]: " + argv[0],
-            "version": LSPSCRIPT_VERSION
+            "name": "[change_ls]: " + argv[0],
+            "version": CHANGE_LS_VERSION
         },
         rootUri=None,
         capabilities=get_default_client_capabilities())
@@ -352,7 +346,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     The ``Client`` class provides methods for each request in the
     `LSP <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>`_
     that is sent from the client to the server. The types used in the parameters to these requests are
-    available under ``lspscript.types``. However, users may find it easier to use the abstractions
+    available under ``change_ls.types``. However, users may find it easier to use the abstractions
     provided by :class:`Workspace`, :class:`TextDocument`, etc. The ``send_*`` methods which send a request
     (i.e. expect a response from the server) also provide the following keyword arguments:
 

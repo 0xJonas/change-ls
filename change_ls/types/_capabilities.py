@@ -5,7 +5,7 @@
 
 from typing import List, Optional
 from dataclasses import dataclass
-from .structures import *
+from ._structures import *
 
 
 @dataclass

@@ -1,17 +1,14 @@
 from abc import abstractmethod, abstractproperty
 from typing import Dict, List, Optional, Tuple
 
-from lspscript.client import Client
-from lspscript.lsp_exception import LSPScriptException
-from lspscript.tokens.token_list import (SemanticToken, SyntacticToken,
-                                         TokenList)
-from lspscript.types.structures import (Position, SemanticTokens,
-                                        SemanticTokensDelta,
-                                        SemanticTokensDeltaParams,
-                                        SemanticTokensLegend,
-                                        SemanticTokensParams,
-                                        TextDocumentIdentifier)
-from lspscript.util import TextDocumentInfo
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import Client
+from change_ls._util import TextDocumentInfo
+from change_ls.tokens._token_list import (SemanticToken, SyntacticToken,
+                                          TokenList)
+from change_ls.types import (Position, SemanticTokens, SemanticTokensDelta,
+                             SemanticTokensDeltaParams, SemanticTokensLegend,
+                             SemanticTokensParams, TextDocumentIdentifier)
 
 
 def _get_semantic_tokens_in_range(semantic_tokens: TokenList[SemanticToken], start: int, end: int, start_index: int = 0) -> Tuple[List[SemanticToken], int]:
@@ -160,17 +157,17 @@ class SemanticTokensMixin:
             try:
                 lexeme = text[offset:offset + length]
             except IndexError as e:
-                raise LSPScriptException("Invalid semantic token data: Token is out of bounds") from e
+                raise ChangeLSError("Invalid semantic token data: Token is out of bounds") from e
 
             try:
                 token_type = legend.tokenTypes[token_type_idx]
             except IndexError as e:
-                raise LSPScriptException("Invalid semantic token data: Invalid token type") from e
+                raise ChangeLSError("Invalid semantic token data: Invalid token type") from e
 
             try:
                 token_modifiers = {legend.tokenModifiers[i] for i in _get_set_bits(token_modifiers_bits)}
             except IndexError as e:
-                raise LSPScriptException("Invalid semantic token data: Invalid token modifier") from e
+                raise ChangeLSError("Invalid semantic token data: Invalid token modifier") from e
 
             tokens.append(SemanticToken(lexeme, offset, token_type, token_modifiers))
 
@@ -224,7 +221,7 @@ class SemanticTokensMixin:
         elif client.check_feature("textDocument/semanticTokens", sematic_tokens=["full"], text_document=TextDocumentInfo(self.uri, self.language_id)):
             self._loaded_semantic_tokens[client.get_name()] = await self._load_semantic_tokens_full(client)
         else:
-            raise LSPScriptException(f"Client {client.get_name()} does not support semantic tokens.")
+            raise ChangeLSError(f"Client {client.get_name()} does not support semantic tokens.")
 
     @property
     def sem_tokens(self) -> TokenList[SemanticToken]:
@@ -248,5 +245,5 @@ class SemanticTokensMixin:
         out = self._loaded_semantic_tokens.get(client_name)
 
         if out is None:
-            raise LSPScriptException(f"No semantic tokens are loaded for client {client_name}")
+            raise ChangeLSError(f"No semantic tokens are loaded for client {client_name}")
         return out

@@ -2,16 +2,14 @@ from pathlib import Path
 
 import pytest
 
-import lspscript.languages as languages
-from lspscript.tokens import Grammar, GrammarFormat
-from lspscript.types.enumerations import FileOperationPatternKind
-from lspscript.types.structures import (FileOperationFilter,
-                                        FileOperationPattern,
-                                        FileOperationPatternOptions,
-                                        TextDocumentFilter)
-from lspscript.util import (install_language, matches_file_operation_filter,
-                            matches_text_document_filter)
-from lspscript.workspace import Workspace
+import change_ls._languages as languages
+from change_ls import (Workspace, install_language,
+                       matches_file_operation_filter,
+                       matches_text_document_filter)
+from change_ls.tokens import Grammar, GrammarFormat
+from change_ls.types import (FileOperationFilter, FileOperationPattern,
+                             FileOperationPatternKind,
+                             FileOperationPatternOptions, TextDocumentFilter)
 
 
 @pytest.fixture

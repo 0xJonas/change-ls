@@ -1,6 +1,6 @@
 from typing import Dict
-from .tokens.grammar import Grammar, BuiltInGrammar
 
+from .tokens._grammar import BuiltInGrammar, Grammar
 
 extension_to_language_id = {
     ".as": "actionscript",

@@ -7,20 +7,20 @@ from typing import (Callable, Dict, List, Literal, Optional, Sequence, Tuple,
                     Type, Union, overload)
 from urllib.parse import urlsplit
 
-import lspscript.symbol as symbol
-import lspscript.text_document as td
-from lspscript.lsp_exception import LSPScriptException
-
-from .client import (Client, ServerLaunchParams, WorkspaceRequestHandler,
-                     get_default_initialize_params)
-from .types.structures import (ConfigurationParams, CreateFile,
-                               CreateFilesParams, DeleteFilesParams,
-                               DidOpenTextDocumentParams, FileCreate,
-                               FileDelete, FileRename, InitializeParams,
-                               LSPAny, PublishDiagnosticsParams, RenameFile,
-                               RenameFilesParams, TextDocumentEdit, TextEdit,
-                               WorkspaceEdit, WorkspaceFolder,
-                               WorkspaceSymbolParams)
+import change_ls._symbol as symbol
+import change_ls._text_document as td
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import (Client, ServerLaunchParams,
+                               WorkspaceRequestHandler,
+                               get_default_initialize_params)
+from change_ls.types import (ConfigurationParams, CreateFile,
+                             CreateFilesParams, DeleteFilesParams,
+                             DidOpenTextDocumentParams, FileCreate, FileDelete,
+                             FileRename, InitializeParams, LSPAny,
+                             PublishDiagnosticsParams, RenameFile,
+                             RenameFilesParams, TextDocumentEdit, TextEdit,
+                             WorkspaceEdit, WorkspaceFolder,
+                             WorkspaceSymbolParams)
 
 ConfigurationProvider = Callable[[Optional[str], Optional[str]], LSPAny]
 
@@ -263,10 +263,10 @@ class Workspace(WorkspaceRequestHandler):
     async def _perform_text_document_edits(self, uri: str, edits: List[TextEdit], version: Optional[int] = None) -> None:
         with self.open_text_document(uri) as doc:
             if version is not None and doc.version != version:
-                raise LSPScriptException(
+                raise ChangeLSError(
                     f"Encountered edit for version {version} of {doc.uri}, but the current version is {doc.version}")
             if len(doc._pending_edits) > 0:  # type: ignore
-                raise LSPScriptException(
+                raise ChangeLSError(
                     f"Edit cannot be applied, because TextDocument {doc.uri} has uncommitted edits.")
 
             for edit in edits:
@@ -475,12 +475,12 @@ class Workspace(WorkspaceRequestHandler):
 
         is_directory = full_path.is_dir()
         if expect_directory and not is_directory:
-            raise LSPScriptException(f"{uri} is not a directory.")
+            raise ChangeLSError(f"{uri} is not a directory.")
 
         if is_directory and not recursive:
             try:
                 next(full_path.iterdir())
-                raise LSPScriptException("Attempted to delete a directory which is not empty.")
+                raise ChangeLSError("Attempted to delete a directory which is not empty.")
             except StopIteration:
                 pass
 
@@ -523,7 +523,7 @@ class Workspace(WorkspaceRequestHandler):
     async def _query_unresolved_symbols(self, query: str, client_name: Optional[str]) -> List["symbol.UnresolvedWorkspaceSymbol"]:
         client = self._get_client(client_name)
         if not client.check_feature("workspace/symbol"):
-            raise LSPScriptException(f"Client {client.get_name()} does not support querying workspace symbols.")
+            raise ChangeLSError(f"Client {client.get_name()} does not support querying workspace symbols.")
         raw_result = await client.send_workspace_symbol(WorkspaceSymbolParams(query=query))
         if raw_result is None:
             return []

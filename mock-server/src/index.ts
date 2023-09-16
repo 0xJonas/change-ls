@@ -106,7 +106,7 @@ connection.onInitialize((params: InitializeParams) => {
                 // TODO: fill accordingly as more tests are added
             },
             serverInfo: {
-                name: "LSPScript mock-server"
+                name: "change-ls mock-server"
             }
         };
     }

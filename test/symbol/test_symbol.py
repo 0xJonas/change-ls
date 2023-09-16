@@ -3,18 +3,15 @@ from typing import AsyncGenerator, Tuple
 
 import pytest
 
-from lspscript.client import Client, StdIOConnectionParams
-from lspscript.lsp_exception import LSPScriptException
-from lspscript.symbol import (CustomSymbol, UnresolvedWorkspaceSymbol,
-                              WorkspaceSymbol)
-from lspscript.types.enumerations import SymbolKind
-from lspscript.types.structures import (
-    OptionalVersionedTextDocumentIdentifier, Position, Range, TextDocumentEdit,
-    TextEdit, WorkspaceEdit)
-from lspscript.workspace import Workspace
+from change_ls import (ChangeLSError, Client, CustomSymbol,
+                       StdIOConnectionParams, UnresolvedWorkspaceSymbol,
+                       Workspace, WorkspaceSymbol)
+from change_ls.types import (OptionalVersionedTextDocumentIdentifier, Position,
+                             Range, SymbolKind, TextDocumentEdit, TextEdit,
+                             WorkspaceEdit)
 
 
-@pytest.mark.filterwarnings("ignore::lspscript.text_document.DroppedChangesWarning")
+@pytest.mark.filterwarnings("ignore::change_ls.DroppedChangesWarning")
 async def test_symbol_invalid_anchor() -> None:
     async with Workspace(Path("test/mock-ws-1")) as ws:
         launch_params = StdIOConnectionParams(
@@ -30,7 +27,7 @@ async def test_symbol_invalid_anchor() -> None:
         doc.edit("changed", 4, 8)
         doc.commit_edits()
 
-        with pytest.raises(LSPScriptException):
+        with pytest.raises(ChangeLSError):
             await symbol.find_references()
 
 
@@ -156,7 +153,7 @@ async def test_query_symbols_resolve(mock_ws_1: Tuple[Workspace, Client]) -> Non
         assert sym.container_name == "test-2.py"
         assert sym.range == (4, 8)
 
-    with pytest.raises(LSPScriptException):
+    with pytest.raises(ChangeLSError):
         # Symbol was closed
         await sym.find_references()
 

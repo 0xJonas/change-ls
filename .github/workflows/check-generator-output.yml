@@ -18,6 +18,6 @@ jobs:
     - name: Run Generator and Output into ./temp
       run: python -m gen.main ./res/ ./temp
 
-    - name: Compare Generated Files with ./lspscript/types/
-      run: "for f in *; do cmp $f ../lspscript/types/$f || exit 1; done"
+    - name: Compare Generated Files with ./change_ls/types/
+      run: "for f in *; do cmp $f ../change_ls/types/$f || exit 1; done"
       working-directory: temp

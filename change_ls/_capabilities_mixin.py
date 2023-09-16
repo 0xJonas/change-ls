@@ -3,28 +3,23 @@ from asyncio import Event, wait_for
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from lspscript.protocol import LSPUnknownIdWarning
-from lspscript.types.enumerations import TextDocumentSyncKind
-from lspscript.types.structures import (CodeActionOptions, CodeLensOptions,
-                                        CompletionOptions, DiagnosticOptions,
-                                        DocumentLinkOptions,
-                                        ExecuteCommandOptions,
-                                        FileOperationRegistrationOptions,
-                                        InlayHintOptions,
-                                        NotebookCellTextDocumentFilter,
-                                        Registration, SaveOptions,
-                                        SemanticTokensOptions,
-                                        ServerCapabilities,
-                                        TextDocumentChangeRegistrationOptions,
-                                        TextDocumentSaveRegistrationOptions,
-                                        TextDocumentSyncOptions,
-                                        Unregistration, WorkspaceSymbolOptions)
-from lspscript.util import (TextDocumentInfo, matches_file_operation_filter,
-                            matches_text_document_filter)
-
-from .types.capabilities import (FeatureRegistration,
-                                 registration_to_feature_registration,
-                                 server_capabilities_to_feature_registrations)
+from change_ls._protocol import LSPUnknownIdWarning
+from change_ls._util import (TextDocumentInfo, matches_file_operation_filter,
+                             matches_text_document_filter)
+from change_ls.types import (CodeActionOptions, CodeLensOptions,
+                             CompletionOptions, DiagnosticOptions,
+                             DocumentLinkOptions, ExecuteCommandOptions,
+                             FileOperationRegistrationOptions,
+                             InlayHintOptions, NotebookCellTextDocumentFilter,
+                             Registration, SaveOptions, SemanticTokensOptions,
+                             ServerCapabilities,
+                             TextDocumentChangeRegistrationOptions,
+                             TextDocumentSaveRegistrationOptions,
+                             TextDocumentSyncKind, TextDocumentSyncOptions,
+                             Unregistration, WorkspaceSymbolOptions)
+from change_ls.types._capabilities import (
+    FeatureRegistration, registration_to_feature_registration,
+    server_capabilities_to_feature_registrations)
 
 
 @dataclass

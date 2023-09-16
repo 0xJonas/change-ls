@@ -10,8 +10,7 @@ from sys import getdefaultencoding
 from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
                     Tuple, Union)
 
-from lspscript.types import ErrorCodes, LSPErrorCodes
-from lspscript.types.util import JSON_VALUE
+from change_ls.types import JSON_VALUE, ErrorCodes, LSPErrorCodes
 
 
 class LSPException(Exception):

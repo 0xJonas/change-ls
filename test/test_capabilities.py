@@ -4,8 +4,7 @@ from typing import Any
 
 from pytest import mark
 
-from lspscript.client import Client, StdIOConnectionParams
-from lspscript.util import TextDocumentInfo
+from change_ls import Client, StdIOConnectionParams, TextDocumentInfo
 
 
 async def test_server_capabilities() -> None:

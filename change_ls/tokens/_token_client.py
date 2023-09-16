@@ -11,14 +11,14 @@ from pathlib import Path
 from threading import Lock, Thread
 from typing import List, Mapping, Optional, Tuple
 
-import lspscript.languages as languages
-from lspscript.protocol import LSSubprocessProtocol
-from lspscript.tokens.token_list import SyntacticToken, TokenList
-from lspscript.types.util import (JSON_VALUE, json_assert_type_array,
-                                  json_assert_type_int,
-                                  json_assert_type_object,
-                                  json_assert_type_string, json_get_array,
-                                  json_get_string)
+import change_ls._languages as languages
+from change_ls._protocol import LSSubprocessProtocol
+from change_ls.tokens._token_list import SyntacticToken, TokenList
+from change_ls.types._util import (JSON_VALUE, json_assert_type_array,
+                                   json_assert_type_int,
+                                   json_assert_type_object,
+                                   json_assert_type_string, json_get_array,
+                                   json_get_string)
 
 version_pattern = re.compile(r"^v(\d+)\.(\d+)\.(\d+)\s*$")
 

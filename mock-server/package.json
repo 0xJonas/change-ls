@@ -1,7 +1,7 @@
 {
   "name": "mock-server",
   "version": "0.0.1",
-  "description": "Simple Language Server for testing LSPScript",
+  "description": "Simple Language Server for testing change-ls",
   "main": "src/index.js",
   "author": "Delphy",
   "license": "MIT",

@@ -2,10 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from lspscript.client import StdIOConnectionParams
-from lspscript.location_list import LocationList
-from lspscript.types.structures import Location, Position, Range
-from lspscript.workspace import Workspace
+from change_ls import LocationList, StdIOConnectionParams, Workspace
+from change_ls.types import Location, Position, Range
 
 
 async def test_location_list_iteration() -> None:
@@ -44,7 +42,7 @@ async def test_location_list_iteration() -> None:
         assert doc2.is_closed()
 
 
-@pytest.mark.filterwarnings("ignore::lspscript.text_document.DroppedChangesWarning")
+@pytest.mark.filterwarnings("ignore::change_ls.DroppedChangesWarning")
 async def test_location_list_document_edits() -> None:
     async with Workspace(Path("./test/mock-ws-1")) as ws:
         doc1 = ws.open_text_document(Path("test-1.py"))

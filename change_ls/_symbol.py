@@ -3,19 +3,17 @@ from dataclasses import dataclass
 from types import TracebackType
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-import lspscript.text_document as td
-import lspscript.types.structures as lsptypes
-import lspscript.workspace as ws
-from lspscript.client import Client
-from lspscript.location_list import LocationList
-from lspscript.lsp_exception import LSPScriptException
-from lspscript.types.enumerations import SymbolKind, SymbolTag
-from lspscript.types.structures import (DeclarationParams, DefinitionParams,
-                                        ImplementationParams, Location,
-                                        Position, ReferenceContext,
-                                        ReferenceParams, RenameParams,
-                                        TextDocumentIdentifier,
-                                        TypeDefinitionParams, WorkspaceEdit)
+import change_ls._location_list as ll
+import change_ls._text_document as td
+import change_ls._workspace as ws
+import change_ls.types as lsptypes
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import Client
+from change_ls.types import (DeclarationParams, DefinitionParams,
+                             ImplementationParams, Location, Position,
+                             ReferenceContext, ReferenceParams, RenameParams,
+                             SymbolKind, SymbolTag, TextDocumentIdentifier,
+                             TypeDefinitionParams, WorkspaceEdit)
 
 
 @dataclass
@@ -65,7 +63,7 @@ class Symbol(ABC):
         The range [start offset, end offset] in the ``TextDocument`` which contains this reference to the ``Symbol``.
 
     .. property:: kind
-        :type: lspscript.types.SymbolKind
+        :type: change_ls.types.SymbolKind
 
         The :class:`SymbolKind` of this ``Symbold``, which describes which element of the language (e.g. class, function)
         this ``Symbol`` represents.
@@ -124,7 +122,7 @@ class Symbol(ABC):
 
     def _assert_valid(self) -> None:
         if not self.is_valid():
-            raise LSPScriptException("Symbol is no longer valid")
+            raise ChangeLSError("Symbol is no longer valid")
 
     async def get_rename_workspace_edit(self, new_name: str) -> Optional[WorkspaceEdit]:
         """
@@ -135,13 +133,13 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/rename", text_documents=[anchor.text_document]):
-            raise LSPScriptException(f"Client {self._client.get_name()} does not support renaming.")
+            raise ChangeLSError(f"Client {self._client.get_name()} does not support renaming.")
 
         params = RenameParams(
             textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position, newName=new_name)
         return await self._client.send_text_document_rename(params)
 
-    async def find_references(self, *, include_declaration: bool = True) -> LocationList:
+    async def find_references(self, *, include_declaration: bool = True) -> "ll.LocationList":
         """
         Returns all references to this ``Symbol`` within its :class:`Workspace`.
 
@@ -150,7 +148,7 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/references", text_documents=[anchor.text_document]):
-            raise LSPScriptException(f"Client {self._client.get_name()} does not support find_references.")
+            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_references.")
 
         res = await self._client.send_text_document_references(ReferenceParams(
             textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
@@ -158,9 +156,9 @@ class Symbol(ABC):
             context=ReferenceContext(includeDeclaration=include_declaration)))
         if res is None:
             res = []
-        return LocationList.from_lsp_locations(self._workspace, res)
+        return ll.LocationList.from_lsp_locations(self._workspace, res)
 
-    async def find_declaration(self) -> LocationList:
+    async def find_declaration(self) -> "ll.LocationList":
         """
         Returns the declaration sites of this ``Symbol``.
 
@@ -171,15 +169,15 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/declaration", text_documents=[anchor.text_document]):
-            raise LSPScriptException(f"Client {self._client.get_name()} does not support find_declaration.")
+            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_declaration.")
 
         res = await self._client.send_text_document_declaration(
             DeclarationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
-        return LocationList.from_lsp_locations(self._workspace, res)
+        return ll.LocationList.from_lsp_locations(self._workspace, res)
 
-    async def find_definition(self) -> LocationList:
+    async def find_definition(self) -> "ll.LocationList":
         """
         Returns the definition sites of this ``Symbol``.
 
@@ -190,15 +188,15 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/definition", text_documents=[anchor.text_document]):
-            raise LSPScriptException(f"Client {self._client.get_name()} does not support find_definition.")
+            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_definition.")
 
         res = await self._client.send_text_document_definition(
             DefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
-        return LocationList.from_lsp_locations(self._workspace, res)
+        return ll.LocationList.from_lsp_locations(self._workspace, res)
 
-    async def find_type_definition(self) -> LocationList:
+    async def find_type_definition(self) -> "ll.LocationList":
         """
         Returns the type definition sites of this ``Symbol``.
 
@@ -209,15 +207,15 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/typeDefinition", text_documents=[anchor.text_document]):
-            raise LSPScriptException(f"Client {self._client.get_name()} does not support find_type_definition.")
+            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_type_definition.")
 
         res = await self._client.send_text_document_type_definition(
             TypeDefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
-        return LocationList.from_lsp_locations(self._workspace, res)
+        return ll.LocationList.from_lsp_locations(self._workspace, res)
 
-    async def find_implementation(self) -> LocationList:
+    async def find_implementation(self) -> "ll.LocationList":
         """
         Returns the implementation sites of this ``Symbol``.
 
@@ -228,13 +226,13 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/implementation", text_documents=[anchor.text_document]):
-            raise LSPScriptException(f"Client {self._client.get_name()} does not support find_implementation.")
+            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_implementation.")
 
         res = await self._client.send_text_document_implementation(
             ImplementationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
         if res is None:
             res = []
-        return LocationList.from_lsp_locations(self._workspace, res)
+        return ll.LocationList.from_lsp_locations(self._workspace, res)
 
     def __str__(self) -> str:
         if self.is_valid():
@@ -415,7 +413,7 @@ class WorkspaceSymbol(UnresolvedWorkspaceSymbol, Symbol):
 
     def __init__(self, client: Client, workspace: "ws.Workspace", lsp_workspace_symbol: Union[lsptypes.WorkspaceSymbol, lsptypes.SymbolInformation]) -> None:
         if not isinstance(lsp_workspace_symbol.location, Location):
-            raise LSPScriptException("Client did not return a WorkspaceSymbol with filled range after resolve.")
+            raise ChangeLSError("Client did not return a WorkspaceSymbol with filled range after resolve.")
 
         self._client = client
         self._workspace = workspace

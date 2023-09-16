@@ -3,10 +3,10 @@ from itertools import groupby
 from types import TracebackType
 from typing import Dict, Iterator, List, Mapping, Sequence, Tuple, Type, Union
 
-import lspscript.text_document as td
-import lspscript.workspace as ws
-from lspscript.lsp_exception import LSPScriptException
-from lspscript.types.structures import Location, LocationLink
+import change_ls._text_document as td
+import change_ls._workspace as ws
+from change_ls._change_ls_error import ChangeLSError
+from change_ls.types import Location, LocationLink
 
 
 def _text_document_matches_uri_posix(doc: "td.TextDocument", uri: str) -> bool:
@@ -171,7 +171,7 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
         If the ``LocationList`` contains more than one entry, an exception is raised.
         """
         if len(self._text_documents) != 1 or len(self._data[self._text_documents[0].uri]) != 1:
-            raise LSPScriptException("LocationList contains more than one entry.")
+            raise ChangeLSError("LocationList contains more than one entry.")
         return self._text_documents[0], self._data[self._text_documents[0].uri][0]
 
     def __str__(self) -> str:

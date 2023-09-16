@@ -4,7 +4,7 @@
 # To change the content of this file, make changes to the generator.
 
 from typing import ClassVar
-from .lsp_enum import AllowCustomValues, TypedLSPEnum
+from ._lsp_enum import AllowCustomValues, TypedLSPEnum
 
 
 class SemanticTokenTypes(TypedLSPEnum[str], AllowCustomValues):

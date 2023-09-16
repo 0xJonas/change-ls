@@ -471,8 +471,8 @@ def generate_structures_py(gen: Generator) -> str:
         # This file was automatically generated, so any edits to it will get overwritten.
         # To change the content of this file, make changes to the generator.
 
-        from .util import *
-        from .enumerations import *
+        from ._util import *
+        from ._enumerations import *
 
         from dataclasses import dataclass
         from typing import Dict, List, Literal, Mapping, Optional, Tuple, Union

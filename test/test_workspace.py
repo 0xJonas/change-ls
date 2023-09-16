@@ -4,11 +4,11 @@ from typing import Any, Generator, Optional
 
 import pytest
 
-from lspscript.client import StdIOConnectionParams
-from lspscript.types.structures import (
-    CreateFile, DeleteFile, LSPAny, OptionalVersionedTextDocumentIdentifier,
-    Position, Range, RenameFile, TextDocumentEdit, TextEdit, WorkspaceEdit)
-from lspscript.workspace import Workspace
+from change_ls import StdIOConnectionParams, Workspace
+from change_ls.types import (CreateFile, DeleteFile, LSPAny,
+                             OptionalVersionedTextDocumentIdentifier, Position,
+                             Range, RenameFile, TextDocumentEdit, TextEdit,
+                             WorkspaceEdit)
 
 
 async def test_workspace_launch_clients() -> None:

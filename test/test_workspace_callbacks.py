@@ -1,12 +1,11 @@
 from asyncio import Event, wait_for
 from typing import List
 
-from lspscript.client import (Client, StdIOConnectionParams,
-                              WorkspaceRequestHandler)
-from lspscript.types import (ApplyWorkspaceEditParams,
+from change_ls import Client, StdIOConnectionParams, WorkspaceRequestHandler
+from change_ls.types import (ApplyWorkspaceEditParams,
                              ApplyWorkspaceEditResult, ConfigurationParams,
-                             LSPAny, PublishDiagnosticsParams, WorkspaceFolder)
-from lspscript.types.enumerations import DiagnosticSeverity
+                             DiagnosticSeverity, LSPAny,
+                             PublishDiagnosticsParams, WorkspaceFolder)
 
 
 class MockWorkspaceRequestHandler(WorkspaceRequestHandler):

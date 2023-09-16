@@ -6,27 +6,24 @@ from pathlib import Path
 from types import TracebackType
 from typing import Callable, Dict, List, Literal, Optional, Type, overload
 
-import lspscript.symbol as sym
-import lspscript.workspace as ws
-from lspscript.client import Client
-from lspscript.lsp_exception import LSPScriptException
-from lspscript.tokens import TokenList, tokenize
-from lspscript.tokens.semantic_tokens_mixin import (SemanticTokensMixin,
-                                                    enrich_syntactic_tokens)
-from lspscript.tokens.token_list import SyntacticToken
-from lspscript.types import (DidCloseTextDocumentParams,
-                             OptionalVersionedTextDocumentIdentifier,
-                             TextDocumentItem, VersionedTextDocumentIdentifier)
-from lspscript.types.enumerations import (PositionEncodingKind, SymbolKind,
-                                          SymbolTag, TextDocumentSaveReason,
-                                          TextDocumentSyncKind)
-from lspscript.types.structures import (DidChangeTextDocumentParams,
-                                        DidSaveTextDocumentParams,
-                                        DocumentSymbolParams, Position, Range,
-                                        TextDocumentContentChangeEvent,
-                                        TextDocumentIdentifier, TextEdit,
-                                        WillSaveTextDocumentParams)
-from lspscript.util import TextDocumentInfo, guess_language_id
+import change_ls._symbol as sym
+import change_ls._workspace as ws
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import Client
+from change_ls._util import TextDocumentInfo, guess_language_id
+from change_ls.tokens import SyntacticToken, TokenList, tokenize
+from change_ls.tokens._semantic_tokens_mixin import (SemanticTokensMixin,
+                                                     enrich_syntactic_tokens)
+from change_ls.types import (DidChangeTextDocumentParams,
+                             DidCloseTextDocumentParams,
+                             DidSaveTextDocumentParams, DocumentSymbolParams,
+                             OptionalVersionedTextDocumentIdentifier, Position,
+                             PositionEncodingKind, Range, SymbolKind,
+                             SymbolTag, TextDocumentContentChangeEvent,
+                             TextDocumentIdentifier, TextDocumentItem,
+                             TextDocumentSaveReason, TextDocumentSyncKind,
+                             TextEdit, VersionedTextDocumentIdentifier,
+                             WillSaveTextDocumentParams)
 
 
 @dataclass(order=True)
@@ -210,7 +207,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         if not language_id:
             guessed_id = guess_language_id(path)
             if not guessed_id:
-                raise LSPScriptException(f"Unable to determine language id for '{str(path)}'")
+                raise ChangeLSError(f"Unable to determine language id for '{str(path)}'")
             language_id = guessed_id
 
         self._version = version
@@ -281,7 +278,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
     def _check_closed(self) -> None:
         if self.is_closed():
-            raise LSPScriptException("TextDocument is closed")
+            raise ChangeLSError("TextDocument is closed")
 
     def close(self) -> None:
         """
@@ -306,13 +303,13 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     def _get_client(self, client_name: Optional[str]) -> Client:
         clients = self._workspace.clients
         if not clients:
-            raise LSPScriptException("No Client available")
+            raise ChangeLSError("No Client available")
 
         if not client_name:
             if len(clients) == 1:
                 return list(clients.values())[0]
             else:
-                raise LSPScriptException("Unable to identify Client without a name.")
+                raise ChangeLSError("Unable to identify Client without a name.")
         return clients[client_name]
 
     @property
@@ -405,11 +402,11 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
         client = self._get_client(client_name)
         if not client.check_feature("textDocument/documentSymbol", text_document=self):
-            raise LSPScriptException(f"Client {client_name} does not support document outlines.")
+            raise ChangeLSError(f"Client {client_name} does not support document outlines.")
 
         res = await client.send_text_document_document_symbol(DocumentSymbolParams(textDocument=self.get_text_document_identifier()))
         if res is None:
-            raise LSPScriptException(f"Client {client_name} returned an empty outline.")
+            raise ChangeLSError(f"Client {client_name} returned an empty outline.")
 
         outline = [sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res]
         self._outlines[client.get_name()] = outline
@@ -683,10 +680,10 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
     def position_to_offset(self, position: Position, client_name: Optional[str] = None) -> int:
         """
-        Converts a :class:`lspscript.types.Position` into an offset into :attr:`text`.
+        Converts a :class:`change_ls.types.Position` into an offset into :attr:`text`.
 
         :param client_name: The name of the :class:`Client` for which the ``Position`` should be converted.
-            This info is needed because the language servers can use different :attr:`position encodings <lspscript.types.InitializeResult>`,
+            This info is needed because the language servers can use different :attr:`position encodings <change_ls.types.InitializeResult>`,
             which affect how the ``Position`` is interpreted. If the ``TextDocument`` is only open in a single
             ``Client``, this parameter is optional.
         """
@@ -717,10 +714,10 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
     def offset_to_position(self, offset: int, client_name: Optional[str] = None) -> Position:
         """
-        Converts an offset into :attr:`text` into a :class:`lspscript.types.Position`.
+        Converts an offset into :attr:`text` into a :class:`change_ls.types.Position`.
 
         :param client_name: The name of the :class:`Client` for which the ``Position`` should be converted.
-            This info is needed because the language servers can use different :attr:`position encodings <lspscript.types.InitializeResult>`,
+            This info is needed because the language servers can use different :attr:`position encodings <change_ls.types.InitializeResult>`,
             which affect how the ``Position`` is interpreted. If the ``TextDocument`` is only open in a single
             ``Client``, this parameter is optional.
         """

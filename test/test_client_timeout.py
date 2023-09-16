@@ -3,7 +3,7 @@ from asyncio.exceptions import TimeoutError
 
 from pytest import mark, raises
 
-from lspscript.client import Client, StdIOConnectionParams
+from change_ls import Client, StdIOConnectionParams
 
 
 @mark.slow

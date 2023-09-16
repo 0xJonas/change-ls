@@ -14,8 +14,8 @@ from gen.generator import Generator
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="python -m gen.main",
-        description="Generates source files for LSPScript from the LSP meta model.")
-    parser.add_argument("input", help="Metamodel JSON file to use as input.")
+        description="Generates source files for change-ls from the LSP meta model.")
+    parser.add_argument("input", help="Resource directory with JSON files to use as input.")
     parser.add_argument("output", help="Output directory for the generated files.")
     return parser.parse_args()
 
@@ -52,13 +52,13 @@ def generate_output_files(out_dir: Path) -> None:
 """)
             output.write(input.read())
 
-    with open(out_dir.joinpath("enumerations.py"), "w", encoding="utf-8", newline="\n") as file:
+    with open(out_dir.joinpath("_enumerations.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generate_enumerations_py(generator))
-    with open(out_dir.joinpath("structures.py"), "w", encoding="utf-8", newline="\n") as file:
+    with open(out_dir.joinpath("_structures.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generate_structures_py(generator))
-    with open(out_dir.joinpath("client_requests.py"), "w", encoding="utf-8", newline="\n") as file:
+    with open(out_dir.joinpath("_client_requests.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generate_client_requests_py(generator))
-    with open(out_dir.joinpath("capabilities.py"), "w", encoding="utf-8", newline="\n") as file:
+    with open(out_dir.joinpath("_capabilities.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generate_capabilities_py(generator, feature_infos))
     with open(out_dir.joinpath("__init__.py"), "w", encoding="utf-8", newline="\n") as file:
         file.write(generator.generate_init_py())

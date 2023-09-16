@@ -23,6 +23,6 @@ module.exports = {
     },
     output: {
         filename: "[name].js",
-        path: path.resolve(__dirname, '../lspscript/token_server')
+        path: path.resolve(__dirname, '../change_ls/token_server')
     }
 }

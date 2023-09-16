@@ -1,7 +1,7 @@
 {
   "name": "token-server",
   "version": "1.0.0",
-  "description": "Tokenization server for LSPScript",
+  "description": "Tokenization server for change-ls",
   "main": "index.js",
   "engines": {
     "node": ">=14.0.0"

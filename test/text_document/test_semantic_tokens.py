@@ -3,9 +3,7 @@ from typing import AsyncGenerator
 
 import pytest
 
-from lspscript.client import StdIOConnectionParams
-from lspscript.text_document import TextDocument
-from lspscript.workspace import Workspace
+from change_ls import StdIOConnectionParams, TextDocument, Workspace
 
 
 @pytest.fixture

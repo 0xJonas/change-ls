@@ -107,19 +107,19 @@ def _get_semantic_tokens_legend(client: Client) -> SemanticTokensLegend:
 
 
 class SemanticTokensMixin:
-    _cached_results: Dict[str, SemanticTokens]
-    _loaded_semantic_tokens: Dict[str, TokenList[SemanticToken]]
+    _cached_results: Dict[Client, SemanticTokens]
+    _loaded_semantic_tokens: Dict[Client, TokenList[SemanticToken]]
 
     def __init__(self) -> None:
         self._cached_results = {}
         self._loaded_semantic_tokens = {}
 
     @abstractmethod
-    def _get_client(self, client_name: Optional[str]) -> Client:
+    def _resolve_client_parameter(self, client: Optional[Client]) -> Client:
         ...
 
     @abstractmethod
-    def position_to_offset(self, position: Position, client_name: Optional[str] = None) -> int:
+    def position_to_offset(self, position: Position, client: Optional[Client] = None) -> int:
         ...
 
     @abstractmethod
@@ -135,7 +135,7 @@ class SemanticTokensMixin:
     @abstractproperty
     def language_id(self) -> Optional[str]: ...
 
-    def _parse_semantic_tokens_relative(self, data: List[int], legend: SemanticTokensLegend, client_name: str) -> TokenList[SemanticToken]:
+    def _parse_semantic_tokens_relative(self, data: List[int], legend: SemanticTokensLegend, client: Client) -> TokenList[SemanticToken]:
         data_length = len(data)
         text = self.text
 
@@ -151,8 +151,7 @@ class SemanticTokensMixin:
             else:
                 current_start += delta_start
 
-            offset = self.position_to_offset(
-                Position(line=current_line, character=current_start), client_name=client_name)
+            offset = self.position_to_offset(Position(line=current_line, character=current_start), client)
 
             try:
                 lexeme = text[offset:offset + length]
@@ -183,12 +182,12 @@ class SemanticTokensMixin:
         if result.resultId is not None:
             # Only cache results with a known resultId, since without a resultId
             # we cannot use this result for textDocument/semanticTokens/full/delta requests.
-            self._cached_results[client.name] = result
+            self._cached_results[client] = result
 
-        return self._parse_semantic_tokens_relative(result.data, _get_semantic_tokens_legend(client), client.name)
+        return self._parse_semantic_tokens_relative(result.data, _get_semantic_tokens_legend(client), client)
 
     async def _load_semantic_tokens_delta(self, client: Client) -> TokenList[SemanticToken]:
-        previous_result = self._cached_results[client.name]
+        previous_result = self._cached_results[client]
         assert previous_result.resultId is not None
         params = SemanticTokensDeltaParams(textDocument=self.get_text_document_identifier(),
                                            previousResultId=previous_result.resultId)
@@ -196,7 +195,7 @@ class SemanticTokensMixin:
 
         if delta is None:
             # TODO: Log warning
-            return self._parse_semantic_tokens_relative(previous_result.data, _get_semantic_tokens_legend(client), client.name)
+            return self._parse_semantic_tokens_relative(previous_result.data, _get_semantic_tokens_legend(client), client)
 
         if isinstance(delta, SemanticTokensDelta):
             result = _apply_semantic_token_delta(previous_result, delta)
@@ -206,20 +205,20 @@ class SemanticTokensMixin:
         if result.resultId is not None:
             # Only cache results with a known resultId, since without a resultId
             # we cannot use this result for textDocument/semanticTokens/full/delta requests.
-            self._cached_results[client.name] = result
+            self._cached_results[client] = result
 
-        return self._parse_semantic_tokens_relative(result.data, _get_semantic_tokens_legend(client), client.name)
+        return self._parse_semantic_tokens_relative(result.data, _get_semantic_tokens_legend(client), client)
 
-    async def _load_semantic_tokens(self, client_name: Optional[str] = None) -> None:
-        client = self._get_client(client_name)
+    async def _load_semantic_tokens(self, client: Optional[Client] = None) -> None:
+        client = self._resolve_client_parameter(client)
 
-        if (client.name in self._cached_results
+        if (client in self._cached_results
                 and client.check_feature("textDocument/semanticTokens",
                                          semantic_tokens=["full/delta"],
                                          text_document=TextDocumentInfo(self.uri, self.language_id))):
-            self._loaded_semantic_tokens[client.name] = await self._load_semantic_tokens_delta(client)
+            self._loaded_semantic_tokens[client] = await self._load_semantic_tokens_delta(client)
         elif client.check_feature("textDocument/semanticTokens", sematic_tokens=["full"], text_document=TextDocumentInfo(self.uri, self.language_id)):
-            self._loaded_semantic_tokens[client.name] = await self._load_semantic_tokens_full(client)
+            self._loaded_semantic_tokens[client] = await self._load_semantic_tokens_full(client)
         else:
             raise ChangeLSError(f"Client {client} does not support semantic tokens.")
 
@@ -232,18 +231,16 @@ class SemanticTokensMixin:
         """
         return self.get_loaded_semantic_tokens()
 
-    def get_loaded_semantic_tokens(self, client_name: Optional[str] = None) -> TokenList[SemanticToken]:
+    def get_loaded_semantic_tokens(self, client: Optional[Client] = None) -> TokenList[SemanticToken]:
         """
         Returns semantic tokens previously loaded with :meth:`TextDocument.load_tokens()` using
         either ``mode="enrich"`` or ``mode="semantic"``.
 
-        :param client_name: The name of the :class:`Client` which was used to load the semantic tokens.
+        :param client: The :class:`Client` which was used to load the semantic tokens.
             If only one client is running in the current :class:`Workspace` this parameter is optional.
         """
-        if client_name is None:
-            client_name = self._get_client(None).name
-        out = self._loaded_semantic_tokens.get(client_name)
+        out = self._loaded_semantic_tokens.get(self._resolve_client_parameter(client))
 
         if out is None:
-            raise ChangeLSError(f"No semantic tokens are loaded for client {client_name}")
+            raise ChangeLSError(f"No semantic tokens are loaded for client {client}")
         return out

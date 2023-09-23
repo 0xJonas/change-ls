@@ -288,7 +288,7 @@ class CustomSymbol(Symbol):
         self._tags = list(tags) if tags is not None else []
         self._container_name = container_name
 
-        position = text_document.offset_to_position(range[0], client.name)
+        position = text_document.offset_to_position(range[0], client)
         self._anchor = _SymbolAnchor(text_document, position)
 
     def _get_anchor(self) -> _SymbolAnchor:

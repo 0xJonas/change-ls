@@ -61,7 +61,7 @@ class Workspace(WorkspaceRequestHandler):
 
     _roots: List[Path]
     _root_names: List[str]
-    _clients: Dict[str, Client]
+    _clients: List[Client]
     _configuration_provider: Optional[ConfigurationProvider]
     _opened_text_documents: Dict[str, "td.TextDocument"]
 
@@ -78,7 +78,7 @@ class Workspace(WorkspaceRequestHandler):
         else:
             self._root_names = [r.stem for r in roots]
         self.default_encoding = default_encoding
-        self._clients = {}
+        self._clients = []
         self._configuration_provider = None
         self._opened_text_documents = {}
 
@@ -120,19 +120,18 @@ class Workspace(WorkspaceRequestHandler):
 
         def unregister_client() -> None:
             client.set_workspace_request_handler(None)
-            del self._clients[client.name]
+            del self._clients[self._clients.index(client)]
 
-        name = client.name
-        if name in self._clients.values():
-            raise ValueError(f"A Client with the same name '{name}' was already registered with this Workspace")
+        if client in self._clients:
+            raise ValueError(f"Client {client} was already registered with this Workspace")
 
-        self._clients[name] = client
+        self._clients.append(client)
         client.set_workspace_request_handler(self)
         client.register_state_callback("running", send_did_open_notifications)
         client.register_state_callback("disconnected", unregister_client)
 
     @property
-    def clients(self) -> Dict[str, Client]:
+    def clients(self) -> List[Client]:
         return self._clients
 
     def set_configuration_provider(self, configuration_provider: Optional[ConfigurationProvider]) -> None:
@@ -228,7 +227,7 @@ class Workspace(WorkspaceRequestHandler):
 
         text_document = td.TextDocument(full_path, self, language_id, 0, encoding)
 
-        for client in self._clients.values():
+        for client in self._clients:
             if not client.check_feature("textDocument/didOpen", text_documents=[text_document]):
                 continue
             client.send_text_document_did_open(DidOpenTextDocumentParams(
@@ -245,20 +244,22 @@ class Workspace(WorkspaceRequestHandler):
             doc._final_close()  # type: ignore
         self._opened_text_documents = {}
 
-        futures = [client.__aexit__(exc_type, exc_value, traceback)
-                   for client in list(reversed(self._clients.values()))]
+        futures = [client.__aexit__(exc_type, exc_value, traceback) for client in reversed(self._clients)]
         await asyncio.gather(*futures)
-        self._clients = {}
+        self._clients = []
 
         return False
 
-    def _get_client(self, client_name: Optional[str]) -> Client:
-        if not client_name:
+    def _resolve_client_parameter(self, client: Optional[Client]) -> Client:
+        if not client:
             if len(self._clients) == 1:
-                return list(self._clients.values())[0]
+                return self._clients[0]
             else:
-                raise ValueError("Unable to identify Client without a name.")
-        return self._clients[client_name]
+                raise ChangeLSError("No Client was given and the Workspace contains zero or more than one Client.")
+        elif client in self._clients:
+            return client
+        else:
+            raise ChangeLSError(f"Client {client} was not launched in Workspace {self}")
 
     async def _perform_text_document_edits(self, uri: str, edits: List[TextEdit], version: Optional[int] = None) -> None:
         with self.open_text_document(uri) as doc:
@@ -313,7 +314,7 @@ class Workspace(WorkspaceRequestHandler):
 
     async def _send_will_create_file_requests(self, uri: str) -> None:
         params = CreateFilesParams(files=[FileCreate(uri=uri)])
-        for client in self.clients.values():
+        for client in self.clients:
             if not client.check_feature("workspace/willCreateFiles", file_operations=[uri]):
                 continue
             edit = await client.send_workspace_will_create_files(params)
@@ -322,7 +323,7 @@ class Workspace(WorkspaceRequestHandler):
 
     def _send_did_create_file_notifications(self, uri: str) -> None:
         params = CreateFilesParams(files=[FileCreate(uri=uri)])
-        for client in self.clients.values():
+        for client in self.clients:
             if not client.check_feature("workspace/didCreateFiles", file_operations=[uri]):
                 continue
             client.send_workspace_did_create_files(params)
@@ -373,7 +374,7 @@ class Workspace(WorkspaceRequestHandler):
 
     async def _send_will_rename_requests(self, source_uri: str, destination_uri: str) -> None:
         params = RenameFilesParams(files=[FileRename(oldUri=source_uri, newUri=destination_uri)])
-        for client in self.clients.values():
+        for client in self.clients:
             if not client.check_feature("workspace/willRenameFiles", file_operations=[source_uri]):
                 continue
             edit = await client.send_workspace_will_rename_files(params)
@@ -382,7 +383,7 @@ class Workspace(WorkspaceRequestHandler):
 
     def _send_did_rename_notifications(self, source_uri: str, destination_uri: str) -> None:
         params = RenameFilesParams(files=[FileRename(oldUri=source_uri, newUri=destination_uri)])
-        for client in self.clients.values():
+        for client in self.clients:
             if not client.check_feature("workspace/didRenameFiles", file_operations=[source_uri]):
                 continue
             client.send_workspace_did_rename_files(params)
@@ -436,7 +437,7 @@ class Workspace(WorkspaceRequestHandler):
 
     async def _send_will_delete_file_requests(self, uri: str) -> None:
         params = DeleteFilesParams(files=[FileDelete(uri=uri)])
-        for client in self.clients.values():
+        for client in self.clients:
             if not client.check_feature("workspace/willDeleteFiles", file_operations=[uri]):
                 continue
             edit = await client.send_workspace_will_delete_files(params)
@@ -445,7 +446,7 @@ class Workspace(WorkspaceRequestHandler):
 
     def _send_did_delete_file_notifications(self, uri: str) -> None:
         params = DeleteFilesParams(files=[FileDelete(uri=uri)])
-        for client in self.clients.values():
+        for client in self.clients:
             if not client.check_feature("workspace/didCreateFiles", file_operations=[uri]):
                 continue
             client.send_workspace_did_delete_files(params)
@@ -520,8 +521,8 @@ class Workspace(WorkspaceRequestHandler):
         """
         await self._handle_delete_file(path, recursive, ignore_if_not_exists, expect_directory=True)
 
-    async def _query_unresolved_symbols(self, query: str, client_name: Optional[str]) -> List["symbol.UnresolvedWorkspaceSymbol"]:
-        client = self._get_client(client_name)
+    async def _query_unresolved_symbols(self, query: str, client: Optional[Client]) -> List["symbol.UnresolvedWorkspaceSymbol"]:
+        client = self._resolve_client_parameter(client)
         if not client.check_feature("workspace/symbol"):
             raise ChangeLSError(f"Client {client} does not support querying workspace symbols.")
         raw_result = await client.send_workspace_symbol(WorkspaceSymbolParams(query=query))
@@ -532,13 +533,13 @@ class Workspace(WorkspaceRequestHandler):
 
     @overload
     async def query_symbols(self, query: str, *,
-                            resolve: Literal[True] = True, client_name: Optional[str] = None) -> List["symbol.WorkspaceSymbol"]: ...
+                            resolve: Literal[True] = True, client: Optional[Client] = None) -> List["symbol.WorkspaceSymbol"]: ...
 
     @overload
     async def query_symbols(self, query: str, *,
-                            resolve: Literal[False] = False, client_name: Optional[str] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]: ...
+                            resolve: Literal[False] = False, client: Optional[Client] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]: ...
 
-    async def query_symbols(self, query: str, *, resolve: bool = True, client_name: Optional[str] = None) -> Union[List["symbol.WorkspaceSymbol"], List["symbol.UnresolvedWorkspaceSymbol"]]:
+    async def query_symbols(self, query: str, *, resolve: bool = True, client: Optional[Client] = None) -> Union[List["symbol.WorkspaceSymbol"], List["symbol.UnresolvedWorkspaceSymbol"]]:
         """
         Queries the ``Workspace`` for symbols using the given query string.
 
@@ -548,31 +549,31 @@ class Workspace(WorkspaceRequestHandler):
             of :class:`UnresolvedWorkspaceSymbols <UnresolvedWorkspaceSymbol>`. Setting ``resolve`` to ``False`` means
             that the language server potentially has to do less work if not all symbols returned by the query are actually
             needed, as well as less :class:`TextDocuments <TextDocument>` are opened.
-        :param client_name: The name of the :class:`Client` which should send the LSP-request to its language server.
-            If only one client is created in this ``Workspace``, this information is optional.
+        :param client: The :class:`Client` which should send the LSP-request to its language server.
+            If only one client is created in this ``Workspace``, this parameter is optional.
         """
 
         if query == "":
             warnings.warn(
                 "Querying symbols with an empty query will return ALL symbols in the workspace. Consider using load_all_symbols() instead.")
 
-        unresolved_symbols = await self._query_unresolved_symbols(query, client_name)
+        unresolved_symbols = await self._query_unresolved_symbols(query, client)
         if resolve:
             requests = [sym.resolve() for sym in unresolved_symbols]
             return await asyncio.gather(*requests)
         else:
             return unresolved_symbols
 
-    async def load_all_symbols(self, *, client_name: Optional[str] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]:
+    async def load_all_symbols(self, *, client: Optional[Client] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]:
         """
         Returns all symbols in this ``Workspace``. The symbols are returned as a List
         of :class:`UnresolvedWorkspaceSymbols <UnresolvedWorkspaceSymbol>` so they need to
         be resolved before they can be used as a regular :class:`Symbol`.
 
-        :param client_name: The name of the :class:`Client` which should send the LSP-request to its language server.
-            If only one client is created in this ``Workspace``, this information is optional.
+        :param client: The :class:`Client` which should send the LSP-request to its language server.
+            If only one client is created in this ``Workspace``, this parameter is optional.
         """
-        return await self._query_unresolved_symbols("", client_name)
+        return await self._query_unresolved_symbols("", client)
 
     def on_workspace_folders(self) -> List[WorkspaceFolder]:
         return self._get_workspace_folders()

@@ -1,4 +1,5 @@
 import subprocess
+import uuid
 from abc import ABC, abstractmethod
 from asyncio import (AbstractEventLoop, BaseTransport, get_running_loop,
                      wait_for)
@@ -9,7 +10,7 @@ from socket import AF_INET
 from sys import argv
 from types import TracebackType
 from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+                    Sequence, Tuple, Type, Union)
 
 from change_ls._capabilities_mixin import CapabilitiesMixin
 from change_ls._protocol import (LSPClientException, LSProtocol,
@@ -46,11 +47,6 @@ from change_ls.types._client_requests import (ClientRequestsMixin,
                                               ServerRequestsMixin)
 
 CHANGE_LS_VERSION = "0.1.0"
-
-
-# Global list of client names, currently only used for logging purposes.
-_client_names: Set[str] = set()
-_anonymous_client_counter: int = 0
 
 
 _RequestHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], JSON_VALUE]
@@ -314,22 +310,6 @@ def get_default_initialize_params() -> InitializeParams:
         capabilities=get_default_client_capabilities())
 
 
-def _generate_client_name(launch_params: ServerLaunchParams) -> str:
-    global _anonymous_client_counter
-    if launch_params.server_path:
-        basename = launch_params.server_path.stem
-        suffix = ""
-        index = 0
-        while basename + suffix in _client_names:
-            index += 1
-            suffix = "-" + str(index)
-        return basename + suffix
-    else:
-        name = str(_anonymous_client_counter)
-        _anonymous_client_counter += 1
-        return name
-
-
 ClientState = Literal["disconnected", "uninitialized",
                       "initializing", "running", "shutdown"]
 
@@ -384,7 +364,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     _state: ClientState
     _protocol: Optional[LSProtocol]
     _launch_params: ServerLaunchParams
-    _name: str
+    _id: uuid.UUID
     _logger: Logger
 
     # Whether or not an 'exit' notification was sent. This is used
@@ -403,12 +383,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._launch_params = launch_params
         self._exit_sent = False
         self._initialize_params = initialize_params
-
-        if name is None:
-            name = _generate_client_name(launch_params)
-        self._name = name
-        _client_names.add(name)
-        self._logger = getLogger("lspscript.client." + name)
+        self._id = uuid.uuid4()
+        self._logger = getLogger("lspscript.client." + str(self._id))
         self._state_callbacks = {
             "disconnected": [],
             "uninitialized": [],
@@ -416,6 +392,12 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
             "running": [],
             "shutdown": [],
         }
+
+    def __eq__(self, other: Any) -> bool:
+        return other is self
+
+    def __hash__(self) -> int:
+        return self._id.int
 
     def set_workspace_request_handler(self, handler: Optional[WorkspaceRequestHandler]) -> None:
         self._workspace_request_handler = handler
@@ -449,13 +431,6 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
             return no value.
         """
         self._state_callbacks[state].append(callback)
-
-    @property
-    def name(self) -> str:
-        """
-        The name of the ``Client``, as set by :meth:`Workspace.launch_client()` or :meth:`Workspace.create_client()`.
-        """
-        return self._name
 
     async def launch(self) -> None:
         """
@@ -700,11 +675,11 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         pass
 
     def __str__(self) -> str:
-        return self._name
+        return "client:" + str(self._id)
 
     def __repr__(self) -> str:
         values = {
-            "name": self._name,
+            "id": self._id,
             "state": self._state
         }
         return f"{object.__repr__(self)} {values!r}"

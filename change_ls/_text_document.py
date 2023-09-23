@@ -184,7 +184,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     _clients: Dict[str, Client]
     _workspace: "ws.Workspace"
     _tokens: Optional[TokenList[SyntacticToken]]
-    _outlines: Dict[str, List["sym.DocumentSymbol"]]
+    _outlines: Dict[Client, List["sym.DocumentSymbol"]]
     _pending_edits: List[_Edit]
     _line_offsets: List[int]
     _reference_count: int
@@ -262,7 +262,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
                 f"TextDocument {self.uri} has unsaved changes. Call text_document.save() to save the changes.",
                 DroppedChangesWarning)
 
-        for client in self._workspace.clients.values():
+        for client in self._workspace.clients:
             if not client.check_feature("textDocument/didClose", text_documents=[self]):
                 continue
             params = DidCloseTextDocumentParams(textDocument=self.get_text_document_identifier())
@@ -300,17 +300,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self.close()
         return False
 
-    def _get_client(self, client_name: Optional[str]) -> Client:
-        clients = self._workspace.clients
-        if not clients:
-            raise ChangeLSError("No Client available")
-
-        if not client_name:
-            if len(clients) == 1:
-                return list(clients.values())[0]
-            else:
-                raise ChangeLSError("Unable to identify Client without a name.")
-        return clients[client_name]
+    def _resolve_client_parameter(self, client: Optional[Client]) -> Client:
+        return self._workspace._resolve_client_parameter(client)  # type: ignore
 
     @property
     def text(self) -> str:
@@ -331,7 +322,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
                 "Tokens are not loaded for this TextDocument. Use load_tokens() to fill the tokens property.")
         return self._tokens
 
-    async def load_tokens(self, mode: Literal["enrich", "syntactic", "semantic"] = "enrich", *, include_whitespace: bool = False, client_name: Optional[str] = None) -> None:
+    async def load_tokens(self, mode: Literal["enrich", "syntactic", "semantic"] = "enrich", *, include_whitespace: bool = False, client: Optional[Client] = None) -> None:
         """
         Tokenizes this ``TextDocument``. After this method is called, :attr:`tokens` will contain the computed tokens.
 
@@ -351,7 +342,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
         :param include_whitespace: If this is ``True``, whitespace-only tokens are included in ``tokens``, otherwise
             they are removed.
-        :param client_name: The name of the :class:`Client` to load the semantic tokens from. If only one ``Client`` is
+        :param client: The :class:`Client` to load the semantic tokens from. If only one ``Client`` is
             open in the current :class:`Workspace`, this parameter is optional.
         """
         self._check_closed()
@@ -359,57 +350,57 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         if mode in ["enrich", "syntactic"]:
             self._tokens = await tokenize(self.text, self.language_id, include_whitespace=include_whitespace)
         if mode in ["enrich", "semantic"]:
-            await self._load_semantic_tokens(client_name)
+            await self._load_semantic_tokens(client)
         if mode == "enrich":
             assert self._tokens is not None
-            enrich_syntactic_tokens(self._tokens, self.get_loaded_semantic_tokens(client_name))
+            enrich_syntactic_tokens(self._tokens, self.get_loaded_semantic_tokens(client))
 
-    def get_loaded_outline(self, client_name: Optional[str] = None) -> List["sym.DocumentSymbol"]:
+    def get_loaded_outline(self, client: Optional[Client] = None) -> List["sym.DocumentSymbol"]:
         """
         Returns a previously loaded outline.
 
-        :param client_name: The name of the :class:`Client` to retrieve the outline for. If only one ``Client``
+        :param client: The :class:`Client` to retrieve the outline for. If only one ``Client``
             is open in the current :class:`Workspace`, this parameter is optional.
         """
 
-        if client_name is None:
+        if client is None:
             if len(self._workspace.clients) == 0:
                 raise AttributeError(
                     "No outline is loaded for this TextDocument because the Workspace does not have any open Clients.")
             elif len(self._workspace.clients) == 1:
-                client_name = next(iter(self._workspace.clients.keys()))
+                client = self._workspace.clients[0]
             else:
                 raise AttributeError(
-                    "Outline is ambiguous because the Workspace has multiple open Clients. Use test_document.outline(client_name) to select the outline for a specific Client.")
+                    "Outline is ambiguous because the Workspace has multiple open Clients. Pass a Client to load_outline to load the outline for that Client.")
 
-        out = self._outlines.get(client_name)
+        out = self._outlines.get(client)
         if out is None:
             raise AttributeError(
-                f"No outline is loaded for Client {client_name}. Use load_outline('{client_name}') to fill the outline property.")
+                f"No outline is loaded for Client {client}. Use load_outline(...) to fill the outline property.")
         else:
             return out
 
-    async def load_outline(self, *, client_name: Optional[str] = None) -> None:
+    async def load_outline(self, *, client: Optional[Client] = None) -> None:
         """
         Loads the document outline (list of symbols defined in the document, maybe hierarchical) for a given :class:`Client`.
 
         After an outline is loaded, it can be retrieved by calling :meth:`~TextDocument.get_loaded_outline()`. An
         outline is valid as long as the ``TextDocument`` is not changed.
 
-        :param client_name: The name of the ``Client`` to load the document outline for. If only one ``Client`` is open
+        :param client: The ``Client`` to load the document outline for. If only one ``Client`` is open
             in the :class:`Workspace`, this parameter is optional.
         """
 
-        client = self._get_client(client_name)
+        client = self._resolve_client_parameter(client)
         if not client.check_feature("textDocument/documentSymbol", text_document=self):
-            raise ChangeLSError(f"Client {client_name} does not support document outlines.")
+            raise ChangeLSError(f"Client {client} does not support document outlines.")
 
         res = await client.send_text_document_document_symbol(DocumentSymbolParams(textDocument=self.get_text_document_identifier()))
         if res is None:
-            raise ChangeLSError(f"Client {client_name} returned an empty outline.")
+            raise ChangeLSError(f"Client {client} returned an empty outline.")
 
         outline = [sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res]
-        self._outlines[client.name] = outline
+        self._outlines[client] = outline
 
     def get_text_document_item(self) -> TextDocumentItem:
         """
@@ -555,9 +546,9 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         to_offset = self.position_to_offset(text_edit.range.end)
         self.edit(text_edit.newText, from_offset, to_offset)
 
-    def _edit_to_text_document_change_event(self, edit: _Edit) -> TextDocumentContentChangeEvent:
-        from_position = self.offset_to_position(edit.from_offset)
-        to_position = self.offset_to_position(edit.to_offset)
+    def _edit_to_text_document_change_event(self, edit: _Edit, client: Client) -> TextDocumentContentChangeEvent:
+        from_position = self.offset_to_position(edit.from_offset, client)
+        to_position = self.offset_to_position(edit.to_offset, client)
         return {
             "text": edit.new_text,
             "range": Range(start=from_position, end=to_position)
@@ -570,7 +561,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             # The edits are reversed because, unlike commit_edits, ContentChangeEvents are applied one
             # at a time, in the order they are received. So in order for edits earlier in the document
             # to not invalidate later edits, the edits are entered in reverse order.
-            contentChanges = [self._edit_to_text_document_change_event(edit)
+            contentChanges = [self._edit_to_text_document_change_event(edit, client)
                               for edit in reversed(self._pending_edits)]
         else:
             # Document Sync is disabled for this client
@@ -609,7 +600,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
         self._text = "".join(segments)
         self._version += 1
-        for client in self._workspace.clients.values():
+        for client in self._workspace.clients:
             self._handle_text_change(client)
         self._pending_edits = []
         self._tokens = None
@@ -643,14 +634,14 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             textDocument=self.get_text_document_identifier(), reason=TextDocumentSaveReason.Manual)
 
         # textDocument/willSave
-        for client in clients.values():
+        for client in clients:
             if not client.check_feature("textDocument/willSave", text_document=self):
                 continue
             client.send_text_document_will_save(will_save_params)
 
         # textDocument/willSaveWaitUntil
         requests = [client.send_text_document_will_save_wait_until(will_save_params)
-                    for client in clients.values()
+                    for client in clients
                     if client.check_feature("textDocument/willSaveWaitUntil", text_document=self)]
         edit_lists: List[Optional[List[TextEdit]]] = await asyncio.gather(*requests)
 
@@ -670,7 +661,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         did_save_params = DidSaveTextDocumentParams(textDocument=self.get_text_document_identifier())
         did_save_params_include_text = DidSaveTextDocumentParams(
             textDocument=self.get_text_document_identifier(), text=self._text)
-        for client in clients.values():
+        for client in clients:
             if client.check_feature("textDocument/didSave", include_text=True, text_document=self):
                 client.send_text_document_did_save(did_save_params_include_text)
             elif client.check_feature("textDocument/didSave", include_text=False, text_document=self):
@@ -678,11 +669,11 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
         self._content_saved = True
 
-    def position_to_offset(self, position: Position, client_name: Optional[str] = None) -> int:
+    def position_to_offset(self, position: Position, client: Optional[Client] = None) -> int:
         """
         Converts a :class:`change_ls.types.Position` into an offset into :attr:`text`.
 
-        :param client_name: The name of the :class:`Client` for which the ``Position`` should be converted.
+        :param client: The :class:`Client` for which the ``Position`` should be converted.
             This info is needed because the language servers can use different :attr:`position encodings <change_ls.types.InitializeResult>`,
             which affect how the ``Position`` is interpreted. If the ``TextDocument`` is only open in a single
             ``Client``, this parameter is optional.
@@ -709,14 +700,14 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             self._cached_start_offset = start_offset
             self._cached_reference_string = reference_string
 
-        encoding = self._get_client(client_name).get_position_encoding_kind()
+        encoding = self._resolve_client_parameter(client).get_position_encoding_kind()
         return start_offset + _code_units_to_offset(reference_string, position.character, encoding)
 
-    def offset_to_position(self, offset: int, client_name: Optional[str] = None) -> Position:
+    def offset_to_position(self, offset: int, client: Optional[Client] = None) -> Position:
         """
         Converts an offset into :attr:`text` into a :class:`change_ls.types.Position`.
 
-        :param client_name: The name of the :class:`Client` for which the ``Position`` should be converted.
+        :param client: The :class:`Client` for which the ``Position`` should be converted.
             This info is needed because the language servers can use different :attr:`position encodings <change_ls.types.InitializeResult>`,
             which affect how the ``Position`` is interpreted. If the ``TextDocument`` is only open in a single
             ``Client``, this parameter is optional.
@@ -731,7 +722,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         start_offset = self._line_offsets[line]
         end_offset = self._line_offsets[line + 1] if line < len(self._line_offsets) - 1 else len(self._text)
         reference_string = self._text[start_offset:end_offset]
-        encoding = self._get_client(client_name).get_position_encoding_kind()
+        encoding = self._resolve_client_parameter(client).get_position_encoding_kind()
         character = _offset_to_code_units(reference_string, offset - self._line_offsets[line], encoding)
 
         return Position(line=line, character=character)
@@ -778,7 +769,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
     def create_symbol_at(self, start: int, end: int, kind: SymbolKind, *,
                          tags: Optional[List[SymbolTag]] = None, container_name: Optional[str] = None,
-                         client_name: Optional[str] = None) -> sym.CustomSymbol:
+                         client: Optional[Client] = None) -> sym.CustomSymbol:
         """
         Creates a :class:`CustomSymbol` at the specified location. It is the caller's responsibility
         to ensure that the given range actually contains something that can be used as a symbol.
@@ -791,10 +782,10 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         :param tags: A list of :class:`SymbolTags <SymbolTag>` for the symbol.
         :param container_name: Name of a containing symbol. This is NOT used to form a hierarchy, so it can be
             any arbitrary string.
-        :param client_name: The name of the :class:`Client` with which this symbol should be associated. This
+        :param client: The :class:`Client` with which this symbol should be associated. This
             is the ``Client`` which will receive the request sent by the methods of the symbol.
         """
-        client = self._get_client(client_name)
+        client = self._resolve_client_parameter(client)
         return sym.CustomSymbol(client, self, (start, end), kind, tags, container_name)
 
     def __str__(self) -> str:

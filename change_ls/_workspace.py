@@ -120,9 +120,9 @@ class Workspace(WorkspaceRequestHandler):
 
         def unregister_client() -> None:
             client.set_workspace_request_handler(None)
-            del self._clients[client.get_name()]
+            del self._clients[client.name]
 
-        name = client.get_name()
+        name = client.name
         if name in self._clients.values():
             raise ValueError(f"A Client with the same name '{name}' was already registered with this Workspace")
 
@@ -523,7 +523,7 @@ class Workspace(WorkspaceRequestHandler):
     async def _query_unresolved_symbols(self, query: str, client_name: Optional[str]) -> List["symbol.UnresolvedWorkspaceSymbol"]:
         client = self._get_client(client_name)
         if not client.check_feature("workspace/symbol"):
-            raise ChangeLSError(f"Client {client.get_name()} does not support querying workspace symbols.")
+            raise ChangeLSError(f"Client {client} does not support querying workspace symbols.")
         raw_result = await client.send_workspace_symbol(WorkspaceSymbolParams(query=query))
         if raw_result is None:
             return []

@@ -133,7 +133,7 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/rename", text_documents=[anchor.text_document]):
-            raise ChangeLSError(f"Client {self._client.get_name()} does not support renaming.")
+            raise ChangeLSError(f"Client {self._client} does not support renaming.")
 
         params = RenameParams(
             textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position, newName=new_name)
@@ -148,7 +148,7 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/references", text_documents=[anchor.text_document]):
-            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_references.")
+            raise ChangeLSError(f"Client {self._client} does not support find_references.")
 
         res = await self._client.send_text_document_references(ReferenceParams(
             textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
@@ -169,7 +169,7 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/declaration", text_documents=[anchor.text_document]):
-            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_declaration.")
+            raise ChangeLSError(f"Client {self._client} does not support find_declaration.")
 
         res = await self._client.send_text_document_declaration(
             DeclarationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
@@ -188,7 +188,7 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/definition", text_documents=[anchor.text_document]):
-            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_definition.")
+            raise ChangeLSError(f"Client {self._client} does not support find_definition.")
 
         res = await self._client.send_text_document_definition(
             DefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
@@ -207,7 +207,7 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/typeDefinition", text_documents=[anchor.text_document]):
-            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_type_definition.")
+            raise ChangeLSError(f"Client {self._client} does not support find_type_definition.")
 
         res = await self._client.send_text_document_type_definition(
             TypeDefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
@@ -226,7 +226,7 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         if not self._client.check_feature("textDocument/implementation", text_documents=[anchor.text_document]):
-            raise ChangeLSError(f"Client {self._client.get_name()} does not support find_implementation.")
+            raise ChangeLSError(f"Client {self._client} does not support find_implementation.")
 
         res = await self._client.send_text_document_implementation(
             ImplementationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
@@ -288,7 +288,7 @@ class CustomSymbol(Symbol):
         self._tags = list(tags) if tags is not None else []
         self._container_name = container_name
 
-        position = text_document.offset_to_position(range[0], client.get_name())
+        position = text_document.offset_to_position(range[0], client.name)
         self._anchor = _SymbolAnchor(text_document, position)
 
     def _get_anchor(self) -> _SymbolAnchor:

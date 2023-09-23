@@ -409,7 +409,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             raise ChangeLSError(f"Client {client_name} returned an empty outline.")
 
         outline = [sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res]
-        self._outlines[client.get_name()] = outline
+        self._outlines[client.name] = outline
 
     def get_text_document_item(self) -> TextDocumentItem:
         """

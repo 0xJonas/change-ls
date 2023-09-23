@@ -77,6 +77,7 @@ async def test_semantic_tokens_enrich_nested_semantic_tokens(mock_document_1: Te
 
 
 @pytest.mark.test_sequence("test/text_document/test_semantic_tokens_apply_delta.json")
+@pytest.mark.filterwarnings("ignore::change_ls.DroppedChangesWarning")
 async def test_semantic_tokens_apply_delta(mock_document_1: TextDocument) -> None:
     await mock_document_1.load_tokens("semantic")
     mock_document_1.edit("logging.info", 0, 5)

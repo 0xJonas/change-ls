@@ -450,7 +450,11 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         """
         self._state_callbacks[state].append(callback)
 
-    def get_name(self) -> str:
+    @property
+    def name(self) -> str:
+        """
+        The name of the ``Client``, as set by :meth:`Workspace.launch_client()` or :meth:`Workspace.create_client()`.
+        """
         return self._name
 
     async def launch(self) -> None:
@@ -696,7 +700,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         pass
 
     def __str__(self) -> str:
-        return f"Client {self._name}"
+        return self._name
 
     def __repr__(self) -> str:
         values = {

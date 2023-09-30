@@ -1,9 +1,9 @@
+import sys
 from contextvars import ContextVar
 from logging import INFO, Logger, LoggerAdapter, getLogger
 from types import TracebackType
-from typing import (TYPE_CHECKING, Any, Callable, Generic, List,
-                    MutableMapping, Optional, Tuple, Type, TypeAlias, TypeVar,
-                    Union, cast)
+from typing import (TYPE_CHECKING, Any, Callable, List, MutableMapping,
+                    Optional, Tuple, Type, TypeVar, Union, cast)
 from uuid import UUID, uuid4
 
 
@@ -38,14 +38,18 @@ _operation_stack: ContextVar[List[OperationInfo]] = ContextVar("_operation_stack
 
 # Why do you have to be like this, TypeShed?
 if TYPE_CHECKING:
-    _L_tmp: TypeAlias = "_L"
-    _LoggerAdapter = LoggerAdapter[_L_tmp]
+    if sys.version_info >= (3, 10):
+        from typing import TypeAlias
+        _L_tmp: TypeAlias = "_L"
+        _LoggerAdapter = LoggerAdapter[_L_tmp]
+    else:
+        _LoggerAdapter = LoggerAdapter[Any]
 else:
     _LoggerAdapter = LoggerAdapter
 _L = TypeVar("_L", Logger, _LoggerAdapter)
 
 
-class OperationLoggerAdapter(LoggerAdapter[_L], Generic[_L]):
+class OperationLoggerAdapter(_LoggerAdapter):
     """
     A :class:`logging.LoggerAdapter` which adds properties of the :class:`Operation` stack
     to the :class:`LogRecords`.
@@ -80,7 +84,7 @@ class OperationLoggerAdapter(LoggerAdapter[_L], Generic[_L]):
         return msg, kwargs
 
 
-def _resolve_logger(logger: Optional[Union[str, Logger, OperationLoggerAdapter[Any]]]) -> Optional[OperationLoggerAdapter[Logger]]:
+def _resolve_logger(logger: Optional[Union[str, Logger, OperationLoggerAdapter]]) -> Optional[OperationLoggerAdapter]:
     if logger is None:
         return None
     elif isinstance(logger, Logger):
@@ -105,11 +109,11 @@ class Operation:
     _name: str
     _start_message: Optional[str]
     _end_message: Optional[str]
-    _logger: Optional[OperationLoggerAdapter[Any]]
+    _logger: Optional[OperationLoggerAdapter]
     _log_level: int
     _info: Optional[OperationInfo]
 
-    def __init__(self, name: str, logger: Optional[Union[str, Logger, OperationLoggerAdapter[Any]]] = None, start_message: Optional[str] = None, end_message: Optional[str] = None, log_level: int = INFO) -> None:
+    def __init__(self, name: str, logger: Optional[Union[str, Logger, OperationLoggerAdapter]] = None, start_message: Optional[str] = None, end_message: Optional[str] = None, log_level: int = INFO) -> None:
         """
         Constructs a new ``Operation``.
 

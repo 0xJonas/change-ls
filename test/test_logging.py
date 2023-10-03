@@ -1,12 +1,12 @@
-from logging import DEBUG, Handler, LogRecord, getLogger
-from typing import Generator, List
+from logging import DEBUG, Handler, Logger, LogRecord, getLogger
+from typing import Any, Generator, List
 
 import pytest
 
 from change_ls.logging import Operation, OperationLoggerAdapter, operation
 
 
-class TestHandler(Handler):
+class OperationRecorder(Handler):
     records: List[LogRecord]
 
     def __init__(self) -> None:
@@ -18,29 +18,29 @@ class TestHandler(Handler):
 
 
 @pytest.fixture
-def test_handler() -> Generator[TestHandler, None, None]:
+def test_handler() -> Generator[OperationRecorder, None, None]:
     logger = getLogger("change-ls.test")
     logger.setLevel(DEBUG)
     logger.propagate = False
-    handler = TestHandler()
+    handler = OperationRecorder()
     logger.addHandler(handler)
     yield handler
     logger.removeHandler(handler)
 
 
-def test_operation_decorator(test_handler: TestHandler) -> None:
+async def test_operation_decorator(test_handler: OperationRecorder) -> None:
     logger = OperationLoggerAdapter(getLogger("change-ls.test"))
     logger.info("No Operation")
 
     @operation(logger_name="change-ls.test", start_message="Starting test_fn1", end_message="Finished test_fn1")
-    def test_fn1() -> None:
+    async def test_fn1() -> None:
         test_fn2()
 
     @operation(logger_name="change-ls.test", start_message="Starting test_fn2", end_message="Finished test_fn2")
     def test_fn2() -> None:
         logger.info("Test")
 
-    test_fn1()
+    await test_fn1()
 
     assert len(test_handler.records) == 6
     records = test_handler.records
@@ -70,7 +70,7 @@ def test_operation_decorator(test_handler: TestHandler) -> None:
     assert records[5].cls_current_operation_name == "test_fn1"  # type: ignore
 
 
-def test_operation_context_manager(test_handler: TestHandler) -> None:
+def test_operation_context_manager(test_handler: OperationRecorder) -> None:
     logger = OperationLoggerAdapter(getLogger("change-ls.test"))
     logger.info("No Operation")
 
@@ -104,3 +104,26 @@ def test_operation_context_manager(test_handler: TestHandler) -> None:
     assert records[5].msg == "Finished test_fn1"
     assert records[5].cls_operation_stack_names == "test_fn1"  # type: ignore
     assert records[5].cls_current_operation_name == "test_fn1"  # type: ignore
+
+
+class OperationContext:
+    _logger: Logger
+
+    def __init__(self) -> None:
+        self._logger = getLogger("change-ls.test")
+
+    @operation(start_message="test_fn", get_logger_from_context=lambda self, *_1, **_2: self._logger)  # type: ignore
+    def test_fn(self, param1: Any, param2: Any) -> None:
+        pass
+
+
+def test_operation_get_logger_from_context(test_handler: OperationRecorder) -> None:
+    context = OperationContext()
+
+    context.test_fn(1, param2=2)
+
+    assert len(test_handler.records) == 1
+    records = test_handler.records
+    assert records[0].msg == "test_fn"
+    assert records[0].cls_operation_stack_names == "test_fn"  # type: ignore
+    assert records[0].cls_current_operation_name == "test_fn"  # type: ignore

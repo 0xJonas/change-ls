@@ -1,9 +1,10 @@
-import sys
+from asyncio import iscoroutinefunction
 from contextvars import ContextVar
+from functools import wraps
 from logging import INFO, Logger, LoggerAdapter, getLogger
-from types import TracebackType
+from types import FunctionType, TracebackType
 from typing import (TYPE_CHECKING, Any, Callable, List, MutableMapping,
-                    Optional, Tuple, Type, TypeVar, Union, cast)
+                    Optional, Tuple, Type, TypeVar, Union, cast, overload)
 from uuid import UUID, uuid4
 
 
@@ -36,17 +37,10 @@ class OperationInfo:
 _operation_stack: ContextVar[List[OperationInfo]] = ContextVar("_operation_stack", default=[])
 
 
-# Why do you have to be like this, TypeShed?
 if TYPE_CHECKING:
-    if sys.version_info >= (3, 10):
-        from typing import TypeAlias
-        _L_tmp: TypeAlias = "_L"
-        _LoggerAdapter = LoggerAdapter[_L_tmp]
-    else:
-        _LoggerAdapter = LoggerAdapter[Any]
+    _LoggerAdapter = LoggerAdapter[Any]
 else:
     _LoggerAdapter = LoggerAdapter
-_L = TypeVar("_L", Logger, _LoggerAdapter)
 
 
 class OperationLoggerAdapter(_LoggerAdapter):
@@ -67,7 +61,7 @@ class OperationLoggerAdapter(_LoggerAdapter):
         If there are no operations active, this attribute is ``None``.
     """
 
-    def __init__(self, logger: _L) -> None:
+    def __init__(self, logger: Union[Logger, _LoggerAdapter]) -> None:
         super().__init__(logger, {})
 
     def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> Tuple[Any, MutableMapping[str, Any]]:
@@ -84,13 +78,13 @@ class OperationLoggerAdapter(_LoggerAdapter):
         return msg, kwargs
 
 
-def _resolve_logger(logger: Optional[Union[str, Logger, OperationLoggerAdapter]]) -> Optional[OperationLoggerAdapter]:
+def _resolve_logger(logger: Optional[Union[str, Logger, _LoggerAdapter]]) -> Optional[OperationLoggerAdapter]:
     if logger is None:
         return None
-    elif isinstance(logger, Logger):
-        return OperationLoggerAdapter(logger)
     elif isinstance(logger, OperationLoggerAdapter):
         return logger
+    elif isinstance(logger, Logger) or isinstance(logger, LoggerAdapter):
+        return OperationLoggerAdapter(logger)
     else:
         return OperationLoggerAdapter(getLogger(logger))
 
@@ -113,7 +107,7 @@ class Operation:
     _log_level: int
     _info: Optional[OperationInfo]
 
-    def __init__(self, name: str, logger: Optional[Union[str, Logger, OperationLoggerAdapter]] = None, start_message: Optional[str] = None, end_message: Optional[str] = None, log_level: int = INFO) -> None:
+    def __init__(self, name: str, logger: Optional[Union[str, Logger, _LoggerAdapter]] = None, start_message: Optional[str] = None, end_message: Optional[str] = None, log_level: int = INFO) -> None:
         """
         Constructs a new ``Operation``.
 
@@ -160,14 +154,33 @@ class Operation:
         return False
 
 
-T = TypeVar("T")
+_T = TypeVar("_T", bound=Callable[..., Any])
 
 
+@overload
 def operation(name: Optional[str] = None,
               logger_name: Optional[str] = None,
               start_message: Optional[str] = None,
               end_message: Optional[str] = None,
-              log_level: int = INFO) -> Callable[[T], T]:
+              log_level: int = INFO,
+              get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None) -> Callable[[_T], _T]: ...
+
+
+@overload
+def operation(name: _T,
+              logger_name: Optional[str] = None,
+              start_message: Optional[str] = None,
+              end_message: Optional[str] = None,
+              log_level: int = INFO,
+              get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None) -> _T: ...
+
+
+def operation(name: Union[_T, Optional[str]] = None,
+              logger_name: Optional[str] = None,
+              start_message: Optional[str] = None,
+              end_message: Optional[str] = None,
+              log_level: int = INFO,
+              get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None) -> Union[_T, Callable[[_T], _T]]:
     """
     Decorator to turn a function into an :class:`Operation`::
 
@@ -178,24 +191,65 @@ def operation(name: Optional[str] = None,
     :param name: The name of the ``Operation``. If this is ``None``, the name of the function
         is used as the ``Operation's`` name.
     :param logger_name: The name of the :class:`logging.Logger` that should log the start and end message.
-        This paramter is optional, but must be present if a start or end message is given.
+        This paramter is optional, but one of ``logger_name`` and ``get_logger_from_context``
+        must be present if a start or end message is given.
     :param start_message: Message that should be logged when the ``Operation`` is started.
     :param end_message: Message that should be logged when the ``Operation`` is finished.
     :param log_level: Log level with which the start and end messages should be logged.
+    :param get_logger_from_context: Callable which returns a logger from the arguments to
+        the decorated function. Since this callable receives the same arguments as the
+        decorated function, the callable must have a compatible signature.
+
+        An example use case is to fetch a logger from an object::
+
+            class Thing:
+                # ...
+
+                def get_logger(self, *args, **kwargs):
+                    return self._logger
+
+                @operation(get_logger_from_context=get_logger, start_message="doing stuff")
+                def do_stuff(self):
+                    ...
     """
-    if logger_name is not None:
-        logger = getLogger(logger_name)
+    if type(name) is str:
+        name_arg = name
     else:
-        logger = None
+        name_arg = None
 
-    def decorator(func: T) -> T:
-        nonlocal name
-        assert isinstance(func, Callable)
-        opname = name if name is not None else func.__name__
+    if logger_name is not None:
+        named_logger = getLogger(logger_name)
+    else:
+        named_logger = None
 
+    def resolve_logger(*args: Any, **kwargs: Any) -> Union[None, Logger, _LoggerAdapter]:
+        """
+        Try to get a logger from the arguments supplied to the decorator.
+        """
+        if get_logger_from_context is not None:
+            return get_logger_from_context(*args, **kwargs)
+        else:
+            return named_logger
+
+    def decorator(func: _T) -> _T:
+        opname: str = name_arg if name_arg is not None else func.__name__  # type: ignore
+
+        @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            with Operation(opname, logger, start_message, end_message, log_level):
+            with Operation(opname, resolve_logger(*args, **kwargs), start_message, end_message, log_level):
                 return func(*args, **kwargs)
 
-        return cast(T, wrapper)
-    return decorator
+        @wraps(func)
+        async def coro_wrapper(*args: Any, **kwargs: Any) -> Any:
+            with Operation(opname, resolve_logger(*args, **kwargs), start_message, end_message, log_level):
+                return await func(*args, **kwargs)
+
+        if iscoroutinefunction(func):
+            return cast(_T, coro_wrapper)
+        else:
+            return cast(_T, wrapper)
+
+    if type(name) is FunctionType:
+        return decorator(name)
+    else:
+        return decorator

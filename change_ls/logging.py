@@ -3,7 +3,7 @@ from contextvars import ContextVar
 from functools import wraps
 from logging import INFO, Logger, LoggerAdapter, getLogger
 from types import FunctionType, TracebackType
-from typing import (TYPE_CHECKING, Any, Callable, List, MutableMapping,
+from typing import (TYPE_CHECKING, Any, Callable, Dict, List, MutableMapping,
                     Optional, Tuple, Type, TypeVar, Union, cast, overload)
 from uuid import UUID, uuid4
 
@@ -154,6 +154,43 @@ class Operation:
         return False
 
 
+def _reconstruct_argument_dict(func: Callable[..., Any], args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    code = func.__code__
+
+    # Handle positional parameters
+    positional_parameters = code.co_varnames[:code.co_argcount]
+    default_arguments = func.__defaults__
+    arg_values = args + default_arguments if default_arguments else args
+    out = {param: value for param, value in zip(positional_parameters, arg_values)}
+    out.update({param: kwargs[param] for param in positional_parameters if param in kwargs})
+
+    # Handle variadic parameter
+    if (code.co_flags & 0x4) != 0:
+        variadic_parameter = code.co_varnames[code.co_argcount]
+        out[variadic_parameter] = args[code.co_argcount:]
+        kw_parameters_start = code.co_argcount + 1
+    else:
+        kw_parameters_start = code.co_argcount
+
+    # Handle keyword parameters
+    kw_parameters_end = kw_parameters_start + code.co_kwonlyargcount
+    keywoard_parameters = code.co_varnames[kw_parameters_start:kw_parameters_end]
+    for param in keywoard_parameters:
+        if param in kwargs:
+            out[param] = kwargs[param]
+        else:
+            out[param] = func.__kwdefaults__[param]
+
+    # Handle variadic keyword parameter
+    if (code.co_flags & 0x8) != 0:
+        variadic_keyword_parameter = code.co_varnames[kw_parameters_end]
+        known_keyword_parameters = set(code.co_varnames[kw_parameters_start:kw_parameters_end])
+        unknown_keyword_parameters = set(kwargs.keys()).difference(known_keyword_parameters)
+        out[variadic_keyword_parameter] = {key: kwargs[key] for key in unknown_keyword_parameters}
+
+    return out
+
+
 _T = TypeVar("_T", bound=Callable[..., Any])
 
 
@@ -194,7 +231,14 @@ def operation(name: Union[_T, Optional[str]] = None,
         This paramter is optional, but one of ``logger_name`` and ``get_logger_from_context``
         must be present if a start or end message is given.
     :param start_message: Message that should be logged when the ``Operation`` is started.
+        The message can be an ``str.format()``-style format string referencing the
+        decorated function's parameters. It is required that the parameters are referenced by
+        name in the format string, positional formatting (e.g. ``"thing: {}"``) is not supported.
     :param end_message: Message that should be logged when the ``Operation`` is finished.
+        Similar to ``start_message`` this message can also be formatted by ``str.format()``.
+        Note the the formatted messages are created before the decorated function is invoked,
+        so the formatted output will reflect the arguments as they were initially passed to the
+        function.
     :param log_level: Log level with which the start and end messages should be logged.
     :param get_logger_from_context: Callable which returns a logger from the arguments to
         the decorated function. Since this callable receives the same arguments as the
@@ -231,17 +275,31 @@ def operation(name: Union[_T, Optional[str]] = None,
         else:
             return named_logger
 
+    def format_start_end_messages(func: _T, args: Tuple[Any, ...], kwargs: Dict[str, Any],
+                                  start_message: Optional[str], end_message: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+        if start_message or end_message:
+            argument_dict = _reconstruct_argument_dict(func, args, kwargs)
+        else:
+            argument_dict = {}
+        start_message_formatted = start_message.format(**argument_dict) if start_message else start_message
+        end_message_formatted = end_message.format(**argument_dict) if end_message else end_message
+        return start_message_formatted, end_message_formatted
+
     def decorator(func: _T) -> _T:
         opname: str = name_arg if name_arg is not None else func.__name__  # type: ignore
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            with Operation(opname, resolve_logger(*args, **kwargs), start_message, end_message, log_level):
+            start_message_formatted, end_message_formatted = format_start_end_messages(
+                func, args, kwargs, start_message, end_message)
+            with Operation(opname, resolve_logger(*args, **kwargs), start_message_formatted, end_message_formatted, log_level):
                 return func(*args, **kwargs)
 
         @wraps(func)
         async def coro_wrapper(*args: Any, **kwargs: Any) -> Any:
-            with Operation(opname, resolve_logger(*args, **kwargs), start_message, end_message, log_level):
+            start_message_formatted, end_message_formatted = format_start_end_messages(
+                func, args, kwargs, start_message, end_message)
+            with Operation(opname, resolve_logger(*args, **kwargs), start_message_formatted, end_message_formatted, log_level):
                 return await func(*args, **kwargs)
 
         if iscoroutinefunction(func):

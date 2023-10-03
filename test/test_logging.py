@@ -127,3 +127,32 @@ def test_operation_get_logger_from_context(test_handler: OperationRecorder) -> N
     assert records[0].msg == "test_fn"
     assert records[0].cls_operation_stack_names == "test_fn"  # type: ignore
     assert records[0].cls_current_operation_name == "test_fn"  # type: ignore
+
+
+def test_operation_message_formatting(test_handler: OperationRecorder) -> None:
+    @operation(logger_name="change-ls.test", start_message="test_fn1 {a} {b} {c}")
+    def test_fn1(a: int, b: int, c: int) -> None:
+        pass
+
+    @operation(logger_name="change-ls.test", start_message="test_fn2 {a} {b} {c}")
+    def test_fn2(a: int, *b: int, **c: int) -> None:
+        pass
+
+    @operation(logger_name="change-ls.test", start_message="test_fn3 {a} {b}")
+    def test_fn3(a: int = 1, *, b: int = 2) -> None:
+        pass
+
+    test_fn1(1, 2, 3)
+    test_fn1(1, c=3, b=2)
+    test_fn2(1, 2, 3, d=4, e=5)
+    test_fn2(1, d=4, e=5)
+    test_fn3()
+
+    assert len(test_handler.records) == 5
+    records = test_handler.records
+
+    assert records[0].msg == "test_fn1 1 2 3"
+    assert records[1].msg == "test_fn1 1 2 3"
+    assert records[2].msg in ["test_fn2 1 (2, 3) {'d': 4, 'e': 5}", "test_fn2 1 (2, 3) {'e': 5, 'd': 4}"]
+    assert records[3].msg in ["test_fn2 1 () {'d': 4, 'e': 5}", "test_fn2 1 () {'e': 5, 'd': 4}"]
+    assert records[4].msg == "test_fn3 1 2"

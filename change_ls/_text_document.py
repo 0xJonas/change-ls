@@ -316,6 +316,10 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         return self._encoding
 
     @property
+    def path(self) -> Path:
+        return self._path
+
+    @property
     def tokens(self) -> TokenList[SyntacticToken]:
         if not self._tokens:
             raise AttributeError(

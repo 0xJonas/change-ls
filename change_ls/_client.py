@@ -3,6 +3,7 @@ import uuid
 from abc import ABC, abstractmethod
 from asyncio import (AbstractEventLoop, BaseTransport, get_running_loop,
                      wait_for)
+from dataclasses import dataclass
 from logging import Logger, getLogger
 from os import getpid
 from pathlib import Path
@@ -314,6 +315,15 @@ ClientState = Literal["disconnected", "uninitialized",
                       "initializing", "running", "shutdown"]
 
 
+@dataclass(frozen=True)
+class ServerInfo:
+    name: str
+    version: str
+
+    def __str__(self) -> str:
+        return f"{self.name} version {self.version}"
+
+
 class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     """
     A Client manages the low-level communication with a language server using the Language Server Protocol.
@@ -372,19 +382,22 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     _exit_sent: bool
 
     _initialize_params: InitializeParams
+    _server_info: Optional[ServerInfo]
     _workspace_request_handler: Optional[WorkspaceRequestHandler]
     _state_callbacks: Dict[ClientState, List[Callable[[], None]]]
 
-    def __init__(self, launch_params: ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params(), name: Optional[str] = None) -> None:
+    def __init__(self, launch_params: ServerLaunchParams, initialize_params: InitializeParams = get_default_initialize_params()) -> None:
         super().__init__()
 
         self._state = "disconnected"
         self._protocol = None
         self._launch_params = launch_params
         self._exit_sent = False
-        self._initialize_params = initialize_params
         self._id = uuid.uuid4()
-        self._logger = getLogger("lspscript.client." + str(self._id))
+        self._logger = getLogger("change-ls.client")
+        self._initialize_params = initialize_params
+        self._server_info = None
+        self._workspace_request_handler = None
         self._state_callbacks = {
             "disconnected": [],
             "uninitialized": [],
@@ -398,6 +411,14 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     def __hash__(self) -> int:
         return self._id.int
+
+    @property
+    def logger(self) -> Logger:
+        return self._logger
+
+    @property
+    def server_info(self) -> Optional[ServerInfo]:
+        return self._server_info
 
     def set_workspace_request_handler(self, handler: Optional[WorkspaceRequestHandler]) -> None:
         self._workspace_request_handler = handler
@@ -505,13 +526,15 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         out_json = await self._send_request_internal("initialize", params.to_json(), **kwargs)
         assert isinstance(out_json, Mapping)
         out = InitializeResult.from_json(out_json)
+        if out.serverInfo:
+            self._server_info = ServerInfo(out.serverInfo["name"], out.serverInfo["version"])
         self._set_server_capabilities(out.capabilities)
 
         self._set_state("initializing")
         self._logger.info("Client is now initializing")
         return out
 
-    async def send_initialized(self, params: InitializedParams) -> None:
+    def send_initialized(self, params: InitializedParams) -> None:
         if self._state != "initializing":
             raise LSPClientException("Invalid state, expected 'initializing'.")
 
@@ -524,7 +547,13 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._set_state("shutdown")
         self._logger.info("Client is now shutting down")
 
-    async def send_exit(self) -> None:
+    async def send_exit(self) -> None:  # type: ignore
+        """
+        The exit event is sent from the client to the server to ask the server to exit its process.
+
+        .. warning: This method is ``async``, despite only sending a notification, as it also waits for
+            the language server process to exit.
+        """
         if self._state != "shutdown":
             raise LSPClientException("Invalid state, expected 'shutdown'.")
 
@@ -533,6 +562,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         try:
             assert self._protocol
             await wait_for(self._protocol.wait_for_disconnect(), 10.0)
+            self._server_info = None
+            self._server_capabilities = None
             self._set_state("disconnected")
         except:
             raise LSPClientException("Unable to stop server thread.")
@@ -548,7 +579,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
             # TODO store result
             await self.send_initialize()
         if self._state == "initializing":
-            await self.send_initialized(InitializedParams())
+            self.send_initialized(InitializedParams())
 
         assert self._state == "running"
         return self

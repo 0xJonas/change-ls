@@ -4,7 +4,8 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 
-from change_ls import StdIOConnectionParams, TextDocument, Workspace
+from change_ls import (ChangeLSError, StdIOConnectionParams, TextDocument,
+                       Workspace)
 from change_ls.types import Position
 
 
@@ -191,7 +192,7 @@ async def test_text_document_reopen(mock_workspace_1: Workspace) -> None:
 
     doc3 = mock_workspace_1.open_text_document(Path("test-1.py"), language_id="python")
     assert doc3 is not doc1
-    with pytest.raises(ValueError):
+    with pytest.raises(ChangeLSError):
         mock_workspace_1.open_text_document(Path("test-1.py"), language_id="javascript")
     doc3.close()
 

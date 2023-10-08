@@ -17,7 +17,7 @@ async def test_client_assumes_correct_states() -> None:
     await client.send_initialize(InitializeParams(processId=getpid(), rootUri=None, capabilities=ClientCapabilities()))
     assert client.get_state() == "initializing"
 
-    await client.send_initialized(InitializedParams())
+    client.send_initialized(InitializedParams())
     assert client.get_state() == "running"
 
     await client.send_shutdown()
@@ -57,7 +57,7 @@ async def test_client_state_callbacks() -> None:
     await client.send_initialize(InitializeParams(processId=getpid(), rootUri=None, capabilities=ClientCapabilities()))
     assert marker == 2
 
-    await client.send_initialized(InitializedParams())
+    client.send_initialized(InitializedParams())
     assert marker == 3
 
     await client.send_shutdown()

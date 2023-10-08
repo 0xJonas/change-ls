@@ -44,6 +44,8 @@ async def test_workspace_configuration_provider() -> None:
 
 
 async def test_workspace_context_manager() -> None:
+    doc = None
+    client = None
     async with Workspace(Path("test/mock-ws-1")) as ws:
         launch_params = StdIOConnectionParams(
             launch_command="node mock-server/out/index.js --stdio test/text_document/test_text_document_open_close.json")
@@ -55,8 +57,8 @@ async def test_workspace_context_manager() -> None:
 
         doc = ws.open_text_document(Path("test-1.py"))
 
-    assert doc.is_closed()
-    assert client.get_state() == "disconnected"
+    assert doc and doc.is_closed()
+    assert client and client.get_state() == "disconnected"
 
 
 @pytest.fixture

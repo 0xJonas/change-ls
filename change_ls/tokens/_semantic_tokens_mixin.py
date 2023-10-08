@@ -1,14 +1,21 @@
 from abc import abstractmethod, abstractproperty
-from typing import Dict, List, Optional, Tuple
+from logging import DEBUG, Logger, LoggerAdapter, getLogger
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from change_ls._change_ls_error import ChangeLSError
 from change_ls._client import Client
 from change_ls._util import TextDocumentInfo
+from change_ls.logging import OperationLoggerAdapter, operation
 from change_ls.tokens._token_list import (SemanticToken, SyntacticToken,
                                           TokenList)
 from change_ls.types import (Position, SemanticTokens, SemanticTokensDelta,
                              SemanticTokensDeltaParams, SemanticTokensLegend,
                              SemanticTokensParams, TextDocumentIdentifier)
+
+if TYPE_CHECKING:
+    _LoggerAdapter = LoggerAdapter[Any]
+else:
+    _LoggerAdapter = LoggerAdapter
 
 
 def _get_semantic_tokens_in_range(semantic_tokens: TokenList[SemanticToken], start: int, end: int, start_index: int = 0) -> Tuple[List[SemanticToken], int]:
@@ -40,7 +47,7 @@ def _sort_candidate_semantic_tokens(candidates: List[SemanticToken], syn_token_s
     candidates.sort(key=sort_key, reverse=True)
 
 
-def enrich_syntactic_tokens(syntactic_tokens: TokenList[SyntacticToken], semantic_tokens: TokenList[SemanticToken]) -> None:
+def enrich_syntactic_tokens(syntactic_tokens: TokenList[SyntacticToken], semantic_tokens: TokenList[SemanticToken], *, _logger: Optional[Union[Logger, _LoggerAdapter]] = None) -> None:
     """
     Enriches the given :class:`SyntacticTokens <SyntacticToken>` with semantic information
     from the given :class:`SemanticTokens <SemanticToken>`.
@@ -50,15 +57,21 @@ def enrich_syntactic_tokens(syntactic_tokens: TokenList[SyntacticToken], semanti
     :param syntactic_tokens: The syntactic tokens to enrich.
     :param semantic_tokens: The semantic information to enrich the syntactic tokens by.
     """
+    if _logger is None:
+        _logger = OperationLoggerAdapter(getLogger("change-ls.workspace"))
+
+    _logger.info("Enriching syntactic tokens with semantic information.")
+
     search_start_index = 0
-    for syn_token in syntactic_tokens:
+    for index, syn_token in enumerate(syntactic_tokens):
         syn_token_start = syn_token.offset
         syn_token_end = syn_token_start + len(syn_token.lexeme)
         overlapping_semantic_tokens, search_start_index = _get_semantic_tokens_in_range(
             semantic_tokens, syn_token_start, syn_token_end, search_start_index)
 
         if len(overlapping_semantic_tokens) == 0:
-            # Reset any previously set semantic info
+            _logger.debug(
+                f"No semantic token overlapping syntactic_tokens[{index}] = {syn_token!r}, clearing semantic data.")
             syn_token.sem_type = None
             syn_token.sem_modifiers = set()
             continue
@@ -66,6 +79,8 @@ def enrich_syntactic_tokens(syntactic_tokens: TokenList[SyntacticToken], semanti
         _sort_candidate_semantic_tokens(overlapping_semantic_tokens, syn_token.start_offset, syn_token.end_offset)
 
         semantic_token = overlapping_semantic_tokens[0]
+        _logger.debug(
+            f"Using first of semantic token candidates {overlapping_semantic_tokens!r} for syntactic_tokens[{index}] = {syn_token!r}.")
         syn_token.sem_type = semantic_token.sem_type
         syn_token.sem_modifiers = semantic_token.sem_modifiers
 
@@ -133,9 +148,18 @@ class SemanticTokensMixin:
     def uri(self) -> str: ...
 
     @abstractproperty
-    def language_id(self) -> Optional[str]: ...
+    def language_id(self) -> str: ...
+
+    @abstractproperty
+    def logger(self) -> _LoggerAdapter: ...
+
+    def _get_logger_from_context(self, *args: Any, **kwargs: Any) -> _LoggerAdapter:
+        return self.logger
 
     def _parse_semantic_tokens_relative(self, data: List[int], legend: SemanticTokensLegend, client: Client) -> TokenList[SemanticToken]:
+        self.logger.info("Parsing raw token data in relative format.")
+        if self.logger.getEffectiveLevel() <= DEBUG:
+            self.logger.debug("Raw data: " + str(data))
         data_length = len(data)
         text = self.text
 
@@ -170,23 +194,32 @@ class SemanticTokensMixin:
 
             tokens.append(SemanticToken(lexeme, offset, token_type, token_modifiers))
 
+        if self.logger.getEffectiveLevel() <= DEBUG:
+            self.logger.debug("Semantic tokens: " + repr(tokens))
         return TokenList(tokens)
 
+    def _cache_result(self, result: SemanticTokens, client: Client) -> None:
+        self.logger.info(f"Saving result '{result.resultId}' for Client '{client}'.")
+        self._cached_results[client] = result
+
     async def _load_semantic_tokens_full(self, client: Client) -> TokenList[SemanticToken]:
+        self.logger.info("Loading full semantic token list for Client '{client}'.")
         params = SemanticTokensParams(textDocument=self.get_text_document_identifier())
         result = await client.send_text_document_semantic_tokens_full(params)
         if result is None:
-            # TODO: Log warning
+            self.logger.warning(
+                f"Language server {client.server_info} did not send semantic tokens, no semantic information available.")
             return TokenList([])
 
         if result.resultId is not None:
             # Only cache results with a known resultId, since without a resultId
             # we cannot use this result for textDocument/semanticTokens/full/delta requests.
-            self._cached_results[client] = result
+            self._cache_result(result, client)
 
         return self._parse_semantic_tokens_relative(result.data, _get_semantic_tokens_legend(client), client)
 
     async def _load_semantic_tokens_delta(self, client: Client) -> TokenList[SemanticToken]:
+        self.logger.info(f"Loading semantic token delta for Client '{client}'.")
         previous_result = self._cached_results[client]
         assert previous_result.resultId is not None
         params = SemanticTokensDeltaParams(textDocument=self.get_text_document_identifier(),
@@ -194,10 +227,12 @@ class SemanticTokensMixin:
         delta = await client.send_text_document_semantic_tokens_full_delta(params)
 
         if delta is None:
-            # TODO: Log warning
+            self.logger.warning(
+                f"Language server {client.server_info} did not send semantic tokens, using previous response's data.")
             return self._parse_semantic_tokens_relative(previous_result.data, _get_semantic_tokens_legend(client), client)
 
         if isinstance(delta, SemanticTokensDelta):
+            self.logger.info(f"Applying semantic token delta to result '{previous_result.resultId}'.")
             result = _apply_semantic_token_delta(previous_result, delta)
         else:
             result = delta
@@ -205,10 +240,11 @@ class SemanticTokensMixin:
         if result.resultId is not None:
             # Only cache results with a known resultId, since without a resultId
             # we cannot use this result for textDocument/semanticTokens/full/delta requests.
-            self._cached_results[client] = result
+            self._cache_result(result, client)
 
         return self._parse_semantic_tokens_relative(result.data, _get_semantic_tokens_legend(client), client)
 
+    @operation(start_message="Loading semantic tokens using Client {client}...", get_logger_from_context=_get_logger_from_context)
     async def _load_semantic_tokens(self, client: Optional[Client] = None) -> None:
         client = self._resolve_client_parameter(client)
 

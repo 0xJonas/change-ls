@@ -2,15 +2,18 @@ import asyncio
 import warnings
 from bisect import bisect_right
 from dataclasses import dataclass, field
+from logging import LoggerAdapter
 from pathlib import Path
 from types import TracebackType
-from typing import Callable, Dict, List, Literal, Optional, Type, overload
+from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
+                    Optional, Type, overload)
 
 import change_ls._symbol as sym
 import change_ls._workspace as ws
 from change_ls._change_ls_error import ChangeLSError
 from change_ls._client import Client
 from change_ls._util import TextDocumentInfo, guess_language_id
+from change_ls.logging import operation
 from change_ls.tokens import SyntacticToken, TokenList, tokenize
 from change_ls.tokens._semantic_tokens_mixin import (SemanticTokensMixin,
                                                      enrich_syntactic_tokens)
@@ -133,6 +136,12 @@ def _offset_to_code_units(reference: str, offset: int, encoding: PositionEncodin
     return sum(get_character_length(ord(c)) for c in reference[:offset])
 
 
+if TYPE_CHECKING:
+    _LoggerAdapter = LoggerAdapter[Any]
+else:
+    _LoggerAdapter = LoggerAdapter
+
+
 class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     """
     A :class:`TextDocument` is a single file in a :class:`Workspace`, which can be edited or queried for information.
@@ -189,14 +198,13 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     _line_offsets: List[int]
     _reference_count: int
     _content_saved: bool
+    _logger: _LoggerAdapter
 
     # Cache for position_to_offset, to speed up processing of semantic tokens
     _cached_line: int
     _cached_version: int
     _cached_start_offset: int
     _cached_reference_string: str
-
-    language_id: str
 
     def __init__(self, path: Path, workspace: "ws.Workspace", language_id: Optional[str] = None, version: int = 0, encoding: Optional[str] = None) -> None:
         self._path = path
@@ -216,7 +224,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self._outlines = {}
         self._pending_edits = []
         self._line_offsets = _calculate_line_offsets(self._text)
-        self._reference_count = 1
+        self._reference_count = 0
         self._content_saved = True
 
         self._cached_line = -1
@@ -228,8 +236,20 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         TextDocumentInfo.__init__(self, uri, language_id)
         SemanticTokensMixin.__init__(self)
 
+        self._logger = LoggerAdapter(self._workspace.logger, {"cls_text_document": uri})
+
+        self._reopen()
+
+    @property
+    def logger(self) -> _LoggerAdapter:
+        return self._logger
+
+    def _get_logger_from_context(self, *args: Any, **kwargs: Any) -> _LoggerAdapter:
+        return self._logger
+
     def _reopen(self) -> None:
         self._reference_count += 1
+        self.logger.info(f"Incremented reference count. New count is {self._reference_count}.")
 
     def _set_path(self, new_path: Path) -> None:
         del self._workspace._opened_text_documents[self.uri]  # type: ignore
@@ -252,6 +272,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         """
         await self._workspace.delete_text_document(self._path)
 
+    @operation(name="close_text_document", start_message="Closing TextDocument...", get_logger_from_context=_get_logger_from_context)
     def _final_close(self) -> None:
         if len(self._pending_edits) > 0:
             warnings.warn(
@@ -272,6 +293,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         # Workspace return True on is_closed().
         self._reference_count = 0
         del self._workspace._opened_text_documents[self.uri]  # type: ignore
+        self.logger.info("TextDocument closed!")
 
     def is_closed(self) -> bool:
         return self._reference_count <= 0
@@ -290,6 +312,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self._check_closed()
 
         self._reference_count -= 1
+        self.logger.info(f"Decremented reference count. New count is {self._reference_count}.")
         if self._reference_count <= 0:
             self._final_close()
 
@@ -316,6 +339,11 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         return self._encoding
 
     @property
+    def language_id(self) -> str:
+        assert self._language_id is not None
+        return self._language_id
+
+    @property
     def path(self) -> Path:
         return self._path
 
@@ -326,6 +354,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
                 "Tokens are not loaded for this TextDocument. Use load_tokens() to fill the tokens property.")
         return self._tokens
 
+    @operation(start_message="Loading tokens with mode '{mode}' using client '{client}'...", get_logger_from_context=_get_logger_from_context)
     async def load_tokens(self, mode: Literal["enrich", "syntactic", "semantic"] = "enrich", *, include_whitespace: bool = False, client: Optional[Client] = None) -> None:
         """
         Tokenizes this ``TextDocument``. After this method is called, :attr:`tokens` will contain the computed tokens.
@@ -357,7 +386,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             await self._load_semantic_tokens(client)
         if mode == "enrich":
             assert self._tokens is not None
-            enrich_syntactic_tokens(self._tokens, self.get_loaded_semantic_tokens(client))
+            enrich_syntactic_tokens(self._tokens, self.get_loaded_semantic_tokens(client), _logger=self.logger)
+        self.logger.info("Tokens loaded!")
 
     def get_loaded_outline(self, client: Optional[Client] = None) -> List["sym.DocumentSymbol"]:
         """
@@ -384,6 +414,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         else:
             return out
 
+    @operation(start_message="Loading document outline using Client '{client}'...", get_logger_from_context=_get_logger_from_context)
     async def load_outline(self, *, client: Optional[Client] = None) -> None:
         """
         Loads the document outline (list of symbols defined in the document, maybe hierarchical) for a given :class:`Client`.
@@ -397,14 +428,15 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
 
         client = self._resolve_client_parameter(client)
         if not client.check_feature("textDocument/documentSymbol", text_document=self):
-            raise ChangeLSError(f"Client {client} does not support document outlines.")
+            raise ChangeLSError(f"Client '{client}' does not support document outlines.")
 
         res = await client.send_text_document_document_symbol(DocumentSymbolParams(textDocument=self.get_text_document_identifier()))
         if res is None:
-            raise ChangeLSError(f"Client {client} returned an empty outline.")
+            raise ChangeLSError(f"Client '{client}' returned an empty outline.")
 
         outline = [sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res]
         self._outlines[client] = outline
+        self.logger.info("Outline loaded!")
 
     def get_text_document_item(self) -> TextDocumentItem:
         """
@@ -433,6 +465,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         return OptionalVersionedTextDocumentIdentifier(uri=self.uri, version=self._version)
 
     def _queue_edit(self, new_edit: _Edit) -> None:
+        self.logger.debug(f"Queuing edit: {new_edit}")
+
         # Use bisect_right, so insertions at the same position are applied in insertion order.
         insertion_point = bisect_right(self._pending_edits, new_edit)
 
@@ -559,6 +593,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         }
 
     def _handle_text_change(self, client: Client) -> None:
+        self.logger.info(f"Updating document content for Client '{client}'")
+
         if client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Full):
             contentChanges: List[TextDocumentContentChangeEvent] = [{"text": self._text}]
         elif client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Incremental):
@@ -612,13 +648,16 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self._outlines = {}
         self._content_saved = False
 
+    @operation
     def discard_edits(self) -> None:
         """
         Discards the currently queued edits.
         """
+        self.logger.info(f"Discarding {len(self._pending_edits)} pending edits.")
         self._check_closed()
         self._pending_edits = []
 
+    @operation(start_message="Saving TextDocument...", get_logger_from_context=_get_logger_from_context)
     async def save(self) -> None:
         """
         Saves the ``TextDocument`` to file.
@@ -637,13 +676,13 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         will_save_params = WillSaveTextDocumentParams(
             textDocument=self.get_text_document_identifier(), reason=TextDocumentSaveReason.Manual)
 
-        # textDocument/willSave
+        self.logger.info("Sending textDocument/willSave notifications.")
         for client in clients:
             if not client.check_feature("textDocument/willSave", text_document=self):
                 continue
             client.send_text_document_will_save(will_save_params)
 
-        # textDocument/willSaveWaitUntil
+        self.logger.info("Sending textDocument/willSaveWaitUntil requests.")
         requests = [client.send_text_document_will_save_wait_until(will_save_params)
                     for client in clients
                     if client.check_feature("textDocument/willSaveWaitUntil", text_document=self)]
@@ -657,11 +696,11 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         if len(self._pending_edits) > 0:
             self.commit_edits()
 
-        # Actual saving
+        self.logger.info("Writing text content to file.")
         with self._path.open("w", encoding=self._encoding) as file:
             file.write(self._text)
 
-        # textDocument/didSave
+        self.logger.info("Sending textDocument/didSave notifications.")
         did_save_params = DidSaveTextDocumentParams(textDocument=self.get_text_document_identifier())
         did_save_params_include_text = DidSaveTextDocumentParams(
             textDocument=self.get_text_document_identifier(), text=self._text)
@@ -672,6 +711,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
                 client.send_text_document_did_save(did_save_params)
 
         self._content_saved = True
+        self.logger.info("TextDocument saved!")
 
     def position_to_offset(self, position: Position, client: Optional[Client] = None) -> int:
         """
@@ -771,6 +811,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         else:
             return None
 
+    @operation(start_message="Creating custom symbol at [{start}:{end}] using Client '{client}'...", get_logger_from_context=_get_logger_from_context)
     def create_symbol_at(self, start: int, end: int, kind: SymbolKind, *,
                          tags: Optional[List[SymbolTag]] = None, container_name: Optional[str] = None,
                          client: Optional[Client] = None) -> sym.CustomSymbol:
@@ -790,7 +831,9 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             is the ``Client`` which will receive the request sent by the methods of the symbol.
         """
         client = self._resolve_client_parameter(client)
-        return sym.CustomSymbol(client, self, (start, end), kind, tags, container_name)
+        out = sym.CustomSymbol(client, self, (start, end), kind, tags, container_name)
+        self.logger.info(f"Custom symbol {out} created!")
+        return out
 
     def __str__(self) -> str:
         return self.uri

@@ -109,7 +109,7 @@ class NotTokenMatcher(TokenMatcher):
 
 class AnyTokenMatcher(TokenMatcher):
 
-    def matches_token(self, _: "_BaseToken") -> bool:
+    def matches_token(self, token: "_BaseToken") -> bool:
         return True
 
 
@@ -131,8 +131,11 @@ class _BaseToken(TokenMatcher):
     def end_offset(self) -> int:
         return self.offset + len(self.lexeme)
 
-    def matches_token(self, other: "_BaseToken") -> bool:
-        return self.lexeme == other.lexeme
+    def matches_token(self, token: "_BaseToken") -> bool:
+        return self.lexeme == token.lexeme
+
+    def __str__(self) -> str:
+        return self.lexeme
 
 
 @dataclass
@@ -142,23 +145,23 @@ class _BaseSemanticToken(_BaseToken):
 
     __slots__ = ["sem_type", "sem_modifiers"]
 
-    def matches_token(self, other: "_BaseToken") -> bool:
-        if not isinstance(other, _BaseSemanticToken):
+    def matches_token(self, token: "_BaseToken") -> bool:
+        if not isinstance(token, _BaseSemanticToken):
             return False
-        return (super().matches_token(other)
-                and self.sem_type == other.sem_type
-                and self.sem_modifiers == other.sem_modifiers)
+        return (super().matches_token(token)
+                and self.sem_type == token.sem_type
+                and self.sem_modifiers == token.sem_modifiers)
 
 
 @dataclass
 class SemanticToken(_BaseSemanticToken):
-    ...
+
+    def __repr__(self) -> str:
+        return f'SemanticToken({self.lexeme=!r}, {self.offset=!r}, {self.sem_type=!r}, {self.sem_modifiers=!r})'
 
 
 @dataclass
 class SyntacticToken(_BaseSemanticToken, TokenMatcher):
-    lexeme: str
-    offset: int
     scopes: Set[str]
 
     __slots__ = ["scopes"]
@@ -170,10 +173,15 @@ class SyntacticToken(_BaseSemanticToken, TokenMatcher):
         self.sem_type = sem_type
         self.sem_modifiers = set(sem_modifiers)
 
-    def matches_token(self, other: "SyntacticToken") -> bool:
-        return (self.lexeme == other.lexeme
-                and len(self.scopes) == len(other.scopes)
-                and self.scopes == other.scopes)
+    def matches_token(self, token: "_BaseToken") -> bool:
+        if not isinstance(token, SyntacticToken):
+            return False
+        return (self.lexeme == token.lexeme
+                and len(self.scopes) == len(token.scopes)
+                and self.scopes == token.scopes)
+
+    def __repr__(self) -> str:
+        return f'SyntacticToken({self.lexeme=!r}, {self.offset=!r}, {self.sem_type=!r}, {self.sem_modifiers=!r}, {self.scopes=!r})'
 
 
 _TokenType = TypeVar("_TokenType", bound=_BaseToken)

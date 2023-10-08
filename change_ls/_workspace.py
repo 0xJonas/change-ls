@@ -577,7 +577,7 @@ class Workspace(WorkspaceRequestHandler):
             raise ChangeLSError(f"Language server {client.server_info} does not support querying workspace symbols.")
         raw_result = await client.send_workspace_symbol(WorkspaceSymbolParams(query=query))
         if raw_result is None:
-            self.logger.warn(
+            self.logger.warning(
                 f"Language server {client.server_info} returned null for workspace/symbol with query '{query}'.")
             return []
 

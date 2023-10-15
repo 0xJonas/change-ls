@@ -52,10 +52,6 @@ from change_ls.types._client_requests import (ClientRequestsMixin,
 CHANGE_LS_VERSION = "0.1.0"
 
 
-_RequestHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], JSON_VALUE]
-_NotificationHandler = Callable[[str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], None]
-
-
 class ServerLaunchParams(ABC):
     """
     Abstract base class for parameters to launch a language server.
@@ -70,19 +66,19 @@ class ServerLaunchParams(ABC):
     """
 
     server_path: Optional[Path]
+    args: Sequence[str]
     launch_command: Optional[str]
-    additional_args: Sequence[str]
-    additional_only: bool
+    cwd: Optional[Path]
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
+                 args: Sequence[str] = [],
                  launch_command: Optional[str] = None,
-                 additional_args: Sequence[str] = [],
-                 additional_only: bool = False) -> None:
+                 cwd: Optional[Path] = None) -> None:
         self.server_path = server_path
+        self.args = args
         self.launch_command = launch_command
-        self.additional_args = additional_args
-        self.additional_only = additional_only
+        self.cwd = cwd
 
     @abstractmethod
     async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
@@ -99,42 +95,32 @@ class StdIOConnectionParams(ServerLaunchParams):
     Either ``server_path`` or ``launch_command`` must be set.
 
     :param server_path: Path to the server binary.
-    :param launch_command: Shell command to launch the language server. If this is given, only this command
-        is run, without any additional arguments. Therefore, the ``launch_command`` needs to make sure that
-        the server is started with stdio communication, e.g. by passing ``--stdio`` for some node.js-based servers.
-    :param additional_args: List of additional commandline arguments passed to the server.
-    :param additional_only: Only add the arguments inside ``additional_args``, do not add any default arguments.
-        By default, ``StdIOConnectionParams`` adds ``--stdio`` and ``cliendProcessId=<pid>``, as recommended by
-        the LSP spec.
+    :param args: List of arguments passed to the server.
+    :param launch_command: Shell command to launch the language server.
+    :param cwd: Working directory for the language server process. Defaults to the current directory.
     """
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
+                 args: Sequence[str] = [],
                  launch_command: Optional[str] = None,
-                 additional_args: Sequence[str] = [],
-                 additional_only: bool = False) -> None:
+                 cwd: Optional[Path] = None) -> None:
         if not server_path and not launch_command:
             raise ValueError(
                 "Either server_path or launch_command need to be set.")
 
-        super().__init__(server_path=server_path, additional_args=additional_args,
-                         launch_command=launch_command, additional_only=additional_only)
+        super().__init__(server_path=server_path, args=args, launch_command=launch_command, cwd=cwd)
 
     async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
-        args = ["--stdio", f"--clientProcessId={getpid()}"]
-        if self.additional_only:
-            args = self.additional_args
-        else:
-            args += self.additional_args
         loop = get_running_loop()
         if self.server_path:
             client.logger.info("Launching server %s, connection over stdio, with arguments %s",
-                               self.server_path, ", ".join(args))
-            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.server_path, *args)
+                               self.server_path, ", ".join(self.args))
+            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.server_path, *self.args, cwd=self.cwd)
         elif self.launch_command:
             client.logger.info(
                 "Launching server, connection over stdio, using '%s'", self.launch_command)
-            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.launch_command)
+            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.launch_command, cwd=self.cwd)
         else:
             assert False
 
@@ -147,47 +133,40 @@ class SocketConnectionParams(ServerLaunchParams):
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
+                 args: Sequence[str] = [],
                  launch_command: Optional[str] = None,
+                 cwd: Optional[Path] = None,
                  port: int,
-                 hostname: str = "localhost",
-                 additional_args: Sequence[str] = [],
-                 additional_only: bool = False) -> None:
-        """Constructs a new SocketConnectionParams instance. This instance can then
+                 hostname: str = "localhost") -> None:
+        """
+        Constructs a new SocketConnectionParams instance. This instance can then
         be used to launch a new client/server connection.
 
-        If neither `server_path` nor `launch_command` are set, no server is launched. Instead,
+        If neither `server_path` nor `launch_command` are given, no server is launched. Instead,
         the Client tries to connect to an already running server.
 
-        Parameters:
-        - `server_path`: The path were the language server executable is located.
-        - `launch_command`: Shell command to start the server. If a launch command is given,
-          no additional arguments are appended. This means that the caller may also need
-          to add `--socket=<port>` to the command to select a connection via TCP-sockets.
-        - `port`: The port number to use for the TCP connection.
-        - `hostname`: An optional name of a host to connect to. The default is 'localhost'.
-        - `additional_args`: List of additional arguments to pass to the server.
-        - `additional_only`: Do not send any standard arguments, only those in `additional_args`."""
+        :param server_path: The path were the language server executable is located.
+        :param args: List of arguments to pass to the server.
+        :param launch_command: Shell command to start the server.
+        :param cwd: Working directory of the server process. Defaults to the current directory.
+        :param port: The port number to use for the TCP connection.
+        :param hostname: An optional name of a host to connect to. The default is 'localhost'.
+        """
 
         super().__init__(server_path=server_path, launch_command=launch_command,
-                         additional_args=additional_args, additional_only=additional_only)
+                         args=args, cwd=cwd)
         self.hostname = hostname
         self.port = port
 
     async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
-        args = [f"--socket={self.port}", f"--clientProcessId={getpid()}"]
-        if self.additional_only:
-            args = self.additional_args
-        else:
-            args += self.additional_args
-
         if self.server_path:
             client.logger.info("Launching server %s, connection over TCP sockets, with arguments %s",
-                               self.server_path, ", ".join(args))
-            subprocess.Popen([self.server_path.absolute()] + list(args))
+                               self.server_path, ", ".join(self.args))
+            subprocess.Popen([self.server_path.absolute()] + list(self.args), cwd=self.cwd)
         elif self.launch_command:
             client.logger.info(
                 "Launching server, connection over TCP sockets, using '%s'", self.launch_command)
-            subprocess.Popen(self.launch_command, shell=True)
+            subprocess.Popen(self.launch_command, shell=True, cwd=self.cwd)
 
         loop = get_running_loop()
         client.logger.info("Connecting to running server at %s:%d",

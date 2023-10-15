@@ -6,13 +6,14 @@ from asyncio import (AbstractEventLoop, Event, Future, get_running_loop,
                      new_event_loop, run_coroutine_threadsafe, set_event_loop,
                      wrap_future)
 from dataclasses import dataclass
-from logging import Logger, getLogger
 from pathlib import Path
 from threading import Lock, Thread
 from typing import List, Mapping, Optional, Tuple
 
 import change_ls._languages as languages
 from change_ls._protocol import LSSubprocessProtocol
+from change_ls.logging import _get_change_ls_default_logger  # type: ignore
+from change_ls.logging import OperationLoggerAdapter
 from change_ls.tokens._token_list import SyntacticToken, TokenList
 from change_ls.types._util import (JSON_VALUE, json_assert_type_array,
                                    json_assert_type_int,
@@ -86,10 +87,10 @@ class TextDocumentTokenizeResult:
 class _TokenClient:
 
     _protocol: LSSubprocessProtocol
-    _logger: Logger
+    _logger: OperationLoggerAdapter
 
     def __init__(self) -> None:
-        self._logger = getLogger("lspscript.tokens")
+        self._logger = _get_change_ls_default_logger("change-ls.tokens")
 
     async def launch(self) -> None:
         node_path = shutil.which("node")
@@ -99,9 +100,10 @@ class _TokenClient:
 
         token_server_path = get_token_server_path()
         (_, self._protocol) = await get_running_loop().subprocess_exec(
-            lambda: LSSubprocessProtocol(self.dispatch_request, self.dispatch_notification, self._logger),
+            lambda: LSSubprocessProtocol(self.dispatch_request, self.dispatch_notification),
             node_path, str(token_server_path / "main.js"),
             cwd=str(token_server_path))
+        self._protocol._set_loggers(self._logger, self._logger, self._logger)  # type: ignore
 
     async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         future: Future[JSON_VALUE] = get_running_loop().create_future()
@@ -121,10 +123,10 @@ class _TokenClient:
         await self.send_request("initialize", None)
 
     async def exit(self) -> None:
-        self._logger.info("Stopping token server")
+        self._logger.info("Stopping token server...")
         self._protocol.send_notification("exit", None)
         await self._protocol.wait_for_disconnect()
-        self._logger.info("Token server stopped")
+        self._logger.info("Token server stopped!")
 
     def dispatch_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         if method == "grammar/requestRaw":

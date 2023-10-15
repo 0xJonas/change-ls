@@ -3,8 +3,8 @@ import uuid
 from abc import ABC, abstractmethod
 from asyncio import (AbstractEventLoop, BaseTransport, get_running_loop,
                      wait_for)
+from collections.abc import Mapping
 from dataclasses import dataclass
-from logging import Logger, getLogger
 from os import getpid
 from pathlib import Path
 from socket import AF_INET
@@ -16,6 +16,8 @@ from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
 from change_ls._capabilities_mixin import CapabilitiesMixin
 from change_ls._protocol import (LSPClientException, LSProtocol,
                                  LSStreamingProtocol, LSSubprocessProtocol)
+from change_ls.logging import _get_change_ls_default_logger  # type: ignore
+from change_ls.logging import OperationLoggerAdapter, operation
 from change_ls.types import (JSON_VALUE, ApplyWorkspaceEditParams,
                              ApplyWorkspaceEditResult, CancelParams,
                              ClientCapabilities, ConfigurationParams,
@@ -83,8 +85,8 @@ class ServerLaunchParams(ABC):
         self.additional_only = additional_only
 
     @abstractmethod
-    async def _launch_server_from_event_loop(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
-        pass
+    async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
+        ...
 
 
 class StdIOConnectionParams(ServerLaunchParams):
@@ -118,7 +120,7 @@ class StdIOConnectionParams(ServerLaunchParams):
         super().__init__(server_path=server_path, additional_args=additional_args,
                          launch_command=launch_command, additional_only=additional_only)
 
-    async def _launch_server_from_event_loop(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
         args = ["--stdio", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -126,13 +128,13 @@ class StdIOConnectionParams(ServerLaunchParams):
             args += self.additional_args
         loop = get_running_loop()
         if self.server_path:
-            logger.info("Launching server %s, connection over stdio, with arguments %s",
-                        self.server_path, ", ".join(args))
-            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(request_handler, notification_handler, logger), self.server_path, *args)
+            client.logger.info("Launching server %s, connection over stdio, with arguments %s",
+                               self.server_path, ", ".join(args))
+            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.server_path, *args)
         elif self.launch_command:
-            logger.info(
-                "launching server, connection over stdio, using '%s'", self.launch_command)
-            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(request_handler, notification_handler, logger), self.launch_command)
+            client.logger.info(
+                "Launching server, connection over stdio, using '%s'", self.launch_command)
+            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.launch_command)
         else:
             assert False
 
@@ -171,7 +173,7 @@ class SocketConnectionParams(ServerLaunchParams):
         self.hostname = hostname
         self.port = port
 
-    async def _launch_server_from_event_loop(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
         args = [f"--socket={self.port}", f"--clientProcessId={getpid()}"]
         if self.additional_only:
             args = self.additional_args
@@ -179,18 +181,18 @@ class SocketConnectionParams(ServerLaunchParams):
             args += self.additional_args
 
         if self.server_path:
-            logger.info("Launching server %s, connection over TCP sockets, with arguments %s",
-                        self.server_path, ", ".join(args))
+            client.logger.info("Launching server %s, connection over TCP sockets, with arguments %s",
+                               self.server_path, ", ".join(args))
             subprocess.Popen([self.server_path.absolute()] + list(args))
         elif self.launch_command:
-            logger.info(
-                "launching server, connection over TCP sockets, using '%s'", self.launch_command)
+            client.logger.info(
+                "Launching server, connection over TCP sockets, using '%s'", self.launch_command)
             subprocess.Popen(self.launch_command, shell=True)
 
         loop = get_running_loop()
-        logger.info("Connecting to running server at %s:%d",
-                    self.hostname, self.port)
-        return await loop.create_connection(lambda: LSStreamingProtocol(request_handler, notification_handler, logger), host=self.hostname, port=self.port, family=AF_INET)
+        client.logger.info("Connecting to running server at %s:%d",
+                           self.hostname, self.port)
+        return await loop.create_connection(lambda: LSStreamingProtocol(client.dispatch_request, client.dispatch_notification), host=self.hostname, port=self.port, family=AF_INET)
 
 
 class PipeConnectionParams(ServerLaunchParams):
@@ -368,14 +370,15 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     The context manager functions are state-agnostic, so the ``Client`` will always be in the ``"running"`` state
     inside a ``with`` statement and always in the ``"disconnected"`` state after the ``with`` statement is exited.
-    To facilitate this, the language server process may be relaunched.
     """
 
     _state: ClientState
     _protocol: Optional[LSProtocol]
     _launch_params: ServerLaunchParams
     _id: uuid.UUID
-    _logger: Logger
+    _logger_client: OperationLoggerAdapter
+    _logger_server: OperationLoggerAdapter
+    _logger_messages: OperationLoggerAdapter
 
     # Whether or not an 'exit' notification was sent. This is used
     # to distinguish a normal termination of the server from a crash.
@@ -394,7 +397,12 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._launch_params = launch_params
         self._exit_sent = False
         self._id = uuid.uuid4()
-        self._logger = getLogger("change-ls.client")
+        self._logger_client = _get_change_ls_default_logger(
+            "change-ls.client", cls_client=str(self._id), cls_server=None)
+        self._logger_server = _get_change_ls_default_logger(
+            "change-ls.server", cls_client=str(self._id), cls_server=None)
+        self._logger_messages = _get_change_ls_default_logger(
+            "change-ls.messages", cls_client=str(self._id), cls_server=None)
         self._initialize_params = initialize_params
         self._server_info = None
         self._workspace_request_handler = None
@@ -413,8 +421,22 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         return self._id.int
 
     @property
-    def logger(self) -> Logger:
-        return self._logger
+    def logger(self) -> OperationLoggerAdapter:
+        return self._logger_client
+
+    def _get_logger_from_context(self, *args: Any, **kwargs: Any) -> OperationLoggerAdapter:
+        return self._logger_client
+
+    def _set_server_info(self, server_info: Optional[ServerInfo]) -> None:
+        self._server_info = server_info
+        self._logger_client = _get_change_ls_default_logger(
+            "change-ls.client", cls_client=str(self._id), cls_server=str(server_info))
+        self._logger_server = _get_change_ls_default_logger(
+            "change-ls.server", cls_client=str(self._id), cls_server=str(server_info))
+        self._logger_messages = _get_change_ls_default_logger(
+            "change-ls.messages", cls_client=str(self._id), cls_server=str(server_info))
+        if self._protocol:
+            self._protocol._set_loggers(self._logger_client, self._logger_server, self._logger_messages)  # type: ignore
 
     @property
     def server_info(self) -> Optional[ServerInfo]:
@@ -427,7 +449,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         exception = context.get("exception")
         if exception is None:
             exception = LSPClientException(context["message"])
-        self._logger.exception(exception)
+        self._logger_client.exception(exception)
 
         if self._protocol:
             self._protocol.reject_active_requests(exception)
@@ -436,6 +458,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._state = state
         for callback in self._state_callbacks[state]:
             callback()
+        self._logger_client.info(f"Client is now in state {self._state}.")
 
     def get_state(self) -> ClientState:
         """
@@ -453,6 +476,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         """
         self._state_callbacks[state].append(callback)
 
+    @operation(start_message="Launching language server.", get_logger_from_context=_get_logger_from_context)
     async def launch(self) -> None:
         """
         Launches the Language Server process.
@@ -462,25 +486,25 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._exit_sent = False
 
         get_running_loop().set_exception_handler(self._client_thread_exception_handler)
-        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self.dispatch_request, self.dispatch_notification, self._logger)  # type: ignore
+        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self)  # type: ignore
+        self._protocol._set_loggers(self._logger_client, self._logger_server, self._logger_messages)  # type: ignore
         self._set_state("uninitialized")
-        self._logger.info("Client is now uninitialized")
 
     async def _send_request_internal(self, method: str, params: JSON_VALUE, timeout: Optional[float] = 10.0) -> JSON_VALUE:
         assert self._protocol
 
         future = get_running_loop().create_future()
-        self._logger.info("Sending request (%s)", method)
         self._protocol.send_request(method, params, future)
         await wait_for(future, timeout)
 
         assert not future.cancelled()
         if exception := future.exception():
-            self._logger.info("Request failed (%s)", method)
+            self._logger_client.info("Request failed (%s)", method)
             raise exception
         else:
             return future.result()
 
+    @operation(start_message="Sending request {method}.", get_logger_from_context=_get_logger_from_context)
     async def send_request(self, method: str, params: JSON_VALUE, **kwargs: Any) -> JSON_VALUE:
         """
         Sends a request to the server and returns the result.
@@ -501,9 +525,9 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
         assert self._protocol
-        self._logger.info("Sending notification (%s)", method)
         self._protocol.send_notification(method, params)
 
+    @operation(start_message="Sending notification {method}.", get_logger_from_context=_get_logger_from_context)
     def send_notification(self, method: str, params: JSON_VALUE) -> None:
         """
         Sends a notification to the server. The method and contents of the notification are arbitrary
@@ -513,6 +537,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
             raise LSPClientException("Invalid state, expected 'running'.")
         self._send_notification_internal(method, params)
 
+    @operation(start_message="Sending initialize request.", get_logger_from_context=_get_logger_from_context)
     async def send_initialize(self, params: Optional[InitializeParams] = None, **kwargs: Any) -> InitializeResult:
         if self._state != "uninitialized":
             raise LSPClientException(
@@ -528,25 +553,26 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         out = InitializeResult.from_json(out_json)
         if out.serverInfo:
             self._server_info = ServerInfo(out.serverInfo["name"], out.serverInfo["version"])
+
         self._set_server_capabilities(out.capabilities)
 
         self._set_state("initializing")
-        self._logger.info("Client is now initializing")
         return out
 
+    @operation(start_message="Sending initialized notification.", get_logger_from_context=_get_logger_from_context)
     def send_initialized(self, params: InitializedParams) -> None:
         if self._state != "initializing":
             raise LSPClientException("Invalid state, expected 'initializing'.")
 
         self._send_notification_internal("initialized", params.to_json())
         self._set_state("running")
-        self._logger.info("Client is now running")
 
+    @operation(start_message="Sending shutdown request.", get_logger_from_context=_get_logger_from_context)
     async def send_shutdown(self, **kwargs: Any) -> None:
         await super().send_shutdown(**kwargs)
         self._set_state("shutdown")
-        self._logger.info("Client is now shutting down")
 
+    @operation(start_message="Sending exit notification.", get_logger_from_context=_get_logger_from_context)
     async def send_exit(self) -> None:  # type: ignore
         """
         The exit event is sent from the client to the server to ask the server to exit its process.
@@ -671,33 +697,30 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         return NotImplemented
 
     def on_window_show_message(self, params: ShowMessageParams) -> None:
-        logger = self._logger.getChild("server")
         if params.type is MessageType.Log:
-            logger.debug("window/showMessage: %s", params.message)
+            self._logger_server.debug("window/showMessage: %s", params.message)
         elif params.type is MessageType.Info:
-            logger.info("window/showMessage: %s", params.message)
+            self._logger_server.info("window/showMessage: %s", params.message)
         elif params.type is MessageType.Warning:
-            logger.warning("window/showMessage: %s", params.message)
+            self._logger_server.warning("window/showMessage: %s", params.message)
         elif params.type is MessageType.Error:
-            logger.error("window/showMessage: %s", params.message)
+            self._logger_server.error("window/showMessage: %s", params.message)
 
     def on_window_log_message(self, params: LogMessageParams) -> None:
-        logger = self._logger.getChild("server")
         if params.type is MessageType.Log:
-            logger.debug("window/logMessage: %s", params.message)
+            self._logger_server.debug("window/logMessage: %s", params.message)
         elif params.type is MessageType.Info:
-            logger.info("window/logMessage: %s", params.message)
+            self._logger_server.info("window/logMessage: %s", params.message)
         elif params.type is MessageType.Warning:
-            logger.warning("window/logMessage: %s", params.message)
+            self._logger_server.warning("window/logMessage: %s", params.message)
         elif params.type is MessageType.Error:
-            logger.error("window/logMessage: %s", params.message)
+            self._logger_server.error("window/logMessage: %s", params.message)
 
     def on_telemetry_event(self, params: LSPAny) -> None:
         pass
 
     def on_s_log_trace(self, params: LogTraceParams) -> None:
-        logger = self._logger.getChild("server")
-        logger.debug("$/logTrace: %s", params.message)
+        self._logger_server.debug("$/logTrace: %s", params.message)
 
     def on_s_cancel_request(self, params: CancelParams) -> None:
         pass

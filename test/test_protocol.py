@@ -1,5 +1,4 @@
 from asyncio import get_running_loop
-from logging import getLogger
 from typing import Callable, Mapping, Sequence, Union
 
 from pytest import raises
@@ -17,7 +16,7 @@ class MockLSProtocol(LSProtocol):
     _output_buffer: bytes
 
     def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler) -> None:
-        super().__init__(request_handler, notification_handler, getLogger("test"))
+        super().__init__(request_handler, notification_handler)
         self._output_buffer = b""
         self._connected = True
 

@@ -1,11 +1,11 @@
-import warnings
+from abc import ABC, abstractproperty
 from asyncio import Event, wait_for
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from change_ls._protocol import LSPUnknownIdWarning
 from change_ls._util import (TextDocumentInfo, matches_file_operation_filter,
                              matches_text_document_filter)
+from change_ls.logging import OperationLoggerAdapter, operation
 from change_ls.types import (CodeActionOptions, CodeLensOptions,
                              CompletionOptions, DiagnosticOptions,
                              DocumentLinkOptions, ExecuteCommandOptions,
@@ -154,7 +154,7 @@ def _text_document_sync_options_to_feature_registrations(options: TextDocumentSy
     return out
 
 
-class CapabilitiesMixin:
+class CapabilitiesMixin(ABC):
     _registrations: Dict[str, List[FeatureRegistration]]
     _pending_feature_requests: Dict[str, List[_FeatureRequest]]
     _server_capabilities: Optional[ServerCapabilities]
@@ -163,6 +163,10 @@ class CapabilitiesMixin:
         self._registrations = {}
         self._pending_feature_requests = {}
         self._server_capabilities = None
+
+    @abstractproperty
+    def logger(self) -> OperationLoggerAdapter:
+        ...
 
     def _set_server_capabilities(self, capabilities: ServerCapabilities) -> None:
         self._server_capabilities = capabilities
@@ -203,6 +207,8 @@ class CapabilitiesMixin:
         if feature_registration.method not in self._registrations:
             self._registrations[feature_registration.method] = []
         self._registrations[feature_registration.method].append(feature_registration)
+        self.logger.info(
+            f"Added dynamic feature registration for {feature_registration.method} with id {feature_registration.id}")
 
     def _remove_dynamic_registration(self, unregistration: Unregistration) -> None:
         registrations = self._registrations.get(unregistration.method, [])
@@ -210,10 +216,11 @@ class CapabilitiesMixin:
         for i, r in enumerate(registrations):
             if r.id and r.id == unregistration.id:
                 del registrations[i]
+                self.logger.info(f"Removed dynamic feature registration with id {unregistration.id}")
                 return
 
-        warnings.warn(
-            f"Dynamic registration {unregistration.id} for {unregistration.method} could not be removed because it was not found.", LSPUnknownIdWarning)
+        self.logger.warning(
+            f"Dynamic registration {unregistration.id} for {unregistration.method} could not be removed because it was not found.")
 
     def check_feature(self, method: str, **kwargs: Any) -> bool:
         """
@@ -290,6 +297,7 @@ class CapabilitiesMixin:
                 else:
                     index += 1
 
+    @operation
     async def require_feature(self, method: str, *, timeout: Optional[float] = 10.0, **kwargs: Any) -> None:
         """
         Requires that the language server provides the feature described by `method` and `params`. This
@@ -302,6 +310,7 @@ class CapabilitiesMixin:
         :param timeout: How long to wait for a dynamic registration. Use `None` to wait indefinitly.
             When the ``timeout`` is reached without a matching registration, an ``asyncio.TimeoutError`` is raised.
         """
+        self.logger.info(f"Requiring dynamic feature {method}.")
         if self.check_feature(method, **kwargs):
             return
 

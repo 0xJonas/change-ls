@@ -1,15 +1,16 @@
-import warnings
 from abc import ABC, abstractmethod
 from asyncio import (BaseTransport, Event, Future, Protocol,
                      SubprocessProtocol, SubprocessTransport, Transport,
                      WriteTransport)
 from dataclasses import dataclass
 from json import JSONDecodeError, dumps, loads
-from logging import DEBUG, Logger
+from logging import DEBUG
 from sys import getdefaultencoding
 from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
                     Tuple, Union)
 
+from change_ls.logging import _get_change_ls_default_logger  # type: ignore
+from change_ls.logging import OperationLoggerAdapter
 from change_ls.types import JSON_VALUE, ErrorCodes, LSPErrorCodes
 
 
@@ -33,10 +34,6 @@ class LSPException(Exception):
 
 
 class LSPClientException(Exception):
-    pass
-
-
-class LSPUnknownIdWarning(Warning):
     pass
 
 
@@ -111,7 +108,9 @@ class LSProtocol(ABC):
     _request_handler: _RequestHandler
     _notification_handler: _NotificationHandler
 
-    _logger: Logger
+    _logger_client: Optional[OperationLoggerAdapter]
+    _logger_server: Optional[OperationLoggerAdapter]
+    _logger_messages: Optional[OperationLoggerAdapter]
 
     _read_buffer: bytes
     _pending_header: Optional[_LSPHeader]
@@ -120,11 +119,13 @@ class LSProtocol(ABC):
     _connected: bool
     _disconnect_event: Event
 
-    def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> None:
+    def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler) -> None:
         self._active_requests = {}
         self._request_handler = request_handler
         self._notification_handler = notification_handler
-        self._logger = logger
+        self._logger_client = None
+        self._logger_server = None
+        self._logger_messages = None
         self._read_buffer = b""
         self._pending_header = None
         self._content_offset = 0
@@ -132,9 +133,15 @@ class LSProtocol(ABC):
         self._connected = False
         self._disconnect_event = Event()
 
+    def _set_loggers(self, _logger_client: OperationLoggerAdapter, _logger_server: OperationLoggerAdapter, _logger_messages: OperationLoggerAdapter) -> None:
+        self._logger_client = _logger_client
+        self._logger_server = _logger_server
+        self._logger_messages = _logger_messages
+
     def reject_active_requests(self, exc: Exception) -> None:
         if len(self._active_requests) > 0:
-            self._logger.warning("Dropping %d currently active requests", len(self._active_requests))
+            _ = self._logger_client and self._logger_client.warning(
+                "Dropping %d currently active requests", len(self._active_requests))
         for f in self._active_requests.values():
             f.set_exception(exc)
 
@@ -169,9 +176,8 @@ class LSProtocol(ABC):
         content_to = content_from + self._pending_header.content_length
         content = str(self._read_buffer[content_from:content_to],
                       encoding=self._pending_header.get_encoding())
-        logger = self._logger.getChild("data")
-        if logger.getEffectiveLevel() <= DEBUG:
-            logger.getChild("data").debug("Received:\n%s", str(
+        if self._logger_messages and self._logger_messages.getEffectiveLevel() <= DEBUG:
+            self._logger_messages.debug("Received:\n%s", str(
                 self._read_buffer[:content_to], encoding=self._pending_header.get_encoding()))
 
         self._read_buffer = self._read_buffer[self._content_offset +
@@ -202,7 +208,7 @@ class LSProtocol(ABC):
     def _process_response(self, id: Union[int, str], result: JSON_VALUE) -> None:
         future = self._active_requests.get(id)
         if not future:
-            warnings.warn(f"Received response for unknown request id {id}.", LSPUnknownIdWarning)
+            _ = self._logger_client and self._logger_client.warning(f"Received response for unknown request id {id}.")
             return
         future.set_result(result)
         del self._active_requests[id]
@@ -228,7 +234,7 @@ class LSProtocol(ABC):
         if id is not None:
             future = self._active_requests.get(id)
             if not future:
-                warnings.warn(f"Received error for unknown request id {id}.", LSPUnknownIdWarning)
+                _ = self._logger_client and self._logger_client.warning(f"Received error for unknown request id {id}.")
                 return
             future.set_exception(LSPException(code, message, data))
             del self._active_requests[id]
@@ -241,7 +247,7 @@ class LSProtocol(ABC):
 
         if id is not None and (type(id) is not str and type(id) is not int):
             self._send_error_response(None, ErrorCodes.InvalidRequest, "'id' must be of type number or string")
-            return None
+            return
 
         # Determine whether the message is a request, notification, response or error
         if method is not None:
@@ -251,11 +257,11 @@ class LSProtocol(ABC):
             if id is not None:
                 if type(method) is not str:
                     self._send_error_response(id, ErrorCodes.InvalidRequest, "'method' must be of type string")
-                    return None
+                    return
 
                 if not isinstance(params, List) and not isinstance(params, Mapping) and params is not ...:
                     self._send_error_response(id, ErrorCodes.InvalidRequest, "'params' must be of type array or object")
-                    return None
+                    return
 
                 if params == ...:
                     params = None
@@ -263,10 +269,10 @@ class LSProtocol(ABC):
             else:
                 # No error responses for notifications
                 if type(method) is not str:
-                    return None
+                    return
 
                 if not isinstance(params, List) and not isinstance(params, Mapping) and params is not ...:
-                    return None
+                    return
 
                 if params == ...:
                     params = None
@@ -279,25 +285,25 @@ class LSProtocol(ABC):
             if error is not ... and has_result:
                 self._send_error_response(None, ErrorCodes.InvalidRequest,
                                           "Only one of 'result' or 'error' may be included")
-                return None
+                return
 
             if error is not ...:
                 if not isinstance(error, Mapping):
                     self._send_error_response(None, ErrorCodes.InvalidRequest, "'error' must be of type object.")
-                    return None
+                    return
                 self._process_error(id, error)
 
             elif id is not None:
                 if not has_result:
                     self._send_error_response(id, ErrorCodes.InvalidRequest, "Expected either 'method' or 'result'.")
-                    return None
+                    return
 
                 self._process_response(id, json_data["result"])
 
             else:
                 self._send_error_response(None, ErrorCodes.InvalidRequest,
                                           "At least one of 'id' or 'method' must exist.")
-                return None
+                return
 
     def _on_data(self, data: bytes) -> None:
         "Called by subclasses when new data has been received."
@@ -350,6 +356,7 @@ class LSProtocol(ABC):
         self._write_data(_json_to_packet(message_json))
 
     def _on_connection_lost(self) -> None:
+        _ = self._logger_client and self._logger_client.info("Server terminated connection.")
         self._connected = False
         self._disconnect_event.set()
         self.reject_active_requests(LSPClientException("Server has stopped."))
@@ -362,8 +369,8 @@ class LSStreamingProtocol(Protocol, LSProtocol):
 
     _transport: Transport
 
-    def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> None:
-        super().__init__(request_handler, notification_handler, logger)
+    def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler) -> None:
+        super().__init__(request_handler, notification_handler)
 
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, Transport)
@@ -380,9 +387,8 @@ class LSStreamingProtocol(Protocol, LSProtocol):
 
     def _write_data(self, data: bytes) -> None:
         self._transport.write(data)
-        logger = self._logger.getChild("data")
-        if logger.getEffectiveLevel() <= DEBUG:
-            logger.debug("Sent:\n%s", str(data, encoding="utf-8"))
+        if self._logger_messages and self._logger_messages.getEffectiveLevel() <= DEBUG:
+            self._logger_messages.debug("Sent:\n%s", str(data, encoding="utf-8"))
 
 
 class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
@@ -390,8 +396,8 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
     _transport: SubprocessTransport
     _write_transport: WriteTransport
 
-    def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler, logger: Logger) -> None:
-        super().__init__(request_handler, notification_handler, logger)
+    def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler) -> None:
+        super().__init__(request_handler, notification_handler)
 
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, SubprocessTransport)
@@ -411,11 +417,10 @@ class LSSubprocessProtocol(LSProtocol, SubprocessProtocol):
         if fd == 1:
             super()._on_data(data)
         elif fd == 2:
-            self._logger.getChild("server").warning(
+            _ = self._logger_server and self._logger_server.warning(
                 "Server stderr: %s", str(data, encoding=getdefaultencoding()))
 
     def _write_data(self, data: bytes) -> None:
         self._write_transport.write(data)
-        logger = self._logger.getChild("data")
-        if logger.getEffectiveLevel() <= DEBUG:
-            logger.debug("Sent:\n%s", str(data, encoding="utf-8"))
+        if self._logger_messages and self._logger_messages.getEffectiveLevel() <= DEBUG:
+            self._logger_messages.debug("Sent:\n%s", str(data, encoding="utf-8"))

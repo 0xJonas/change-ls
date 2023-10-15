@@ -3,8 +3,9 @@ from contextvars import ContextVar
 from functools import wraps
 from logging import INFO, Logger, LoggerAdapter, getLogger
 from types import FunctionType, TracebackType
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, MutableMapping,
-                    Optional, Tuple, Type, TypeVar, Union, cast, overload)
+from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
+                    MutableMapping, Optional, Tuple, Type, TypeVar, Union,
+                    cast, overload)
 from uuid import UUID, uuid4
 
 
@@ -311,3 +312,21 @@ def operation(name: Union[_T, Optional[str]] = None,
         return decorator(name)
     else:
         return decorator
+
+
+_CHANGE_LW_DEFAULT_LOGGER = Literal["change-ls.workspace", "change-ls.client",
+                                    "change-ls.server", "change-ls.messages", "change-ls.tokens"]
+
+
+def _get_change_ls_default_logger(name: _CHANGE_LW_DEFAULT_LOGGER, **extras: Any) -> OperationLoggerAdapter:
+    if name == "change-ls.workspace":
+        assert "cls_workspace" in extras
+        assert "cls_text_document" in extras
+    elif name in ["change-ls.client", "change-ls.server", "change-ls.messages"]:
+        assert "cls_client" in extras
+        assert "cls_server" in extras
+    elif name == "change-ls.tokens":
+        pass
+    else:
+        assert False
+    return OperationLoggerAdapter(LoggerAdapter(getLogger(name), extras))

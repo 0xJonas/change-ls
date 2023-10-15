@@ -13,6 +13,7 @@ import change_ls._workspace as ws
 from change_ls._change_ls_error import ChangeLSError
 from change_ls._client import Client
 from change_ls._util import TextDocumentInfo, guess_language_id
+from change_ls.logging import _get_change_ls_default_logger  # type: ignore
 from change_ls.logging import operation
 from change_ls.tokens import SyntacticToken, TokenList, tokenize
 from change_ls.tokens._semantic_tokens_mixin import (SemanticTokensMixin,
@@ -236,7 +237,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         TextDocumentInfo.__init__(self, uri, language_id)
         SemanticTokensMixin.__init__(self)
 
-        self._logger = LoggerAdapter(self._workspace.logger, {"cls_text_document": uri})
+        self._logger = _get_change_ls_default_logger(
+            "change-ls.workspace", cls_workspace=str(workspace._id), cls_text_document=uri)  # type: ignore
 
         self._reopen()
 

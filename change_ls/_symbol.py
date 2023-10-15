@@ -9,6 +9,7 @@ import change_ls._workspace as ws
 import change_ls.types as lsptypes
 from change_ls._change_ls_error import ChangeLSError
 from change_ls._client import Client
+from change_ls.logging import operation
 from change_ls.types import (DeclarationParams, DefinitionParams,
                              ImplementationParams, Location, Position,
                              ReferenceContext, ReferenceParams, RenameParams,
@@ -124,6 +125,7 @@ class Symbol(ABC):
         if not self.is_valid():
             raise ChangeLSError("Symbol is no longer valid")
 
+    @operation
     async def get_rename_workspace_edit(self, new_name: str) -> Optional[WorkspaceEdit]:
         """
         Returns a :class:`WorkspaceEdit` which renames this ``Symbol`` to ``new_name``.
@@ -132,6 +134,7 @@ class Symbol(ABC):
         """
         self._assert_valid()
         anchor = self._get_anchor()
+        anchor.text_document.logger.info(f"Requesting workspace edit to rename symbol {self} to '{new_name}'.")
         if not self._client.check_feature("textDocument/rename", text_documents=[anchor.text_document]):
             raise ChangeLSError(f"Client {self._client} does not support renaming.")
 
@@ -139,6 +142,7 @@ class Symbol(ABC):
             textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position, newName=new_name)
         return await self._client.send_text_document_rename(params)
 
+    @operation
     async def find_references(self, *, include_declaration: bool = True) -> "ll.LocationList":
         """
         Returns all references to this ``Symbol`` within its :class:`Workspace`.
@@ -147,6 +151,7 @@ class Symbol(ABC):
         """
         self._assert_valid()
         anchor = self._get_anchor()
+        anchor.text_document.logger.info(f"Finding references to symbol {self}.")
         if not self._client.check_feature("textDocument/references", text_documents=[anchor.text_document]):
             raise ChangeLSError(f"Client {self._client} does not support find_references.")
 
@@ -158,6 +163,7 @@ class Symbol(ABC):
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
 
+    @operation
     async def find_declaration(self) -> "ll.LocationList":
         """
         Returns the declaration sites of this ``Symbol``.
@@ -168,6 +174,7 @@ class Symbol(ABC):
         """
         self._assert_valid()
         anchor = self._get_anchor()
+        anchor.text_document.logger.info(f"Finding declaration for symbol {self}.")
         if not self._client.check_feature("textDocument/declaration", text_documents=[anchor.text_document]):
             raise ChangeLSError(f"Client {self._client} does not support find_declaration.")
 
@@ -177,6 +184,7 @@ class Symbol(ABC):
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
 
+    @operation
     async def find_definition(self) -> "ll.LocationList":
         """
         Returns the definition sites of this ``Symbol``.
@@ -187,6 +195,7 @@ class Symbol(ABC):
         """
         self._assert_valid()
         anchor = self._get_anchor()
+        anchor.text_document.logger.info(f"Finding definition for symbol {self}.")
         if not self._client.check_feature("textDocument/definition", text_documents=[anchor.text_document]):
             raise ChangeLSError(f"Client {self._client} does not support find_definition.")
 
@@ -196,6 +205,7 @@ class Symbol(ABC):
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
 
+    @operation
     async def find_type_definition(self) -> "ll.LocationList":
         """
         Returns the type definition sites of this ``Symbol``.
@@ -206,6 +216,7 @@ class Symbol(ABC):
         """
         self._assert_valid()
         anchor = self._get_anchor()
+        anchor.text_document.logger.info(f"Finding type definition for symbol {self}.")
         if not self._client.check_feature("textDocument/typeDefinition", text_documents=[anchor.text_document]):
             raise ChangeLSError(f"Client {self._client} does not support find_type_definition.")
 
@@ -215,6 +226,7 @@ class Symbol(ABC):
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
 
+    @operation
     async def find_implementation(self) -> "ll.LocationList":
         """
         Returns the implementation sites of this ``Symbol``.
@@ -225,6 +237,7 @@ class Symbol(ABC):
         """
         self._assert_valid()
         anchor = self._get_anchor()
+        anchor.text_document.logger.info(f"Finding implementation for symbol {self}.")
         if not self._client.check_feature("textDocument/implementation", text_documents=[anchor.text_document]):
             raise ChangeLSError(f"Client {self._client} does not support find_implementation.")
 
@@ -344,12 +357,14 @@ class UnresolvedWorkspaceSymbol:
         self._workspace = workspace
         self._lsp_workspace_symbol = lsp_workspace_symbol
 
+    @operation
     async def resolve(self) -> "WorkspaceSymbol":
         """
         Resolves this ``UnresolvedWorkspaceSymbol`` into a full :class:`WorkspaceSymbol`.
 
         This will open the :class:`TextDocument` which contains this symbol.
         """
+        self._workspace.logger.info(f"Resolving symbol {self}.")
         if isinstance(self._lsp_workspace_symbol, lsptypes.WorkspaceSymbol) and self._client.check_feature("workspace/symbol", workspace_symbol_resolve=True):
             resolved_symbol = await self._client.send_workspace_symbol_resolve(self._lsp_workspace_symbol)
             return WorkspaceSymbol(self._client, self._workspace, resolved_symbol)

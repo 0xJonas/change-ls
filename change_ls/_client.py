@@ -1,7 +1,9 @@
+import os
 import subprocess
+import sys
 import uuid
 from abc import ABC, abstractmethod
-from asyncio import (AbstractEventLoop, BaseTransport, get_running_loop,
+from asyncio import (AbstractEventLoop, ProactorEventLoop, get_running_loop,
                      wait_for)
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -11,7 +13,7 @@ from socket import AF_INET
 from sys import argv
 from types import TracebackType
 from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
-                    Sequence, Tuple, Type, Union)
+                    Sequence, Type, Union)
 
 from change_ls._capabilities_mixin import CapabilitiesMixin
 from change_ls._protocol import (LSPClientException, LSProtocol,
@@ -80,8 +82,17 @@ class ServerLaunchParams(ABC):
         self.launch_command = launch_command
         self.cwd = cwd
 
+    def _start_server_process(self, client: "Client") -> None:
+        if self.server_path:
+            client.logger.info("Launching language server %s with arguments %s.",
+                               self.server_path, str(self.args))
+            subprocess.Popen([self.server_path.absolute()] + list(self.args), cwd=self.cwd)
+        elif self.launch_command:
+            client.logger.info("Launching language server using '%s'.", self.launch_command)
+            subprocess.Popen(self.launch_command, shell=True, cwd=self.cwd)
+
     @abstractmethod
-    async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, client: "Client") -> LSProtocol:
         ...
 
 
@@ -111,16 +122,19 @@ class StdIOConnectionParams(ServerLaunchParams):
 
         super().__init__(server_path=server_path, args=args, launch_command=launch_command, cwd=cwd)
 
-    async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
+    async def _launch_server_from_event_loop(self, client: "Client") -> LSProtocol:
+        client.logger.info("Using stdio connection.")
         loop = get_running_loop()
         if self.server_path:
-            client.logger.info("Launching server %s, connection over stdio, with arguments %s",
-                               self.server_path, ", ".join(self.args))
-            return await loop.subprocess_exec(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.server_path, *self.args, cwd=self.cwd)
+            client.logger.info("Launching language server %s with arguments %s.",
+                               self.server_path, str(self.args))
+            _, protocol = await loop.subprocess_exec(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.server_path, *self.args, cwd=self.cwd)
+            return protocol
         elif self.launch_command:
             client.logger.info(
-                "Launching server, connection over stdio, using '%s'", self.launch_command)
-            return await loop.subprocess_shell(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.launch_command, cwd=self.cwd)
+                "Launching language server using '%s'.", self.launch_command)
+            _, protocol = await loop.subprocess_shell(lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification), self.launch_command, cwd=self.cwd)
+            return protocol
         else:
             assert False
 
@@ -128,7 +142,6 @@ class StdIOConnectionParams(ServerLaunchParams):
 class SocketConnectionParams(ServerLaunchParams):
     """Launch parameters which launch a language server with tcp socket communication."""
 
-    hostname: str
     port: int
 
     def __init__(self, *,
@@ -136,51 +149,91 @@ class SocketConnectionParams(ServerLaunchParams):
                  args: Sequence[str] = [],
                  launch_command: Optional[str] = None,
                  cwd: Optional[Path] = None,
-                 port: int,
-                 hostname: str = "localhost") -> None:
+                 port: int) -> None:
         """
         Constructs a new SocketConnectionParams instance. This instance can then
         be used to launch a new client/server connection.
-
-        If neither `server_path` nor `launch_command` are given, no server is launched. Instead,
-        the Client tries to connect to an already running server.
 
         :param server_path: The path were the language server executable is located.
         :param args: List of arguments to pass to the server.
         :param launch_command: Shell command to start the server.
         :param cwd: Working directory of the server process. Defaults to the current directory.
         :param port: The port number to use for the TCP connection.
-        :param hostname: An optional name of a host to connect to. The default is 'localhost'.
         """
 
         super().__init__(server_path=server_path, launch_command=launch_command,
                          args=args, cwd=cwd)
-        self.hostname = hostname
         self.port = port
 
-    async def _launch_server_from_event_loop(self, client: "Client") -> Tuple[BaseTransport, LSProtocol]:
-        if self.server_path:
-            client.logger.info("Launching server %s, connection over TCP sockets, with arguments %s",
-                               self.server_path, ", ".join(self.args))
-            subprocess.Popen([self.server_path.absolute()] + list(self.args), cwd=self.cwd)
-        elif self.launch_command:
-            client.logger.info(
-                "Launching server, connection over TCP sockets, using '%s'", self.launch_command)
-            subprocess.Popen(self.launch_command, shell=True, cwd=self.cwd)
+    async def _launch_server_from_event_loop(self, client: "Client") -> LSProtocol:
+        client.logger.info("Using TCP socket connection.")
 
         loop = get_running_loop()
-        client.logger.info("Connecting to running server at %s:%d",
-                           self.hostname, self.port)
-        return await loop.create_connection(lambda: LSStreamingProtocol(client.dispatch_request, client.dispatch_notification), host=self.hostname, port=self.port, family=AF_INET)
+        protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
+        server = await loop.create_server(lambda: protocol, host="127.0.0.1", port=self.port, family=AF_INET)
+
+        protocol.set_server(server)
+        self._start_server_process(client)
+        await protocol.wait_for_connection()
+        return protocol
 
 
 class PipeConnectionParams(ServerLaunchParams):
-    # Unix:
-    #   event_loop.create_unix_connection(...)
-    # Win:
-    #   fd = create named pipe
-    #   event_loop.subprocess_exec(stdin=fd, stdout=fd, ...)
-    pipename: str
+    """Launch parametes which launch a language server using either named pipes (windows) or UNIX Domain Sockets (UNIX)."""
+
+    pipe_name: str
+
+    def __init__(self, *,
+                 server_path: Optional[Path] = None,
+                 args: Sequence[str] = [],
+                 launch_command: Optional[str] = None,
+                 cwd: Optional[Path] = None,
+                 pipe_name: str) -> None:
+        r"""
+        Constructs a new PipeConnectionParams instance. This instance can then
+        be used to launch a new client/server connection.
+
+        :param server_path: The path were the language server executable is located.
+        :param args: List of arguments to pass to the server.
+        :param launch_command: Shell command to start the server.
+        :param cwd: Working directory of the server process. Defaults to the current directory.
+        :param pipe_name: The name of the pipe/socket file that should be used. On windows, this must
+            be a path in the namespace '\\.\pipe\'.
+        """
+        super().__init__(server_path=server_path, args=args, launch_command=launch_command, cwd=cwd)
+        self.pipe_name = pipe_name
+
+    async def _launch_server_from_event_loop(self, client: "Client") -> LSProtocol:
+        if sys.platform == "win32":
+            client.logger.info(f"Using named pipe connection with pipe '{self.pipe_name}'.")
+            loop = get_running_loop()
+            if not isinstance(loop, ProactorEventLoop):
+                raise LSPClientException(f"Pipe connections on Windows require a ProactorEventLoop")
+
+            # typeshed expects this to be a StreamReaderProtocol, but that does not make sense.
+            protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
+            [server] = await loop.start_serving_pipe(
+                lambda: protocol,    # type: ignore
+                self.pipe_name)
+            # Hold on to the PipeServer to prevent the named pipe from being closed.
+            protocol.set_server(server)
+
+            self._start_server_process(client)
+            await protocol.wait_for_connection()
+            return protocol
+        elif os.name == "posix":
+            client.logger.info(f"Using UNIX Domain Socket connection with name '{self.pipe_name}'")
+
+            loop = get_running_loop()
+            protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
+            server = await loop.create_unix_server(lambda: protocol, self.pipename)
+            protocol.set_server(server)
+
+            self._start_server_process(client)
+            await protocol.wait_for_connection()
+            return protocol
+        else:
+            raise LSPClientException(f"PipeConnectionParams are not support on platform {sys.platform}")
 
 
 class WorkspaceRequestHandler(ABC):
@@ -465,7 +518,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._exit_sent = False
 
         get_running_loop().set_exception_handler(self._client_thread_exception_handler)
-        (_, self._protocol) = await self._launch_params._launch_server_from_event_loop(self)  # type: ignore
+        self._protocol = await self._launch_params._launch_server_from_event_loop(self)  # type: ignore
         self._protocol._set_loggers(self._logger_client, self._logger_server, self._logger_messages)  # type: ignore
         self._set_state("uninitialized")
 

@@ -368,14 +368,24 @@ class LSProtocol(ABC):
 class LSStreamingProtocol(Protocol, LSProtocol):
 
     _transport: Transport
+    _server: Any
+    _connection_event: Event
 
     def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler) -> None:
         super().__init__(request_handler, notification_handler)
+        self._connection_event = Event()
+
+    def set_server(self, server: Any) -> None:
+        self._server = server
 
     def connection_made(self, transport: BaseTransport) -> None:
         assert isinstance(transport, Transport)
         self._transport = transport
         self._connected = True
+        self._connection_event.set()
+
+    async def wait_for_connection(self) -> None:
+        await self._connection_event.wait()
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
         self._on_connection_lost()

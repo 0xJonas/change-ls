@@ -3,7 +3,8 @@ from typing import Any, Generator, List
 
 import pytest
 
-from change_ls.logging import Operation, OperationLoggerAdapter, operation
+from change_ls.logging import (Operation, OperationFilter,
+                               OperationLoggerAdapter, operation)
 
 
 class OperationRecorder(Handler):
@@ -156,3 +157,21 @@ def test_operation_message_formatting(test_handler: OperationRecorder) -> None:
     assert records[2].msg in ["test_fn2 1 (2, 3) {'d': 4, 'e': 5}", "test_fn2 1 (2, 3) {'e': 5, 'd': 4}"]
     assert records[3].msg in ["test_fn2 1 () {'d': 4, 'e': 5}", "test_fn2 1 () {'e': 5, 'd': 4}"]
     assert records[4].msg == "test_fn3 1 2"
+
+
+def test_operation_filter(test_handler: OperationRecorder) -> None:
+    @operation(logger_name="change-ls.test", start_message="test1")
+    def test1() -> None:
+        pass
+
+    @operation(logger_name="change-ls.test", start_message="test2")
+    def test2() -> None:
+        pass
+
+    getLogger("change-ls.test").addFilter(OperationFilter(["test2"]))
+
+    test1()
+    test2()
+
+    assert len(test_handler.records) == 1
+    assert test_handler.records[0].msg == "test2"

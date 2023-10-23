@@ -1,7 +1,7 @@
 from asyncio import iscoroutinefunction
 from contextvars import ContextVar
 from functools import wraps
-from logging import INFO, Logger, LoggerAdapter, getLogger
+from logging import INFO, Filter, Logger, LoggerAdapter, LogRecord, getLogger
 from types import FunctionType, TracebackType
 from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
                     MutableMapping, Optional, Tuple, Type, TypeVar, Union,
@@ -314,11 +314,36 @@ def operation(name: Union[_T, Optional[str]] = None,
         return decorator
 
 
-_CHANGE_LW_DEFAULT_LOGGER = Literal["change-ls.workspace", "change-ls.client",
+class OperationFilter(Filter):
+    """
+    Logging filter which only allows log records from certain operations.
+    """
+    _operations: List[str]
+
+    def __init__(self, operations: List[str], name: str = "") -> None:
+        """
+        Initializes a new ``OperationFilter``.
+
+        :param operation: List of allowed operation names.
+        :param name: Only apply filter to events from the logger with that name, including its children.
+            This is forwarded to the ``logging.Filter.__init__``.
+        """
+        super().__init__(name)
+        self._operations = operations
+
+    def filter(self, record: LogRecord) -> bool:
+        try:
+            stack = record.cls_operation_stack_raw  # type: ignore
+            return any(op.name in self._operations for op in stack)  # type: ignore
+        except AttributeError:
+            return False
+
+
+_CHANGE_LS_DEFAULT_LOGGER = Literal["change-ls.workspace", "change-ls.client",
                                     "change-ls.server", "change-ls.messages", "change-ls.tokens"]
 
 
-def _get_change_ls_default_logger(name: _CHANGE_LW_DEFAULT_LOGGER, **extras: Any) -> OperationLoggerAdapter:
+def _get_change_ls_default_logger(name: _CHANGE_LS_DEFAULT_LOGGER, **extras: Any) -> OperationLoggerAdapter:
     if name == "change-ls.workspace":
         assert "cls_workspace" in extras
         assert "cls_text_document" in extras

@@ -3,8 +3,11 @@ import subprocess
 import sys
 import uuid
 from abc import ABC, abstractmethod
-from asyncio import (AbstractEventLoop, ProactorEventLoop, get_running_loop,
-                     wait_for)
+from asyncio import AbstractEventLoop, get_running_loop, wait_for
+
+if sys.platform == "win32":
+    from asyncio import ProactorEventLoop
+
 from collections.abc import Mapping
 from dataclasses import dataclass
 from os import getpid
@@ -226,7 +229,7 @@ class PipeConnectionParams(ServerLaunchParams):
 
             loop = get_running_loop()
             protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
-            server = await loop.create_unix_server(lambda: protocol, self.pipename)
+            server = await loop.create_unix_server(lambda: protocol, self.pipe_name)
             protocol.set_server(server)
 
             self._start_server_process(client)

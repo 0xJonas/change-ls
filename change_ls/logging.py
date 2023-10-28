@@ -1,7 +1,8 @@
 from asyncio import iscoroutinefunction
 from contextvars import ContextVar
 from functools import wraps
-from logging import INFO, Filter, Logger, LoggerAdapter, LogRecord, getLogger
+from logging import (INFO, Filter, Formatter, Logger, LoggerAdapter, LogRecord,
+                     getLogger)
 from types import FunctionType, TracebackType
 from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
                     MutableMapping, Optional, Tuple, Type, TypeVar, Union,
@@ -337,6 +338,217 @@ class OperationFilter(Filter):
             return any(op.name in self._operations for op in stack)  # type: ignore
         except AttributeError:
             return False
+
+
+class ChangeLSFormatter(Formatter):
+    """
+    Custom ``Formatter`` for change-ls log messages.
+
+    Offers multiple levels of verbosity as well as options to turn individual
+    fields on or off.
+    """
+
+    _use_message: bool
+    _use_timestamp: bool
+    _use_log_level: bool
+    _use_logger_name: bool
+    _use_operations: Dict[str, Any]
+    _use_text_document: bool
+    _use_client: bool
+    _use_server: bool
+    _use_workspace: bool
+
+    def _init_with_verbosity(self, verbosity: int) -> None:
+        if verbosity <= 0:
+            self._use_message = True
+            self._use_timestamp = False
+            self._use_log_level = False
+            self._use_logger_name = False
+            self._use_operations = {"info": "none", "full_stack": False}
+            self._use_text_document = False
+            self._use_client = False
+            self._use_server = False
+            self._use_workspace = False
+        elif verbosity == 1:
+            self._use_message = True
+            self._use_timestamp = False
+            self._use_log_level = True
+            self._use_logger_name = True
+            self._use_operations = {"info": "none", "full_stack": False}
+            self._use_text_document = False
+            self._use_client = False
+            self._use_server = False
+            self._use_workspace = False
+        elif verbosity == 2:
+            self._use_message = True
+            self._use_timestamp = False
+            self._use_log_level = True
+            self._use_logger_name = True
+            self._use_operations = {"info": "name", "full_stack": False}
+            self._use_text_document = False
+            self._use_client = False
+            self._use_server = False
+            self._use_workspace = False
+        elif verbosity == 3:
+            self._use_message = True
+            self._use_timestamp = False
+            self._use_log_level = True
+            self._use_logger_name = True
+            self._use_operations = {"info": "name", "full_stack": True}
+            self._use_text_document = False
+            self._use_client = False
+            self._use_server = False
+            self._use_workspace = False
+        elif verbosity == 4:
+            self._use_message = True
+            self._use_timestamp = False
+            self._use_log_level = True
+            self._use_logger_name = True
+            self._use_operations = {"info": "name", "full_stack": True}
+            self._use_text_document = True
+            self._use_client = False
+            self._use_server = False
+            self._use_workspace = False
+        elif verbosity == 5:
+            self._use_message = True
+            self._use_timestamp = False
+            self._use_log_level = True
+            self._use_logger_name = True
+            self._use_operations = {"info": "both", "full_stack": True}
+            self._use_text_document = True
+            self._use_client = False
+            self._use_server = False
+            self._use_workspace = False
+        elif verbosity == 6:
+            self._use_message = True
+            self._use_timestamp = False
+            self._use_log_level = True
+            self._use_logger_name = True
+            self._use_operations = {"info": "both", "full_stack": True}
+            self._use_text_document = True
+            self._use_client = True
+            self._use_server = True
+            self._use_workspace = False
+        else:
+            self._use_message = True
+            self._use_timestamp = True
+            self._use_log_level = True
+            self._use_logger_name = True
+            self._use_operations = {"info": "both", "full_stack": True}
+            self._use_text_document = True
+            self._use_client = True
+            self._use_server = True
+            self._use_workspace = True
+
+    def __init__(self, verbosity: int = 2, datefmt: Optional[str] = None, *,
+                 use_message: Optional[bool] = None,
+                 use_timestamp: Optional[bool] = None,
+                 use_log_level: Optional[bool] = None,
+                 use_logger_name: Optional[bool] = None,
+                 use_operations: Optional[Dict[str, Any]] = None,
+                 use_text_document: Optional[bool] = None,
+                 use_client: Optional[bool] = None,
+                 use_server: Optional[bool] = None,
+                 use_workspace: Optional[bool] = None) -> None:
+        """
+        Initialize the formatter.
+
+        :param verbosity: Level of verbosity. This controls the base set of information
+            which is included in the log level. Valid values range from 0 (fewest informaiton)
+            to 7 (most information). Specific fields can be turned on or of independent of
+            the verbosity using the ``use_*`` parameters. Note that not every ``LogRecord``
+            has every field filled; fields are only included if the information is actually
+            available in the record.
+        :param datefmt: The timestamp format. Only relevant when the timestamp is included in
+            the log message, e.g. setting ``use_timestamp=True``.
+        :param use_message: Whether to include the actual log message in the output.
+        :param use_timestamp: Whether to include the log timestamp in the output.
+        :param use_log_level: Whether to include the log level in the output.
+        :param use_logger_name: Whether to include the logger name in the output.
+        :param use_operations: How :class:`Operations <Operation>` should be displayed in the log message.
+            Must be a dictionary with any of the following keys:
+
+            * ``"full_stack"``: If this is ``True``, the full operation stack is included, otherwise only the topmost
+                operation is included.
+            * ``"info"``: Whether the operation names and/or ids should be included. Valid values are ``"name"``, ``"id"`` and ``"both"``
+
+        :param use_text_document: Whether to include the uri of the :class:`TextDocument` in the output.
+        :param use_client: Whether to include the id of the :class:`Client` in the output.
+        :param use_server: Whether to include the name and version of the language server in the output.
+        :param use_workspace: Whether to include the id of the :class:`Workspace` in the output.
+        """
+        super().__init__(datefmt=datefmt, validate=False)
+        self._init_with_verbosity(verbosity)
+
+        if use_message is not None:
+            self._use_message = use_message
+        if use_timestamp is not None:
+            self._use_timestamp = use_timestamp
+        if use_log_level is not None:
+            self._use_log_level = use_log_level
+        if use_logger_name is not None:
+            self._use_logger_name = use_logger_name
+        if use_operations is not None:
+            self._use_operations.update(use_operations)
+        if use_text_document is not None:
+            self._use_text_document = use_text_document
+        if use_client is not None:
+            self._use_client = use_client
+        if use_server is not None:
+            self._use_server = use_server
+        if use_workspace is not None:
+            self._use_workspace = use_workspace
+
+    def format(self, record: LogRecord) -> str:
+        out = ""
+        if self._use_timestamp:
+            out += self.formatTime(record) + " "
+
+        if self._use_log_level:
+            out += f"[{record.levelname}] "
+
+        if self._use_logger_name:
+            out += record.name + " "
+
+        if self._use_operations["info"] in ["name", "both"]:
+            if self._use_operations["full_stack"] and hasattr(record, "cls_operation_stack_names"):
+                out += f"({record.cls_operation_stack_names}) "  # type: ignore
+            elif hasattr(record, "cls_current_operation_name"):
+                out += f"({record.cls_current_operation_name}) "  # type: ignore
+
+        if self._use_operations["info"] in ["id", "both"]:
+            if self._use_operations["full_stack"] and hasattr(record, "cls_operation_stack_ids"):
+                out += f"({record.cls_operation_stack_ids}) "  # type: ignore
+            elif hasattr(record, "cls_current_operation_id"):
+                out += f"({record.cls_current_operation_id}) "  # type: ignore
+
+        if self._use_text_document and hasattr(record, "cls_text_document"):
+            out += f"text_document='{record.cls_text_document}' "  # type: ignore
+
+        if self._use_client and hasattr(record, "cls_client"):
+            out += f"client='{record.cls_client}' "  # type: ignore
+
+        if self._use_server and hasattr(record, "cls_server"):
+            out += f"server='{record.cls_server}' "  # type: ignore
+
+        if self._use_workspace and hasattr(record, "cls_workspace"):
+            out += f"workspace='{record.cls_workspace}' "  # type: ignore
+
+        if self._use_message:
+            if len(out) == 0:
+                out = record.getMessage()
+            else:
+                if out[-1] != " ":
+                    out += " "
+                out += "-- " + record.getMessage()
+
+        if record.exc_info:
+            out += " " + self.formatException(record.exc_info)
+
+        if record.stack_info:
+            out += " " + self.formatStack(record.stack_info)
+
+        return out
 
 
 _CHANGE_LS_DEFAULT_LOGGER = Literal["change-ls.workspace", "change-ls.client",

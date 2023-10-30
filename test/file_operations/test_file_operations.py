@@ -12,6 +12,8 @@ from change_ls import StdIOConnectionParams, Workspace
 def scratch_workspace_path() -> Generator[Path, Any, None]:
     scratch_path = Path("./.temp/mock-ws-1/")
     shutil.copytree(Path("./test/mock-ws-1/"), scratch_path)
+    shutil.copytree(Path("./test/mock-ws-1/"), scratch_path / Path("copy1"))
+    shutil.copytree(Path("./test/mock-ws-1/"), scratch_path / Path("copy2"))
     yield scratch_path
     shutil.rmtree(scratch_path)
 
@@ -107,9 +109,8 @@ class FileRenameExpectation:
      FileRenameExpectation(None, 'print("Hello, World!")\n')),
 ])
 async def test_file_rename(scratch_workspace_path: Path, input: FileRenameInput, expectation: FileRenameExpectation) -> None:
-    # logging.getLogger().setLevel(logging.DEBUG)
+    source_path = scratch_workspace_path / input.source
     destination_path = scratch_workspace_path / input.destination
-    destination_exists = destination_path.exists()
 
     async with Workspace(scratch_workspace_path) as ws:
         params = StdIOConnectionParams(launch_command=f"node ./mock-server/out/index.js --stdio {input.test_sequence}")
@@ -132,8 +133,8 @@ async def test_file_rename(scratch_workspace_path: Path, input: FileRenameInput,
 
         await ws.rename_text_document(input.source, input.destination, overwrite=input.overwrite, ignore_if_exists=input.ignore_if_exists)
 
-        if destination_exists and not input.ignore_if_exists:
-            assert not (scratch_workspace_path / input.source).exists()
+        if destination_path.exists():
+            assert source_path.exists() == input.ignore_if_exists
         assert destination_path.exists()
 
         if source_doc:
@@ -145,6 +146,74 @@ async def test_file_rename(scratch_workspace_path: Path, input: FileRenameInput,
         if input.open_source:
             assert doc is source_doc
         assert doc.text == expectation.destination_content
+
+
+@dataclass
+class DirectoryRenameInput:
+    test_sequence: str
+    source: Path
+    destination: Path
+    overwrite: bool
+    ignore_if_exists: bool
+    open_source_path: Optional[Path]
+    source_new_path: Optional[Path]
+    open_destination_path: Optional[Path]
+
+
+@dataclass
+class DirectoryRenameExpectation:
+    raises: Optional[Type[Exception]]
+
+
+@pytest.mark.parametrize(["input", "expectation"], [
+    (DirectoryRenameInput("./test/file_operations/test_rename_directory.json", Path("./copy1/"), Path("./new/"), False, False, None, None, None),
+     DirectoryRenameExpectation(None)),
+    (DirectoryRenameInput("./test/test_empty.json", Path("./copy1/"), Path("./test-1.py"), True, False, None, None, None),
+     DirectoryRenameExpectation(NotADirectoryError)),
+    (DirectoryRenameInput("./test/test_empty.json", Path("./copy1/"), Path("./copy2/"), False, False, None, None, None),
+     DirectoryRenameExpectation(FileExistsError)),
+    (DirectoryRenameInput("./test/file_operations/test_rename_directory_overwrite_open.json", Path("./copy1/"), Path("./copy2/"), True, False, Path("./copy1/test-1.py"), Path("./copy2/test-1.py"), Path("./copy2/test-1.py")),
+     DirectoryRenameExpectation(None)),
+    (DirectoryRenameInput("./test/test_empty.json", Path("./copy1/"), Path("./copy2/"), False, True, None, None, None),
+     DirectoryRenameExpectation(None))
+])
+async def test_rename_directory(scratch_workspace_path: Path, input: DirectoryRenameInput, expectation: DirectoryRenameExpectation) -> None:
+    source_path = scratch_workspace_path / input.source
+    destination_path = scratch_workspace_path / input.destination
+
+    async with Workspace(scratch_workspace_path) as ws:
+        params = StdIOConnectionParams(launch_command=f"node ./mock-server/out/index.js --stdio {input.test_sequence}")
+        client = await ws.launch_client(params)
+        workspace_uri = scratch_workspace_path.resolve().as_uri()
+        await client.send_request("$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}})
+
+        source_doc = None
+        if input.open_source_path:
+            source_doc = ws.open_text_document(input.open_source_path, encoding="utf-8")
+
+        destination_doc = None
+        if input.open_destination_path:
+            destination_doc = ws.open_text_document(input.open_destination_path, encoding="utf-8")
+
+        if expectation.raises is not None:
+            with pytest.raises(expectation.raises):
+                await ws.rename_directory(input.source, input.destination, overwrite=input.overwrite, ignore_if_exists=input.ignore_if_exists)
+            return
+
+        await ws.rename_directory(input.source, input.destination, overwrite=input.overwrite, ignore_if_exists=input.ignore_if_exists)
+
+        if destination_path.exists():
+            assert source_path.exists() == input.ignore_if_exists
+        assert destination_path.exists()
+
+        if source_doc and input.source_new_path:
+            assert source_doc.uri == (scratch_workspace_path / input.source_new_path).resolve().as_uri()
+        if destination_doc:
+            assert destination_doc.is_closed()
+
+        if input.open_source_path and input.source_new_path:
+            doc = ws.open_text_document(input.source_new_path)
+            assert doc is source_doc
 
 
 @dataclass

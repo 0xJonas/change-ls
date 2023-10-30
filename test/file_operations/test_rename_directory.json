@@ -1,0 +1,29 @@
+{
+    "name": "test_rename_directory",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "workspace/willRenameFiles",
+            "params": {
+                "files": [
+                    {
+                        "oldUri": "${WORKSPACE_URI}/copy1",
+                        "newUri": "${WORKSPACE_URI}/new"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "workspace/didRenameFiles",
+            "params": {
+                "files": [
+                    {
+                        "oldUri": "${WORKSPACE_URI}/copy1",
+                        "newUri": "${WORKSPACE_URI}/new"
+                    }
+                ]
+            }
+        }
+    ]
+}

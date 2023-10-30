@@ -38,6 +38,29 @@ def _path_is_relative_to(path: Path, root: Path) -> bool:
         return False
 
 
+def _validate_node_type(full_path: Path, expect_directory: Optional[bool]) -> None:
+    if expect_directory is not None:
+        if expect_directory and not full_path.is_dir():
+            raise ChangeLSError(f"Expected directory but '{full_path}' is a file.")
+        elif not expect_directory and full_path.is_dir():
+            raise ChangeLSError(f"Expected file but '{full_path}' is a directory.")
+
+
+def _validate_rename_args(path_source: Path, path_destination: Path, overwrite: bool, expect_directory: Optional[bool]) -> None:
+    if not path_source.exists():
+        raise FileNotFoundError(f"Source '{path_source}' not found")
+    elif path_destination.exists() and not overwrite:
+        raise FileExistsError(f"Destination '{path_destination}' already exists.")
+
+    _validate_node_type(path_source, expect_directory)
+
+    if path_destination.exists():
+        if path_source.is_dir() and not path_destination.is_dir():
+            raise NotADirectoryError(f"Cannot rename a directory to a file.")
+        elif not path_source.is_dir() and path_destination.is_dir():
+            raise IsADirectoryError(f"Cannot rename a file to a directory.")
+
+
 class Workspace(WorkspaceRequestHandler):
     """
     A :class:`Workspace` contains one or more workspace roots and provides access to the roots' files,
@@ -198,7 +221,6 @@ class Workspace(WorkspaceRequestHandler):
         """
         if isinstance(path, Path):
             full_path = self._resolve_path_in_workspace(path)
-            uri = full_path.as_uri()
         else:
             # This also takes care of string paths
             (_, _, path_component, _, _) = urlsplit(path, scheme="file")
@@ -210,11 +232,11 @@ class Workspace(WorkspaceRequestHandler):
                 path_component = path_component[1:]
 
             full_path = self._resolve_path_in_workspace(Path(path_component))
-            uri = full_path.as_uri()
 
+        uri = full_path.as_uri()
         return (full_path, uri)
 
-    @operation(start_message="Opening TextDocument {path}...", get_logger_from_context=_get_logger_from_context)
+    @operation
     def open_text_document(self, path: Union[Path, str], *, encoding: Optional[str] = None, language_id: Optional[str] = None) -> "td.TextDocument":
         """
         Opens a :class:`TextDocument` from this :class:`Workspace`.
@@ -234,6 +256,7 @@ class Workspace(WorkspaceRequestHandler):
         """
 
         full_path, uri = self._normalize_path_parameter(path)
+        self.logger.info(f"Opening TextDocument {full_path}...")
 
         if text_document := self._opened_text_documents.get(uri):
             if encoding is not None and encoding != text_document.encoding:
@@ -338,7 +361,7 @@ class Workspace(WorkspaceRequestHandler):
                 elif isinstance(action, RenameFile):
                     overwrite = bool(action.options and action.options.overwrite)
                     ignore_if_exists = bool(action.options and action.options.ignoreIfExists)
-                    await self.rename_text_document(action.oldUri, action.newUri, overwrite=overwrite, ignore_if_exists=ignore_if_exists)
+                    await self._handle_rename(action.oldUri, action.newUri, overwrite=overwrite, ignore_if_exists=ignore_if_exists)
                 else:
                     recursive = bool(action.options and action.options.recursive)
                     ignore_if_not_exists = bool(action.options and action.options.ignoreIfNotExists)
@@ -432,7 +455,65 @@ class Workspace(WorkspaceRequestHandler):
                 continue
             client.send_workspace_did_rename_files(params)
 
+    def _delete_directory_recursive(self, path: Path) -> None:
+        if not path.exists():
+            return
+        for item in path.iterdir():
+            if item.is_dir():
+                self._delete_directory_recursive(item)
+            elif item.is_symlink():
+                item.unlink()
+            else:
+                uri = item.as_uri()
+                document = self._opened_text_documents.get(uri)
+                if document:
+                    document._final_close()  # type: ignore
+                item.unlink()
+        path.rmdir()
+
+    def _transfer_text_documents_recursive(self, path_source: Path, path_destination: Path) -> None:
+        assert path_source.is_absolute()
+        assert path_destination.is_absolute()
+
+        for source_item in path_source.iterdir():
+            destination_item = path_destination / source_item.relative_to(path_source)
+            if source_item.is_dir():
+                self._transfer_text_documents_recursive(source_item, destination_item)
+            elif doc := self._opened_text_documents.get(source_item.as_uri()):
+                doc._set_path(destination_item)  # type: ignore
+
     @operation(name="rename_node", start_message="Renaming file '{source}' to '{destination}'...", get_logger_from_context=_get_logger_from_context)
+    async def _handle_rename(self, source: Union[Path, str], destination: Union[Path, str], *, overwrite: bool = False, ignore_if_exists: bool = False, expect_directory: Optional[bool] = None) -> None:
+        path_source, uri_source = self._normalize_path_parameter(source)
+        path_destination, uri_destination = self._normalize_path_parameter(destination)
+
+        if path_source == path_destination:
+            self.logger.info("Source and destination are the same.")
+            return
+
+        if path_destination.exists() and ignore_if_exists:
+            self.logger.info(f"Destination '{path_destination}' already exists.")
+            return
+
+        _validate_rename_args(path_source, path_destination, overwrite, expect_directory)
+
+        await self._send_will_rename_requests(uri_source, uri_destination)
+
+        if path_source.is_dir():
+            self._delete_directory_recursive(path_destination)
+            self._transfer_text_documents_recursive(path_source, path_destination)
+        else:
+            if doc := self._opened_text_documents.get(uri_destination):
+                doc._final_close()  # type: ignore
+            path_destination.unlink(missing_ok=True)
+            if doc := self._opened_text_documents.get(uri_source):
+                doc._set_path(path_destination)  # type: ignore
+
+        path_source.rename(path_destination)
+
+        self._send_did_rename_notifications(uri_source, uri_destination)
+        self.logger.info(f"Renamed file '{path_source}' to '{path_destination}'!")
+
     async def rename_text_document(self, source: Union[Path, str], destination: Union[Path, str], *, overwrite: bool = False, ignore_if_exists: bool = False) -> None:
         """
         Renames a document.
@@ -446,42 +527,22 @@ class Workspace(WorkspaceRequestHandler):
             ``ignore_if_exists`` are given, ``overwrite`` takes priority.
         :param ignore_if_exists: If the destination already exists, no rename should be performed.
         """
-        path_source, uri_source = self._normalize_path_parameter(source)
-        path_destination, uri_destination = self._normalize_path_parameter(destination)
+        await self._handle_rename(source, destination, overwrite=overwrite, ignore_if_exists=ignore_if_exists, expect_directory=False)
 
-        # TODO rename directories
+    async def rename_directory(self, source: Union[Path, str], destination: Union[Path, str], *, overwrite: bool = False, ignore_if_exists: bool = False) -> None:
+        """
+        Renames a directory.
 
-        if path_source == path_destination:
-            self.logger.info("Source and destination are the same.")
-            return
-
-        if not path_source.exists():
-            raise FileNotFoundError(f"Source '{path_source}' not found")
-        elif path_destination.exists() and not overwrite:
-            if ignore_if_exists:
-                return
-            else:
-                raise FileExistsError(f"Destination '{path_destination}' already exists.")
-
-        await self._send_will_rename_requests(uri_source, uri_destination)
-
-        source_text_document = self._opened_text_documents.get(uri_source)
-        destination_text_document = self._opened_text_documents.get(uri_destination)
-
-        if path_destination.exists():
-            self.logger.info(f"Destination '{path_destination}' already exists, overwriting node.")
-            if destination_text_document:
-                destination_text_document._final_close()  # type: ignore
-        if source_text_document:
-            source_text_document._set_path(path_destination)  # type: ignore
-            self._opened_text_documents[source_text_document.uri] = source_text_document
-
-        # Windows requires the destination file to not exist
-        path_destination.unlink(missing_ok=True)
-        path_source.rename(path_destination)
-
-        self._send_did_rename_notifications(uri_source, uri_destination)
-        self.logger.info(f"Renamed file '{path_source}' to '{path_destination}'!")
+        :param source: The source path that should be renamed. Can be either a :class:`pathlib.Path` or an
+            ``str`` path or uri. If this path does not exist, a :class:`FileNotFoundError` is raised.
+        :param destination: The path that ``source`` should be renamed to. Can be either a :class:`pathlib.Path` or an
+            ``str`` path or uri. If neither ``overwrite`` nor ``ignore_if_exists`` are ``True`` and the path
+            already exists, a :class:`FileExistsError` is raised.
+        :param overwrite: The destination should be overwritten if it already exists. If both ``overwrite`` and
+            ``ignore_if_exists`` are given, ``overwrite`` takes priority.
+        :param ignore_if_exists: If the destination already exists, no rename should be performed.
+        """
+        await self._handle_rename(source, destination, overwrite=overwrite, ignore_if_exists=ignore_if_exists, expect_directory=True)
 
     async def _send_will_delete_file_requests(self, uri: str) -> None:
         params = DeleteFilesParams(files=[FileDelete(uri=uri)])
@@ -499,22 +560,8 @@ class Workspace(WorkspaceRequestHandler):
                 continue
             client.send_workspace_did_delete_files(params)
 
-    def _delete_directory_recursive(self, path: Path) -> None:
-        for item in path.iterdir():
-            if item.is_dir():
-                self._delete_directory_recursive(item)
-            elif item.is_symlink():
-                item.unlink()
-            else:
-                uri = item.as_uri()
-                document = self._opened_text_documents.get(uri)
-                if document:
-                    document._final_close()  # type: ignore
-                item.unlink()
-        path.rmdir()
-
     @operation(name="delete_node", start_message="Deleting file '{path}'...", get_logger_from_context=_get_logger_from_context)
-    async def _handle_delete_file(self, path: Union[Path, str], recursive: bool, ignore_if_not_exists: bool, *, expect_directory: bool = False) -> None:
+    async def _handle_delete_file(self, path: Union[Path, str], recursive: bool, ignore_if_not_exists: bool, *, expect_directory: Optional[bool] = None) -> None:
         full_path, uri = self._normalize_path_parameter(path)
 
         if not full_path.exists():
@@ -523,9 +570,9 @@ class Workspace(WorkspaceRequestHandler):
             else:
                 raise FileNotFoundError(f"File not found: '{full_path}'.")
 
+        _validate_node_type(full_path, expect_directory)
+
         is_directory = full_path.is_dir()
-        if expect_directory and not is_directory:
-            raise ChangeLSError(f"Expected directory but '{full_path}' is a file.")
 
         if is_directory and not recursive:
             try:
@@ -557,7 +604,7 @@ class Workspace(WorkspaceRequestHandler):
             ``str`` path or uri.
         :param ignore_if_not_exists: Whether to raise a :class:`FileNotFoundError` if the ``path`` does not exist.
         """
-        await self._handle_delete_file(path, False, ignore_if_not_exists)
+        await self._handle_delete_file(path, False, ignore_if_not_exists, expect_directory=False)
 
     async def delete_directory(self, path: Union[Path, str], *, recursive: bool = False, ignore_if_not_exists: bool = False) -> None:
         """

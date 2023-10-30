@@ -257,6 +257,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         del self._workspace._opened_text_documents[self.uri]  # type: ignore
         self._path = new_path
         self._uri = new_path.as_uri()
+        self._workspace._opened_text_documents[self.uri] = self  # type: ignore
 
     async def rename_file(self, new_path: Path, *, overwrite: bool = False, ignore_if_exists: bool = False) -> None:
         """
@@ -274,8 +275,9 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         """
         await self._workspace.delete_text_document(self._path)
 
-    @operation(name="close_text_document", start_message="Closing TextDocument...", get_logger_from_context=_get_logger_from_context)
+    @operation(name="close_text_document")
     def _final_close(self) -> None:
+        self.logger.info(f"Closing TextDocument {self.path}...")
         if len(self._pending_edits) > 0:
             warnings.warn(
                 f"Dropping {len(self._pending_edits)} uncommitted edits for Textdocument '{self.uri}'. Call text_document.commit_edits() followed by text_document.save() to save the changes.",

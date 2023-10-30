@@ -1,0 +1,23 @@
+{
+    "name": "test_delete_directory_recursive",
+    "sequence": [
+        {
+            "type": "request",
+            "method": "workspace/willDeleteFiles",
+            "params": {
+                "files": [
+                    { "uri": "${WORKSPACE_URI}/copy1" }
+                ]
+            }
+        },
+        {
+            "type": "notification",
+            "method": "workspace/didDeleteFiles",
+            "params": {
+                "files": [
+                    { "uri": "${WORKSPACE_URI}/copy1" }
+                ]
+            }
+        }
+    ]
+}

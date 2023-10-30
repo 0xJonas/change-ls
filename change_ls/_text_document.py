@@ -363,15 +363,12 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         """
         Tokenizes this ``TextDocument``. After this method is called, :attr:`tokens` will contain the computed tokens.
 
-        .. important:: Tokenization requires that a compatible version of node.js is available on ``PATH``.
+        .. important:: Syntactic tokenization (mode ``"syntactic"``) requires that a compatible version of node.js is available on ``PATH``.
 
         :param mode: Which types of tokens should be loaded. Must be one of the following strings:
 
-            * ``"auto"``: Automatically select one of the available modes based on which features are provided by the language server
-                and installed languages. This is the default.
-
             * ``"enrich"``: Load both syntactic and semantic tokens and enrich the syntactic tokens in :attr:`tokens` with semantic information
-                from the semantic tokens.
+                from the semantic tokens. This is the default.
 
             * ``"syntactic"``: Load only syntactic tokens. The tokens can be accessed via the :attr:`tokens` property.
 

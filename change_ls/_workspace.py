@@ -581,6 +581,8 @@ class Workspace(WorkspaceRequestHandler):
             except StopIteration:
                 pass
 
+        # workspace/willDeleteFiles is sent before the document
+        # is closed. Maybe change this at some point?
         await self._send_will_delete_file_requests(uri)
 
         if is_directory:

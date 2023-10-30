@@ -259,3 +259,51 @@ async def test_delete_file(scratch_workspace_path: Path, input: DeleteFileInput,
             assert not input.path.exists()
         if doc:
             assert doc.is_closed()
+
+
+@dataclass
+class DeleteDirectoryInput:
+    test_sequence: str
+    path: Path
+    ignore_if_not_exists: bool
+    recursive: bool
+    open_document_path: Optional[Path]
+
+
+@dataclass
+class DeleteDirectoryExpectation:
+    raises: Optional[Type[Exception]]
+
+
+@pytest.mark.parametrize(["input", "expectation"], [
+    (DeleteDirectoryInput("test/file_operations/test_delete_directory_recursive.json", Path("./copy1/"), False, True, None),
+     DeleteDirectoryExpectation(None)),
+    (DeleteDirectoryInput("test/test_empty.json", Path("./copy1/"), False, False, None),
+     DeleteDirectoryExpectation(FileExistsError)),
+    (DeleteDirectoryInput("test/test_empty.json", Path("./nothing/"), True, False, None),
+     DeleteDirectoryExpectation(None)),
+    (DeleteDirectoryInput("test/file_operations/test_delete_directory_recursive_open.json", Path("./copy1/"), False, True, Path("./copy1/test-1.py")),
+     DeleteDirectoryExpectation(None))
+])
+async def test_delete_directory(scratch_workspace_path: Path, input: DeleteDirectoryInput, expectation: DeleteDirectoryExpectation) -> None:
+    async with Workspace(scratch_workspace_path) as ws:
+        params = StdIOConnectionParams(launch_command=f"node ./mock-server/out/index.js --stdio {input.test_sequence}")
+        client = await ws.launch_client(params)
+        workspace_uri = scratch_workspace_path.resolve().as_uri()
+        await client.send_request("$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}})
+
+        doc = None
+        if input.open_document_path:
+            doc = ws.open_text_document(input.open_document_path)
+
+        if expectation.raises:
+            with pytest.raises(expectation.raises):
+                await ws.delete_directory(input.path, recursive=input.recursive, ignore_if_not_exists=input.ignore_if_not_exists)
+            return
+
+        await ws.delete_directory(input.path, recursive=input.recursive, ignore_if_not_exists=input.ignore_if_not_exists)
+
+        if not input.ignore_if_not_exists:
+            assert not input.path.exists()
+        if doc:
+            assert doc.is_closed()

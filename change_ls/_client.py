@@ -1,14 +1,10 @@
+import asyncio
 import os
 import subprocess
 import sys
 import uuid
 from abc import ABC, abstractmethod
 from asyncio import AbstractEventLoop, get_running_loop, wait_for
-
-if sys.platform == "win32":
-    from asyncio import ProactorEventLoop
-
-from collections.abc import Mapping
 from dataclasses import dataclass
 from os import getpid
 from pathlib import Path
@@ -54,6 +50,9 @@ from change_ls.types import (JSON_VALUE, ApplyWorkspaceEditParams,
 from change_ls.types._client_requests import (ClientRequestsMixin,
                                               ServerRequestsMixin)
 
+if sys.platform == "win32":
+    from asyncio import ProactorEventLoop
+
 CHANGE_LS_VERSION = "0.1.0"
 
 
@@ -77,11 +76,11 @@ class ServerLaunchParams(ABC):
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
-                 args: Sequence[str] = [],
+                 args: Optional[Sequence[str]] = None,
                  launch_command: Optional[str] = None,
                  cwd: Optional[Path] = None) -> None:
         self.server_path = server_path
-        self.args = args
+        self.args = args or []
         self.launch_command = launch_command
         self.cwd = cwd
 
@@ -116,7 +115,7 @@ class StdIOConnectionParams(ServerLaunchParams):
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
-                 args: Sequence[str] = [],
+                 args: Optional[Sequence[str]] = None,
                  launch_command: Optional[str] = None,
                  cwd: Optional[Path] = None) -> None:
         if not server_path and not launch_command:
@@ -149,7 +148,7 @@ class SocketConnectionParams(ServerLaunchParams):
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
-                 args: Sequence[str] = [],
+                 args: Optional[Sequence[str]] = None,
                  launch_command: Optional[str] = None,
                  cwd: Optional[Path] = None,
                  port: int) -> None:
@@ -188,7 +187,7 @@ class PipeConnectionParams(ServerLaunchParams):
 
     def __init__(self, *,
                  server_path: Optional[Path] = None,
-                 args: Sequence[str] = [],
+                 args: Optional[Sequence[str]] = None,
                  launch_command: Optional[str] = None,
                  cwd: Optional[Path] = None,
                  pipe_name: str) -> None:
@@ -211,7 +210,7 @@ class PipeConnectionParams(ServerLaunchParams):
             client.logger.info(f"Using named pipe connection with pipe '{self.pipe_name}'.")
             loop = get_running_loop()
             if not isinstance(loop, ProactorEventLoop):
-                raise LSPClientException(f"Pipe connections on Windows require a ProactorEventLoop")
+                raise LSPClientException("Pipe connections on Windows require a ProactorEventLoop")
 
             # typeshed expects this to be a StreamReaderProtocol, but that does not make sense.
             protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
@@ -459,7 +458,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     def logger(self) -> OperationLoggerAdapter:
         return self._logger_client
 
-    def _get_logger_from_context(self, *args: Any, **kwargs: Any) -> OperationLoggerAdapter:
+    def _get_logger_from_context(self, *_args: Any, **_kwargs: Any) -> OperationLoggerAdapter:
         return self._logger_client
 
     def _set_server_info(self, server_info: Optional[ServerInfo]) -> None:
@@ -608,7 +607,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._set_state("shutdown")
 
     @operation(start_message="Sending exit notification.", get_logger_from_context=_get_logger_from_context)
-    async def send_exit(self) -> None:  # type: ignore
+    async def send_exit(self) -> None:  # type: ignore  # pylint: disable=invalid-overridden-method
         """
         The exit event is sent from the client to the server to ask the server to exit its process.
 
@@ -626,8 +625,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
             self._server_info = None
             self._server_capabilities = None
             self._set_state("disconnected")
-        except:
-            raise LSPClientException("Unable to stop server thread.")
+        except asyncio.TimeoutError as e:
+            raise LSPClientException("Unable to stop server thread.") from e
 
     async def __aenter__(self) -> "Client":
         # These 'if's are here so that the method can be called from any state.
@@ -637,7 +636,6 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         if self._state == "disconnected":
             await self.launch()
         if self._state == "uninitialized":
-            # TODO store result
             await self.send_initialize()
         if self._state == "initializing":
             self.send_initialized(InitializedParams())

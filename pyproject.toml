@@ -10,6 +10,9 @@ authors = [
 ]
 dynamic = ["version"]
 
+
+### setuptools ###
+
 [tool.setuptools]
 include-package-data = true
 
@@ -22,6 +25,9 @@ include = ["change_ls*"]
 [tool.setuptools.dynamic]
 version = { attr = "change_ls.client.CHANGE_LS_VERSION" }
 
+
+### pytest ###
+
 [tool.pytest.ini_options]
 testpaths = [
     "."
@@ -32,3 +38,23 @@ markers = [
     "uses_external_resources: marks tests which interact with resources outside the change-ls repo, e.g. external grammar files",
     "test_sequence: used to pass a test sequence file to a fixture"
 ]
+
+
+### pylint ###
+
+[tool.pylint.master]
+load-plugins = "pylint.extensions.mccabe"
+ignore-paths = [
+    ".*/change_ls/types/.*.py",
+    ".*/change_ls/_languages.py",
+    ".*/test/.*/test_.*.py"
+]
+
+[tool.pylint.messages_control]
+disable = ["protected-access", "no-else-return"]
+
+
+### Black ###
+
+[tool.black]
+exclude = "**/change_ls/types/*,**/change_ls/_languages.py"

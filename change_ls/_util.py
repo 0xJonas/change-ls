@@ -109,7 +109,7 @@ class TextDocumentInfo:
         return self._language_id
 
 
-def matches_text_document_filter(info: TextDocumentInfo, filter: TextDocumentFilter) -> bool:
+def matches_text_document_filter(info: TextDocumentInfo, document_filter: TextDocumentFilter) -> bool:
     """
     Checks whether the given `uri` matches the `TextDocumentFilter`.
 
@@ -118,15 +118,15 @@ def matches_text_document_filter(info: TextDocumentInfo, filter: TextDocumentFil
 
     (scheme, _, path_raw, _, _) = urlsplit(info.uri, scheme="file")
 
-    if "scheme" in filter and filter["scheme"] != scheme:
+    if "scheme" in document_filter and document_filter["scheme"] != scheme:
         return False
 
-    if filter_language_id := filter.get("language"):
+    if filter_language_id := document_filter.get("language"):
         language_id = guess_language_id(Path(path_raw)) if not info.language_id else info.language_id
         if not language_id or language_id != filter_language_id:
             return False
 
-    if lsp_glob := filter.get("pattern"):
+    if lsp_glob := document_filter.get("pattern"):
         found = False
         for glob in _expand_lsp_glob(lsp_glob):
             if fnmatch(path_raw, glob):
@@ -138,19 +138,19 @@ def matches_text_document_filter(info: TextDocumentInfo, filter: TextDocumentFil
     return True
 
 
-def matches_file_operation_filter(uri: str, filter: FileOperationFilter) -> bool:
+def matches_file_operation_filter(uri: str, document_filter: FileOperationFilter) -> bool:
     """
     Checks whether a given `uri` matches the `FileOperationFilter`.
     """
 
     (scheme, _, path_raw, _, _) = urlsplit(uri, scheme="file")
 
-    if filter.scheme and scheme != filter.scheme:
+    if document_filter.scheme and scheme != document_filter.scheme:
         return False
 
-    if filter.pattern:
-        ignore_case = filter.pattern.options and filter.pattern.options.ignoreCase
-        lsp_glob = filter.pattern.glob
+    if document_filter.pattern:
+        ignore_case = document_filter.pattern.options and document_filter.pattern.options.ignoreCase
+        lsp_glob = document_filter.pattern.glob
 
         if ignore_case:
             path_raw = path_raw.casefold()
@@ -172,18 +172,22 @@ def matches_file_operation_filter(uri: str, filter: FileOperationFilter) -> bool
             path = Path(path_raw[1:])
 
         is_directory = path.is_dir()
-        if filter.pattern.matches is FileOperationPatternKind.file and is_directory:
+        if document_filter.pattern.matches is FileOperationPatternKind.file and is_directory:
             return False
-        elif filter.pattern.matches is FileOperationPatternKind.folder and not is_directory:
+        elif document_filter.pattern.matches is FileOperationPatternKind.folder and not is_directory:
             return False
 
     return True
 
 
-def install_language(*, language_id: str, extensions: List[str] = [], grammar: Optional[Grammar] = None, embedded_grammars: List[Grammar] = [], allow_overwrite: bool = False) -> None:
+def install_language(*, language_id: str,
+                     extensions: Optional[List[str]] = None,
+                     grammar: Optional[Grammar] = None,
+                     embedded_grammars: Optional[List[Grammar]] = None,
+                     allow_overwrite: bool = False) -> None:
     """
-    Adds a new language to be used by the library functions.
-
+    Adds a new language to be used by the library functions. Can also be used
+    to add properties to an existing language.
 
     :param language_id: The language id of the new language.
     :param extensions: List of file extensions associated with the new language.
@@ -194,10 +198,8 @@ def install_language(*, language_id: str, extensions: List[str] = [], grammar: O
         supplied are overwritten.
     """
 
-    if len(extensions) == 0:
-        raise ValueError("At least one file extension must be given.")
-
-    grammars = list(embedded_grammars)
+    extensions = list(extensions or [])
+    grammars = list(embedded_grammars or [])
     if grammar:
         grammars.append(grammar)
 

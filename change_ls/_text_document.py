@@ -72,7 +72,6 @@ class DroppedChangesWarning(Warning):
     """
     Warning category used when dropping changes when closing a TextDocument.
     """
-    ...
 
 
 def _skip_to_next_line(text: str, offset: int) -> int:
@@ -296,7 +295,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         # Set the reference_count to 0 explicitly, so documents from a closed
         # Workspace return True on is_closed().
         self._reference_count = 0
-        del self._workspace._opened_text_documents[self.uri]  # type: ignore
+        del self._workspace._opened_text_documents[self.uri]
         self.logger.info("TextDocument closed!")
 
     def is_closed(self) -> bool:
@@ -328,7 +327,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         return False
 
     def _resolve_client_parameter(self, client: Optional[Client]) -> Client:
-        return self._workspace._resolve_client_parameter(client)  # type: ignore
+        return self._workspace._resolve_client_parameter(client)
 
     @property
     def text(self) -> str:
@@ -597,20 +596,20 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self.logger.info(f"Updating document content for Client '{client}'")
 
         if client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Full):
-            contentChanges: List[TextDocumentContentChangeEvent] = [{"text": self._text}]
+            content_changes: List[TextDocumentContentChangeEvent] = [{"text": self._text}]
         elif client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Incremental):
             # The edits are reversed because, unlike commit_edits, ContentChangeEvents are applied one
             # at a time, in the order they are received. So in order for edits earlier in the document
             # to not invalidate later edits, the edits are entered in reverse order.
-            contentChanges = [self._edit_to_text_document_change_event(edit, client)
-                              for edit in reversed(self._pending_edits)]
+            content_changes = [self._edit_to_text_document_change_event(edit, client)
+                               for edit in reversed(self._pending_edits)]
         else:
             # Document Sync is disabled for this client
             return
 
         params = DidChangeTextDocumentParams(
             textDocument=self.get_versioned_text_document_identifier(),
-            contentChanges=contentChanges)
+            contentChanges=content_changes)
         client.send_text_document_did_change(params)
 
     def commit_edits(self) -> None:

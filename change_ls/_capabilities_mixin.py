@@ -1,4 +1,4 @@
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 from asyncio import Event, wait_for
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -37,11 +37,11 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
 
         for t in text_documents:
             document_matched = False
-            for filter in registration.document_selector:
-                if isinstance(filter, NotebookCellTextDocumentFilter):
+            for document_filter in registration.document_selector:
+                if isinstance(document_filter, NotebookCellTextDocumentFilter):
                     continue
 
-                if matches_text_document_filter(t, filter):
+                if matches_text_document_filter(t, document_filter):
                     document_matched = True
                     break
             if not document_matched:
@@ -65,8 +65,8 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
 
         for t in uris:
             uri_matched = False
-            for filter in registration.options.filters:
-                if matches_file_operation_filter(t, filter):
+            for document_filter in registration.options.filters:
+                if matches_file_operation_filter(t, document_filter):
                     uri_matched = True
                     break
             if not uri_matched:
@@ -164,7 +164,8 @@ class CapabilitiesMixin(ABC):
         self._pending_feature_requests = {}
         self._server_capabilities = None
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def logger(self) -> OperationLoggerAdapter:
         ...
 

@@ -105,11 +105,11 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
             offset_locations_in_document: List[Tuple[int, int]] = []
             for l in lsp_locations_in_document:
                 if isinstance(l, Location):
-                    range = l.range
+                    location_range = l.range
                 else:
-                    range = l.targetSelectionRange
-                start = doc.position_to_offset(range.start)
-                end = doc.position_to_offset(range.end)
+                    location_range = l.targetSelectionRange
+                start = doc.position_to_offset(location_range.start)
+                end = doc.position_to_offset(location_range.end)
                 offset_locations_in_document.append((start, end))
 
             offset_locations_in_document.sort()
@@ -143,8 +143,8 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
             doc = key
             try:
                 index = self._text_documents.index(key)
-            except ValueError:
-                raise KeyError(key.uri)
+            except ValueError as e:
+                raise KeyError(key.uri) from e
         else:
             index, doc = next(filter(lambda e: _text_document_matches_uri(e[1], key), enumerate(self._text_documents)),
                               (None, None))

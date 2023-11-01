@@ -288,20 +288,19 @@ class CustomSymbol(Symbol):
     _tags: List[SymbolTag]
     _container_name: Optional[str]
 
-    def __init__(self, client: Client, text_document: "td.TextDocument", range: Tuple[int, int], kind: SymbolKind,
+    def __init__(self, client: Client, text_document: "td.TextDocument", symbol_range: Tuple[int, int], kind: SymbolKind,
                  tags: Optional[List[SymbolTag]] = None, container_name: Optional[str] = None) -> None:
-        if range[0] >= range[1]:
+        if symbol_range[0] >= symbol_range[1]:
             raise ValueError("Invalid range for CustomSymbol")
-        self._client = client
-        self._workspace = text_document._workspace  # type: ignore
-        self._name = text_document.text[range[0]:range[1]]
+        super().__init__(text_document._workspace, client)
+        self._name = text_document.text[symbol_range[0]:symbol_range[1]]
         self._uri = text_document.uri
-        self._range = range
+        self._range = symbol_range
         self._kind = kind
         self._tags = list(tags) if tags is not None else []
         self._container_name = container_name
 
-        position = text_document.offset_to_position(range[0], client)
+        position = text_document.offset_to_position(symbol_range[0], client)
         self._anchor = _SymbolAnchor(text_document, position)
 
     def _get_anchor(self) -> _SymbolAnchor:
@@ -429,10 +428,8 @@ class WorkspaceSymbol(UnresolvedWorkspaceSymbol, Symbol):
     def __init__(self, client: Client, workspace: "ws.Workspace", lsp_workspace_symbol: Union[lsptypes.WorkspaceSymbol, lsptypes.SymbolInformation]) -> None:
         if not isinstance(lsp_workspace_symbol.location, Location):
             raise ChangeLSError("Client did not return a WorkspaceSymbol with filled range after resolve.")
-
-        self._client = client
-        self._workspace = workspace
-        self._lsp_workspace_symbol = lsp_workspace_symbol
+        super().__init__(client, workspace, lsp_workspace_symbol)  # init UnresolvedWorkspaceSymbol
+        super(UnresolvedWorkspaceSymbol, self).__init__(workspace, client)  # init Symbol
         text_document = workspace.open_text_document(self.uri)
         self._anchor = _SymbolAnchor(text_document, lsp_workspace_symbol.location.range.start)
         self._range = (text_document.position_to_offset(lsp_workspace_symbol.location.range.start),
@@ -511,8 +508,7 @@ class DocumentSymbol(Symbol):
 
     def __init__(self, client: Client, workspace: "ws.Workspace", text_document: "td.TextDocument",
                  lsp_symbol: Union[lsptypes.DocumentSymbol, lsptypes.SymbolInformation], parent: Optional["DocumentSymbol"]) -> None:
-        self._client = client
-        self._workspace = workspace
+        super().__init__(workspace, client)
         self._text_document = text_document
         self._lsp_symbol = lsp_symbol
         self._tags = list(lsp_symbol.tags) if lsp_symbol.tags else []

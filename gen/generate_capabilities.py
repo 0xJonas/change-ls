@@ -155,7 +155,7 @@ def generate_registration_to_feature_registration(gen: Generator) -> str:
 
         def registration_to_feature_registration(registration: Registration) -> FeatureRegistration:
             cls = _method_to_options_mapping[registration.method]
-            options = cls.from_json(registration.registerOptions)
+            options = cls.from_json(registration.registerOptions)  # type: ignore
             if isinstance(options, TextDocumentRegistrationOptions):
                 document_selector = options.documentSelector
             else:
@@ -183,6 +183,9 @@ def generate_capabilities_py(gen: Generator, feature_infos: Dict[str, FeatureInf
         #
         # This file was automatically generated, so any edits to it will get overwritten.
         # To change the content of this file, make changes to the generator.
+
+        # TODO: fix this:
+        # pyright: reportOptionalMemberAccess=none
 
         from typing import List, Optional
         from dataclasses import dataclass

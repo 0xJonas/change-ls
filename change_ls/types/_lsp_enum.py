@@ -2,8 +2,24 @@
 #
 # This file is a copy from the gen/static directory. Edit the file there instead.
 
-from typing import Any, ClassVar, Dict, Generic, Tuple, Type, TypeVar
+"""
+Implements an enum class (:class:`TypedLSPEnum`) which meets to following requirements:
 
+* The expression ``ExampleEnum(value)``...
+
+    * Returns the existing member if there is an enumeration member with that ``value``.
+
+    * Creates a new unique member on the fly if the enum class extends the marker
+        class :class:`AllowCustomValues`. Future calls with the same value
+        will return that same member.
+
+    * Otherwise raises an :class:`LSPEnumException`.
+
+* Enumeration members have the type of the enum class
+    (e.g. ``isinstance(member, ExampleEnum) == True``)
+"""
+
+from typing import Any, ClassVar, Dict, Generic, Hashable, Tuple, Type, TypeVar
 
 # The next two functions are copied from cpython/enum.py
 
@@ -26,9 +42,9 @@ def _is_descriptor(obj: Any) -> bool:
 
 
 class LSPEnumException(Exception):
-    value: str
+    value: Any
 
-    def __init__(self, value: str) -> None:
+    def __init__(self, value: Any) -> None:
         self.value = value
 
     def __str__(self) -> str:
@@ -52,22 +68,19 @@ class _LSPEnumProtoMember:
 
 class AllowCustomValues:
     """Marker class to indicate to _LSPEnumMeta that custom values are allowed."""
-    pass
 
 class _LSPEnumMeta(type):
 
-    def __new__(cls, name: str, bases: Tuple[type, ...], classdict: Dict[str, Any]) -> type:
-        value_to_member = {}
-
+    def __new__(mcs, name: str, bases: Tuple[type, ...], classdict: Dict[str, Any]) -> type:
         for (key, value) in classdict.items():
             if _is_dunder(key) or _is_descriptor(value):
                 continue
             classdict[key] = _LSPEnumProtoMember(value)
 
-        classdict["_value_to_member"] = value_to_member
+        classdict["_value_to_member"] = {}
         classdict["_allow_custom_values"] = AllowCustomValues in bases
 
-        return super().__new__(cls, name, bases, classdict)
+        return super().__new__(mcs, name, bases, classdict)
 
 
 T = TypeVar("T", bound="_LSPEnum")
@@ -75,8 +88,10 @@ T = TypeVar("T", bound="_LSPEnum")
 class _LSPEnum(metaclass=_LSPEnumMeta):
     value: Any
     _initialized: ClassVar[bool]
+    _value_to_member: ClassVar[Dict[Hashable, Any]]
+    _allow_custom_values: ClassVar[bool]
 
-    def __new__(cls: Type[T], value: Any) -> T:
+    def __new__(cls: Type[T], value: Hashable) -> T:
         if out := cls._value_to_member.get(value):
             return out
         elif cls._allow_custom_values:

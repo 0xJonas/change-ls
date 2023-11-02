@@ -3,6 +3,9 @@
 # This file was automatically generated, so any edits to it will get overwritten.
 # To change the content of this file, make changes to the generator.
 
+# pyright: reportUnknownArgumentType=none
+# ^ Why does this not work?
+
 from ._util import *
 from ._enumerations import *
 
@@ -312,10 +315,10 @@ def _parse_AnonymousStructure42(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 def _write_AnonymousStructure42(obj: Dict[Literal["language","scheme","pattern"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
     out["language"] = obj["language"]
-    if obj.get("scheme") is not None:
-        out["scheme"] = obj.get("scheme")
-    if obj.get("pattern") is not None:
-        out["pattern"] = obj.get("pattern")
+    if "scheme" in obj:
+        out["scheme"] = obj["scheme"]
+    if "pattern" in obj:
+        out["pattern"] = obj["pattern"]
     return out
 
 
@@ -334,11 +337,11 @@ def _parse_AnonymousStructure43(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure43(obj: Dict[Literal["language","scheme","pattern"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("language") is not None:
-        out["language"] = obj.get("language")
+    if "language" in obj:
+        out["language"] = obj["language"]
     out["scheme"] = obj["scheme"]
-    if obj.get("pattern") is not None:
-        out["pattern"] = obj.get("pattern")
+    if "pattern" in obj:
+        out["pattern"] = obj["pattern"]
     return out
 
 
@@ -357,10 +360,10 @@ def _parse_AnonymousStructure44(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure44(obj: Dict[Literal["language","scheme","pattern"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("language") is not None:
-        out["language"] = obj.get("language")
-    if obj.get("scheme") is not None:
-        out["scheme"] = obj.get("scheme")
+    if "language" in obj:
+        out["language"] = obj["language"]
+    if "scheme" in obj:
+        out["scheme"] = obj["scheme"]
     out["pattern"] = obj["pattern"]
     return out
 
@@ -406,10 +409,10 @@ def _parse_AnonymousStructure45(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 def _write_AnonymousStructure45(obj: Dict[Literal["notebookType","scheme","pattern"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
     out["notebookType"] = obj["notebookType"]
-    if obj.get("scheme") is not None:
-        out["scheme"] = obj.get("scheme")
-    if obj.get("pattern") is not None:
-        out["pattern"] = obj.get("pattern")
+    if "scheme" in obj:
+        out["scheme"] = obj["scheme"]
+    if "pattern" in obj:
+        out["pattern"] = obj["pattern"]
     return out
 
 
@@ -428,11 +431,11 @@ def _parse_AnonymousStructure46(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure46(obj: Dict[Literal["notebookType","scheme","pattern"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("notebookType") is not None:
-        out["notebookType"] = obj.get("notebookType")
+    if "notebookType" in obj:
+        out["notebookType"] = obj["notebookType"]
     out["scheme"] = obj["scheme"]
-    if obj.get("pattern") is not None:
-        out["pattern"] = obj.get("pattern")
+    if "pattern" in obj:
+        out["pattern"] = obj["pattern"]
     return out
 
 
@@ -451,10 +454,10 @@ def _parse_AnonymousStructure47(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure47(obj: Dict[Literal["notebookType","scheme","pattern"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("notebookType") is not None:
-        out["notebookType"] = obj.get("notebookType")
-    if obj.get("scheme") is not None:
-        out["scheme"] = obj.get("scheme")
+    if "notebookType" in obj:
+        out["notebookType"] = obj["notebookType"]
+    if "scheme" in obj:
+        out["scheme"] = obj["scheme"]
     out["pattern"] = obj["pattern"]
     return out
 
@@ -2018,7 +2021,7 @@ def parse_LSPObject(arg: JSON_VALUE) -> LSPObject:
     return { json_assert_type_string(key): parse_LSPAny((value)) for key, value in json_assert_type_object(arg).items()}
 
 def write_LSPObject(arg: LSPObject) -> JSON_VALUE:
-    return { key: write_LSPAny(val) for key, val in arg.items() }
+    return { json_assert_type_string(key): write_LSPAny(val) for key, val in arg.items() }
 
 
 # LSP arrays.
@@ -2594,8 +2597,8 @@ def _parse_AnonymousStructure6(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["d
 
 def _write_AnonymousStructure6(obj: Dict[Literal["delta"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("delta") is not None:
-        out["delta"] = obj.get("delta")
+    if "delta" in obj:
+        out["delta"] = obj["delta"]
     return out
 
 
@@ -3965,11 +3968,11 @@ class WorkspaceEdit():
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
         if self.changes is not None:
-            out["changes"] = { key: [i.to_json() for i in val] for key, val in self.changes.items() }
+            out["changes"] = { json_assert_type_string(key): [i.to_json() for i in val] for key, val in self.changes.items() }
         if self.documentChanges is not None:
             out["documentChanges"] = [write_or_type(i, (lambda i: isinstance(i, TextDocumentEdit), lambda i: isinstance(i, CreateFile), lambda i: isinstance(i, RenameFile), lambda i: isinstance(i, DeleteFile)), (lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json(), lambda i: i.to_json())) for i in self.documentChanges]
         if self.changeAnnotations is not None:
-            out["changeAnnotations"] = { write_ChangeAnnotationIdentifier(key): val.to_json() for key, val in self.changeAnnotations.items() }
+            out["changeAnnotations"] = { json_assert_type_string(write_ChangeAnnotationIdentifier(key)): val.to_json() for key, val in self.changeAnnotations.items() }
         return out
 
 
@@ -5580,7 +5583,7 @@ class DocumentDiagnosticReportPartialResult():
 
     def to_json(self) -> Dict[str, JSON_VALUE]:
         out: Dict[str, JSON_VALUE] = {}
-        out["relatedDocuments"] = { key: write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
+        out["relatedDocuments"] = { json_assert_type_string(key): write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
         return out
 
 
@@ -6748,10 +6751,10 @@ def _parse_AnonymousStructure7(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["a
 def _write_AnonymousStructure7(obj: Dict[Literal["array","didOpen","didClose"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
     out["array"] = obj["array"].to_json()
-    if obj.get("didOpen") is not None:
-        out["didOpen"] = [i.to_json() for i in obj.get("didOpen")]
-    if obj.get("didClose") is not None:
-        out["didClose"] = [i.to_json() for i in obj.get("didClose")]
+    if "didOpen" in obj:
+        out["didOpen"] = [i.to_json() for i in obj["didOpen"]]
+    if "didClose" in obj:
+        out["didClose"] = [i.to_json() for i in obj["didClose"]]
     return out
 
 
@@ -6803,8 +6806,8 @@ def _parse_AnonymousStructure39(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 def _write_AnonymousStructure39(obj: Dict[Literal["range","rangeLength","text"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
     out["range"] = obj["range"].to_json()
-    if obj.get("rangeLength") is not None:
-        out["rangeLength"] = obj.get("rangeLength")
+    if "rangeLength" in obj:
+        out["rangeLength"] = obj["rangeLength"]
     out["text"] = obj["text"]
     return out
 
@@ -6862,12 +6865,12 @@ def _parse_AnonymousStructure9(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["s
 
 def _write_AnonymousStructure9(obj: Dict[Literal["structure","data","textContent"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("structure") is not None:
-        out["structure"] = _write_AnonymousStructure7(obj.get("structure"))
-    if obj.get("data") is not None:
-        out["data"] = [i.to_json() for i in obj.get("data")]
-    if obj.get("textContent") is not None:
-        out["textContent"] = [_write_AnonymousStructure8(i) for i in obj.get("textContent")]
+    if "structure" in obj:
+        out["structure"] = _write_AnonymousStructure7(obj["structure"])
+    if "data" in obj:
+        out["data"] = [i.to_json() for i in obj["data"]]
+    if "textContent" in obj:
+        out["textContent"] = [_write_AnonymousStructure8(i) for i in obj["textContent"]]
     return out
 
 
@@ -7237,8 +7240,8 @@ def _parse_AnonymousStructure10(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 def _write_AnonymousStructure10(obj: Dict[Literal["name","version"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
     out["name"] = obj["name"]
-    if obj.get("version") is not None:
-        out["version"] = obj.get("version")
+    if "version" in obj:
+        out["version"] = obj["version"]
     return out
 
 
@@ -7252,8 +7255,8 @@ def _parse_AnonymousStructure17(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure17(obj: Dict[Literal["groupsOnLabel"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("groupsOnLabel") is not None:
-        out["groupsOnLabel"] = obj.get("groupsOnLabel")
+    if "groupsOnLabel" in obj:
+        out["groupsOnLabel"] = obj["groupsOnLabel"]
     return out
 
 
@@ -7457,8 +7460,8 @@ def _parse_AnonymousStructure18(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure18(obj: Dict[Literal["valueSet"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("valueSet") is not None:
-        out["valueSet"] = [i.value for i in obj.get("valueSet")]
+    if "valueSet" in obj:
+        out["valueSet"] = [i.value for i in obj["valueSet"]]
     return out
 
 
@@ -8318,26 +8321,26 @@ def _parse_AnonymousStructure24(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure24(obj: Dict[Literal["snippetSupport","commitCharactersSupport","documentationFormat","deprecatedSupport","preselectSupport","tagSupport","insertReplaceSupport","resolveSupport","insertTextModeSupport","labelDetailsSupport"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("snippetSupport") is not None:
-        out["snippetSupport"] = obj.get("snippetSupport")
-    if obj.get("commitCharactersSupport") is not None:
-        out["commitCharactersSupport"] = obj.get("commitCharactersSupport")
-    if obj.get("documentationFormat") is not None:
-        out["documentationFormat"] = [i.value for i in obj.get("documentationFormat")]
-    if obj.get("deprecatedSupport") is not None:
-        out["deprecatedSupport"] = obj.get("deprecatedSupport")
-    if obj.get("preselectSupport") is not None:
-        out["preselectSupport"] = obj.get("preselectSupport")
-    if obj.get("tagSupport") is not None:
-        out["tagSupport"] = _write_AnonymousStructure21(obj.get("tagSupport"))
-    if obj.get("insertReplaceSupport") is not None:
-        out["insertReplaceSupport"] = obj.get("insertReplaceSupport")
-    if obj.get("resolveSupport") is not None:
-        out["resolveSupport"] = _write_AnonymousStructure22(obj.get("resolveSupport"))
-    if obj.get("insertTextModeSupport") is not None:
-        out["insertTextModeSupport"] = _write_AnonymousStructure23(obj.get("insertTextModeSupport"))
-    if obj.get("labelDetailsSupport") is not None:
-        out["labelDetailsSupport"] = obj.get("labelDetailsSupport")
+    if "snippetSupport" in obj:
+        out["snippetSupport"] = obj["snippetSupport"]
+    if "commitCharactersSupport" in obj:
+        out["commitCharactersSupport"] = obj["commitCharactersSupport"]
+    if "documentationFormat" in obj:
+        out["documentationFormat"] = [i.value for i in obj["documentationFormat"]]
+    if "deprecatedSupport" in obj:
+        out["deprecatedSupport"] = obj["deprecatedSupport"]
+    if "preselectSupport" in obj:
+        out["preselectSupport"] = obj["preselectSupport"]
+    if "tagSupport" in obj:
+        out["tagSupport"] = _write_AnonymousStructure21(obj["tagSupport"])
+    if "insertReplaceSupport" in obj:
+        out["insertReplaceSupport"] = obj["insertReplaceSupport"]
+    if "resolveSupport" in obj:
+        out["resolveSupport"] = _write_AnonymousStructure22(obj["resolveSupport"])
+    if "insertTextModeSupport" in obj:
+        out["insertTextModeSupport"] = _write_AnonymousStructure23(obj["insertTextModeSupport"])
+    if "labelDetailsSupport" in obj:
+        out["labelDetailsSupport"] = obj["labelDetailsSupport"]
     return out
 
 
@@ -8351,8 +8354,8 @@ def _parse_AnonymousStructure25(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure25(obj: Dict[Literal["valueSet"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("valueSet") is not None:
-        out["valueSet"] = [i.value for i in obj.get("valueSet")]
+    if "valueSet" in obj:
+        out["valueSet"] = [i.value for i in obj["valueSet"]]
     return out
 
 
@@ -8366,8 +8369,8 @@ def _parse_AnonymousStructure26(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure26(obj: Dict[Literal["itemDefaults"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("itemDefaults") is not None:
-        out["itemDefaults"] = [i for i in obj.get("itemDefaults")]
+    if "itemDefaults" in obj:
+        out["itemDefaults"] = [i for i in obj["itemDefaults"]]
     return out
 
 
@@ -8603,8 +8606,8 @@ def _parse_AnonymousStructure27(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure27(obj: Dict[Literal["labelOffsetSupport"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("labelOffsetSupport") is not None:
-        out["labelOffsetSupport"] = obj.get("labelOffsetSupport")
+    if "labelOffsetSupport" in obj:
+        out["labelOffsetSupport"] = obj["labelOffsetSupport"]
     return out
 
 
@@ -8626,12 +8629,12 @@ def _parse_AnonymousStructure28(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure28(obj: Dict[Literal["documentationFormat","parameterInformation","activeParameterSupport"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("documentationFormat") is not None:
-        out["documentationFormat"] = [i.value for i in obj.get("documentationFormat")]
-    if obj.get("parameterInformation") is not None:
-        out["parameterInformation"] = _write_AnonymousStructure27(obj.get("parameterInformation"))
-    if obj.get("activeParameterSupport") is not None:
-        out["activeParameterSupport"] = obj.get("activeParameterSupport")
+    if "documentationFormat" in obj:
+        out["documentationFormat"] = [i.value for i in obj["documentationFormat"]]
+    if "parameterInformation" in obj:
+        out["parameterInformation"] = _write_AnonymousStructure27(obj["parameterInformation"])
+    if "activeParameterSupport" in obj:
+        out["activeParameterSupport"] = obj["activeParameterSupport"]
     return out
 
 
@@ -9558,8 +9561,8 @@ def _parse_AnonymousStructure31(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure31(obj: Dict[Literal["valueSet"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("valueSet") is not None:
-        out["valueSet"] = [i.value for i in obj.get("valueSet")]
+    if "valueSet" in obj:
+        out["valueSet"] = [i.value for i in obj["valueSet"]]
     return out
 
 
@@ -9573,8 +9576,8 @@ def _parse_AnonymousStructure32(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure32(obj: Dict[Literal["collapsedText"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("collapsedText") is not None:
-        out["collapsedText"] = obj.get("collapsedText")
+    if "collapsedText" in obj:
+        out["collapsedText"] = obj["collapsedText"]
     return out
 
 
@@ -9883,8 +9886,8 @@ def _parse_AnonymousStructure34(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure34(obj: Dict[Literal["delta"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("delta") is not None:
-        out["delta"] = obj.get("delta")
+    if "delta" in obj:
+        out["delta"] = obj["delta"]
     return out
 
 
@@ -9902,10 +9905,10 @@ def _parse_AnonymousStructure35(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure35(obj: Dict[Literal["range","full"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("range") is not None:
-        out["range"] = write_or_type(obj.get("range"), (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: _write_AnonymousStructure5(i)))
-    if obj.get("full") is not None:
-        out["full"] = write_or_type(obj.get("full"), (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: _write_AnonymousStructure34(i)))
+    if "range" in obj:
+        out["range"] = write_or_type(obj["range"], (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: _write_AnonymousStructure5(i)))
+    if "full" in obj:
+        out["full"] = write_or_type(obj["full"], (lambda i: isinstance(i, bool), lambda i: isinstance(i, Dict)), (lambda i: i, lambda i: _write_AnonymousStructure34(i)))
     return out
 
 
@@ -10831,8 +10834,8 @@ def _parse_AnonymousStructure36(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure36(obj: Dict[Literal["additionalPropertiesSupport"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("additionalPropertiesSupport") is not None:
-        out["additionalPropertiesSupport"] = obj.get("additionalPropertiesSupport")
+    if "additionalPropertiesSupport" in obj:
+        out["additionalPropertiesSupport"] = obj["additionalPropertiesSupport"]
     return out
 
 
@@ -11834,8 +11837,8 @@ def _parse_AnonymousStructure14(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 def _write_AnonymousStructure14(obj: Dict[Literal["notebook","cells"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
     out["notebook"] = write_or_type(obj["notebook"], (lambda i: isinstance(i, str), lambda i: (isinstance(i, Dict) and "notebookType" in i.keys()) or (isinstance(i, Dict) and "scheme" in i.keys()) or (isinstance(i, Dict) and "pattern" in i.keys())), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
-    if obj.get("cells") is not None:
-        out["cells"] = [_write_AnonymousStructure13(i) for i in obj.get("cells")]
+    if "cells" in obj:
+        out["cells"] = [_write_AnonymousStructure13(i) for i in obj["cells"]]
     return out
 
 
@@ -11850,8 +11853,8 @@ def _parse_AnonymousStructure15(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure15(obj: Dict[Literal["notebook","cells"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("notebook") is not None:
-        out["notebook"] = write_or_type(obj.get("notebook"), (lambda i: isinstance(i, str), lambda i: (isinstance(i, Dict) and "notebookType" in i.keys()) or (isinstance(i, Dict) and "scheme" in i.keys()) or (isinstance(i, Dict) and "pattern" in i.keys())), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
+    if "notebook" in obj:
+        out["notebook"] = write_or_type(obj["notebook"], (lambda i: isinstance(i, str), lambda i: (isinstance(i, Dict) and "notebookType" in i.keys()) or (isinstance(i, Dict) and "scheme" in i.keys()) or (isinstance(i, Dict) and "pattern" in i.keys())), (lambda i: i, lambda i: write_NotebookDocumentFilter(i)))
     out["cells"] = [_write_AnonymousStructure13(i) for i in obj["cells"]]
     return out
 
@@ -11975,8 +11978,8 @@ def _parse_AnonymousStructure12(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure12(obj: Dict[Literal["labelDetailsSupport"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("labelDetailsSupport") is not None:
-        out["labelDetailsSupport"] = obj.get("labelDetailsSupport")
+    if "labelDetailsSupport" in obj:
+        out["labelDetailsSupport"] = obj["labelDetailsSupport"]
     return out
 
 
@@ -12857,10 +12860,10 @@ def _parse_AnonymousStructure11(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["
 
 def _write_AnonymousStructure11(obj: Dict[Literal["workspaceFolders","fileOperations"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("workspaceFolders") is not None:
-        out["workspaceFolders"] = obj.get("workspaceFolders").to_json()
-    if obj.get("fileOperations") is not None:
-        out["fileOperations"] = obj.get("fileOperations").to_json()
+    if "workspaceFolders" in obj:
+        out["workspaceFolders"] = obj["workspaceFolders"].to_json()
+    if "fileOperations" in obj:
+        out["fileOperations"] = obj["fileOperations"].to_json()
     return out
 
 
@@ -13377,8 +13380,8 @@ def _parse_AnonymousStructure0(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["n
 def _write_AnonymousStructure0(obj: Dict[Literal["name","version"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
     out["name"] = obj["name"]
-    if obj.get("version") is not None:
-        out["version"] = obj.get("version")
+    if "version" in obj:
+        out["version"] = obj["version"]
     return out
 
 
@@ -14834,16 +14837,16 @@ def _parse_AnonymousStructure2(obj: Mapping[str, JSON_VALUE]) -> Dict[Literal["c
 
 def _write_AnonymousStructure2(obj: Dict[Literal["commitCharacters","editRange","insertTextFormat","insertTextMode","data"], Any]) -> JSON_VALUE:
     out: JSON_VALUE = {}
-    if obj.get("commitCharacters") is not None:
-        out["commitCharacters"] = [i for i in obj.get("commitCharacters")]
-    if obj.get("editRange") is not None:
-        out["editRange"] = write_or_type(obj.get("editRange"), (lambda i: isinstance(i, Range), lambda i: isinstance(i, Dict) and "insert" in i.keys() and "replace" in i.keys()), (lambda i: i.to_json(), lambda i: _write_AnonymousStructure1(i)))
-    if obj.get("insertTextFormat") is not None:
-        out["insertTextFormat"] = obj.get("insertTextFormat").value
-    if obj.get("insertTextMode") is not None:
-        out["insertTextMode"] = obj.get("insertTextMode").value
-    if obj.get("data") is not None:
-        out["data"] = write_LSPAny(obj.get("data"))
+    if "commitCharacters" in obj:
+        out["commitCharacters"] = [i for i in obj["commitCharacters"]]
+    if "editRange" in obj:
+        out["editRange"] = write_or_type(obj["editRange"], (lambda i: isinstance(i, Range), lambda i: isinstance(i, Dict) and "insert" in i.keys() and "replace" in i.keys()), (lambda i: i.to_json(), lambda i: _write_AnonymousStructure1(i)))
+    if "insertTextFormat" in obj:
+        out["insertTextFormat"] = obj["insertTextFormat"].value
+    if "insertTextMode" in obj:
+        out["insertTextMode"] = obj["insertTextMode"].value
+    if "data" in obj:
+        out["data"] = write_LSPAny(obj["data"])
     return out
 
 
@@ -18770,7 +18773,7 @@ class RelatedFullDocumentDiagnosticReport(FullDocumentDiagnosticReport):
             out["resultId"] = self.resultId
         out["items"] = [i.to_json() for i in self.items]
         if self.relatedDocuments is not None:
-            out["relatedDocuments"] = { key: write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
+            out["relatedDocuments"] = { json_assert_type_string(key): write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
         return out
 
 
@@ -18837,7 +18840,7 @@ class RelatedUnchangedDocumentDiagnosticReport(UnchangedDocumentDiagnosticReport
         out["kind"] = "unchanged"
         out["resultId"] = self.resultId
         if self.relatedDocuments is not None:
-            out["relatedDocuments"] = { key: write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
+            out["relatedDocuments"] = { json_assert_type_string(key): write_or_type(val, (lambda i: isinstance(i, FullDocumentDiagnosticReport), lambda i: isinstance(i, UnchangedDocumentDiagnosticReport)), (lambda i: i.to_json(), lambda i: i.to_json())) for key, val in self.relatedDocuments.items() }
         return out
 
 

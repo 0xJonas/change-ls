@@ -200,7 +200,7 @@ class Generator:
         See `_get_or_item_priority` for how priorities are used with OrTypes.
         """
         out = list(items)
-        out.sort(key=lambda i: self._get_or_item_priority(i), reverse=True)
+        out.sort(key=self._get_or_item_priority, reverse=True)
         return out
 
     def _generate_parse_expression_or(self, or_val: OrType, arg: str) -> str:
@@ -409,11 +409,9 @@ class Generator:
                 # Whatever the actual type is, all valid MapKeyTypes can be written directly.
                 write_key_expression = "key"
             else:
-                write_key_expression = self._generate_write_expression_reference(
-                    val.content.key, "key")
-            write_value_expression = self.generate_write_expression(
-                val.content.value, "val")
-            return f"{{ {write_key_expression}: {write_value_expression} for key, val in {name}.items() }}"
+                write_key_expression = self._generate_write_expression_reference(val.content.key, "key")
+            write_value_expression = self.generate_write_expression(val.content.value, "val")
+            return f"{{ json_assert_type_string({write_key_expression}): {write_value_expression} for key, val in {name}.items() }}"
         elif val.kind == "and":
             assert isinstance(val.content, AndType)
             return f"{name}.to_json()"

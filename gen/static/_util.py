@@ -54,9 +54,10 @@ class LSPUnknownPropertyException(Exception):
 
 
 T = TypeVar("T", bound=JSON_VALUE)
+R = TypeVar("R", bound=JSON_VALUE)
 
 
-def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[T]) -> Callable[[Mapping[str, JSON_VALUE], str], T]:
+def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[Mapping[str, JSON_VALUE], str], R]:
     """Creates a function which returns the value of a field with type check_type.
     If the field is missing or the extracted value has the wrong type, an
     exception is raised."""
@@ -65,14 +66,14 @@ def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, re
             val = obj[key]
             if not isinstance(val, check_type):
                 raise LSPTypeException(json_type_name, key)
-            return val
+            return val  # type: ignore
         except KeyError as e:
             raise LSPKeyNotFoundException(key) from e
 
     return json_get
 
 
-def _create_get_optional_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[T]) -> Callable[[Mapping[str, JSON_VALUE], str], Optional[T]]:
+def _create_get_optional_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[Mapping[str, JSON_VALUE], str], Optional[R]]:
     """Creates a function which returns the value of a field with type check_type.
     If the field is missing, None is returned. If the field exists but its value has
     the wrong type, an exception is raised."""
@@ -80,17 +81,17 @@ def _create_get_optional_function(check_type: Type[T], json_type_name: JSON_TYPE
         val = obj.get(key, None)
         if val is not None and not isinstance(val, check_type):
             raise LSPTypeException(json_type_name, key)
-        return val
+        return val  # type: ignore
 
     return json_get_optional
 
 
-def _create_assert_type_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[T]) -> Callable[[JSON_VALUE], T]:
+def _create_assert_type_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[JSON_VALUE], R]:
     def json_assert_type(val: JSON_VALUE) -> return_type:
         if not isinstance(val, check_type):
             raise LSPTypeException(json_type_name)
         else:
-            return val
+            return val  # type: ignore
 
     return json_assert_type
 

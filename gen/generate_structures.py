@@ -47,16 +47,16 @@ def _generate_property_read_statement(gen: Generator, prop: Property, obj_name: 
 
 def _generate_property_write_statement(gen: Generator, prop: Property, obj_name: str, anonymous_structure: bool = False, source_name: str = "") -> str:
     if anonymous_structure:
-        if prop.optional:
-            source = f'{source_name}.get("{prop.name}")'
-        else:
-            source = f'{source_name}["{prop.name}"]'
+        source = f'{source_name}["{prop.name}"]'
     else:
         source = "self." + escape_keyword(prop.name)
 
     write_statement = f'{obj_name}["{prop.name}"] = {gen.generate_write_expression(prop.type, source)}'
     if prop.optional:
-        write_statement = f"if {source} is not None:\n    " + write_statement
+        if anonymous_structure:
+            write_statement = f'if "{prop.name}" in {source_name}:\n    ' + write_statement
+        else:
+            write_statement = f'if {source} is not None:\n    ' + write_statement
     return write_statement
 
 
@@ -165,7 +165,7 @@ def _generate_structure_init_method(gen: Generator, properties: Tuple[Property, 
         assignments=indent("\n".join(assignments)))
 
 
-def _generate_structure_from_json_method(gen: Generator, class_name: str, properties: Tuple[Property]) -> str:
+def _generate_structure_from_json_method(gen: Generator, class_name: str, properties: Tuple[Property, ...]) -> str:
     property_read_statements = "\n".join([_generate_property_read_statement(gen, p, "obj") for p in properties])
     property_assignments = ", ".join([escape_keyword(p.name) + "=" + escape_keyword(p.name) for p in properties])
 
@@ -180,7 +180,7 @@ def _generate_structure_from_json_method(gen: Generator, class_name: str, proper
         property_assignments=property_assignments)
 
 
-def _generate_structure_to_json_method(gen: Generator, properties: Tuple[Property]) -> str:
+def _generate_structure_to_json_method(gen: Generator, properties: Tuple[Property, ...]) -> str:
     property_write_statements = "\n".join([_generate_property_write_statement(gen, p, "out") for p in properties])
 
     template = dedent("""\
@@ -191,7 +191,7 @@ def _generate_structure_to_json_method(gen: Generator, properties: Tuple[Propert
     return template.format(write_statments=indent(property_write_statements))
 
 
-def _generate_structure_definition_generic(gen: Generator, class_name: str, documentation: Optional[str], properties: Tuple[Property], superclasses: Tuple[str, ...]) -> str:
+def _generate_structure_definition_generic(gen: Generator, class_name: str, documentation: Optional[str], properties: Tuple[Property, ...], superclasses: Tuple[str, ...]) -> str:
     property_declarations = "\n\n".join([_generate_property_declaration(gen, p) for p in properties])
 
     template = dedent_ignore_empty('''\
@@ -470,6 +470,9 @@ def generate_structures_py(gen: Generator) -> str:
         #
         # This file was automatically generated, so any edits to it will get overwritten.
         # To change the content of this file, make changes to the generator.
+
+        # pyright: reportUnknownArgumentType=none
+        # ^ Why does this not work?
 
         from ._util import *
         from ._enumerations import *

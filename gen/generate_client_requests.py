@@ -284,6 +284,9 @@ def generate_client_requests_py(gen: Generator) -> str:
         # This file was automatically generated, so any edits to it will get overwritten.
         # To change the content of this file, make changes to the generator.
 
+        # pyright: reportUnknownArgumentType=none
+        # ^ Why does this not work?
+
         from ._util import *
         from ._enumerations import *
         from ._structures import *

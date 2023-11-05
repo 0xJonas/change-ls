@@ -12,7 +12,7 @@ from typing import List, Mapping, Optional, Tuple
 
 import change_ls._languages as languages
 from change_ls._protocol import LSSubprocessProtocol
-from change_ls.logging import _get_change_ls_default_logger  # type: ignore
+from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter
 from change_ls.tokens._token_list import SyntacticToken, TokenList
 from change_ls.types._util import (JSON_VALUE, json_assert_type_array,
@@ -23,20 +23,32 @@ from change_ls.types._util import (JSON_VALUE, json_assert_type_array,
 
 version_pattern = re.compile(r"^v(\d+)\.(\d+)\.(\d+)\s*$")
 
-MIN_NODE_VERSION_MAJOR = 14
-MIN_NODE_VERSION_MINOR = 0
-MIN_NODE_VERSION_PATCH = 0
+MIN_NODE_VERSION = (14, 0, 0)
 
 
-def check_node_version(path: str) -> bool:
-    result = subprocess.run([path, "-v"], capture_output=True, encoding="utf-8")
+def check_node_version(path: Optional[str] = None) -> bool:
+    """
+    Checks whether a sufficient version of node is installed to run the token server.
+
+    :param path: Check the node version at this path. If this is not given,
+        the path returned by ``shutil.which("node")`` is used.
+    """
+    if not path:
+        path = shutil.which("node")
+    if not path:
+        return False
+
+    result = subprocess.run([path, "-v"], capture_output=True, encoding="utf-8", check=False)
+    if result.returncode != 0:
+        return False
+
     version_match = version_pattern.fullmatch(result.stdout)
 
     if not version_match:
         return False
 
-    major, minor, patch = version_match.group(1, 2, 3)
-    return int(major) >= MIN_NODE_VERSION_MAJOR and int(minor) >= MIN_NODE_VERSION_MINOR and int(patch) >= MIN_NODE_VERSION_PATCH
+    found_version = tuple(int(v) for v in version_match.group(1, 2, 3))
+    return found_version >= MIN_NODE_VERSION
 
 
 def get_token_server_path() -> Path:
@@ -90,13 +102,15 @@ class _TokenClient:
     _logger: OperationLoggerAdapter
 
     def __init__(self) -> None:
-        self._logger = _get_change_ls_default_logger("change-ls.tokens")
+        self._logger = get_change_ls_default_logger("change-ls.tokens")
 
     async def launch(self) -> None:
         node_path = shutil.which("node")
         if not node_path or not check_node_version(node_path):
             raise TokenClientException(
-                f"node with at least version {MIN_NODE_VERSION_MAJOR}.{MIN_NODE_VERSION_MINOR}.{MIN_NODE_VERSION_PATCH} must be on PATH.")
+                "node with at least version "
+                f"v{MIN_NODE_VERSION[0]}.{MIN_NODE_VERSION[1]}.{MIN_NODE_VERSION[2]} "
+                "must be on PATH.")
 
         token_server_path = get_token_server_path()
         (_, self._protocol) = await get_running_loop().subprocess_exec(
@@ -131,7 +145,6 @@ class _TokenClient:
     def dispatch_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
         if method == "grammar/requestRaw":
             return self.grammar_request_raw(params)
-        pass
 
     def dispatch_notification(self, method: str, params: JSON_VALUE) -> None:
         pass
@@ -176,7 +189,7 @@ async def _start_token_client() -> None:
         _token_client_event_loop.run_until_complete(_token_client_instance.launch())
         _token_client_event_loop.run_until_complete(_token_client_instance.initialize())
         _token_client_event_loop.call_soon(
-            lambda: main_event_loop.call_soon_threadsafe(lambda: token_client_ready.set()))
+            lambda: main_event_loop.call_soon_threadsafe(token_client_ready.set))
         _token_client_event_loop.run_forever()
 
     async def shutdown_token_client_internal() -> None:

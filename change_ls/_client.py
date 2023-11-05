@@ -17,7 +17,7 @@ from typing import (Any, Callable, Dict, List, Literal, Mapping, Optional,
 from change_ls._capabilities_mixin import CapabilitiesMixin
 from change_ls._protocol import (LSPClientException, LSProtocol,
                                  LSStreamingProtocol, LSSubprocessProtocol)
-from change_ls.logging import _get_change_ls_default_logger  # type: ignore
+from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter, operation
 from change_ls.types import (JSON_VALUE, ApplyWorkspaceEditParams,
                              ApplyWorkspaceEditResult, CancelParams,
@@ -431,11 +431,11 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._launch_params = launch_params
         self._exit_sent = False
         self._id = uuid.uuid4()
-        self._logger_client = _get_change_ls_default_logger(
+        self._logger_client = get_change_ls_default_logger(
             "change-ls.client", cls_client=str(self._id), cls_server=None)
-        self._logger_server = _get_change_ls_default_logger(
+        self._logger_server = get_change_ls_default_logger(
             "change-ls.server", cls_client=str(self._id), cls_server=None)
-        self._logger_messages = _get_change_ls_default_logger(
+        self._logger_messages = get_change_ls_default_logger(
             "change-ls.messages", cls_client=str(self._id), cls_server=None)
         self._initialize_params = initialize_params
         self._server_info = None
@@ -463,11 +463,11 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     def _set_server_info(self, server_info: Optional[ServerInfo]) -> None:
         self._server_info = server_info
-        self._logger_client = _get_change_ls_default_logger(
+        self._logger_client = get_change_ls_default_logger(
             "change-ls.client", cls_client=str(self._id), cls_server=str(server_info))
-        self._logger_server = _get_change_ls_default_logger(
+        self._logger_server = get_change_ls_default_logger(
             "change-ls.server", cls_client=str(self._id), cls_server=str(server_info))
-        self._logger_messages = _get_change_ls_default_logger(
+        self._logger_messages = get_change_ls_default_logger(
             "change-ls.messages", cls_client=str(self._id), cls_server=str(server_info))
         if self._protocol:
             self._protocol._set_loggers(self._logger_client, self._logger_server, self._logger_messages)  # type: ignore

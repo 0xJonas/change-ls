@@ -1,5 +1,5 @@
 from ._grammar import Grammar, GrammarFormat
-from ._token_client import tokenize
+from ._token_client import check_node_version, tokenize
 from ._token_list import (AndTokenMatcher, AnyTokenMatcher, LexemeTokenMatcher,
                           NotTokenMatcher, OrTokenMatcher, ScopeTokenMatcher,
                           SemanticModifierTokenMatcher, SemanticToken,
@@ -27,5 +27,6 @@ __all__ = (
     "sem_modifier",
     "sem_type",
     "tokenize",
-    "GrammarFormat"
+    "check_node_version",
+    "GrammarFormat",
 )

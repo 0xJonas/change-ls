@@ -33,9 +33,10 @@ async def test_symbol_invalid_anchor() -> None:
 
 @pytest.fixture
 async def mock_ws_1(request: pytest.FixtureRequest) -> AsyncGenerator[Tuple[Workspace, Client], None]:
-    test_sequence_marker = request.node.get_closest_marker('test_sequence')
+    # pytest does not annotate request.node correctly
+    test_sequence_marker = request.node.get_closest_marker('test_sequence')  # type: ignore
     assert test_sequence_marker
-    test_sequence = test_sequence_marker.args[0]
+    test_sequence = test_sequence_marker.args[0]  # type: ignore
 
     async with Workspace(Path("test/mock-ws-1")) as ws:
         launch_params = StdIOConnectionParams(launch_command=f"node mock-server/out/index.js --stdio {test_sequence}")

@@ -15,7 +15,7 @@ from change_ls._change_ls_error import ChangeLSError
 from change_ls._client import (Client, ServerLaunchParams,
                                WorkspaceRequestHandler,
                                get_default_initialize_params)
-from change_ls.logging import _get_change_ls_default_logger  # type: ignore
+from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter, operation
 from change_ls.types import (ApplyWorkspaceEditParams,
                              ApplyWorkspaceEditResult, ConfigurationParams,
@@ -113,7 +113,7 @@ class Workspace(WorkspaceRequestHandler):
         self._configuration_provider = None
         self._opened_text_documents = {}
         self._id = uuid.uuid4()
-        self._logger = _get_change_ls_default_logger(
+        self._logger = get_change_ls_default_logger(
             "change-ls.workspace", cls_workspace=str(self._id), cls_text_document=None)
 
     @property

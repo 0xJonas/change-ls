@@ -555,7 +555,7 @@ _CHANGE_LS_DEFAULT_LOGGER = Literal["change-ls.workspace", "change-ls.client",
                                     "change-ls.server", "change-ls.messages", "change-ls.tokens"]
 
 
-def _get_change_ls_default_logger(name: _CHANGE_LS_DEFAULT_LOGGER, **extras: Any) -> OperationLoggerAdapter:
+def get_change_ls_default_logger(name: _CHANGE_LS_DEFAULT_LOGGER, **extras: Any) -> OperationLoggerAdapter:
     if name == "change-ls.workspace":
         assert "cls_workspace" in extras
         assert "cls_text_document" in extras

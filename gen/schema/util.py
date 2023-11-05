@@ -1,5 +1,5 @@
-from typing import Callable, List, Literal, Mapping, Optional, Sequence, Type, TypeVar, Union
-
+from typing import (Callable, List, Literal, Mapping, Optional, Sequence, Type,
+                    TypeVar, Union)
 
 JSON_VALUE = Union[int, float, bool, str, Sequence['JSON_VALUE'], Mapping[str, 'JSON_VALUE'], None]
 JSON_TYPE_NAME = Literal["number (int)", "number (real)", "bool", "string", "array", "object", "null"]
@@ -38,8 +38,9 @@ class LSPMetaModelException(Exception):
 
 
 T = TypeVar("T", bound=JSON_VALUE)
+R = TypeVar("R", bound=JSON_VALUE)
 
-def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[T]) -> Callable[[Mapping[str, JSON_VALUE], str], T]:
+def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[Mapping[str, JSON_VALUE], str], R]:
     """Creates a function which returns the value of a field with type check_type.
     If the field is missing or the extracted value has the wrong type, an
     exception is raised."""
@@ -48,21 +49,21 @@ def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, re
             val = obj[key]
             if not isinstance(val, check_type):
                 raise LSPTypeException(key, json_type_name)
-            return val
+            return val  # type: ignore
         except KeyError as e:
             raise LSPKeyNotFoundException(key) from e
 
     return json_get
 
-def _create_get_optional_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[T]) -> Callable[[Mapping[str, JSON_VALUE], str], Optional[T]]:
+def _create_get_optional_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[Mapping[str, JSON_VALUE], str], Optional[R]]:
     """Creates a function which returns the value of a field with type check_type.
     If the field is missing, None is returned. If the field exists but its value has
     the wrong type, an exception is raised."""
-    def json_get_optional(obj: Mapping[str, JSON_VALUE], key: str) -> Optional[check_type]:
+    def json_get_optional(obj: Mapping[str, JSON_VALUE], key: str) -> Optional[return_type]:
         val = obj.get(key, None)
         if val is not None and not isinstance(val, check_type):
             raise LSPTypeException(key, json_type_name)
-        return val
+        return val  # type: ignore
 
     return json_get_optional
 

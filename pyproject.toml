@@ -23,7 +23,7 @@ include = ["change_ls*"]
 "change_ls.token_server" = ["*.js", "*.wasm"]
 
 [tool.setuptools.dynamic]
-version = { attr = "change_ls.client.CHANGE_LS_VERSION" }
+version = { attr = "change_ls.CHANGE_LS_VERSION" }
 
 
 ### pytest ###
@@ -40,18 +40,33 @@ markers = [
 ]
 
 
+### pyright ###
+
+[tool.pyright]
+include = [
+    "change_ls",
+    "gen",
+    "test"
+]
+typeCheckingMode = "strict"
+reportPrivateUsage = false
+
+
 ### pylint ###
 
-[tool.pylint.master]
+[tool.pylint.main]
 load-plugins = "pylint.extensions.mccabe"
 ignore-paths = [
-    ".*/change_ls/types/.*.py",
-    ".*/change_ls/_languages.py",
-    ".*/test/.*/test_.*.py"
+    '.*change_ls/types/.*',
+    '.*change_ls/_languages.py',
+    '.*test/.*/test_.*',
 ]
 
 [tool.pylint.messages_control]
-disable = ["protected-access", "no-else-return"]
+disable = ["protected-access", "no-else-return", "no-else-raise", "fixme"]
+
+[tool.pylint.format]
+max-line-length = 120
 
 
 ### Black ###

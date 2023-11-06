@@ -8,21 +8,43 @@ from .util import *
 class BaseType:
     """Represents a base type like `string` or `DocumentUri`."""
 
-    name: Literal["URI", "DocumentUri", "integer", "uinteger", "decimal", "RegExp", "string", "boolean", "null"]
+    name: Literal[
+        "URI",
+        "DocumentUri",
+        "integer",
+        "uinteger",
+        "decimal",
+        "RegExp",
+        "string",
+        "boolean",
+        "null",
+    ]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "BaseType":
         name_json = json_get_string(obj, "name")
-        if name_json == "URI": return BaseType("URI")
-        elif name_json == "DocumentUri": return cls("DocumentUri")
-        elif name_json == "integer": return cls("integer")
-        elif name_json == "uinteger": return cls("uinteger")
-        elif name_json == "decimal": return cls("decimal")
-        elif name_json == "RegExp": return cls("RegExp")
-        elif name_json == "string": return cls("string")
-        elif name_json == "boolean": return cls("boolean")
-        elif name_json == "null": return cls("null")
-        else: raise LSPMetaModelException(f'Expected "name" to be one of "URI", "DocumentUri", "integer", "uinteger", "decimal", "RegExp", "string", "boolean" or "null", found {name_json}')
+        if name_json == "URI":
+            return BaseType("URI")
+        elif name_json == "DocumentUri":
+            return cls("DocumentUri")
+        elif name_json == "integer":
+            return cls("integer")
+        elif name_json == "uinteger":
+            return cls("uinteger")
+        elif name_json == "decimal":
+            return cls("decimal")
+        elif name_json == "RegExp":
+            return cls("RegExp")
+        elif name_json == "string":
+            return cls("string")
+        elif name_json == "boolean":
+            return cls("boolean")
+        elif name_json == "null":
+            return cls("null")
+        else:
+            raise LSPMetaModelException(
+                f'Expected "name" to be one of "URI", "DocumentUri", "integer", "uinteger", "decimal", "RegExp", "string", "boolean" or "null", found {name_json}'
+            )
 
 
 @dataclass(frozen=True)
@@ -57,11 +79,18 @@ class MapKeyType:
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "MapKeyType":
         name_json = json_get_string(obj, "name")
-        if name_json == "URI": return cls("URI")
-        elif name_json == "DocumentUri": return cls("DocumentUri")
-        elif name_json == "string": return cls("string")
-        elif name_json == "integer": return cls("integer")
-        else: raise LSPMetaModelException(f'Expected "name" to be one of "URI", "DocumentUri", "string" or "integer", found {name_json}')
+        if name_json == "URI":
+            return cls("URI")
+        elif name_json == "DocumentUri":
+            return cls("DocumentUri")
+        elif name_json == "string":
+            return cls("string")
+        elif name_json == "integer":
+            return cls("integer")
+        else:
+            raise LSPMetaModelException(
+                f'Expected "name" to be one of "URI", "DocumentUri", "string" or "integer", found {name_json}'
+            )
 
 
 @dataclass(frozen=True)
@@ -80,7 +109,9 @@ class MapType:
         elif key_kind == "reference":
             key = ReferenceType.from_json(key_json)
         else:
-            raise LSPMetaModelException(f'Expected "kind" to be one of "base" or "reference, found {key_kind}')
+            raise LSPMetaModelException(
+                f'Expected "kind" to be one of "base" or "reference, found {key_kind}'
+            )
 
         value_json = json_get_object(obj, "value")
         return cls(key, AnyType.from_json(value_json))
@@ -191,9 +222,9 @@ class StringLiteralType:
         return cls(json_get_string(obj, "value"))
 
     def generate_read(self, source: str) -> str:
-        return (f"""if json_get_string(obj, "{source}") != {self.value}:
+        return f"""if json_get_string(obj, "{source}") != {self.value}:
     raise LSPException("stringLiteral does not match")
-""")
+"""
 
 
 @dataclass(frozen=True)
@@ -207,9 +238,9 @@ class IntegerLiteralType:
         return cls(json_get_int(obj, "value"))
 
     def generate_read(self, source: str) -> str:
-        return (f"""if json_get_number(obj, "{source}") != {self.value}:
+        return f"""if json_get_number(obj, "{source}") != {self.value}:
     raise LSPException("integerLiteral does not match")
-""")
+"""
 
 
 @dataclass(frozen=True)
@@ -223,31 +254,69 @@ class BooleanLiteralType:
         return cls(json_get_bool(obj, "value"))
 
     def generate_read(self, source: str) -> str:
-        return (f"""if json_get_boolean(obj, "{source}") != {self.value}:
+        return f"""if json_get_boolean(obj, "{source}") != {self.value}:
     raise LSPException("booleanLiteral does not match")
-""")
+"""
 
 
-AnyTypeKind = Literal["base", "reference", "array", "map", "and", "or", "tuple", "literal", "stringLiteral", "integerLiteral", "booleanLiteral"]
+AnyTypeKind = Literal[
+    "base",
+    "reference",
+    "array",
+    "map",
+    "and",
+    "or",
+    "tuple",
+    "literal",
+    "stringLiteral",
+    "integerLiteral",
+    "booleanLiteral",
+]
+
 
 @dataclass(frozen=True)
 class AnyType:
-
     kind: AnyTypeKind
-    content: Union[BaseType, ReferenceType, ArrayType, MapType, AndType, OrType, TupleType, StructureLiteralType, StringLiteralType, IntegerLiteralType, BooleanLiteralType]
+    content: Union[
+        BaseType,
+        ReferenceType,
+        ArrayType,
+        MapType,
+        AndType,
+        OrType,
+        TupleType,
+        StructureLiteralType,
+        StringLiteralType,
+        IntegerLiteralType,
+        BooleanLiteralType,
+    ]
 
     @classmethod
     def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "AnyType":
         kind_json = json_get_string(obj, "kind")
-        if kind_json == "base": return AnyType("base", BaseType.from_json(obj))
-        elif kind_json == "reference": return AnyType("reference", ReferenceType.from_json(obj))
-        elif kind_json == "array": return AnyType("array", ArrayType.from_json(obj))
-        elif kind_json == "map": return AnyType("map", MapType.from_json(obj))
-        elif kind_json == "and": return AnyType("and", AndType.from_json(obj))
-        elif kind_json == "or": return AnyType("or", OrType.from_json(obj))
-        elif kind_json == "tuple": return AnyType("tuple", TupleType.from_json(obj))
-        elif kind_json == "literal": return AnyType("literal", StructureLiteralType.from_json(obj))
-        elif kind_json == "stringLiteral": return AnyType("stringLiteral", StringLiteralType.from_json(obj))
-        elif kind_json == "integerLiteral": return AnyType("integerLiteral", IntegerLiteralType.from_json(obj))
-        elif kind_json == "booleanLiteral": return AnyType("booleanLiteral", BooleanLiteralType.from_json(obj))
-        else: raise LSPMetaModelException(f'Expected "kind" to be one of "base", "reference", "array", "map", "and", "or", "tuple", "literal", "stringLiteral", "integerLiteral" or "booleanLiteral", found {kind_json}')
+        if kind_json == "base":
+            return AnyType("base", BaseType.from_json(obj))
+        elif kind_json == "reference":
+            return AnyType("reference", ReferenceType.from_json(obj))
+        elif kind_json == "array":
+            return AnyType("array", ArrayType.from_json(obj))
+        elif kind_json == "map":
+            return AnyType("map", MapType.from_json(obj))
+        elif kind_json == "and":
+            return AnyType("and", AndType.from_json(obj))
+        elif kind_json == "or":
+            return AnyType("or", OrType.from_json(obj))
+        elif kind_json == "tuple":
+            return AnyType("tuple", TupleType.from_json(obj))
+        elif kind_json == "literal":
+            return AnyType("literal", StructureLiteralType.from_json(obj))
+        elif kind_json == "stringLiteral":
+            return AnyType("stringLiteral", StringLiteralType.from_json(obj))
+        elif kind_json == "integerLiteral":
+            return AnyType("integerLiteral", IntegerLiteralType.from_json(obj))
+        elif kind_json == "booleanLiteral":
+            return AnyType("booleanLiteral", BooleanLiteralType.from_json(obj))
+        else:
+            raise LSPMetaModelException(
+                f'Expected "kind" to be one of "base", "reference", "array", "map", "and", "or", "tuple", "literal", "stringLiteral", "integerLiteral" or "booleanLiteral", found {kind_json}'
+            )

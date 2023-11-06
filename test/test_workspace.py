@@ -5,18 +5,27 @@ from typing import Any, Generator, Optional
 import pytest
 
 from change_ls import StdIOConnectionParams, Workspace
-from change_ls.types import (CreateFile, DeleteFile, LSPAny,
-                             OptionalVersionedTextDocumentIdentifier, Position,
-                             Range, RenameFile, TextDocumentEdit, TextEdit,
-                             WorkspaceEdit)
+from change_ls.types import (
+    CreateFile,
+    DeleteFile,
+    LSPAny,
+    OptionalVersionedTextDocumentIdentifier,
+    Position,
+    Range,
+    RenameFile,
+    TextDocumentEdit,
+    TextEdit,
+    WorkspaceEdit,
+)
 
 
 async def test_workspace_launch_clients() -> None:
-    workspace = Workspace(Path("test/mock-ws-1"),
-                          Path("test/mock-ws-2"),
-                          names=["mock-ws-1", "mock-ws-2"])
+    workspace = Workspace(
+        Path("test/mock-ws-1"), Path("test/mock-ws-2"), names=["mock-ws-1", "mock-ws-2"]
+    )
     launch_params = StdIOConnectionParams(
-        launch_command="node mock-server/out/index.js --stdio test/test_workspace.json")
+        launch_command="node mock-server/out/index.js --stdio test/test_workspace.json"
+    )
     async with workspace.create_client(launch_params) as client:
         repo_uri = Path(".").resolve().as_uri()
         await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
@@ -38,7 +47,8 @@ async def test_workspace_configuration_provider() -> None:
     workspace = Workspace(Path("test/mock-ws-1"), Path("test/mock-ws-2"))
     workspace.set_configuration_provider(mock_config_provider)
     launch_params = StdIOConnectionParams(
-        launch_command="node mock-server/out/index.js --stdio test/test_configuration_provider.json")
+        launch_command="node mock-server/out/index.js --stdio test/test_configuration_provider.json"
+    )
     async with workspace.create_client(launch_params) as client:
         await client.send_request("$/go", None)
 
@@ -48,7 +58,8 @@ async def test_workspace_context_manager() -> None:
     client = None
     async with Workspace(Path("test/mock-ws-1")) as ws:
         launch_params = StdIOConnectionParams(
-            launch_command="node mock-server/out/index.js --stdio test/text_document/test_text_document_open_close.json")
+            launch_command="node mock-server/out/index.js --stdio test/text_document/test_text_document_open_close.json"
+        )
         client = await ws.launch_client(launch_params)
         assert client.get_state() == "running"
 
@@ -74,18 +85,27 @@ async def test_workspace_edit_changes(scratch_workspace_path: Path) -> None:
     doc_uri = (scratch_workspace_path / doc_path).resolve().as_uri()
     async with Workspace(scratch_workspace_path) as ws:
         launch_params = StdIOConnectionParams(
-            launch_command="node mock-server/out/index.js --stdio test/test_workspace_edit_changes.json")
+            launch_command="node mock-server/out/index.js --stdio test/test_workspace_edit_changes.json"
+        )
         client = await ws.launch_client(launch_params)
 
         workspace_uri = scratch_workspace_path.resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}})
+        await client.send_request(
+            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+        )
 
-        edit = WorkspaceEdit(changes={
-            doc_uri: [
-                TextEdit(range=Range(start=Position(line=0, character=7), end=Position(line=0, character=12)),
-                         newText="Good morning")
-            ]
-        })
+        edit = WorkspaceEdit(
+            changes={
+                doc_uri: [
+                    TextEdit(
+                        range=Range(
+                            start=Position(line=0, character=7), end=Position(line=0, character=12)
+                        ),
+                        newText="Good morning",
+                    )
+                ]
+            }
+        )
 
         await ws.perform_edit_and_save(edit)
 
@@ -103,21 +123,34 @@ async def test_workspace_edit_document_changes(scratch_workspace_path: Path) -> 
 
     async with Workspace(scratch_workspace_path) as ws:
         launch_params = StdIOConnectionParams(
-            launch_command="node mock-server/out/index.js --stdio test/test_workspace_edit_document_changes.json")
+            launch_command="node mock-server/out/index.js --stdio test/test_workspace_edit_document_changes.json"
+        )
         client = await ws.launch_client(launch_params)
 
         workspace_uri = scratch_workspace_path.resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}})
+        await client.send_request(
+            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+        )
 
-        edit = WorkspaceEdit(documentChanges=[
-            TextDocumentEdit(textDocument=OptionalVersionedTextDocumentIdentifier(uri=doc1_uri, version=0), edits=[
-                TextEdit(range=Range(start=Position(line=0, character=7), end=Position(line=0, character=12)),
-                         newText="Good morning")
-            ]),
-            CreateFile(kind="create", uri=temp_doc1_uri),
-            RenameFile(kind="rename", oldUri=temp_doc1_uri, newUri=temp_doc2_uri),
-            DeleteFile(kind="delete", uri=temp_doc2_uri)
-        ])
+        edit = WorkspaceEdit(
+            documentChanges=[
+                TextDocumentEdit(
+                    textDocument=OptionalVersionedTextDocumentIdentifier(uri=doc1_uri, version=0),
+                    edits=[
+                        TextEdit(
+                            range=Range(
+                                start=Position(line=0, character=7),
+                                end=Position(line=0, character=12),
+                            ),
+                            newText="Good morning",
+                        )
+                    ],
+                ),
+                CreateFile(kind="create", uri=temp_doc1_uri),
+                RenameFile(kind="rename", oldUri=temp_doc1_uri, newUri=temp_doc2_uri),
+                DeleteFile(kind="delete", uri=temp_doc2_uri),
+            ]
+        )
 
         await ws.perform_edit_and_save(edit)
 

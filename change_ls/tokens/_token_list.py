@@ -1,11 +1,20 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import (Any, Generic, Optional, Sequence, Set, SupportsIndex,
-                    Tuple, TypeVar, Union, overload)
+from typing import (
+    Any,
+    Generic,
+    Optional,
+    Sequence,
+    Set,
+    SupportsIndex,
+    Tuple,
+    TypeVar,
+    Union,
+    overload,
+)
 
 
 class TokenMatcher(ABC):
-
     @abstractmethod
     def matches_token(self, token: "_BaseToken") -> bool:
         pass
@@ -108,7 +117,6 @@ class NotTokenMatcher(TokenMatcher):
 
 
 class AnyTokenMatcher(TokenMatcher):
-
     def matches_token(self, token: "_BaseToken") -> bool:
         return True
 
@@ -148,16 +156,17 @@ class _BaseSemanticToken(_BaseToken):
     def matches_token(self, token: "_BaseToken") -> bool:
         if not isinstance(token, _BaseSemanticToken):
             return False
-        return (super().matches_token(token)
-                and self.sem_type == token.sem_type
-                and self.sem_modifiers == token.sem_modifiers)
+        return (
+            super().matches_token(token)
+            and self.sem_type == token.sem_type
+            and self.sem_modifiers == token.sem_modifiers
+        )
 
 
 @dataclass
 class SemanticToken(_BaseSemanticToken):
-
     def __repr__(self) -> str:
-        return f'SemanticToken({self.lexeme=!r}, {self.offset=!r}, {self.sem_type=!r}, {self.sem_modifiers=!r})'
+        return f"SemanticToken({self.lexeme=!r}, {self.offset=!r}, {self.sem_type=!r}, {self.sem_modifiers=!r})"
 
 
 @dataclass
@@ -166,7 +175,14 @@ class SyntacticToken(_BaseSemanticToken, TokenMatcher):
 
     __slots__ = ["scopes"]
 
-    def __init__(self, lexeme: str, offset: int, scopes: Set[str], sem_type: Optional[str] = None, sem_modifiers: Set[str] = set()) -> None:
+    def __init__(
+        self,
+        lexeme: str,
+        offset: int,
+        scopes: Set[str],
+        sem_type: Optional[str] = None,
+        sem_modifiers: Set[str] = set(),
+    ) -> None:
         self.lexeme = lexeme
         self.offset = offset
         self.scopes = scopes
@@ -176,28 +192,34 @@ class SyntacticToken(_BaseSemanticToken, TokenMatcher):
     def matches_token(self, token: "_BaseToken") -> bool:
         if not isinstance(token, SyntacticToken):
             return False
-        return (self.lexeme == token.lexeme
-                and len(self.scopes) == len(token.scopes)
-                and self.scopes == token.scopes)
+        return (
+            self.lexeme == token.lexeme
+            and len(self.scopes) == len(token.scopes)
+            and self.scopes == token.scopes
+        )
 
     def __repr__(self) -> str:
-        return f'SyntacticToken({self.lexeme=!r}, {self.offset=!r}, {self.sem_type=!r}, {self.sem_modifiers=!r}, {self.scopes=!r})'
+        return f"SyntacticToken({self.lexeme=!r}, {self.offset=!r}, {self.sem_type=!r}, {self.sem_modifiers=!r}, {self.scopes=!r})"
 
 
 _TokenType = TypeVar("_TokenType", bound=_BaseToken)
 
 
 class TokenList(Generic[_TokenType], Tuple[_TokenType, ...]):
-
     def __setitem__(self, index: Any, value: Any) -> None:
         raise NotImplementedError("TokenLists are read-only.")
 
     @overload
-    def __getitem__(self, index: SupportsIndex) -> _TokenType: ...
-    @overload
-    def __getitem__(self, index: slice) -> "TokenList[_TokenType]": ...
+    def __getitem__(self, index: SupportsIndex) -> _TokenType:
+        ...
 
-    def __getitem__(self, index: Union[SupportsIndex, slice]) -> Union["TokenList[_TokenType]", _TokenType]:
+    @overload
+    def __getitem__(self, index: slice) -> "TokenList[_TokenType]":
+        ...
+
+    def __getitem__(
+        self, index: Union[SupportsIndex, slice]
+    ) -> Union["TokenList[_TokenType]", _TokenType]:
         if isinstance(index, slice):
             return TokenList(super().__getitem__(index))
         else:

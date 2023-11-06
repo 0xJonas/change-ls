@@ -3,19 +3,32 @@ from typing import AsyncGenerator, Tuple
 
 import pytest
 
-from change_ls import (ChangeLSError, Client, CustomSymbol,
-                       StdIOConnectionParams, UnresolvedWorkspaceSymbol,
-                       Workspace, WorkspaceSymbol)
-from change_ls.types import (OptionalVersionedTextDocumentIdentifier, Position,
-                             Range, SymbolKind, TextDocumentEdit, TextEdit,
-                             WorkspaceEdit)
+from change_ls import (
+    ChangeLSError,
+    Client,
+    CustomSymbol,
+    StdIOConnectionParams,
+    UnresolvedWorkspaceSymbol,
+    Workspace,
+    WorkspaceSymbol,
+)
+from change_ls.types import (
+    OptionalVersionedTextDocumentIdentifier,
+    Position,
+    Range,
+    SymbolKind,
+    TextDocumentEdit,
+    TextEdit,
+    WorkspaceEdit,
+)
 
 
 @pytest.mark.filterwarnings("ignore::change_ls.DroppedChangesWarning")
 async def test_symbol_invalid_anchor() -> None:
     async with Workspace(Path("test/mock-ws-1")) as ws:
         launch_params = StdIOConnectionParams(
-            launch_command=f"node mock-server/out/index.js --stdio test/symbol/test_symbol_invalid_anchor.json")
+            launch_command=f"node mock-server/out/index.js --stdio test/symbol/test_symbol_invalid_anchor.json"
+        )
         client = await ws.launch_client(launch_params)
 
         repo_uri = Path(".").resolve().as_uri()
@@ -32,14 +45,18 @@ async def test_symbol_invalid_anchor() -> None:
 
 
 @pytest.fixture
-async def mock_ws_1(request: pytest.FixtureRequest) -> AsyncGenerator[Tuple[Workspace, Client], None]:
+async def mock_ws_1(
+    request: pytest.FixtureRequest,
+) -> AsyncGenerator[Tuple[Workspace, Client], None]:
     # pytest does not annotate request.node correctly
-    test_sequence_marker = request.node.get_closest_marker('test_sequence')  # type: ignore
+    test_sequence_marker = request.node.get_closest_marker("test_sequence")  # type: ignore
     assert test_sequence_marker
     test_sequence = test_sequence_marker.args[0]  # type: ignore
 
     async with Workspace(Path("test/mock-ws-1")) as ws:
-        launch_params = StdIOConnectionParams(launch_command=f"node mock-server/out/index.js --stdio {test_sequence}")
+        launch_params = StdIOConnectionParams(
+            launch_command=f"node mock-server/out/index.js --stdio {test_sequence}"
+        )
         client = await ws.launch_client(launch_params)
 
         repo_uri = Path(".").resolve().as_uri()
@@ -59,21 +76,35 @@ async def test_symbol_rename(custom_symbol: CustomSymbol) -> None:
     edit = await custom_symbol.get_rename_workspace_edit("test")
 
     document_uri = Path("./test/mock-ws-1/test-2.py").resolve().as_uri()
-    expected = WorkspaceEdit(documentChanges=[
-        TextDocumentEdit(textDocument=OptionalVersionedTextDocumentIdentifier(uri=document_uri, version=1),
-                         edits=[TextEdit(newText="test",
-                                         range=Range(start=Position(line=0, character=4),
-                                                     end=Position(line=0, character=8))),
-                                TextEdit(newText="test",
-                                         range=Range(start=Position(line=6, character=4),
-                                                     end=Position(line=6, character=8)))])
-    ])
+    expected = WorkspaceEdit(
+        documentChanges=[
+            TextDocumentEdit(
+                textDocument=OptionalVersionedTextDocumentIdentifier(uri=document_uri, version=1),
+                edits=[
+                    TextEdit(
+                        newText="test",
+                        range=Range(
+                            start=Position(line=0, character=4), end=Position(line=0, character=8)
+                        ),
+                    ),
+                    TextEdit(
+                        newText="test",
+                        range=Range(
+                            start=Position(line=6, character=4), end=Position(line=6, character=8)
+                        ),
+                    ),
+                ],
+            )
+        ]
+    )
     assert edit == expected
 
 
 @pytest.mark.test_sequence("test/symbol/test_symbol_find_references.json")
 async def test_symbol_find_references(custom_symbol: CustomSymbol) -> None:
-    doc, (start, end) = (await custom_symbol.find_references(include_declaration=False)).get_single_entry()
+    doc, (start, end) = (
+        await custom_symbol.find_references(include_declaration=False)
+    ).get_single_entry()
 
     assert doc.uri.endswith("test/mock-ws-1/test-2.py")
     assert start == 77

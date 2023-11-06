@@ -12,10 +12,11 @@ _NotificationHandler = Callable[[str, _ParamType], None]
 
 
 class MockLSProtocol(LSProtocol):
-
     _output_buffer: bytes
 
-    def __init__(self, request_handler: _RequestHandler, notification_handler: _NotificationHandler) -> None:
+    def __init__(
+        self, request_handler: _RequestHandler, notification_handler: _NotificationHandler
+    ) -> None:
         super().__init__(request_handler, notification_handler)
         self._output_buffer = b""
         self._connected = True
@@ -32,11 +33,15 @@ class MockLSProtocol(LSProtocol):
         return out
 
 
-def _empty_request_handler(method: str, params: Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]) -> JSON_VALUE:
+def _empty_request_handler(
+    method: str, params: Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]
+) -> JSON_VALUE:
     return None
 
 
-def _empty_notification_handler(method: str, params: Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]) -> None:
+def _empty_notification_handler(
+    method: str, params: Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]
+) -> None:
     return None
 
 
@@ -118,7 +123,9 @@ async def test_send_invalid_param_type() -> None:
     # Set up a request id, but do not actually send the output to the server.
     client.send_request("test", None, future)
 
-    invalid = b'Content-Length: 61\r\n\r\n{"jsonrpc": "2.0", "id": 0, "method": "test", "params": null}'
+    invalid = (
+        b'Content-Length: 61\r\n\r\n{"jsonrpc": "2.0", "id": 0, "method": "test", "params": null}'
+    )
     server.push_input(invalid)
     client.push_input(server.pull_output())
 

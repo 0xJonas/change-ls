@@ -3,23 +3,38 @@ from asyncio import Event, wait_for
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from change_ls._util import (TextDocumentInfo, matches_file_operation_filter,
-                             matches_text_document_filter)
+from change_ls._util import (
+    TextDocumentInfo,
+    matches_file_operation_filter,
+    matches_text_document_filter,
+)
 from change_ls.logging import OperationLoggerAdapter, operation
-from change_ls.types import (CodeActionOptions, CodeLensOptions,
-                             CompletionOptions, DiagnosticOptions,
-                             DocumentLinkOptions, ExecuteCommandOptions,
-                             FileOperationRegistrationOptions,
-                             InlayHintOptions, NotebookCellTextDocumentFilter,
-                             Registration, SaveOptions, SemanticTokensOptions,
-                             ServerCapabilities,
-                             TextDocumentChangeRegistrationOptions,
-                             TextDocumentSaveRegistrationOptions,
-                             TextDocumentSyncKind, TextDocumentSyncOptions,
-                             Unregistration, WorkspaceSymbolOptions)
+from change_ls.types import (
+    CodeActionOptions,
+    CodeLensOptions,
+    CompletionOptions,
+    DiagnosticOptions,
+    DocumentLinkOptions,
+    ExecuteCommandOptions,
+    FileOperationRegistrationOptions,
+    InlayHintOptions,
+    NotebookCellTextDocumentFilter,
+    Registration,
+    SaveOptions,
+    SemanticTokensOptions,
+    ServerCapabilities,
+    TextDocumentChangeRegistrationOptions,
+    TextDocumentSaveRegistrationOptions,
+    TextDocumentSyncKind,
+    TextDocumentSyncOptions,
+    Unregistration,
+    WorkspaceSymbolOptions,
+)
 from change_ls.types._capabilities import (
-    FeatureRegistration, registration_to_feature_registration,
-    server_capabilities_to_feature_registrations)
+    FeatureRegistration,
+    registration_to_feature_registration,
+    server_capabilities_to_feature_registrations,
+)
 
 
 @dataclass
@@ -29,7 +44,9 @@ class _FeatureRequest:
     event: Event
 
 
-def _registration_fulfils_feature_request(request_params: Dict[str, Any], registration: FeatureRegistration) -> bool:
+def _registration_fulfils_feature_request(
+    request_params: Dict[str, Any], registration: FeatureRegistration
+) -> bool:
     if "text_documents" in request_params and registration.document_selector:
         # TODO does this really need a special member in FeatureRegistration?
 
@@ -55,12 +72,16 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
             if request_params["sync_kind"] != registration.options.change:
                 return False
 
-    if "include_text" in request_params and (isinstance(registration.options, SaveOptions)
-                                             or isinstance(registration.options, TextDocumentSaveRegistrationOptions)):
+    if "include_text" in request_params and (
+        isinstance(registration.options, SaveOptions)
+        or isinstance(registration.options, TextDocumentSaveRegistrationOptions)
+    ):
         if request_params["include_text"] != bool(registration.options.includeText):
             return False
 
-    if "file_operations" in request_params and isinstance(registration.options, FileOperationRegistrationOptions):
+    if "file_operations" in request_params and isinstance(
+        registration.options, FileOperationRegistrationOptions
+    ):
         uris: List[str] = request_params["file_operations"]
 
         for t in uris:
@@ -72,11 +93,16 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
             if not uri_matched:
                 return False
 
-    if "semantic_tokens" in request_params and isinstance(registration.options, SemanticTokensOptions):
+    if "semantic_tokens" in request_params and isinstance(
+        registration.options, SemanticTokensOptions
+    ):
         for r in request_params["semantic_tokens"]:
             if r == "full" and not registration.options.full:
                 return False
-            elif r == "full/delta" and not (isinstance(registration.options.full, Dict) and registration.options.full.get("delta")):
+            elif r == "full/delta" and not (
+                isinstance(registration.options.full, Dict)
+                and registration.options.full.get("delta")
+            ):
                 return False
             elif r == "range" and not registration.options.range:
                 return False
@@ -86,32 +112,51 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
             if c not in registration.options.codeActionKinds:
                 return False
 
-    if "code_action_resolve" in request_params and isinstance(registration.options, CodeActionOptions):
+    if "code_action_resolve" in request_params and isinstance(
+        registration.options, CodeActionOptions
+    ):
         if request_params["code_action_resolve"] != bool(registration.options.resolveProvider):
             return False
 
-    if "workspace_commands" in request_params and isinstance(registration.options, ExecuteCommandOptions):
+    if "workspace_commands" in request_params and isinstance(
+        registration.options, ExecuteCommandOptions
+    ):
         for c in request_params["workspace_commands"]:
             if c not in registration.options.commands:
                 return False
 
-    if "completion_item_resolve" in request_params and isinstance(registration.options, CompletionOptions):
+    if "completion_item_resolve" in request_params and isinstance(
+        registration.options, CompletionOptions
+    ):
         if request_params["completion_item_resolve"] != bool(registration.options.resolveProvider):
             return False
 
-    if "completion_item_label_details" in request_params and isinstance(registration.options, CompletionOptions):
-        if request_params["completion_item_label_details"] != (registration.options.completionItem and registration.options.completionItem.get("labelDetailsSupport")):
+    if "completion_item_label_details" in request_params and isinstance(
+        registration.options, CompletionOptions
+    ):
+        if request_params["completion_item_label_details"] != (
+            registration.options.completionItem
+            and registration.options.completionItem.get("labelDetailsSupport")
+        ):
             return False
 
-    if "inlay_hint_resolve" in request_params and isinstance(registration.options, InlayHintOptions):
+    if "inlay_hint_resolve" in request_params and isinstance(
+        registration.options, InlayHintOptions
+    ):
         if request_params["inlay_hint_resolve"] != bool(registration.options.resolveProvider):
             return False
 
-    if "workspace_diagnostic" in request_params and isinstance(registration.options, DiagnosticOptions):
-        if request_params["workspace_diagnostic"] != bool(registration.options.workspaceDiagnostics):
+    if "workspace_diagnostic" in request_params and isinstance(
+        registration.options, DiagnosticOptions
+    ):
+        if request_params["workspace_diagnostic"] != bool(
+            registration.options.workspaceDiagnostics
+        ):
             return False
 
-    if "workspace_symbol_resolve" in request_params and isinstance(registration.options, WorkspaceSymbolOptions):
+    if "workspace_symbol_resolve" in request_params and isinstance(
+        registration.options, WorkspaceSymbolOptions
+    ):
         if request_params["workspace_symbol_resolve"] != bool(registration.options.resolveProvider):
             return False
 
@@ -119,7 +164,9 @@ def _registration_fulfils_feature_request(request_params: Dict[str, Any], regist
         if request_params["code_lens_resolve"] != bool(registration.options.resolveProvider):
             return False
 
-    if "document_link_resolve" in request_params and isinstance(registration.options, DocumentLinkOptions):
+    if "document_link_resolve" in request_params and isinstance(
+        registration.options, DocumentLinkOptions
+    ):
         if request_params["document_link_resolve"] != bool(registration.options.resolveProvider):
             return False
 
@@ -131,10 +178,14 @@ def _text_document_sync_kind_to_options(kind: TextDocumentSyncKind) -> TextDocum
     if kind is TextDocumentSyncKind.None_:
         return TextDocumentSyncOptions(openClose=False, change=TextDocumentSyncKind.None_)
     else:
-        return TextDocumentSyncOptions(openClose=True, change=kind, save=SaveOptions(includeText=False))
+        return TextDocumentSyncOptions(
+            openClose=True, change=kind, save=SaveOptions(includeText=False)
+        )
 
 
-def _text_document_sync_options_to_feature_registrations(options: TextDocumentSyncOptions) -> List[FeatureRegistration]:
+def _text_document_sync_options_to_feature_registrations(
+    options: TextDocumentSyncOptions,
+) -> List[FeatureRegistration]:
     out: List[FeatureRegistration] = []
 
     if options.openClose:
@@ -175,10 +226,16 @@ class CapabilitiesMixin(ABC):
 
         # A few capabilities cannot be turned into registrations from generated code
 
-        if capabilities.workspace and capabilities.workspace.get("workspaceFolders") and capabilities.workspace["workspaceFolders"].changeNotifications:
+        if (
+            capabilities.workspace
+            and capabilities.workspace.get("workspaceFolders")
+            and capabilities.workspace["workspaceFolders"].changeNotifications
+        ):
             val = capabilities.workspace["workspaceFolders"].changeNotifications
             if type(val) is str:
-                registration_list.append(FeatureRegistration(val, "workspace/didChangeWorkspaceFolders", None, None))
+                registration_list.append(
+                    FeatureRegistration(val, "workspace/didChangeWorkspaceFolders", None, None)
+                )
 
         if capabilities.textDocumentSync:
             if isinstance(capabilities.textDocumentSync, TextDocumentSyncKind):
@@ -192,8 +249,11 @@ class CapabilitiesMixin(ABC):
         # capabilities.diagnosticProvider is an OR-type. Since this is the only case of this pattern, it is
         # currently easier to just add the FeatureRegistration manually.
         if capabilities.diagnosticProvider and capabilities.diagnosticProvider.workspaceDiagnostics:
-            registration_list.append(FeatureRegistration(
-                None, "workspace/diagnostics", None, capabilities.diagnosticProvider))
+            registration_list.append(
+                FeatureRegistration(
+                    None, "workspace/diagnostics", None, capabilities.diagnosticProvider
+                )
+            )
 
         self._registrations = {}
         for r in registration_list:
@@ -209,7 +269,8 @@ class CapabilitiesMixin(ABC):
             self._registrations[feature_registration.method] = []
         self._registrations[feature_registration.method].append(feature_registration)
         self.logger.info(
-            f"Added dynamic feature registration for {feature_registration.method} with id {feature_registration.id}")
+            f"Added dynamic feature registration for {feature_registration.method} with id {feature_registration.id}"
+        )
 
     def _remove_dynamic_registration(self, unregistration: Unregistration) -> None:
         registrations = self._registrations.get(unregistration.method, [])
@@ -217,11 +278,14 @@ class CapabilitiesMixin(ABC):
         for i, r in enumerate(registrations):
             if r.id and r.id == unregistration.id:
                 del registrations[i]
-                self.logger.info(f"Removed dynamic feature registration with id {unregistration.id}")
+                self.logger.info(
+                    f"Removed dynamic feature registration with id {unregistration.id}"
+                )
                 return
 
         self.logger.warning(
-            f"Dynamic registration {unregistration.id} for {unregistration.method} could not be removed because it was not found.")
+            f"Dynamic registration {unregistration.id} for {unregistration.method} could not be removed because it was not found."
+        )
 
     def check_feature(self, method: str, **kwargs: Any) -> bool:
         """
@@ -299,7 +363,9 @@ class CapabilitiesMixin(ABC):
                     index += 1
 
     @operation
-    async def require_feature(self, method: str, *, timeout: Optional[float] = 10.0, **kwargs: Any) -> None:
+    async def require_feature(
+        self, method: str, *, timeout: Optional[float] = 10.0, **kwargs: Any
+    ) -> None:
         """
         Requires that the language server provides the feature described by `method` and `params`. This
         should be used when a language server registers some of its features dynamically, since the client

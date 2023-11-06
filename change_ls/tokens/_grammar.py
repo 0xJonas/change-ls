@@ -35,6 +35,7 @@ class Grammar(ABC):
     """
     Opaque object representing a TextMate grammar.
     """
+
     _scope_name: str
 
     def __init__(self, scope_name: str) -> None:

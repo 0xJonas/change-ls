@@ -68,12 +68,17 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
             out = self._location_list._text_documents[self._current_index]
 
             self._current_index += 1
-            while not self._location_list._is_valid_index(self._current_index) and self._current_index < self._location_list_length:
+            while (
+                not self._location_list._is_valid_index(self._current_index)
+                and self._current_index < self._location_list_length
+            ):
                 self._current_index += 1
 
             return out
 
-    def __init__(self, text_documents: List["td.TextDocument"], locations: List[List[Tuple[int, int]]]) -> None:
+    def __init__(
+        self, text_documents: List["td.TextDocument"], locations: List[List[Tuple[int, int]]]
+    ) -> None:
         self._text_documents = list(text_documents)
         self._original_keys = [(doc.uri, doc.version) for doc in text_documents]
         self._data = {doc.uri: l for doc, l in zip(text_documents, locations)}
@@ -82,7 +87,11 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
             doc._reopen()  # type: ignore
 
     @classmethod
-    def from_lsp_locations(cls, workspace: ws.Workspace, lsp_locations: Union[Location, Sequence[Location], Sequence[LocationLink]]) -> "LocationList":
+    def from_lsp_locations(
+        cls,
+        workspace: ws.Workspace,
+        lsp_locations: Union[Location, Sequence[Location], Sequence[LocationLink]],
+    ) -> "LocationList":
         """
         Creates a ``LocationList`` from a sequence of LSP locations (e.g. :class:`Location`, :class:`LocationLink`)
         as returned by various requests. This will open all :class:`TextDocuments <TextDocument>` referenced in
@@ -95,7 +104,9 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
         if not isinstance(lsp_locations, Sequence):
             lsp_locations = [lsp_locations]
 
-        grouped_locations = groupby(lsp_locations, lambda l: l.uri if isinstance(l, Location) else l.targetUri)
+        grouped_locations = groupby(
+            lsp_locations, lambda l: l.uri if isinstance(l, Location) else l.targetUri
+        )
         text_documents: List["td.TextDocument"] = []
         locations: List[List[Tuple[int, int]]] = []
         for uri, lsp_locations_in_document in grouped_locations:
@@ -125,7 +136,9 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
     def __enter__(self) -> "LocationList":
         return self
 
-    def __exit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
+    def __exit__(
+        self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType
+    ) -> bool:
         for doc in self._text_documents:
             doc.close()
         self._text_documents = []
@@ -136,7 +149,10 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
     def _is_valid_index(self, index: int) -> bool:
         if index >= len(self._text_documents):
             return False
-        return (self._text_documents[index].uri, self._text_documents[index].version) == self._original_keys[index]
+        return (
+            self._text_documents[index].uri,
+            self._text_documents[index].version,
+        ) == self._original_keys[index]
 
     def __getitem__(self, key: Union["td.TextDocument", str]) -> List[Tuple[int, int]]:
         if isinstance(key, td.TextDocument):
@@ -146,8 +162,12 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
             except ValueError as e:
                 raise KeyError(key.uri) from e
         else:
-            index, doc = next(filter(lambda e: _text_document_matches_uri(e[1], key), enumerate(self._text_documents)),
-                              (None, None))
+            index, doc = next(
+                filter(
+                    lambda e: _text_document_matches_uri(e[1], key), enumerate(self._text_documents)
+                ),
+                (None, None),
+            )
             if index is None or doc is None:
                 raise KeyError(key)
 

@@ -1,14 +1,29 @@
 from typing import Dict, List, Optional, Tuple, Union
 
-from gen.gen_util import (LSPGeneratorException, dedent_ignore_empty, indent,
-                          json_type_to_assert_function, ref_target)
-from gen.schema.anytype import (AndType, AnyType, ArrayType, BaseType,
-                                BooleanLiteralType, IntegerLiteralType,
-                                MapKeyType, MapType, OrType, Property,
-                                StringLiteralType, StructureLiteral,
-                                StructureLiteralType, TupleType)
-from gen.schema.types import (Enumeration, MetaModel, ReferenceType, Structure,
-                              TypeAlias)
+from gen.gen_util import (
+    LSPGeneratorException,
+    dedent_ignore_empty,
+    indent,
+    json_type_to_assert_function,
+    ref_target,
+)
+from gen.schema.anytype import (
+    AndType,
+    AnyType,
+    ArrayType,
+    BaseType,
+    BooleanLiteralType,
+    IntegerLiteralType,
+    MapKeyType,
+    MapType,
+    OrType,
+    Property,
+    StringLiteralType,
+    StructureLiteral,
+    StructureLiteralType,
+    TupleType,
+)
+from gen.schema.types import Enumeration, MetaModel, ReferenceType, Structure, TypeAlias
 from gen.schema.util import JSON_TYPE_NAME
 
 
@@ -22,10 +37,11 @@ class ReferenceResolver:
         self._structure_index = {s.name: s for s in meta_model.structures}
         self._type_alias_index = {t.name: t for t in meta_model.type_aliases}
 
-    def resolve_reference(self, name: str, resolve_typealiases: bool, stack: List[str] = []) -> Optional[ref_target]:
+    def resolve_reference(
+        self, name: str, resolve_typealiases: bool, stack: List[str] = []
+    ) -> Optional[ref_target]:
         if name in stack:
-            raise LSPGeneratorException(
-                f"Circular references: {stack + [name]}")
+            raise LSPGeneratorException(f"Circular references: {stack + [name]}")
         if name in self._enumeration_index:
             return self._enumeration_index[name]
         elif name in self._structure_index:
@@ -59,7 +75,9 @@ class Generator:
     def get_meta_model(self) -> MetaModel:
         return self._meta_model
 
-    def resolve_reference(self, reference: ReferenceType, resolve_typealiases: bool = True) -> Optional[ref_target]:
+    def resolve_reference(
+        self, reference: ReferenceType, resolve_typealiases: bool = True
+    ) -> Optional[ref_target]:
         """
         Resolves a ReferenceType to its reference type in the MetaModel of this Generator.
 
@@ -141,8 +159,7 @@ class Generator:
         elif isinstance(target, Enumeration):
             return f"{reference.name}({arg})"
         else:
-            raise LSPGeneratorException(
-                "Reference pointing to an unsupported type.")
+            raise LSPGeneratorException("Reference pointing to an unsupported type.")
 
     def _generate_parse_expression_mapping(self, map: MapType, arg: str) -> str:
         """
@@ -151,14 +168,14 @@ class Generator:
         map's key type to instances of the map's value type.
         """
         if isinstance(map.key, MapKeyType):
-            assert_type_func_key = json_type_to_assert_function[self._get_expected_json_type_mapkey(
-                map.key)]
+            assert_type_func_key = json_type_to_assert_function[
+                self._get_expected_json_type_mapkey(map.key)
+            ]
         else:
             target = self.resolve_reference(map.key)
             if not isinstance(target, TypeAlias):
                 print(target)
-                raise LSPGeneratorException(
-                    "A Reference in a map key must point to an AnyType.")
+                raise LSPGeneratorException("A Reference in a map key must point to an AnyType.")
             json_expected_type = self.get_expected_json_type(target.type)
             if not json_expected_type:
                 raise LSPGeneratorException("Weird AnyType in a map key.")
@@ -216,8 +233,7 @@ class Generator:
             else:
                 assert_type_func = ""
             parse_func_arg = f"{assert_type_func}(v)"
-            parse_functions.append(
-                f"lambda v: {self.generate_parse_expression(i, parse_func_arg)}")
+            parse_functions.append(f"lambda v: {self.generate_parse_expression(i, parse_func_arg)}")
         return f"parse_or_type({arg}, ({', '.join(parse_functions)}))"
 
     def _generate_parse_expression_tuple(self, tuple: TupleType, arg: str) -> str:
@@ -229,8 +245,7 @@ class Generator:
         for i, t in enumerate(tuple.items):
             json_type = self.get_expected_json_type(t)
             assert_fun = json_type_to_assert_function[json_type] if json_type else ""
-            parse_expressions.append(self.generate_parse_expression(
-                t, f"{assert_fun}({arg}[{i}])"))
+            parse_expressions.append(self.generate_parse_expression(t, f"{assert_fun}({arg}[{i}])"))
         return "(" + ", ".join(parse_expressions) + ")"
 
     def generate_parse_expression(self, val: AnyType, arg: str) -> str:
@@ -269,10 +284,10 @@ class Generator:
             return f'match_string({arg}, "{val.content.value}")'
         elif val.kind == "integerLiteral":
             assert isinstance(val.content, IntegerLiteralType)
-            return f'match_integer({arg}, {val.content.value})'
+            return f"match_integer({arg}, {val.content.value})"
         elif val.kind == "booleanLiteral":
             assert isinstance(val.content, BooleanLiteralType)
-            return f'match_bool({arg}, {val.content.value})'
+            return f"match_bool({arg}, {val.content.value})"
         else:
             assert False  # Broken AnyType
 
@@ -294,8 +309,7 @@ class Generator:
         elif isinstance(target, TypeAlias):
             return f"write_{target.name}({name})"
         else:
-            raise LSPGeneratorException(
-                "Reference pointing to an unsupported type.")
+            raise LSPGeneratorException("Reference pointing to an unsupported type.")
 
     def _generate_type_test(self, val: AnyType, name: str) -> str:
         """
@@ -318,8 +332,7 @@ class Generator:
                 return f"{name} is None"
         elif val.kind == "reference":
             assert isinstance(val.content, ReferenceType)
-            target = self.resolve_reference(
-                val.content, resolve_typealiases=False)
+            target = self.resolve_reference(val.content, resolve_typealiases=False)
             if isinstance(target, (Structure, Enumeration)):
                 return f"isinstance({name}, {target.name})"
             elif isinstance(target, TypeAlias):
@@ -333,8 +346,7 @@ class Generator:
                 assert False
         elif val.kind == "array":
             assert isinstance(val.content, ArrayType)
-            element_type_test = self._generate_type_test(
-                val.content.element, name + "[0]")
+            element_type_test = self._generate_type_test(val.content.element, name + "[0]")
             return f"isinstance({name}, List) and (len({name}) == 0 or ({element_type_test}))"
             # return f"isinstance({name}, List)"
         elif val.kind == "map":
@@ -345,15 +357,13 @@ class Generator:
             return f"isinstance({name}, {structure_name})"
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
-            tests = ["(" + self._generate_type_test(i, name) +
-                     ")" for i in val.content.items]
+            tests = ["(" + self._generate_type_test(i, name) + ")" for i in val.content.items]
             return " or ".join(tests)
         elif val.kind == "tuple":
             return f"isinstance({name}, Tuple)"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
-            required_keys = [
-                p.name for p in val.content.value.properties if not p.optional]
+            required_keys = [p.name for p in val.content.value.properties if not p.optional]
             key_checks = [f'"{key}" in {name}.keys()' for key in required_keys]
             return " and ".join([f"isinstance({name}, Dict)"] + key_checks)
         elif val.kind == "stringLiteral":
@@ -383,10 +393,8 @@ class Generator:
         assert kinds.count("map") <= 1
         assert kinds.count("tuple") <= 1
 
-        type_tests = [
-            f"lambda i: {self._generate_type_test(i, 'i')}" for i in val.items]
-        writers = [
-            f"lambda i: {self.generate_write_expression(i, 'i')}" for i in val.items]
+        type_tests = [f"lambda i: {self._generate_type_test(i, 'i')}" for i in val.items]
+        writers = [f"lambda i: {self.generate_write_expression(i, 'i')}" for i in val.items]
 
         return f"write_or_type({name}, ({', '.join(type_tests)}), ({', '.join(writers)}))"
 
@@ -409,7 +417,9 @@ class Generator:
                 # Whatever the actual type is, all valid MapKeyTypes can be written directly.
                 write_key_expression = "key"
             else:
-                write_key_expression = self._generate_write_expression_reference(val.content.key, "key")
+                write_key_expression = self._generate_write_expression_reference(
+                    val.content.key, "key"
+                )
             write_value_expression = self.generate_write_expression(val.content.value, "val")
             return f"{{ json_assert_type_string({write_key_expression}): {write_value_expression} for key, val in {name}.items() }}"
         elif val.kind == "and":
@@ -490,8 +500,7 @@ class Generator:
         elif val.kind == "map":
             assert isinstance(val.content, MapType)
             if isinstance(val.content.key, MapKeyType):
-                key_annotation = self._generate_type_annotation_mapkey(
-                    val.content.key)
+                key_annotation = self._generate_type_annotation_mapkey(val.content.key)
             else:
                 key_annotation = val.content.key.name
             return f"Dict[{key_annotation}, {self.generate_type_annotation(val.content.value)}]"
@@ -500,13 +509,11 @@ class Generator:
             return self._anonymous_andtype_names[val.content]
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
-            item_annotations = [self.generate_type_annotation(
-                v) for v in val.content.items]
+            item_annotations = [self.generate_type_annotation(v) for v in val.content.items]
             return f"Union[{', '.join(item_annotations)}]"
         elif val.kind == "tuple":
             assert isinstance(val.content, TupleType)
-            item_annotations = [self.generate_type_annotation(
-                v) for v in val.content.items]
+            item_annotations = [self.generate_type_annotation(v) for v in val.content.items]
             return f"Tuple[{', '.join(item_annotations)}]"
         elif val.kind == "literal":
             assert isinstance(val.content, StructureLiteralType)
@@ -555,8 +562,7 @@ class Generator:
             for i in val.content.items:
                 self._add_anonymous_definitions_from_anytype(i)
 
-            self._anonymous_andtype_names[val.content] = self._generate_and_type_name(
-                val.content)
+            self._anonymous_andtype_names[val.content] = self._generate_and_type_name(val.content)
         elif val.kind == "or":
             assert isinstance(val.content, OrType)
             for i in val.content.items:
@@ -579,8 +585,7 @@ class Generator:
                 # simply return here.
                 return
 
-            class_name = "AnonymousStructure" + \
-                str(len(self._anonymous_structure_names))
+            class_name = "AnonymousStructure" + str(len(self._anonymous_structure_names))
             self._anonymous_structure_names[val.content.value] = class_name
 
     def _generate_anonymous_structure_names(self) -> None:
@@ -597,8 +602,7 @@ class Generator:
                     self._add_anonymous_definitions_from_anytype(n.params)
 
             if n.registration_options:
-                self._add_anonymous_definitions_from_anytype(
-                    n.registration_options)
+                self._add_anonymous_definitions_from_anytype(n.registration_options)
 
         for r in self._meta_model.requests:
             if r.error_data:
@@ -615,8 +619,7 @@ class Generator:
                 self._add_anonymous_definitions_from_anytype(r.partial_result)
 
             if r.registration_options:
-                self._add_anonymous_definitions_from_anytype(
-                    r.registration_options)
+                self._add_anonymous_definitions_from_anytype(r.registration_options)
 
             self._add_anonymous_definitions_from_anytype(r.result)
 
@@ -650,7 +653,9 @@ class Generator:
                     raise LSPGeneratorException("Non-reference 'extends' values are not supported.")
                 target = self.resolve_reference(m.content)
                 if not isinstance(target, Structure):
-                    raise LSPGeneratorException("Non-Structure references in 'extends' are not supported")
+                    raise LSPGeneratorException(
+                        "Non-Structure references in 'extends' are not supported"
+                    )
                 props.update({p.name: p for p in self.collect_structure_properties(target)})
 
         if struct.mixins:
@@ -659,7 +664,9 @@ class Generator:
                     raise LSPGeneratorException("Non-reference 'mixins' values are not supported.")
                 target = self.resolve_reference(m.content)
                 if not isinstance(target, Structure):
-                    raise LSPGeneratorException("Non-Structure references in 'mixins' are not supported")
+                    raise LSPGeneratorException(
+                        "Non-Structure references in 'mixins' are not supported"
+                    )
                 props.update({p.name: p for p in target.properties})
 
         props.update({p.name: p for p in struct.properties})
@@ -681,19 +688,18 @@ class Generator:
         """
         Returns a list of all anonymous types in the metaModel.
         """
-        return list(self._anonymous_structure_names.keys()) + list(self._anonymous_andtype_names.keys())
+        return list(self._anonymous_structure_names.keys()) + list(
+            self._anonymous_andtype_names.keys()
+        )
 
     def generate_init_py(self) -> str:
-        structures = [
-            '"' + s.name + '"' for s in self._meta_model.structures if s.name[0] != '_']
-        enumerations = ['"' + e.name + '"'
-                        for e in self._meta_model.enumerations]
-        type_aliases = ['"' + t.name + '"'
-                        for t in self._meta_model.type_aliases]
-        and_types = ['"' + a + '"'
-                     for a in self._anonymous_andtype_names.values()]
+        structures = ['"' + s.name + '"' for s in self._meta_model.structures if s.name[0] != "_"]
+        enumerations = ['"' + e.name + '"' for e in self._meta_model.enumerations]
+        type_aliases = ['"' + t.name + '"' for t in self._meta_model.type_aliases]
+        and_types = ['"' + a + '"' for a in self._anonymous_andtype_names.values()]
 
-        template = dedent_ignore_empty("""\
+        template = dedent_ignore_empty(
+            """\
             # DO NOT EDIT THIS FILE DIRECTLY!
             #
             # This file was automatically generated, so any edits to it will get overwritten.
@@ -708,6 +714,9 @@ class Generator:
                 "JSON_VALUE",
             {exports}
             )
-            """)
+            """
+        )
 
-        return template.format(exports=indent(",\n".join(structures + enumerations + type_aliases + and_types)))
+        return template.format(
+            exports=indent(",\n".join(structures + enumerations + type_aliases + and_types))
+        )

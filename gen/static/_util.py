@@ -1,8 +1,22 @@
-from typing import (Any, Callable, List, Literal, Mapping, MutableSequence,
-                    Optional, Sequence, Tuple, Type, TypeVar, Union)
+from typing import (
+    Any,
+    Callable,
+    List,
+    Literal,
+    Mapping,
+    MutableSequence,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
-JSON_VALUE = Union[int, float, bool, str, Sequence['JSON_VALUE'], Mapping[str, 'JSON_VALUE'], None]
-JSON_TYPE_NAME = Literal["number (int)", "number (real)", "bool", "string", "array", "object", "null"]
+JSON_VALUE = Union[int, float, bool, str, Sequence["JSON_VALUE"], Mapping[str, "JSON_VALUE"], None]
+JSON_TYPE_NAME = Literal[
+    "number (int)", "number (real)", "bool", "string", "array", "object", "null"
+]
 
 
 class LSPKeyNotFoundException(Exception):
@@ -43,7 +57,6 @@ class LSPLiteralException(Exception):
 
 
 class LSPUnknownPropertyException(Exception):
-
     property: str
 
     def __init__(self, property: str) -> None:
@@ -57,10 +70,13 @@ T = TypeVar("T", bound=JSON_VALUE)
 R = TypeVar("R", bound=JSON_VALUE)
 
 
-def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[Mapping[str, JSON_VALUE], str], R]:
+def _create_get_function(
+    check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]
+) -> Callable[[Mapping[str, JSON_VALUE], str], R]:
     """Creates a function which returns the value of a field with type check_type.
     If the field is missing or the extracted value has the wrong type, an
     exception is raised."""
+
     def json_get(obj: Mapping[str, JSON_VALUE], key: str) -> return_type:
         try:
             val = obj[key]
@@ -73,10 +89,13 @@ def _create_get_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, re
     return json_get
 
 
-def _create_get_optional_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[Mapping[str, JSON_VALUE], str], Optional[R]]:
+def _create_get_optional_function(
+    check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]
+) -> Callable[[Mapping[str, JSON_VALUE], str], Optional[R]]:
     """Creates a function which returns the value of a field with type check_type.
     If the field is missing, None is returned. If the field exists but its value has
     the wrong type, an exception is raised."""
+
     def json_get_optional(obj: Mapping[str, JSON_VALUE], key: str) -> Optional[return_type]:
         val = obj.get(key, None)
         if val is not None and not isinstance(val, check_type):
@@ -86,7 +105,9 @@ def _create_get_optional_function(check_type: Type[T], json_type_name: JSON_TYPE
     return json_get_optional
 
 
-def _create_assert_type_function(check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]) -> Callable[[JSON_VALUE], R]:
+def _create_assert_type_function(
+    check_type: Type[T], json_type_name: JSON_TYPE_NAME, return_type: Type[R]
+) -> Callable[[JSON_VALUE], R]:
     def json_assert_type(val: JSON_VALUE) -> return_type:
         if not isinstance(val, check_type):
             raise LSPTypeException(json_type_name)
@@ -110,8 +131,12 @@ json_get_optional_float = _create_get_optional_function(float, "number (real)", 
 json_get_optional_bool = _create_get_optional_function(bool, "bool", bool)
 json_get_optional_string = _create_get_optional_function(str, "string", str)
 # use MutableSequence so that a str is not classified as an array
-json_get_optional_array = _create_get_optional_function(MutableSequence, "array", Sequence[JSON_VALUE])
-json_get_optional_object = _create_get_optional_function(Mapping, "object", Mapping[str, JSON_VALUE])
+json_get_optional_array = _create_get_optional_function(
+    MutableSequence, "array", Sequence[JSON_VALUE]
+)
+json_get_optional_object = _create_get_optional_function(
+    Mapping, "object", Mapping[str, JSON_VALUE]
+)
 json_get_optional_null = _create_get_optional_function(type(None), "null", type(None))
 
 json_assert_type_int = _create_assert_type_function(int, "number (int)", int)
@@ -119,7 +144,9 @@ json_assert_type_float = _create_assert_type_function(float, "number (real)", fl
 json_assert_type_bool = _create_assert_type_function(bool, "bool", bool)
 json_assert_type_string = _create_assert_type_function(str, "string", str)
 # use MutableSequence so that a str is not classified as an array
-json_assert_type_array = _create_assert_type_function(MutableSequence, "array", Sequence[JSON_VALUE])
+json_assert_type_array = _create_assert_type_function(
+    MutableSequence, "array", Sequence[JSON_VALUE]
+)
 json_assert_type_object = _create_assert_type_function(Mapping, "object", Mapping[str, JSON_VALUE])
 json_assert_type_null = _create_assert_type_function(type(None), "null", type(None))
 
@@ -157,7 +184,11 @@ def parse_or_type(val: JSON_VALUE, variant_parsers: Tuple[Callable[[JSON_VALUE],
     raise errors[0]  # TODO other exception?
 
 
-def write_or_type(val: Any, type_tests: Tuple[Callable[[Any], bool], ...], variant_writers: Tuple[Callable[[Any], JSON_VALUE], ...]) -> JSON_VALUE:
+def write_or_type(
+    val: Any,
+    type_tests: Tuple[Callable[[Any], bool], ...],
+    variant_writers: Tuple[Callable[[Any], JSON_VALUE], ...],
+) -> JSON_VALUE:
     for t, w in zip(type_tests, variant_writers):
         if t(val):
             return w(val)

@@ -2,10 +2,15 @@ from asyncio import Event, wait_for
 from typing import List
 
 from change_ls import Client, StdIOConnectionParams, WorkspaceRequestHandler
-from change_ls.types import (ApplyWorkspaceEditParams,
-                             ApplyWorkspaceEditResult, ConfigurationParams,
-                             DiagnosticSeverity, LSPAny,
-                             PublishDiagnosticsParams, WorkspaceFolder)
+from change_ls.types import (
+    ApplyWorkspaceEditParams,
+    ApplyWorkspaceEditResult,
+    ConfigurationParams,
+    DiagnosticSeverity,
+    LSPAny,
+    PublishDiagnosticsParams,
+    WorkspaceFolder,
+)
 
 
 class MockWorkspaceRequestHandler(WorkspaceRequestHandler):
@@ -90,7 +95,8 @@ class MockWorkspaceRequestHandler(WorkspaceRequestHandler):
 
 async def test_workspace_callbacks() -> None:
     params = StdIOConnectionParams(
-        launch_command="node mock-server/out/index.js --stdio test/test_workspace_callbacks.json")
+        launch_command="node mock-server/out/index.js --stdio test/test_workspace_callbacks.json"
+    )
     async with Client(params) as client:
         handler = MockWorkspaceRequestHandler()
         client.set_workspace_request_handler(handler)

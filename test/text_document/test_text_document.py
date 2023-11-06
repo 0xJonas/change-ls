@@ -4,21 +4,21 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 
-from change_ls import (ChangeLSError, StdIOConnectionParams, TextDocument,
-                       Workspace)
+from change_ls import ChangeLSError, StdIOConnectionParams, TextDocument, Workspace
 from change_ls.types import Position
 
 
 @pytest.fixture
 async def mock_workspace_1(request: pytest.FixtureRequest) -> AsyncGenerator[Workspace, None]:
     # pytest does not annotate request.node correctly
-    test_sequence_marker = request.node.get_closest_marker('test_sequence')  # type: ignore
+    test_sequence_marker = request.node.get_closest_marker("test_sequence")  # type: ignore
     assert test_sequence_marker
     test_sequence = test_sequence_marker.args[0]  # type: ignore
 
     workspace = Workspace(Path("test/mock-ws-1"))
     launch_params = StdIOConnectionParams(
-        launch_command=f"node mock-server/out/index.js --stdio {test_sequence}")
+        launch_command=f"node mock-server/out/index.js --stdio {test_sequence}"
+    )
     async with workspace.create_client(launch_params) as client:
         repo_uri = Path(".").resolve().as_uri()
         await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})

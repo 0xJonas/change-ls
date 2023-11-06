@@ -10,11 +10,21 @@ import change_ls.types as lsptypes
 from change_ls._change_ls_error import ChangeLSError
 from change_ls._client import Client
 from change_ls.logging import operation
-from change_ls.types import (DeclarationParams, DefinitionParams,
-                             ImplementationParams, Location, Position,
-                             ReferenceContext, ReferenceParams, RenameParams,
-                             SymbolKind, SymbolTag, TextDocumentIdentifier,
-                             TypeDefinitionParams, WorkspaceEdit)
+from change_ls.types import (
+    DeclarationParams,
+    DefinitionParams,
+    ImplementationParams,
+    Location,
+    Position,
+    ReferenceContext,
+    ReferenceParams,
+    RenameParams,
+    SymbolKind,
+    SymbolTag,
+    TextDocumentIdentifier,
+    TypeDefinitionParams,
+    WorkspaceEdit,
+)
 
 
 @dataclass
@@ -32,9 +42,11 @@ class _SymbolAnchor:
         self._original_version = text_document.version
 
     def is_valid(self) -> bool:
-        return (not self.text_document.is_closed()
-                and self.text_document.uri == self._original_uri
-                and self.text_document.version == self._original_version)
+        return (
+            not self.text_document.is_closed()
+            and self.text_document.uri == self._original_uri
+            and self.text_document.version == self._original_version
+        )
 
 
 @dataclass
@@ -87,31 +99,38 @@ class Symbol(ABC):
     _client: Client
 
     @abstractmethod
-    def _get_anchor(self) -> _SymbolAnchor: ...
+    def _get_anchor(self) -> _SymbolAnchor:
+        ...
 
     @property
     @abstractmethod
-    def name(self) -> str: ...
+    def name(self) -> str:
+        ...
 
     @property
     @abstractmethod
-    def uri(self) -> str: ...
+    def uri(self) -> str:
+        ...
 
     @property
     @abstractmethod
-    def range(self) -> Tuple[int, int]: ...
+    def range(self) -> Tuple[int, int]:
+        ...
 
     @property
     @abstractmethod
-    def kind(self) -> SymbolKind: ...
+    def kind(self) -> SymbolKind:
+        ...
 
     @property
     @abstractmethod
-    def tags(self) -> List[SymbolTag]: ...
+    def tags(self) -> List[SymbolTag]:
+        ...
 
     @property
     @abstractmethod
-    def container_name(self) -> Optional[str]: ...
+    def container_name(self) -> Optional[str]:
+        ...
 
     def is_valid(self) -> bool:
         """
@@ -134,12 +153,19 @@ class Symbol(ABC):
         """
         self._assert_valid()
         anchor = self._get_anchor()
-        anchor.text_document.logger.info(f"Requesting workspace edit to rename symbol {self} to '{new_name}'.")
-        if not self._client.check_feature("textDocument/rename", text_documents=[anchor.text_document]):
+        anchor.text_document.logger.info(
+            f"Requesting workspace edit to rename symbol {self} to '{new_name}'."
+        )
+        if not self._client.check_feature(
+            "textDocument/rename", text_documents=[anchor.text_document]
+        ):
             raise ChangeLSError(f"Client {self._client} does not support renaming.")
 
         params = RenameParams(
-            textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position, newName=new_name)
+            textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+            position=anchor.position,
+            newName=new_name,
+        )
         return await self._client.send_text_document_rename(params)
 
     @operation
@@ -152,13 +178,18 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         anchor.text_document.logger.info(f"Finding references to symbol {self}.")
-        if not self._client.check_feature("textDocument/references", text_documents=[anchor.text_document]):
+        if not self._client.check_feature(
+            "textDocument/references", text_documents=[anchor.text_document]
+        ):
             raise ChangeLSError(f"Client {self._client} does not support find_references.")
 
-        res = await self._client.send_text_document_references(ReferenceParams(
-            textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
-            position=anchor.position,
-            context=ReferenceContext(includeDeclaration=include_declaration)))
+        res = await self._client.send_text_document_references(
+            ReferenceParams(
+                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                position=anchor.position,
+                context=ReferenceContext(includeDeclaration=include_declaration),
+            )
+        )
         if res is None:
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
@@ -175,11 +206,17 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         anchor.text_document.logger.info(f"Finding declaration for symbol {self}.")
-        if not self._client.check_feature("textDocument/declaration", text_documents=[anchor.text_document]):
+        if not self._client.check_feature(
+            "textDocument/declaration", text_documents=[anchor.text_document]
+        ):
             raise ChangeLSError(f"Client {self._client} does not support find_declaration.")
 
         res = await self._client.send_text_document_declaration(
-            DeclarationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
+            DeclarationParams(
+                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                position=anchor.position,
+            )
+        )
         if res is None:
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
@@ -196,11 +233,17 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         anchor.text_document.logger.info(f"Finding definition for symbol {self}.")
-        if not self._client.check_feature("textDocument/definition", text_documents=[anchor.text_document]):
+        if not self._client.check_feature(
+            "textDocument/definition", text_documents=[anchor.text_document]
+        ):
             raise ChangeLSError(f"Client {self._client} does not support find_definition.")
 
         res = await self._client.send_text_document_definition(
-            DefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
+            DefinitionParams(
+                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                position=anchor.position,
+            )
+        )
         if res is None:
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
@@ -217,11 +260,17 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         anchor.text_document.logger.info(f"Finding type definition for symbol {self}.")
-        if not self._client.check_feature("textDocument/typeDefinition", text_documents=[anchor.text_document]):
+        if not self._client.check_feature(
+            "textDocument/typeDefinition", text_documents=[anchor.text_document]
+        ):
             raise ChangeLSError(f"Client {self._client} does not support find_type_definition.")
 
         res = await self._client.send_text_document_type_definition(
-            TypeDefinitionParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
+            TypeDefinitionParams(
+                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                position=anchor.position,
+            )
+        )
         if res is None:
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
@@ -238,11 +287,17 @@ class Symbol(ABC):
         self._assert_valid()
         anchor = self._get_anchor()
         anchor.text_document.logger.info(f"Finding implementation for symbol {self}.")
-        if not self._client.check_feature("textDocument/implementation", text_documents=[anchor.text_document]):
+        if not self._client.check_feature(
+            "textDocument/implementation", text_documents=[anchor.text_document]
+        ):
             raise ChangeLSError(f"Client {self._client} does not support find_implementation.")
 
         res = await self._client.send_text_document_implementation(
-            ImplementationParams(textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri), position=anchor.position))
+            ImplementationParams(
+                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                position=anchor.position,
+            )
+        )
         if res is None:
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
@@ -261,7 +316,7 @@ class Symbol(ABC):
             "range": self.range,
             "kind": self.kind,
             "tags": self.tags,
-            "container_name": self.container_name
+            "container_name": self.container_name,
         }
 
     def __repr__(self) -> str:
@@ -288,12 +343,19 @@ class CustomSymbol(Symbol):
     _tags: List[SymbolTag]
     _container_name: Optional[str]
 
-    def __init__(self, client: Client, text_document: "td.TextDocument", symbol_range: Tuple[int, int], kind: SymbolKind,
-                 tags: Optional[List[SymbolTag]] = None, container_name: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        client: Client,
+        text_document: "td.TextDocument",
+        symbol_range: Tuple[int, int],
+        kind: SymbolKind,
+        tags: Optional[List[SymbolTag]] = None,
+        container_name: Optional[str] = None,
+    ) -> None:
         if symbol_range[0] >= symbol_range[1]:
             raise ValueError("Invalid range for CustomSymbol")
         super().__init__(text_document._workspace, client)
-        self._name = text_document.text[symbol_range[0]:symbol_range[1]]
+        self._name = text_document.text[symbol_range[0] : symbol_range[1]]
         self._uri = text_document.uri
         self._range = symbol_range
         self._kind = kind
@@ -351,7 +413,12 @@ class UnresolvedWorkspaceSymbol:
     _client: Client
     _lsp_workspace_symbol: Union[lsptypes.WorkspaceSymbol, lsptypes.SymbolInformation]
 
-    def __init__(self, client: Client, workspace: "ws.Workspace", lsp_workspace_symbol: Union[lsptypes.WorkspaceSymbol, lsptypes.SymbolInformation]) -> None:
+    def __init__(
+        self,
+        client: Client,
+        workspace: "ws.Workspace",
+        lsp_workspace_symbol: Union[lsptypes.WorkspaceSymbol, lsptypes.SymbolInformation],
+    ) -> None:
         self._client = client
         self._workspace = workspace
         self._lsp_workspace_symbol = lsp_workspace_symbol
@@ -364,8 +431,12 @@ class UnresolvedWorkspaceSymbol:
         This will open the :class:`TextDocument` which contains this symbol.
         """
         self._workspace.logger.info(f"Resolving symbol {self}.")
-        if isinstance(self._lsp_workspace_symbol, lsptypes.WorkspaceSymbol) and self._client.check_feature("workspace/symbol", workspace_symbol_resolve=True):
-            resolved_symbol = await self._client.send_workspace_symbol_resolve(self._lsp_workspace_symbol)
+        if isinstance(
+            self._lsp_workspace_symbol, lsptypes.WorkspaceSymbol
+        ) and self._client.check_feature("workspace/symbol", workspace_symbol_resolve=True):
+            resolved_symbol = await self._client.send_workspace_symbol_resolve(
+                self._lsp_workspace_symbol
+            )
             return WorkspaceSymbol(self._client, self._workspace, resolved_symbol)
         else:
             return WorkspaceSymbol(self._client, self._workspace, self._lsp_workspace_symbol)
@@ -387,7 +458,9 @@ class UnresolvedWorkspaceSymbol:
 
     @property
     def tags(self) -> List[SymbolTag]:
-        return self._lsp_workspace_symbol.tags if self._lsp_workspace_symbol.tags is not None else []
+        return (
+            self._lsp_workspace_symbol.tags if self._lsp_workspace_symbol.tags is not None else []
+        )
 
     @property
     def container_name(self) -> Optional[str]:
@@ -402,7 +475,7 @@ class UnresolvedWorkspaceSymbol:
             "uri": self.uri,
             "kind": self.kind,
             "tags": self.tags,
-            "container_name": self.container_name
+            "container_name": self.container_name,
         }
 
     def __repr__(self) -> str:
@@ -425,15 +498,24 @@ class WorkspaceSymbol(UnresolvedWorkspaceSymbol, Symbol):
     _range: Tuple[int, int]
     _is_closed: bool
 
-    def __init__(self, client: Client, workspace: "ws.Workspace", lsp_workspace_symbol: Union[lsptypes.WorkspaceSymbol, lsptypes.SymbolInformation]) -> None:
+    def __init__(
+        self,
+        client: Client,
+        workspace: "ws.Workspace",
+        lsp_workspace_symbol: Union[lsptypes.WorkspaceSymbol, lsptypes.SymbolInformation],
+    ) -> None:
         if not isinstance(lsp_workspace_symbol.location, Location):
-            raise ChangeLSError("Client did not return a WorkspaceSymbol with filled range after resolve.")
+            raise ChangeLSError(
+                "Client did not return a WorkspaceSymbol with filled range after resolve."
+            )
         super().__init__(client, workspace, lsp_workspace_symbol)  # init UnresolvedWorkspaceSymbol
         super(UnresolvedWorkspaceSymbol, self).__init__(workspace, client)  # init Symbol
         text_document = workspace.open_text_document(self.uri)
         self._anchor = _SymbolAnchor(text_document, lsp_workspace_symbol.location.range.start)
-        self._range = (text_document.position_to_offset(lsp_workspace_symbol.location.range.start),
-                       text_document.position_to_offset(lsp_workspace_symbol.location.range.end))
+        self._range = (
+            text_document.position_to_offset(lsp_workspace_symbol.location.range.start),
+            text_document.position_to_offset(lsp_workspace_symbol.location.range.end),
+        )
         self._is_closed = False
 
     def _get_anchor(self) -> _SymbolAnchor:
@@ -446,7 +528,9 @@ class WorkspaceSymbol(UnresolvedWorkspaceSymbol, Symbol):
     def __enter__(self) -> "WorkspaceSymbol":
         return self
 
-    def __exit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
+    def __exit__(
+        self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType
+    ) -> bool:
         self.close()
         return False
 
@@ -506,8 +590,14 @@ class DocumentSymbol(Symbol):
     _children: Optional[List["DocumentSymbol"]]
     _anchor: _SymbolAnchor
 
-    def __init__(self, client: Client, workspace: "ws.Workspace", text_document: "td.TextDocument",
-                 lsp_symbol: Union[lsptypes.DocumentSymbol, lsptypes.SymbolInformation], parent: Optional["DocumentSymbol"]) -> None:
+    def __init__(
+        self,
+        client: Client,
+        workspace: "ws.Workspace",
+        text_document: "td.TextDocument",
+        lsp_symbol: Union[lsptypes.DocumentSymbol, lsptypes.SymbolInformation],
+        parent: Optional["DocumentSymbol"],
+    ) -> None:
         super().__init__(workspace, client)
         self._text_document = text_document
         self._lsp_symbol = lsp_symbol
@@ -516,24 +606,32 @@ class DocumentSymbol(Symbol):
 
         if isinstance(lsp_symbol, lsptypes.DocumentSymbol):
             if lsp_symbol.children is not None:
-                self._children = [DocumentSymbol(client, workspace, text_document, child, self)
-                                  for child in lsp_symbol.children]
+                self._children = [
+                    DocumentSymbol(client, workspace, text_document, child, self)
+                    for child in lsp_symbol.children
+                ]
             else:
                 self._children = None
 
             if lsp_symbol.deprecated:
                 self._tags.append(SymbolTag.Deprecated)
 
-            self._context_range = (text_document.position_to_offset(lsp_symbol.range.start),
-                                   text_document.position_to_offset(lsp_symbol.range.end))
-            self._symbol_range = (text_document.position_to_offset(lsp_symbol.selectionRange.start),
-                                  text_document.position_to_offset(lsp_symbol.selectionRange.end))
+            self._context_range = (
+                text_document.position_to_offset(lsp_symbol.range.start),
+                text_document.position_to_offset(lsp_symbol.range.end),
+            )
+            self._symbol_range = (
+                text_document.position_to_offset(lsp_symbol.selectionRange.start),
+                text_document.position_to_offset(lsp_symbol.selectionRange.end),
+            )
 
             self._anchor = _SymbolAnchor(text_document, lsp_symbol.selectionRange.start)
         else:
             self._children = None
-            self._context_range = (text_document.position_to_offset(lsp_symbol.location.range.start),
-                                   text_document.position_to_offset(lsp_symbol.location.range.end))
+            self._context_range = (
+                text_document.position_to_offset(lsp_symbol.location.range.start),
+                text_document.position_to_offset(lsp_symbol.location.range.end),
+            )
             self._symbol_range = self._context_range
 
             self._anchor = _SymbolAnchor(text_document, lsp_symbol.location.range.start)
@@ -600,12 +698,14 @@ class DocumentSymbol(Symbol):
             status = " INVALIDED SYMBOL! "
 
         values = self._get_repr_dict()
-        values.update({
-            "symbol_range": self.symbol_range,
-            "context_range": self.context_range,
-            # Use the informal str representation for parent and children
-            # to not print huge sections of the document outline every time.
-            "parent": str(self.parent),
-            "children": [str(c) for c in self.children] if self.children else None
-        })
+        values.update(
+            {
+                "symbol_range": self.symbol_range,
+                "context_range": self.context_range,
+                # Use the informal str representation for parent and children
+                # to not print huge sections of the document outline every time.
+                "parent": str(self.parent),
+                "children": [str(c) for c in self.children] if self.children else None,
+            }
+        )
         return f"{object.__repr__(self)}{status}{values!r}"

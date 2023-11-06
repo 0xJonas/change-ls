@@ -5,8 +5,7 @@ from dataclasses import dataclass, field
 from logging import LoggerAdapter
 from pathlib import Path
 from types import TracebackType
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
-                    Optional, Type, overload)
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type, overload
 
 import change_ls._symbol as sym
 import change_ls._workspace as ws
@@ -16,18 +15,27 @@ from change_ls._util import TextDocumentInfo, guess_language_id
 from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import operation
 from change_ls.tokens import SyntacticToken, TokenList, tokenize
-from change_ls.tokens._semantic_tokens_mixin import (SemanticTokensMixin,
-                                                     enrich_syntactic_tokens)
-from change_ls.types import (DidChangeTextDocumentParams,
-                             DidCloseTextDocumentParams,
-                             DidSaveTextDocumentParams, DocumentSymbolParams,
-                             OptionalVersionedTextDocumentIdentifier, Position,
-                             PositionEncodingKind, Range, SymbolKind,
-                             SymbolTag, TextDocumentContentChangeEvent,
-                             TextDocumentIdentifier, TextDocumentItem,
-                             TextDocumentSaveReason, TextDocumentSyncKind,
-                             TextEdit, VersionedTextDocumentIdentifier,
-                             WillSaveTextDocumentParams)
+from change_ls.tokens._semantic_tokens_mixin import SemanticTokensMixin, enrich_syntactic_tokens
+from change_ls.types import (
+    DidChangeTextDocumentParams,
+    DidCloseTextDocumentParams,
+    DidSaveTextDocumentParams,
+    DocumentSymbolParams,
+    OptionalVersionedTextDocumentIdentifier,
+    Position,
+    PositionEncodingKind,
+    Range,
+    SymbolKind,
+    SymbolTag,
+    TextDocumentContentChangeEvent,
+    TextDocumentIdentifier,
+    TextDocumentItem,
+    TextDocumentSaveReason,
+    TextDocumentSyncKind,
+    VersionedTextDocumentIdentifier,
+    TextEdit,
+    WillSaveTextDocumentParams,
+)
 
 
 @dataclass(order=True)
@@ -37,7 +45,9 @@ class _Edit:
     new_text: str = field(compare=False)
 
     def overlaps(self, other: "_Edit") -> bool:
-        covers_from_offset = self.from_offset <= other.from_offset and self.to_offset > other.from_offset
+        covers_from_offset = (
+            self.from_offset <= other.from_offset and self.to_offset > other.from_offset
+        )
         covers_to_offset = self.from_offset < other.to_offset and self.to_offset >= other.to_offset
 
         # The '<' when comparing to_offset ensures that zero-length edits at the same position
@@ -47,17 +57,16 @@ class _Edit:
 
         return covers_from_offset or covers_to_offset or covers_both
 
-    def as_text_document_content_change_event(self, line_offsets: List[int]) -> TextDocumentContentChangeEvent:
+    def as_text_document_content_change_event(
+        self, line_offsets: List[int]
+    ) -> TextDocumentContentChangeEvent:
         from_line = bisect_right(line_offsets, self.from_offset) - 1
         from_character = self.from_offset - line_offsets[from_line]
         from_position = Position(line=from_line, character=from_character)
         to_line = bisect_right(line_offsets, self.to_offset) - 1
         to_character = self.to_offset - line_offsets[to_line]
         to_position = Position(line=to_line, character=to_character)
-        return {
-            "text": self.new_text,
-            "range": Range(start=from_position, end=to_position)
-        }
+        return {"text": self.new_text, "range": Range(start=from_position, end=to_position)}
 
     def __str__(self) -> str:
         if self.from_offset == self.to_offset:
@@ -76,7 +85,7 @@ class DroppedChangesWarning(Warning):
 
 def _skip_to_next_line(text: str, offset: int) -> int:
     for i in range(offset, len(text)):
-        if text[i:i+2] == "\r\n":
+        if text[i : i + 2] == "\r\n":
             return i + 2
         if text[i] in ["\n", "\r"]:
             return i + 1
@@ -95,18 +104,18 @@ def _calculate_line_offsets(text: str) -> List[int]:
 
 
 def _utf_8_character_length(char: int) -> int:
-    if char <= 0x7f:
+    if char <= 0x7F:
         return 1
-    elif char <= 0x7ff:
+    elif char <= 0x7FF:
         return 2
-    elif char <= 0xffff:
+    elif char <= 0xFFFF:
         return 3
     else:
         return 4
 
 
 def _utf_16_character_length(char: int) -> int:
-    if char <= 0xffff:
+    if char <= 0xFFFF:
         return 1
     else:
         return 2
@@ -206,7 +215,14 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     _cached_start_offset: int
     _cached_reference_string: str
 
-    def __init__(self, path: Path, workspace: "ws.Workspace", language_id: Optional[str] = None, version: int = 0, encoding: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        path: Path,
+        workspace: "ws.Workspace",
+        language_id: Optional[str] = None,
+        version: int = 0,
+        encoding: Optional[str] = None,
+    ) -> None:
         self._path = path
         with path.open(encoding=encoding) as file:
             self._text = file.read()
@@ -237,7 +253,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         SemanticTokensMixin.__init__(self)
 
         self._logger = get_change_ls_default_logger(
-            "change-ls.workspace", cls_workspace=str(workspace._id), cls_text_document=uri)  # type: ignore
+            "change-ls.workspace", cls_workspace=str(workspace._id), cls_text_document=uri
+        )  # type: ignore
 
         self._reopen()
 
@@ -258,13 +275,17 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self._uri = new_path.as_uri()
         self._workspace._opened_text_documents[self.uri] = self  # type: ignore
 
-    async def rename_file(self, new_path: Path, *, overwrite: bool = False, ignore_if_exists: bool = False) -> None:
+    async def rename_file(
+        self, new_path: Path, *, overwrite: bool = False, ignore_if_exists: bool = False
+    ) -> None:
         """
         Renames this :class:`TextDocument` to ``new_path``.
 
         See :meth:`Workspace.rename_text_document`.
         """
-        await self._workspace.rename_text_document(self._path, new_path, overwrite=overwrite, ignore_if_exists=ignore_if_exists)
+        await self._workspace.rename_text_document(
+            self._path, new_path, overwrite=overwrite, ignore_if_exists=ignore_if_exists
+        )
 
     async def delete_file(self) -> None:
         """
@@ -280,11 +301,13 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         if len(self._pending_edits) > 0:
             warnings.warn(
                 f"Dropping {len(self._pending_edits)} uncommitted edits for Textdocument '{self.uri}'. Call text_document.commit_edits() followed by text_document.save() to save the changes.",
-                DroppedChangesWarning)
+                DroppedChangesWarning,
+            )
         if not self._content_saved:
             warnings.warn(
                 f"TextDocument {self.uri} has unsaved changes. Call text_document.save() to save the changes.",
-                DroppedChangesWarning)
+                DroppedChangesWarning,
+            )
 
         for client in self._workspace.clients:
             if not client.check_feature("textDocument/didClose", text_documents=[self]):
@@ -322,7 +345,9 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     def __enter__(self) -> "TextDocument":
         return self
 
-    def __exit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
+    def __exit__(
+        self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType
+    ) -> bool:
         self.close()
         return False
 
@@ -354,11 +379,21 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     def tokens(self) -> TokenList[SyntacticToken]:
         if not self._tokens:
             raise AttributeError(
-                "Tokens are not loaded for this TextDocument. Use load_tokens() to fill the tokens property.")
+                "Tokens are not loaded for this TextDocument. Use load_tokens() to fill the tokens property."
+            )
         return self._tokens
 
-    @operation(start_message="Loading tokens with mode '{mode}' using client '{client}'...", get_logger_from_context=_get_logger_from_context)
-    async def load_tokens(self, mode: Literal["enrich", "syntactic", "semantic"] = "enrich", *, include_whitespace: bool = False, client: Optional[Client] = None) -> None:
+    @operation(
+        start_message="Loading tokens with mode '{mode}' using client '{client}'...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    async def load_tokens(
+        self,
+        mode: Literal["enrich", "syntactic", "semantic"] = "enrich",
+        *,
+        include_whitespace: bool = False,
+        client: Optional[Client] = None,
+    ) -> None:
         """
         Tokenizes this ``TextDocument``. After this method is called, :attr:`tokens` will contain the computed tokens.
 
@@ -381,12 +416,16 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self._check_closed()
 
         if mode in ["enrich", "syntactic"]:
-            self._tokens = await tokenize(self.text, self.language_id, include_whitespace=include_whitespace)
+            self._tokens = await tokenize(
+                self.text, self.language_id, include_whitespace=include_whitespace
+            )
         if mode in ["enrich", "semantic"]:
             await self._load_semantic_tokens(client)
         if mode == "enrich":
             assert self._tokens is not None
-            enrich_syntactic_tokens(self._tokens, self.get_loaded_semantic_tokens(client), _logger=self.logger)
+            enrich_syntactic_tokens(
+                self._tokens, self.get_loaded_semantic_tokens(client), _logger=self.logger
+            )
         self.logger.info("Tokens loaded!")
 
     def get_loaded_outline(self, client: Optional[Client] = None) -> List["sym.DocumentSymbol"]:
@@ -400,21 +439,27 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         if client is None:
             if len(self._workspace.clients) == 0:
                 raise AttributeError(
-                    "No outline is loaded for this TextDocument because the Workspace does not have any open Clients.")
+                    "No outline is loaded for this TextDocument because the Workspace does not have any open Clients."
+                )
             elif len(self._workspace.clients) == 1:
                 client = self._workspace.clients[0]
             else:
                 raise AttributeError(
-                    "Outline is ambiguous because the Workspace has multiple open Clients. Pass a Client to load_outline to load the outline for that Client.")
+                    "Outline is ambiguous because the Workspace has multiple open Clients. Pass a Client to load_outline to load the outline for that Client."
+                )
 
         out = self._outlines.get(client)
         if out is None:
             raise AttributeError(
-                f"No outline is loaded for Client {client}. Use load_outline(...) to fill the outline property.")
+                f"No outline is loaded for Client {client}. Use load_outline(...) to fill the outline property."
+            )
         else:
             return out
 
-    @operation(start_message="Loading document outline using Client '{client}'...", get_logger_from_context=_get_logger_from_context)
+    @operation(
+        start_message="Loading document outline using Client '{client}'...",
+        get_logger_from_context=_get_logger_from_context,
+    )
     async def load_outline(self, *, client: Optional[Client] = None) -> None:
         """
         Loads the document outline (list of symbols defined in the document, maybe hierarchical) for a given :class:`Client`.
@@ -430,11 +475,15 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         if not client.check_feature("textDocument/documentSymbol", text_document=self):
             raise ChangeLSError(f"Client '{client}' does not support document outlines.")
 
-        res = await client.send_text_document_document_symbol(DocumentSymbolParams(textDocument=self.get_text_document_identifier()))
+        res = await client.send_text_document_document_symbol(
+            DocumentSymbolParams(textDocument=self.get_text_document_identifier())
+        )
         if res is None:
             raise ChangeLSError(f"Client '{client}' returned an empty outline.")
 
-        outline = [sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res]
+        outline = [
+            sym.DocumentSymbol(client, self._workspace, self, symbol, None) for symbol in res
+        ]
         self._outlines[client] = outline
         self.logger.info("Outline loaded!")
 
@@ -442,7 +491,9 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         """
         Returns a :class:`TextDocumentItem` for this ``TextDocument``.
         """
-        return TextDocumentItem(uri=self.uri, languageId=self.language_id, version=self._version, text=self._text)
+        return TextDocumentItem(
+            uri=self.uri, languageId=self.language_id, version=self._version, text=self._text
+        )
 
     def get_text_document_identifier(self) -> TextDocumentIdentifier:
         """
@@ -456,7 +507,9 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         """
         return VersionedTextDocumentIdentifier(uri=self.uri, version=self._version)
 
-    def get_optional_versioned_text_document_identifier(self) -> OptionalVersionedTextDocumentIdentifier:
+    def get_optional_versioned_text_document_identifier(
+        self,
+    ) -> OptionalVersionedTextDocumentIdentifier:
         """
         Returns a :class:`OptionalVersionedTextDocumentIdentifier` for this ``TextDocument``.
         The returned instance will always have its :attr:`~OptionalVersionedTextDocumentIdentifier.version`
@@ -471,19 +524,34 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         insertion_point = bisect_right(self._pending_edits, new_edit)
 
         if insertion_point > 0 and self._pending_edits[insertion_point - 1].overlaps(new_edit):
-            raise ValueError(f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point - 1]}'")
-        if insertion_point < len(self._pending_edits) - 1 and self._pending_edits[insertion_point + 1].overlaps(new_edit):
-            raise ValueError(f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point + 1]}'")
+            raise ValueError(
+                f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point - 1]}'"
+            )
+        if insertion_point < len(self._pending_edits) - 1 and self._pending_edits[
+            insertion_point + 1
+        ].overlaps(new_edit):
+            raise ValueError(
+                f"Edit '{new_edit}' overlaps existing edit '{self._pending_edits[insertion_point + 1]}'"
+            )
 
         self._pending_edits.insert(insertion_point, new_edit)
 
     @overload
-    def edit(self, new_text: str, from_offset: int, to_offset: int) -> None: ...
+    def edit(self, new_text: str, from_offset: int, to_offset: int) -> None:
+        ...
 
     @overload
-    def edit(self, new_text: str, from_offset: int, *, length: int) -> None: ...
+    def edit(self, new_text: str, from_offset: int, *, length: int) -> None:
+        ...
 
-    def edit(self, new_text: str, from_offset: int, to_offset: Optional[int] = None, *, length: Optional[int] = None) -> None:
+    def edit(
+        self,
+        new_text: str,
+        from_offset: int,
+        to_offset: Optional[int] = None,
+        *,
+        length: Optional[int] = None,
+    ) -> None:
         """
         Queue an edit replacing either the range ``[from_offset:to_offset)`` or ``length`` characters
         starting from ``from_offset`` with ``new_text``.
@@ -509,22 +577,42 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             to_offset = from_offset + length
 
         if to_offset < from_offset:
-            raise IndexError(f"'to_offset' ({to_offset}) must be greater or equal to 'from_offset' ({from_offset})")
-
-        if from_offset < 0 or from_offset > len(self._text) or to_offset < 0 or to_offset > len(self._text):
             raise IndexError(
-                f"edit() offsets are out of bounds: from_offset {from_offset}, to_offset {to_offset}, document length {len(self._text)}")
+                f"'to_offset' ({to_offset}) must be greater or equal to 'from_offset' ({from_offset})"
+            )
+
+        if (
+            from_offset < 0
+            or from_offset > len(self._text)
+            or to_offset < 0
+            or to_offset > len(self._text)
+        ):
+            raise IndexError(
+                f"edit() offsets are out of bounds: from_offset {from_offset}, to_offset {to_offset}, document length {len(self._text)}"
+            )
 
         self._queue_edit(_Edit(from_offset, to_offset, new_text))
 
     @overload
-    def edit_tokens(self, new_text: str, from_index: int) -> None: ...
-    @overload
-    def edit_tokens(self, new_text: str, from_index: int, to_index: int) -> None: ...
-    @overload
-    def edit_tokens(self, new_text: str, from_index: int, *, num_tokens: int) -> None: ...
+    def edit_tokens(self, new_text: str, from_index: int) -> None:
+        ...
 
-    def edit_tokens(self, new_text: str, from_index: int, to_index: Optional[int] = None, *, num_tokens: Optional[int] = None) -> None:
+    @overload
+    def edit_tokens(self, new_text: str, from_index: int, to_index: int) -> None:
+        ...
+
+    @overload
+    def edit_tokens(self, new_text: str, from_index: int, *, num_tokens: int) -> None:
+        ...
+
+    def edit_tokens(
+        self,
+        new_text: str,
+        from_index: int,
+        to_index: Optional[int] = None,
+        *,
+        num_tokens: Optional[int] = None,
+    ) -> None:
         """
         Similar to :meth:`edit()`, but takes it's range from indices into the :attr:`tokens` list. This method
         requires that :meth:`load_tokens()` was called before. It provides the following overloads:
@@ -557,11 +645,16 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self.edit(new_text, offset, offset)
 
     @overload
-    def delete(self, from_offset: int, to_offset: int) -> None: ...
-    @overload
-    def delete(self, from_offset: int, *, length: int) -> None: ...
+    def delete(self, from_offset: int, to_offset: int) -> None:
+        ...
 
-    def delete(self, from_offset: int, to_offset: Optional[int] = None, *, length: Optional[int] = None) -> None:
+    @overload
+    def delete(self, from_offset: int, *, length: int) -> None:
+        ...
+
+    def delete(
+        self, from_offset: int, to_offset: Optional[int] = None, *, length: Optional[int] = None
+    ) -> None:
         """
         Deletes the text from the given range. Shorthand/more readable alternative for ::
 
@@ -584,32 +677,36 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         to_offset = self.position_to_offset(text_edit.range.end)
         self.edit(text_edit.newText, from_offset, to_offset)
 
-    def _edit_to_text_document_change_event(self, edit: _Edit, client: Client) -> TextDocumentContentChangeEvent:
+    def _edit_to_text_document_change_event(
+        self, edit: _Edit, client: Client
+    ) -> TextDocumentContentChangeEvent:
         from_position = self.offset_to_position(edit.from_offset, client)
         to_position = self.offset_to_position(edit.to_offset, client)
-        return {
-            "text": edit.new_text,
-            "range": Range(start=from_position, end=to_position)
-        }
+        return {"text": edit.new_text, "range": Range(start=from_position, end=to_position)}
 
     def _handle_text_change(self, client: Client) -> None:
         self.logger.info(f"Updating document content for Client '{client}'")
 
         if client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Full):
             content_changes: List[TextDocumentContentChangeEvent] = [{"text": self._text}]
-        elif client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Incremental):
+        elif client.check_feature(
+            "textDocument/didChange", sync_kind=TextDocumentSyncKind.Incremental
+        ):
             # The edits are reversed because, unlike commit_edits, ContentChangeEvents are applied one
             # at a time, in the order they are received. So in order for edits earlier in the document
             # to not invalidate later edits, the edits are entered in reverse order.
-            content_changes = [self._edit_to_text_document_change_event(edit, client)
-                               for edit in reversed(self._pending_edits)]
+            content_changes = [
+                self._edit_to_text_document_change_event(edit, client)
+                for edit in reversed(self._pending_edits)
+            ]
         else:
             # Document Sync is disabled for this client
             return
 
         params = DidChangeTextDocumentParams(
             textDocument=self.get_versioned_text_document_identifier(),
-            contentChanges=content_changes)
+            contentChanges=content_changes,
+        )
         client.send_text_document_did_change(params)
 
     def commit_edits(self) -> None:
@@ -632,7 +729,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         segments: List[str] = []
         for edit in self._pending_edits:
             if text_offset < edit.from_offset:
-                segments.append(self._text[text_offset:edit.from_offset])
+                segments.append(self._text[text_offset : edit.from_offset])
             segments.append(edit.new_text)
             text_offset = edit.to_offset
         if text_offset < len(self._text):
@@ -657,7 +754,9 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self._check_closed()
         self._pending_edits = []
 
-    @operation(start_message="Saving TextDocument...", get_logger_from_context=_get_logger_from_context)
+    @operation(
+        start_message="Saving TextDocument...", get_logger_from_context=_get_logger_from_context
+    )
     async def save(self) -> None:
         """
         Saves the ``TextDocument`` to file.
@@ -674,7 +773,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         clients = self._workspace.clients
 
         will_save_params = WillSaveTextDocumentParams(
-            textDocument=self.get_text_document_identifier(), reason=TextDocumentSaveReason.Manual)
+            textDocument=self.get_text_document_identifier(), reason=TextDocumentSaveReason.Manual
+        )
 
         self.logger.info("Sending textDocument/willSave notifications.")
         for client in clients:
@@ -683,9 +783,11 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             client.send_text_document_will_save(will_save_params)
 
         self.logger.info("Sending textDocument/willSaveWaitUntil requests.")
-        requests = [client.send_text_document_will_save_wait_until(will_save_params)
-                    for client in clients
-                    if client.check_feature("textDocument/willSaveWaitUntil", text_document=self)]
+        requests = [
+            client.send_text_document_will_save_wait_until(will_save_params)
+            for client in clients
+            if client.check_feature("textDocument/willSaveWaitUntil", text_document=self)
+        ]
         edit_lists: List[Optional[List[TextEdit]]] = await asyncio.gather(*requests)
 
         for edit_list in edit_lists:
@@ -701,13 +803,18 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             file.write(self._text)
 
         self.logger.info("Sending textDocument/didSave notifications.")
-        did_save_params = DidSaveTextDocumentParams(textDocument=self.get_text_document_identifier())
+        did_save_params = DidSaveTextDocumentParams(
+            textDocument=self.get_text_document_identifier()
+        )
         did_save_params_include_text = DidSaveTextDocumentParams(
-            textDocument=self.get_text_document_identifier(), text=self._text)
+            textDocument=self.get_text_document_identifier(), text=self._text
+        )
         for client in clients:
             if client.check_feature("textDocument/didSave", include_text=True, text_document=self):
                 client.send_text_document_did_save(did_save_params_include_text)
-            elif client.check_feature("textDocument/didSave", include_text=False, text_document=self):
+            elif client.check_feature(
+                "textDocument/didSave", include_text=False, text_document=self
+            ):
                 client.send_text_document_did_save(did_save_params)
 
         self._content_saved = True
@@ -732,12 +839,17 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
                 raise IndexError(f"Line {position.line} is out of bounds")
 
             start_offset = self._line_offsets[position.line]
-            end_offset = (self._line_offsets[position.line + 1]
-                          if position.line < len(self._line_offsets) else len(self._text))
+            end_offset = (
+                self._line_offsets[position.line + 1]
+                if position.line < len(self._line_offsets)
+                else len(self._text)
+            )
             reference_string = self._text[start_offset:end_offset]
 
             if position.character >= len(reference_string):
-                raise IndexError(f"Position at line {position.line} character {position.character} does not exist")
+                raise IndexError(
+                    f"Position at line {position.line} character {position.character} does not exist"
+                )
 
             self._cached_version = self._version
             self._cached_line = position.line
@@ -764,10 +876,14 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         line = bisect_right(self._line_offsets, offset) - 1
 
         start_offset = self._line_offsets[line]
-        end_offset = self._line_offsets[line + 1] if line < len(self._line_offsets) - 1 else len(self._text)
+        end_offset = (
+            self._line_offsets[line + 1] if line < len(self._line_offsets) - 1 else len(self._text)
+        )
         reference_string = self._text[start_offset:end_offset]
         encoding = self._resolve_client_parameter(client).get_position_encoding_kind()
-        character = _offset_to_code_units(reference_string, offset - self._line_offsets[line], encoding)
+        character = _offset_to_code_units(
+            reference_string, offset - self._line_offsets[line], encoding
+        )
 
         return Position(line=line, character=character)
 
@@ -792,7 +908,10 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         right = len(tokens)
         middle = 0
 
-        if tokens[left].offset > offset or tokens[right - 1].offset + len(tokens[right - 1].lexeme) <= offset:
+        if (
+            tokens[left].offset > offset
+            or tokens[right - 1].offset + len(tokens[right - 1].lexeme) <= offset
+        ):
             return None
 
         while left < right - 1:
@@ -806,15 +925,29 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             else:
                 right = middle
 
-        if left >= 0 and left < len(tokens) and tokens[left].offset + len(tokens[left].lexeme) > offset:
+        if (
+            left >= 0
+            and left < len(tokens)
+            and tokens[left].offset + len(tokens[left].lexeme) > offset
+        ):
             return left
         else:
             return None
 
-    @operation(start_message="Creating custom symbol at [{start}:{end}] using Client '{client}'...", get_logger_from_context=_get_logger_from_context)
-    def create_symbol_at(self, start: int, end: int, kind: SymbolKind, *,
-                         tags: Optional[List[SymbolTag]] = None, container_name: Optional[str] = None,
-                         client: Optional[Client] = None) -> sym.CustomSymbol:
+    @operation(
+        start_message="Creating custom symbol at [{start}:{end}] using Client '{client}'...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    def create_symbol_at(
+        self,
+        start: int,
+        end: int,
+        kind: SymbolKind,
+        *,
+        tags: Optional[List[SymbolTag]] = None,
+        container_name: Optional[str] = None,
+        client: Optional[Client] = None,
+    ) -> sym.CustomSymbol:
         """
         Creates a :class:`CustomSymbol` at the specified location. It is the caller's responsibility
         to ensure that the given range actually contains something that can be used as a symbol.

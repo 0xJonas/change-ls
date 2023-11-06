@@ -4,10 +4,12 @@ from change_ls.tokens import *
 
 
 def test_token_list_is_read_only() -> None:
-    token_list = TokenList([
-        SyntacticToken("test1", 0, {"source.test", "scope.1"}),
-        SyntacticToken("test2", 5, {"source.test", "scope.2"})
-    ])
+    token_list = TokenList(
+        [
+            SyntacticToken("test1", 0, {"source.test", "scope.1"}),
+            SyntacticToken("test2", 5, {"source.test", "scope.2"}),
+        ]
+    )
 
     with pytest.raises(NotImplementedError):
         token_list[0] = SyntacticToken("new", 0, {"source.test", "scope.1"})
@@ -44,10 +46,12 @@ def test_not_token_matcher() -> None:
 
 
 def test_token_list_matching() -> None:
-    token_list = TokenList([
-        SyntacticToken("test1", 0, {"source.test", "scope.1"}),
-        SyntacticToken("test2", 5, {"source.test", "scope.2"})
-    ])
+    token_list = TokenList(
+        [
+            SyntacticToken("test1", 0, {"source.test", "scope.1"}),
+            SyntacticToken("test2", 5, {"source.test", "scope.2"}),
+        ]
+    )
 
     assert not token_list % []
     assert token_list % [scope("scope.1"), scope("scope.2")]

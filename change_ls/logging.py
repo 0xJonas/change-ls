@@ -1,12 +1,24 @@
 from asyncio import iscoroutinefunction
 from contextvars import ContextVar
 from functools import wraps
-from logging import (INFO, Filter, Formatter, Logger, LoggerAdapter, LogRecord,
-                     getLogger)
+from logging import INFO, Filter, Formatter, Logger, LoggerAdapter, LogRecord, getLogger
 from types import FunctionType, TracebackType
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
-                    MutableMapping, Optional, Tuple, Type, TypeVar, Union,
-                    cast, overload)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 from uuid import UUID, uuid4
 
 
@@ -66,21 +78,29 @@ class OperationLoggerAdapter(_LoggerAdapter):
     def __init__(self, logger: Union[Logger, _LoggerAdapter]) -> None:
         super().__init__(logger, {})
 
-    def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> Tuple[Any, MutableMapping[str, Any]]:
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> Tuple[Any, MutableMapping[str, Any]]:
         operation_stack = _operation_stack.get()
         length = len(operation_stack)
         extra = {
             "cls_operation_stack_raw": operation_stack,
-            "cls_operation_stack_names": ".".join(o.name for o in operation_stack) if length > 0 else None,
-            "cls_operation_stack_ids": ".".join(str(o.id) for o in operation_stack) if length > 0 else None,
+            "cls_operation_stack_names": ".".join(o.name for o in operation_stack)
+            if length > 0
+            else None,
+            "cls_operation_stack_ids": ".".join(str(o.id) for o in operation_stack)
+            if length > 0
+            else None,
             "cls_current_operation_name": operation_stack[-1].name if length > 0 else None,
-            "cls_current_operation_id": str(operation_stack[-1].id) if length > 0 else None
+            "cls_current_operation_id": str(operation_stack[-1].id) if length > 0 else None,
         }
         kwargs["extra"] = extra
         return msg, kwargs
 
 
-def _resolve_logger(logger: Optional[Union[str, Logger, _LoggerAdapter]]) -> Optional[OperationLoggerAdapter]:
+def _resolve_logger(
+    logger: Optional[Union[str, Logger, _LoggerAdapter]]
+) -> Optional[OperationLoggerAdapter]:
     if logger is None:
         return None
     elif isinstance(logger, OperationLoggerAdapter):
@@ -109,7 +129,14 @@ class Operation:
     _log_level: int
     _info: Optional[OperationInfo]
 
-    def __init__(self, name: str, logger: Optional[Union[str, Logger, _LoggerAdapter]] = None, start_message: Optional[str] = None, end_message: Optional[str] = None, log_level: int = INFO) -> None:
+    def __init__(
+        self,
+        name: str,
+        logger: Optional[Union[str, Logger, _LoggerAdapter]] = None,
+        start_message: Optional[str] = None,
+        end_message: Optional[str] = None,
+        log_level: int = INFO,
+    ) -> None:
         """
         Constructs a new ``Operation``.
 
@@ -142,7 +169,9 @@ class Operation:
 
         return self
 
-    def __exit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
+    def __exit__(
+        self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType
+    ) -> bool:
         if self._end_message is not None:
             assert self._logger
             self._logger.log(self._log_level, self._end_message)
@@ -156,11 +185,13 @@ class Operation:
         return False
 
 
-def _reconstruct_argument_dict(func: Callable[..., Any], args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Dict[str, Any]:
+def _reconstruct_argument_dict(
+    func: Callable[..., Any], args: Tuple[Any, ...], kwargs: Dict[str, Any]
+) -> Dict[str, Any]:
     code = func.__code__
 
     # Handle positional parameters
-    positional_parameters = code.co_varnames[:code.co_argcount]
+    positional_parameters = code.co_varnames[: code.co_argcount]
     default_arguments = func.__defaults__
     arg_values = args + default_arguments if default_arguments else args
     out = {param: value for param, value in zip(positional_parameters, arg_values)}
@@ -169,7 +200,7 @@ def _reconstruct_argument_dict(func: Callable[..., Any], args: Tuple[Any, ...], 
     # Handle variadic parameter
     if (code.co_flags & 0x4) != 0:
         variadic_parameter = code.co_varnames[code.co_argcount]
-        out[variadic_parameter] = args[code.co_argcount:]
+        out[variadic_parameter] = args[code.co_argcount :]
         kw_parameters_start = code.co_argcount + 1
     else:
         kw_parameters_start = code.co_argcount
@@ -197,29 +228,37 @@ _T = TypeVar("_T", bound=Callable[..., Any])
 
 
 @overload
-def operation(name: Optional[str] = None,
-              logger_name: Optional[str] = None,
-              start_message: Optional[str] = None,
-              end_message: Optional[str] = None,
-              log_level: int = INFO,
-              get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None) -> Callable[[_T], _T]: ...
+def operation(
+    name: Optional[str] = None,
+    logger_name: Optional[str] = None,
+    start_message: Optional[str] = None,
+    end_message: Optional[str] = None,
+    log_level: int = INFO,
+    get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None,
+) -> Callable[[_T], _T]:
+    ...
 
 
 @overload
-def operation(name: _T,
-              logger_name: Optional[str] = None,
-              start_message: Optional[str] = None,
-              end_message: Optional[str] = None,
-              log_level: int = INFO,
-              get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None) -> _T: ...
+def operation(
+    name: _T,
+    logger_name: Optional[str] = None,
+    start_message: Optional[str] = None,
+    end_message: Optional[str] = None,
+    log_level: int = INFO,
+    get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None,
+) -> _T:
+    ...
 
 
-def operation(name: Union[_T, Optional[str]] = None,
-              logger_name: Optional[str] = None,
-              start_message: Optional[str] = None,
-              end_message: Optional[str] = None,
-              log_level: int = INFO,
-              get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None) -> Union[_T, Callable[[_T], _T]]:
+def operation(
+    name: Union[_T, Optional[str]] = None,
+    logger_name: Optional[str] = None,
+    start_message: Optional[str] = None,
+    end_message: Optional[str] = None,
+    log_level: int = INFO,
+    get_logger_from_context: Optional[Callable[..., Union[Logger, _LoggerAdapter]]] = None,
+) -> Union[_T, Callable[[_T], _T]]:
     """
     Decorator to turn a function into an :class:`Operation`::
 
@@ -277,13 +316,20 @@ def operation(name: Union[_T, Optional[str]] = None,
         else:
             return named_logger
 
-    def format_start_end_messages(func: _T, args: Tuple[Any, ...], kwargs: Dict[str, Any],
-                                  start_message: Optional[str], end_message: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+    def format_start_end_messages(
+        func: _T,
+        args: Tuple[Any, ...],
+        kwargs: Dict[str, Any],
+        start_message: Optional[str],
+        end_message: Optional[str],
+    ) -> Tuple[Optional[str], Optional[str]]:
         if start_message or end_message:
             argument_dict = _reconstruct_argument_dict(func, args, kwargs)
         else:
             argument_dict = {}
-        start_message_formatted = start_message.format(**argument_dict) if start_message else start_message
+        start_message_formatted = (
+            start_message.format(**argument_dict) if start_message else start_message
+        )
         end_message_formatted = end_message.format(**argument_dict) if end_message else end_message
         return start_message_formatted, end_message_formatted
 
@@ -293,15 +339,29 @@ def operation(name: Union[_T, Optional[str]] = None,
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             start_message_formatted, end_message_formatted = format_start_end_messages(
-                func, args, kwargs, start_message, end_message)
-            with Operation(opname, resolve_logger(*args, **kwargs), start_message_formatted, end_message_formatted, log_level):
+                func, args, kwargs, start_message, end_message
+            )
+            with Operation(
+                opname,
+                resolve_logger(*args, **kwargs),
+                start_message_formatted,
+                end_message_formatted,
+                log_level,
+            ):
                 return func(*args, **kwargs)
 
         @wraps(func)
         async def coro_wrapper(*args: Any, **kwargs: Any) -> Any:
             start_message_formatted, end_message_formatted = format_start_end_messages(
-                func, args, kwargs, start_message, end_message)
-            with Operation(opname, resolve_logger(*args, **kwargs), start_message_formatted, end_message_formatted, log_level):
+                func, args, kwargs, start_message, end_message
+            )
+            with Operation(
+                opname,
+                resolve_logger(*args, **kwargs),
+                start_message_formatted,
+                end_message_formatted,
+                log_level,
+            ):
                 return await func(*args, **kwargs)
 
         if iscoroutinefunction(func):
@@ -319,6 +379,7 @@ class OperationFilter(Filter):
     """
     Logging filter which only allows log records from certain operations.
     """
+
     _operations: List[str]
 
     def __init__(self, operations: List[str], name: str = "") -> None:
@@ -440,16 +501,21 @@ class ChangeLSFormatter(Formatter):
             self._use_server = True
             self._use_workspace = True
 
-    def __init__(self, verbosity: int = 2, datefmt: Optional[str] = None, *,
-                 use_message: Optional[bool] = None,
-                 use_timestamp: Optional[bool] = None,
-                 use_log_level: Optional[bool] = None,
-                 use_logger_name: Optional[bool] = None,
-                 use_operations: Optional[Dict[str, Any]] = None,
-                 use_text_document: Optional[bool] = None,
-                 use_client: Optional[bool] = None,
-                 use_server: Optional[bool] = None,
-                 use_workspace: Optional[bool] = None) -> None:
+    def __init__(
+        self,
+        verbosity: int = 2,
+        datefmt: Optional[str] = None,
+        *,
+        use_message: Optional[bool] = None,
+        use_timestamp: Optional[bool] = None,
+        use_log_level: Optional[bool] = None,
+        use_logger_name: Optional[bool] = None,
+        use_operations: Optional[Dict[str, Any]] = None,
+        use_text_document: Optional[bool] = None,
+        use_client: Optional[bool] = None,
+        use_server: Optional[bool] = None,
+        use_workspace: Optional[bool] = None,
+    ) -> None:
         """
         Initialize the formatter.
 
@@ -551,11 +617,18 @@ class ChangeLSFormatter(Formatter):
         return out
 
 
-_CHANGE_LS_DEFAULT_LOGGER = Literal["change-ls.workspace", "change-ls.client",
-                                    "change-ls.server", "change-ls.messages", "change-ls.tokens"]
+_CHANGE_LS_DEFAULT_LOGGER = Literal[
+    "change-ls.workspace",
+    "change-ls.client",
+    "change-ls.server",
+    "change-ls.messages",
+    "change-ls.tokens",
+]
 
 
-def get_change_ls_default_logger(name: _CHANGE_LS_DEFAULT_LOGGER, **extras: Any) -> OperationLoggerAdapter:
+def get_change_ls_default_logger(
+    name: _CHANGE_LS_DEFAULT_LOGGER, **extras: Any
+) -> OperationLoggerAdapter:
     if name == "change-ls.workspace":
         assert "cls_workspace" in extras
         assert "cls_text_document" in extras

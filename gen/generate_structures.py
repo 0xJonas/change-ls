@@ -1,20 +1,40 @@
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from gen.gen_util import (LSPGeneratorException, dedent_ignore_empty,
-                          escape_keyword, generate_documentation_comment,
-                          indent, json_type_to_assert_function,
-                          json_type_to_get_function,
-                          json_type_to_get_optional_function, ref_target)
+from gen.gen_util import (
+    LSPGeneratorException,
+    dedent_ignore_empty,
+    escape_keyword,
+    generate_documentation_comment,
+    indent,
+    json_type_to_assert_function,
+    json_type_to_get_function,
+    json_type_to_get_optional_function,
+    ref_target,
+)
 from gen.generator import Generator, LSPGeneratorException
-from gen.schema.anytype import (AndType, AnyType, ArrayType, MapType, OrType,
-                                Property, ReferenceType, StructureLiteral,
-                                StructureLiteralType, TupleType)
-from gen.schema.types import (Enumeration, Notification, Request, Structure,
-                              TypeAlias)
+from gen.schema.anytype import (
+    AndType,
+    AnyType,
+    ArrayType,
+    MapType,
+    OrType,
+    Property,
+    ReferenceType,
+    StructureLiteral,
+    StructureLiteralType,
+    TupleType,
+)
+from gen.schema.types import Enumeration, Notification, Request, Structure, TypeAlias
 
 
-def _generate_property_read_statement(gen: Generator, prop: Property, obj_name: str, anonymous_struct: bool = False, dest_name: str = "") -> str:
+def _generate_property_read_statement(
+    gen: Generator,
+    prop: Property,
+    obj_name: str,
+    anonymous_struct: bool = False,
+    dest_name: str = "",
+) -> str:
     """Generates a statement that reads the given `Property` from the JSON object `obj_name`."""
     if anonymous_struct:
         dest = f'{dest_name}["{prop.name}"]'
@@ -23,21 +43,28 @@ def _generate_property_read_statement(gen: Generator, prop: Property, obj_name: 
 
     if prop.optional:
         if expected_json_type := gen.get_expected_json_type(prop.type):
-            get_json_expr = json_type_to_get_optional_function[expected_json_type] + f'({obj_name}, "{prop.name}")'
+            get_json_expr = (
+                json_type_to_get_optional_function[expected_json_type]
+                + f'({obj_name}, "{prop.name}")'
+            )
         else:
             get_json_expr = f'{obj_name}.get("{prop.name}")'
 
         parse_expression = gen.generate_parse_expression(prop.type, f"{prop.name}_json")
 
-        return dedent(f"""\
+        return dedent(
+            f"""\
             if ({prop.name}_json := {get_json_expr}) is not None:
                 {dest} = {parse_expression}
             else:
-                {dest} = None""")
+                {dest} = None"""
+        )
 
     else:
         if expected_json_type := gen.get_expected_json_type(prop.type):
-            get_json_expr = json_type_to_get_function[expected_json_type] + f'({obj_name}, "{prop.name}")'
+            get_json_expr = (
+                json_type_to_get_function[expected_json_type] + f'({obj_name}, "{prop.name}")'
+            )
         else:
             get_json_expr = f'{obj_name}["{prop.name}"]'
 
@@ -45,57 +72,78 @@ def _generate_property_read_statement(gen: Generator, prop: Property, obj_name: 
         return f"{dest} = {parse_expression}"
 
 
-def _generate_property_write_statement(gen: Generator, prop: Property, obj_name: str, anonymous_structure: bool = False, source_name: str = "") -> str:
+def _generate_property_write_statement(
+    gen: Generator,
+    prop: Property,
+    obj_name: str,
+    anonymous_structure: bool = False,
+    source_name: str = "",
+) -> str:
     if anonymous_structure:
         source = f'{source_name}["{prop.name}"]'
     else:
         source = "self." + escape_keyword(prop.name)
 
-    write_statement = f'{obj_name}["{prop.name}"] = {gen.generate_write_expression(prop.type, source)}'
+    write_statement = (
+        f'{obj_name}["{prop.name}"] = {gen.generate_write_expression(prop.type, source)}'
+    )
     if prop.optional:
         if anonymous_structure:
             write_statement = f'if "{prop.name}" in {source_name}:\n    ' + write_statement
         else:
-            write_statement = f'if {source} is not None:\n    ' + write_statement
+            write_statement = f"if {source} is not None:\n    " + write_statement
     return write_statement
 
 
 def _generate_anonymous_structure_read_fun(gen: Generator, val: StructureLiteral) -> str:
-    read_statements = [_generate_property_read_statement(gen, p, "obj", True, "out") for p in val.properties]
-    template = dedent("""\
+    read_statements = [
+        _generate_property_read_statement(gen, p, "obj", True, "out") for p in val.properties
+    ]
+    template = dedent(
+        """\
         def _parse_{name}(obj: Mapping[str, JSON_VALUE]) -> {type}:
             out: {type} = {{}}
         {statements}
-            return out""")
+            return out"""
+    )
     return template.format(
         name=gen.get_anonymous_type_name(val),
         type=gen.generate_type_annotation(AnyType("literal", StructureLiteralType(val))),
-        statements=indent("\n".join(read_statements)))
+        statements=indent("\n".join(read_statements)),
+    )
 
 
 def _generate_anonymous_structure_write_fun(gen: Generator, val: StructureLiteral) -> str:
-    write_statements = [_generate_property_write_statement(gen, p, "out", True, "obj") for p in val.properties]
+    write_statements = [
+        _generate_property_write_statement(gen, p, "out", True, "obj") for p in val.properties
+    ]
 
-    template = dedent("""\
+    template = dedent(
+        """\
         def _write_{name}(obj: {type}) -> JSON_VALUE:
             out: JSON_VALUE = {{}}
         {statements}
-            return out""")
+            return out"""
+    )
 
     return template.format(
         name=gen.get_anonymous_type_name(val),
         type=gen.generate_type_annotation(AnyType("literal", StructureLiteralType(val))),
-        statements=indent("\n".join(write_statements)))
+        statements=indent("\n".join(write_statements)),
+    )
 
 
 def generate_anonymous_structure_definition(gen: Generator, val: StructureLiteral) -> str:
-    template = dedent_ignore_empty("""\
+    template = dedent_ignore_empty(
+        """\
         {read_fun}
 
-        {write_fun}""")
+        {write_fun}"""
+    )
     return template.format(
         read_fun=_generate_anonymous_structure_read_fun(gen, val),
-        write_fun=_generate_anonymous_structure_write_fun(gen, val))
+        write_fun=_generate_anonymous_structure_write_fun(gen, val),
+    )
 
 
 def _generate_property_declaration(gen: Generator, prop: Property) -> str:
@@ -138,7 +186,9 @@ def _generate_property_documentation(gen: Generator, property: Property) -> str:
     if property.documentation:
         documentation += property.documentation
     if isinstance(property.type.content, StructureLiteralType):
-        documentation += "\n\n" + _generate_anonymous_structure_documentation(gen, property.type.content.value)
+        documentation += "\n\n" + _generate_anonymous_structure_documentation(
+            gen, property.type.content.value
+        )
     return _build_documentation_with_prefix(f":param {property.name}: ", documentation)
 
 
@@ -149,52 +199,78 @@ def _generate_structure_init_method(gen: Generator, properties: Tuple[Property, 
     parameters: List[str] = []
     for p in properties:
         if p.optional:
-            parameters.append(f"{escape_keyword(p.name)}: Optional[{gen.generate_type_annotation(p.type)}] = None")
+            parameters.append(
+                f"{escape_keyword(p.name)}: Optional[{gen.generate_type_annotation(p.type)}] = None"
+            )
         else:
             parameters.append(f"{escape_keyword(p.name)}: {gen.generate_type_annotation(p.type)}")
 
     names = [escape_keyword(p.name) for p in properties]
     assignments = [f"self.{n} = {n}" for n in names]
 
-    template = dedent('''\
+    template = dedent(
+        """\
         def __init__(self, *, {parameters}) -> None:
-        {assignments}''')
+        {assignments}"""
+    )
 
     return template.format(
-        parameters=", ".join(parameters),
-        assignments=indent("\n".join(assignments)))
+        parameters=", ".join(parameters), assignments=indent("\n".join(assignments))
+    )
 
 
-def _generate_structure_from_json_method(gen: Generator, class_name: str, properties: Tuple[Property, ...]) -> str:
-    property_read_statements = "\n".join([_generate_property_read_statement(gen, p, "obj") for p in properties])
-    property_assignments = ", ".join([escape_keyword(p.name) + "=" + escape_keyword(p.name) for p in properties])
+def _generate_structure_from_json_method(
+    gen: Generator, class_name: str, properties: Tuple[Property, ...]
+) -> str:
+    property_read_statements = "\n".join(
+        [_generate_property_read_statement(gen, p, "obj") for p in properties]
+    )
+    property_assignments = ", ".join(
+        [escape_keyword(p.name) + "=" + escape_keyword(p.name) for p in properties]
+    )
 
-    template = dedent("""\
+    template = dedent(
+        """\
         @classmethod
         def from_json(cls, obj: Mapping[str, JSON_VALUE]) -> "{class_name}":
         {read_statements}
-            return cls({property_assignments})""")
+            return cls({property_assignments})"""
+    )
     return template.format(
         class_name=class_name,
         read_statements=indent(property_read_statements),
-        property_assignments=property_assignments)
+        property_assignments=property_assignments,
+    )
 
 
 def _generate_structure_to_json_method(gen: Generator, properties: Tuple[Property, ...]) -> str:
-    property_write_statements = "\n".join([_generate_property_write_statement(gen, p, "out") for p in properties])
+    property_write_statements = "\n".join(
+        [_generate_property_write_statement(gen, p, "out") for p in properties]
+    )
 
-    template = dedent("""\
+    template = dedent(
+        """\
         def to_json(self) -> Dict[str, JSON_VALUE]:
             out: Dict[str, JSON_VALUE] = {{}}
         {write_statments}
-            return out""")
+            return out"""
+    )
     return template.format(write_statments=indent(property_write_statements))
 
 
-def _generate_structure_definition_generic(gen: Generator, class_name: str, documentation: Optional[str], properties: Tuple[Property, ...], superclasses: Tuple[str, ...]) -> str:
-    property_declarations = "\n\n".join([_generate_property_declaration(gen, p) for p in properties])
+def _generate_structure_definition_generic(
+    gen: Generator,
+    class_name: str,
+    documentation: Optional[str],
+    properties: Tuple[Property, ...],
+    superclasses: Tuple[str, ...],
+) -> str:
+    property_declarations = "\n\n".join(
+        [_generate_property_declaration(gen, p) for p in properties]
+    )
 
-    template = dedent_ignore_empty('''\
+    template = dedent_ignore_empty(
+        '''\
         @dataclass
         class {class_name}({superclasses}):
             """
@@ -209,7 +285,8 @@ def _generate_structure_definition_generic(gen: Generator, class_name: str, docu
 
         {from_json}
 
-        {to_json}''')
+        {to_json}'''
+    )
 
     return template.format(
         class_name=class_name,
@@ -218,7 +295,8 @@ def _generate_structure_definition_generic(gen: Generator, class_name: str, docu
         property_declarations=indent(property_declarations),
         init=indent(_generate_structure_init_method(gen, properties)),
         from_json=indent(_generate_structure_from_json_method(gen, class_name, properties)),
-        to_json=indent(_generate_structure_to_json_method(gen, properties)))
+        to_json=indent(_generate_structure_to_json_method(gen, properties)),
+    )
 
 
 def generate_structure_definition(gen: Generator, struct: Structure) -> str:
@@ -231,12 +309,16 @@ def generate_structure_definition(gen: Generator, struct: Structure) -> str:
 
     properties = tuple(gen.collect_structure_properties(struct))
 
-    property_documentations = "\n".join(_generate_property_documentation(gen, p) for p in properties)
+    property_documentations = "\n".join(
+        _generate_property_documentation(gen, p) for p in properties
+    )
     if struct.documentation:
         documentation = struct.documentation + "\n\n" + property_documentations
     else:
         documentation = property_documentations
-    return _generate_structure_definition_generic(gen, struct.name, documentation, properties, tuple(superclasses))
+    return _generate_structure_definition_generic(
+        gen, struct.name, documentation, properties, tuple(superclasses)
+    )
 
 
 def generate_andtype_definition(gen: Generator, val: AndType) -> str:
@@ -262,7 +344,7 @@ def generate_typealias_definition(gen: Generator, typealias: TypeAlias) -> str:
         #   typealias = "type"
         # which is interpreted as setting a string variable. So we un-quote the annotation
         # here and hope that it does not cause problems with forward declarations.
-        annotation = annotation[1: -1]
+        annotation = annotation[1:-1]
 
     expected_json_type = gen.get_expected_json_type(typealias.type)
     if expected_json_type:
@@ -270,24 +352,31 @@ def generate_typealias_definition(gen: Generator, typealias: TypeAlias) -> str:
     else:
         assert_fun = ""
 
-    template = dedent_ignore_empty("""\
+    template = dedent_ignore_empty(
+        """\
         {documentation}{name} = {annotation}
 
         def parse_{name}(arg: JSON_VALUE) -> {name}:
             return {parse_expression}
 
         def write_{name}(arg: {name}) -> JSON_VALUE:
-            return {write_expression}""")
+            return {write_expression}"""
+    )
 
     return template.format(
         name=typealias.name,
-        documentation=generate_documentation_comment(typealias.documentation) if typealias.documentation else "",
+        documentation=generate_documentation_comment(typealias.documentation)
+        if typealias.documentation
+        else "",
         annotation=annotation,
         parse_expression=gen.generate_parse_expression(typealias.type, f"{assert_fun}(arg)"),
-        write_expression=gen.generate_write_expression(typealias.type, "arg"))
+        write_expression=gen.generate_write_expression(typealias.type, "arg"),
+    )
 
 
-def get_referenced_definitions_anytype(gen: Generator, val: AnyType) -> List[Union[ref_target, StructureLiteral, AndType]]:
+def get_referenced_definitions_anytype(
+    gen: Generator, val: AnyType
+) -> List[Union[ref_target, StructureLiteral, AndType]]:
     if val.kind == "reference":
         assert isinstance(val.content, ReferenceType)
         target = gen.resolve_reference(val.content, resolve_typealiases=False)
@@ -328,7 +417,10 @@ def get_referenced_definitions_anytype(gen: Generator, val: AnyType) -> List[Uni
         assert False  # Broken AnyType
 
 
-def _get_referenced_definitions(gen: Generator, obj: Union[Notification, Request, Structure, TypeAlias, StructureLiteral, AndType]) -> List[Union[ref_target, StructureLiteral, AndType]]:
+def _get_referenced_definitions(
+    gen: Generator,
+    obj: Union[Notification, Request, Structure, TypeAlias, StructureLiteral, AndType],
+) -> List[Union[ref_target, StructureLiteral, AndType]]:
     if isinstance(obj, Enumeration):
         return []
     elif isinstance(obj, Notification):
@@ -384,7 +476,9 @@ def _get_referenced_definitions(gen: Generator, obj: Union[Notification, Request
                 assert isinstance(p.content, ReferenceType)
                 target = gen.resolve_reference(p.content)
                 if not isinstance(target, Structure):
-                    raise LSPGeneratorException("References to non-structure values are not supported in mixins")
+                    raise LSPGeneratorException(
+                        "References to non-structure values are not supported in mixins"
+                    )
                 out += _get_referenced_definitions(gen, target)
 
         for p in obj.properties:
@@ -406,7 +500,9 @@ def _get_referenced_definitions(gen: Generator, obj: Union[Notification, Request
             assert isinstance(i.content, ReferenceType)
             target = gen.resolve_reference(i.content)
             if not isinstance(target, Structure):
-                raise LSPGeneratorException("References to non-structure values are not supported in AndType items")
+                raise LSPGeneratorException(
+                    "References to non-structure values are not supported in AndType items"
+                )
             out += _get_referenced_definitions(gen, target)
         return out
 
@@ -415,7 +511,12 @@ def _get_referenced_definitions(gen: Generator, obj: Union[Notification, Request
 structures_py_type = Union[Structure, StructureLiteral, TypeAlias, AndType]
 
 
-def _sort_structures_and_typealiases_rec(gen: Generator, obj: structures_py_type, status: Dict[structures_py_type, str], list: List[structures_py_type]) -> None:
+def _sort_structures_and_typealiases_rec(
+    gen: Generator,
+    obj: structures_py_type,
+    status: Dict[structures_py_type, str],
+    list: List[structures_py_type],
+) -> None:
     if status.get(obj) in ["pending", "visited"]:
         return
 
@@ -465,7 +566,8 @@ def generate_structures_py(gen: Generator) -> str:
         else:  # isinstance(t, AndType)
             definitions.append(generate_andtype_definition(gen, t))
 
-    template = dedent_ignore_empty("""\
+    template = dedent_ignore_empty(
+        """\
         # DO NOT EDIT THIS FILE DIRECTLY!
         #
         # This file was automatically generated, so any edits to it will get overwritten.
@@ -482,6 +584,7 @@ def generate_structures_py(gen: Generator) -> str:
 
 
         {definitions}
-        """)
+        """
+    )
 
     return template.format(definitions="\n\n\n".join(definitions))

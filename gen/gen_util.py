@@ -26,11 +26,16 @@ def dedent_ignore_empty(text: str) -> str:
         if len(line) == 0:
             continue
         for i, c in enumerate(line):
-            if c != ' ':
+            if c != " ":
                 min_indentation = min(min_indentation, i)
                 break
 
-    return "\n".join((line[min_indentation:] if len(line) >= min_indentation else line for line in text.splitlines()))
+    return "\n".join(
+        (
+            line[min_indentation:] if len(line) >= min_indentation else line
+            for line in text.splitlines()
+        )
+    )
 
 
 def generate_documentation_comment(documentation: str) -> str:
@@ -44,7 +49,7 @@ def generate_documentation_comment(documentation: str) -> str:
 
 def escape_keyword(name: str) -> str:
     if iskeyword(name):
-        return name + '_'
+        return name + "_"
     else:
         return name
 

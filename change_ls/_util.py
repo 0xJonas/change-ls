@@ -7,8 +7,7 @@ from urllib.parse import urlsplit
 
 import change_ls._languages as languages
 from change_ls.tokens import Grammar
-from change_ls.types import (FileOperationFilter, FileOperationPatternKind,
-                             TextDocumentFilter)
+from change_ls.types import FileOperationFilter, FileOperationPatternKind, TextDocumentFilter
 
 
 @dataclass
@@ -52,9 +51,11 @@ def _extract_selections(lsp_glob: str) -> List[_LSPGlobSelection]:
     return selections
 
 
-def _expand_lsp_glob_rec(lsp_glob: str, selections: List[_LSPGlobSelection], index: int, start: int) -> Generator[str, None, None]:
+def _expand_lsp_glob_rec(
+    lsp_glob: str, selections: List[_LSPGlobSelection], index: int, start: int
+) -> Generator[str, None, None]:
     if index == len(selections):
-        yield lsp_glob[start:len(lsp_glob)]
+        yield lsp_glob[start : len(lsp_glob)]
         return
 
     tails = _expand_lsp_glob_rec(lsp_glob, selections, index + 1, selections[index].end)
@@ -109,7 +110,9 @@ class TextDocumentInfo:
         return self._language_id
 
 
-def matches_text_document_filter(info: TextDocumentInfo, document_filter: TextDocumentFilter) -> bool:
+def matches_text_document_filter(
+    info: TextDocumentInfo, document_filter: TextDocumentFilter
+) -> bool:
     """
     Checks whether the given `uri` matches the `TextDocumentFilter`.
 
@@ -122,7 +125,9 @@ def matches_text_document_filter(info: TextDocumentInfo, document_filter: TextDo
         return False
 
     if filter_language_id := document_filter.get("language"):
-        language_id = guess_language_id(Path(path_raw)) if not info.language_id else info.language_id
+        language_id = (
+            guess_language_id(Path(path_raw)) if not info.language_id else info.language_id
+        )
         if not language_id or language_id != filter_language_id:
             return False
 
@@ -174,17 +179,22 @@ def matches_file_operation_filter(uri: str, document_filter: FileOperationFilter
         is_directory = path.is_dir()
         if document_filter.pattern.matches is FileOperationPatternKind.file and is_directory:
             return False
-        elif document_filter.pattern.matches is FileOperationPatternKind.folder and not is_directory:
+        elif (
+            document_filter.pattern.matches is FileOperationPatternKind.folder and not is_directory
+        ):
             return False
 
     return True
 
 
-def install_language(*, language_id: str,
-                     extensions: Optional[List[str]] = None,
-                     grammar: Optional[Grammar] = None,
-                     embedded_grammars: Optional[List[Grammar]] = None,
-                     allow_overwrite: bool = False) -> None:
+def install_language(
+    *,
+    language_id: str,
+    extensions: Optional[List[str]] = None,
+    grammar: Optional[Grammar] = None,
+    embedded_grammars: Optional[List[Grammar]] = None,
+    allow_overwrite: bool = False,
+) -> None:
     """
     Adds a new language to be used by the library functions. Can also be used
     to add properties to an existing language.
@@ -210,7 +220,8 @@ def install_language(*, language_id: str,
         for e in extensions:
             if e in languages.extension_to_language_id:
                 raise ValueError(
-                    f"file extension {e} is already defined for language id {languages.extension_to_language_id[e]}.")
+                    f"file extension {e} is already defined for language id {languages.extension_to_language_id[e]}."
+                )
 
         for g in grammars:
             if g.get_scope_name() in languages.scope_to_grammar:

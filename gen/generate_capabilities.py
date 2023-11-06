@@ -6,11 +6,9 @@ from typing import Dict, List, Optional, Union
 
 from gen.gen_util import dedent_ignore_empty, indent
 from gen.generator import Generator
-from gen.schema.anytype import (ReferenceType, StructureLiteral,
-                                StructureLiteralType)
+from gen.schema.anytype import ReferenceType, StructureLiteral, StructureLiteralType
 from gen.schema.types import Structure
-from gen.schema.util import (JSON_VALUE, LSPMetaModelException,
-                             json_get_optional_string)
+from gen.schema.util import JSON_VALUE, LSPMetaModelException, json_get_optional_string
 
 
 @dataclass
@@ -23,7 +21,9 @@ class FeatureInfo:
         return cls(server_capability)
 
 
-def _get_access_modes(gen: Generator, root: Union[Structure, StructureLiteral], path: List[str]) -> List[str]:
+def _get_access_modes(
+    gen: Generator, root: Union[Structure, StructureLiteral], path: List[str]
+) -> List[str]:
     if len(path) == 0:
         return []
 
@@ -54,7 +54,7 @@ def _generate_capability_check(root: str, path: List[str], access_modes: List[st
         if mode == "subscript":
             expr = f'.get("{segment}")'
         else:
-            expr = '.' + segment
+            expr = "." + segment
         access_expressions.append(access_expressions[-1] + expr)
 
     # The last check will be the actual capability. We need to
@@ -70,7 +70,7 @@ def _generate_capability_access(root: str, path: List[str], access_modes: List[s
         if mode == "subscript":
             expr = f'["{segment}"]'
         else:
-            expr = '.' + segment
+            expr = "." + segment
         subexpressions.append(expr)
 
     return "".join(subexpressions)
@@ -86,21 +86,28 @@ def parse_capabilities(path: Path) -> Dict[str, FeatureInfo]:
     return out
 
 
-def generate_server_capabilities_to_feature_registrations(gen: Generator, feature_infos: Dict[str, FeatureInfo], server_capabilities: Structure) -> str:
+def generate_server_capabilities_to_feature_registrations(
+    gen: Generator, feature_infos: Dict[str, FeatureInfo], server_capabilities: Structure
+) -> str:
     checks: List[str] = []
 
     for m, f in feature_infos.items():
         if not f.server_capability:
             continue
 
-        path = f.server_capability.split('.')
+        path = f.server_capability.split(".")
         access_modes = _get_access_modes(gen, server_capabilities, path)
 
-        checks.append(dedent(f"""\
+        checks.append(
+            dedent(
+                f"""\
             if {_generate_capability_check("capabilities", path, access_modes)}:
-                out.append(_capability_to_feature_registration({_generate_capability_access("capabilities", path, access_modes)}, "{m}"))"""))
+                out.append(_capability_to_feature_registration({_generate_capability_access("capabilities", path, access_modes)}, "{m}"))"""
+            )
+        )
 
-    template = dedent_ignore_empty("""\
+    template = dedent_ignore_empty(
+        """\
         def _capability_to_feature_registration(capability: Any, method: str) -> FeatureRegistration:
             if isinstance(capability, TextDocumentRegistrationOptions):
                 document_selector = capability.documentSelector
@@ -116,7 +123,8 @@ def generate_server_capabilities_to_feature_registrations(gen: Generator, featur
         def server_capabilities_to_feature_registrations(capabilities: {name}) -> List[FeatureRegistration]:
             out: List[FeatureRegistration] = []
         {checks}
-            return out""")
+            return out"""
+    )
     return template.format(name=server_capabilities.name, checks=indent("\n".join(checks)))
 
 
@@ -147,7 +155,8 @@ def generate_registration_to_feature_registration(gen: Generator) -> str:
         assert isinstance(n.registration_options.content, ReferenceType)
         registration_option_mapping[method] = n.registration_options.content.name
 
-    template = dedent_ignore_empty("""\
+    template = dedent_ignore_empty(
+        """\
         _method_to_options_mapping = {{
         {mapping}
         }}
@@ -164,21 +173,30 @@ def generate_registration_to_feature_registration(gen: Generator) -> str:
                 id = options.id
             else:
                 id = registration.id
-            return FeatureRegistration(id, registration.method, document_selector, options)""")
+            return FeatureRegistration(id, registration.method, document_selector, options)"""
+    )
 
-    return template.format(mapping=indent(",\n".join('"' + m + '": ' + o for m, o in registration_option_mapping.items())))
+    return template.format(
+        mapping=indent(
+            ",\n".join('"' + m + '": ' + o for m, o in registration_option_mapping.items())
+        )
+    )
 
 
 def generate_capabilities_py(gen: Generator, feature_infos: Dict[str, FeatureInfo]) -> str:
     server_capabilities = gen.resolve_reference(ReferenceType("ServerCapabilities"))
     assert isinstance(server_capabilities, Structure)
 
-    server_capabilities_to_feature_registrations = generate_server_capabilities_to_feature_registrations(
-        gen, feature_infos, server_capabilities)
+    server_capabilities_to_feature_registrations = (
+        generate_server_capabilities_to_feature_registrations(
+            gen, feature_infos, server_capabilities
+        )
+    )
 
     registration_to_feature_registration = generate_registration_to_feature_registration(gen)
 
-    template = dedent_ignore_empty("""\
+    template = dedent_ignore_empty(
+        """\
         # DO NOT EDIT THIS FILE DIRECTLY!
         #
         # This file was automatically generated, so any edits to it will get overwritten.
@@ -203,8 +221,10 @@ def generate_capabilities_py(gen: Generator, feature_infos: Dict[str, FeatureInf
         {server_capabilities_to_feature_registrations}
 
 
-        {registration_to_feature_registration}""")
+        {registration_to_feature_registration}"""
+    )
 
     return template.format(
         server_capabilities_to_feature_registrations=server_capabilities_to_feature_registrations,
-        registration_to_feature_registration=registration_to_feature_registration)
+        registration_to_feature_registration=registration_to_feature_registration,
+    )

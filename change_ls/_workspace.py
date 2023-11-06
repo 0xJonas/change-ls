@@ -5,28 +5,55 @@ import warnings
 from logging import DEBUG
 from pathlib import Path
 from types import TracebackType
-from typing import (Any, Callable, Dict, List, Literal, Optional, Sequence,
-                    Tuple, Type, Union, overload)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    overload,
+)
 from urllib.parse import urlsplit
 
 import change_ls._symbol as symbol
 import change_ls._text_document as td
 from change_ls._change_ls_error import ChangeLSError
-from change_ls._client import (Client, ServerLaunchParams,
-                               WorkspaceRequestHandler,
-                               get_default_initialize_params)
+from change_ls._client import (
+    Client,
+    ServerLaunchParams,
+    WorkspaceRequestHandler,
+    get_default_initialize_params,
+)
 from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter, operation
-from change_ls.types import (ApplyWorkspaceEditParams,
-                             ApplyWorkspaceEditResult, ConfigurationParams,
-                             CreateFile, CreateFilesParams, DeleteFile,
-                             DeleteFilesParams, DidOpenTextDocumentParams,
-                             FileCreate, FileDelete, FileRename,
-                             InitializeParams, LSPAny,
-                             PublishDiagnosticsParams, RenameFile,
-                             RenameFilesParams, TextDocumentEdit, TextEdit,
-                             WorkspaceEdit, WorkspaceFolder,
-                             WorkspaceSymbolParams)
+from change_ls.types import (
+    ApplyWorkspaceEditParams,
+    ApplyWorkspaceEditResult,
+    ConfigurationParams,
+    CreateFile,
+    CreateFilesParams,
+    DeleteFile,
+    DeleteFilesParams,
+    DidOpenTextDocumentParams,
+    FileCreate,
+    FileDelete,
+    FileRename,
+    InitializeParams,
+    LSPAny,
+    PublishDiagnosticsParams,
+    RenameFile,
+    RenameFilesParams,
+    TextDocumentEdit,
+    TextEdit,
+    WorkspaceEdit,
+    WorkspaceFolder,
+    WorkspaceSymbolParams,
+)
 
 ConfigurationProvider = Callable[[Optional[str], Optional[str]], LSPAny]
 
@@ -47,7 +74,9 @@ def _validate_node_type(full_path: Path, expect_directory: Optional[bool]) -> No
             raise ChangeLSError(f"Expected file but '{full_path}' is a directory.")
 
 
-def _validate_rename_args(path_source: Path, path_destination: Path, overwrite: bool, expect_directory: Optional[bool]) -> None:
+def _validate_rename_args(
+    path_source: Path, path_destination: Path, overwrite: bool, expect_directory: Optional[bool]
+) -> None:
     if not path_source.exists():
         raise FileNotFoundError(f"Source '{path_source}' not found")
     elif path_destination.exists() and not overwrite:
@@ -98,7 +127,9 @@ class Workspace(WorkspaceRequestHandler):
 
     default_encoding: str
 
-    def __init__(self, *roots: Path, names: Optional[Sequence[str]] = None, default_encoding: str = "utf-8") -> None:
+    def __init__(
+        self, *roots: Path, names: Optional[Sequence[str]] = None, default_encoding: str = "utf-8"
+    ) -> None:
         # pathlib.Path.resolve() does not work correctly on windows, so
         # we use abspath in addition to resolve to deal with both making
         # the path absolute and resolving symlinks. Also, it gets us
@@ -114,7 +145,8 @@ class Workspace(WorkspaceRequestHandler):
         self._opened_text_documents = {}
         self._id = uuid.uuid4()
         self._logger = get_change_ls_default_logger(
-            "change-ls.workspace", cls_workspace=str(self._id), cls_text_document=None)
+            "change-ls.workspace", cls_workspace=str(self._id), cls_text_document=None
+        )
 
     @property
     def logger(self) -> OperationLoggerAdapter:
@@ -124,10 +156,17 @@ class Workspace(WorkspaceRequestHandler):
         return self._logger
 
     def _get_workspace_folders(self) -> List[WorkspaceFolder]:
-        return [WorkspaceFolder(uri=path.as_uri(), name=name) for path, name in zip(self._roots, self._root_names)]
+        return [
+            WorkspaceFolder(uri=path.as_uri(), name=name)
+            for path, name in zip(self._roots, self._root_names)
+        ]
 
     @operation(start_message="Creating Client...", get_logger_from_context=_get_logger_from_context)
-    def create_client(self, launch_params: ServerLaunchParams, initialize_params: Optional[InitializeParams] = None) -> Client:
+    def create_client(
+        self,
+        launch_params: ServerLaunchParams,
+        initialize_params: Optional[InitializeParams] = None,
+    ) -> Client:
         """
         Like :meth:`launch_client`, but does not immediately start the underlying language server.
         """
@@ -142,8 +181,15 @@ class Workspace(WorkspaceRequestHandler):
         self.logger.info(f"Client {client} created!")
         return client
 
-    @operation(start_message="Launching new language server and Client...", get_logger_from_context=_get_logger_from_context)
-    async def launch_client(self, launch_params: ServerLaunchParams, initialize_params: Optional[InitializeParams] = None) -> Client:
+    @operation(
+        start_message="Launching new language server and Client...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    async def launch_client(
+        self,
+        launch_params: ServerLaunchParams,
+        initialize_params: Optional[InitializeParams] = None,
+    ) -> Client:
         """
         Creates a :class:`Client` associated with this :class:`Workspace`, which manages a language server.
         The underlying language server is started immediatly, so the returned ``Client`` will be in the ``"running"`` state.
@@ -165,7 +211,9 @@ class Workspace(WorkspaceRequestHandler):
             for doc in self._opened_text_documents.values():
                 if not client.check_feature("textDocument/didOpen", text_documents=[doc]):
                     continue
-                client.send_text_document_did_open(DidOpenTextDocumentParams(textDocument=doc.get_text_document_item()))
+                client.send_text_document_did_open(
+                    DidOpenTextDocumentParams(textDocument=doc.get_text_document_item())
+                )
 
         def unregister_client() -> None:
             client.set_workspace_request_handler(None)
@@ -183,7 +231,9 @@ class Workspace(WorkspaceRequestHandler):
     def clients(self) -> List[Client]:
         return self._clients
 
-    def set_configuration_provider(self, configuration_provider: Optional[ConfigurationProvider]) -> None:
+    def set_configuration_provider(
+        self, configuration_provider: Optional[ConfigurationProvider]
+    ) -> None:
         """
         Sets the :data:`ConfigurationProvider` for this :class:`Workspace`.
 
@@ -209,10 +259,12 @@ class Workspace(WorkspaceRequestHandler):
             existing_paths = [p for p in full_paths if p.exists()]
             if len(existing_paths) == 0:
                 raise FileNotFoundError(
-                    f"Relative path is ambiguous in workspace: '{str(path)}' is not found under any of the roots.")
+                    f"Relative path is ambiguous in workspace: '{str(path)}' is not found under any of the roots."
+                )
             if len(existing_paths) > 1:
                 raise FileNotFoundError(
-                    f"Relative path is ambiguous in workspace: '{str(path)}' can be any of {[str(p) for p in existing_paths]}")
+                    f"Relative path is ambiguous in workspace: '{str(path)}' can be any of {[str(p) for p in existing_paths]}"
+                )
             return existing_paths[0].resolve()
 
     def _normalize_path_parameter(self, path: Union[Path, str]) -> Tuple[Path, str]:
@@ -238,7 +290,13 @@ class Workspace(WorkspaceRequestHandler):
         return (full_path, uri)
 
     @operation
-    def open_text_document(self, path: Union[Path, str], *, encoding: Optional[str] = None, language_id: Optional[str] = None) -> "td.TextDocument":
+    def open_text_document(
+        self,
+        path: Union[Path, str],
+        *,
+        encoding: Optional[str] = None,
+        language_id: Optional[str] = None,
+    ) -> "td.TextDocument":
         """
         Opens a :class:`TextDocument` from this :class:`Workspace`.
 
@@ -262,10 +320,12 @@ class Workspace(WorkspaceRequestHandler):
         if text_document := self._opened_text_documents.get(uri):
             if encoding is not None and encoding != text_document.encoding:
                 raise ChangeLSError(
-                    f"Textdocument {full_path} was already opened with encoding {text_document.encoding}.")
+                    f"Textdocument {full_path} was already opened with encoding {text_document.encoding}."
+                )
             if language_id is not None and language_id != text_document.language_id:
                 raise ChangeLSError(
-                    f"Textdocument {full_path} was already opened with language_id {text_document.language_id}.")
+                    f"Textdocument {full_path} was already opened with language_id {text_document.language_id}."
+                )
 
             text_document._reopen()
             return text_document
@@ -281,23 +341,29 @@ class Workspace(WorkspaceRequestHandler):
         for client in self._clients:
             if not client.check_feature("textDocument/didOpen", text_documents=[text_document]):
                 continue
-            client.send_text_document_did_open(DidOpenTextDocumentParams(
-                textDocument=text_document.get_text_document_item()))
+            client.send_text_document_did_open(
+                DidOpenTextDocumentParams(textDocument=text_document.get_text_document_item())
+            )
 
         self._opened_text_documents[uri] = text_document
         self.logger.info(
-            f"Opened TextDocument {full_path} with encoding {text_document.encoding} and language id {text_document.language_id}!")
+            f"Opened TextDocument {full_path} with encoding {text_document.encoding} and language id {text_document.language_id}!"
+        )
         return text_document
 
     async def __aenter__(self) -> "Workspace":
         return self
 
-    async def __aexit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType) -> bool:
+    async def __aexit__(
+        self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType
+    ) -> bool:
         for doc in list(reversed(self._opened_text_documents.values())):
             doc._final_close()  # type: ignore
         self._opened_text_documents = {}
 
-        futures = [client.__aexit__(exc_type, exc_value, traceback) for client in reversed(self._clients)]
+        futures = [
+            client.__aexit__(exc_type, exc_value, traceback) for client in reversed(self._clients)
+        ]
         await asyncio.gather(*futures)
         self._clients = []
 
@@ -308,33 +374,43 @@ class Workspace(WorkspaceRequestHandler):
             if len(self._clients) == 1:
                 return self._clients[0]
             else:
-                raise ChangeLSError("No Client was given and the Workspace contains zero or more than one Client.")
+                raise ChangeLSError(
+                    "No Client was given and the Workspace contains zero or more than one Client."
+                )
         elif client in self._clients:
             return client
         else:
             raise ChangeLSError(f"Client {client} was not launched in Workspace {self}")
 
     @operation
-    async def _perform_text_document_edits(self, uri: str, edits: List[TextEdit], version: Optional[int] = None) -> None:
+    async def _perform_text_document_edits(
+        self, uri: str, edits: List[TextEdit], version: Optional[int] = None
+    ) -> None:
         with self.open_text_document(uri) as doc:
             self.logger.info(f"Performing {len(edits)} edits on TextDocument {doc.path}...")
             if version is not None and doc.version != version:
                 raise ChangeLSError(
-                    f"Encountered edits for version {version} of {doc.path}, but the current version is {doc.version}.")
+                    f"Encountered edits for version {version} of {doc.path}, but the current version is {doc.version}."
+                )
             if len(doc._pending_edits) > 0:  # type: ignore
                 raise ChangeLSError(
-                    f"Edits cannot be applied, because TextDocument {doc.path} has uncommitted edits.")
+                    f"Edits cannot be applied, because TextDocument {doc.path} has uncommitted edits."
+                )
 
             for edit in edits:
                 doc.push_text_edit(edit)
             doc.commit_edits()
             await doc.save()
 
-    async def _perform_document_changes_and_save(self, document_changes: List[Union[TextDocumentEdit, CreateFile, RenameFile, DeleteFile]]) -> None:
+    async def _perform_document_changes_and_save(
+        self, document_changes: List[Union[TextDocumentEdit, CreateFile, RenameFile, DeleteFile]]
+    ) -> None:
         self.logger.info("Using WorkspaceEdit.documentChanges.")
         for action in document_changes:
             if isinstance(action, TextDocumentEdit):
-                await self._perform_text_document_edits(action.textDocument.uri, action.edits, action.textDocument.version)
+                await self._perform_text_document_edits(
+                    action.textDocument.uri, action.edits, action.textDocument.version
+                )
             elif isinstance(action, CreateFile):
                 overwrite = bool(action.options and action.options.overwrite)
                 ignore_if_exists = bool(action.options and action.options.ignoreIfExists)
@@ -342,13 +418,21 @@ class Workspace(WorkspaceRequestHandler):
             elif isinstance(action, RenameFile):
                 overwrite = bool(action.options and action.options.overwrite)
                 ignore_if_exists = bool(action.options and action.options.ignoreIfExists)
-                await self._handle_rename(action.oldUri, action.newUri, overwrite=overwrite, ignore_if_exists=ignore_if_exists)
+                await self._handle_rename(
+                    action.oldUri,
+                    action.newUri,
+                    overwrite=overwrite,
+                    ignore_if_exists=ignore_if_exists,
+                )
             else:
                 recursive = bool(action.options and action.options.recursive)
                 ignore_if_not_exists = bool(action.options and action.options.ignoreIfNotExists)
                 await self._handle_delete_file(action.uri, recursive, ignore_if_not_exists)
 
-    @operation(start_message="Performing WorkspaceEdit...", get_logger_from_context=_get_logger_from_context)
+    @operation(
+        start_message="Performing WorkspaceEdit...",
+        get_logger_from_context=_get_logger_from_context,
+    )
     async def perform_edit_and_save(self, edit: WorkspaceEdit) -> None:
         """
         Perform the edits described by the given :class:`WorkspaceEdit` and save the affected
@@ -363,7 +447,9 @@ class Workspace(WorkspaceRequestHandler):
         :param edit: The :class:`WorkspaceEdit` to perform.
         """
         if edit.changes is not None and edit.documentChanges is not None:
-            raise ChangeLSError("Only one of WorkspaceEdit.changes and WorkspaceEdit.documentChanges may be set.")
+            raise ChangeLSError(
+                "Only one of WorkspaceEdit.changes and WorkspaceEdit.documentChanges may be set."
+            )
 
         if self._logger.getEffectiveLevel() <= DEBUG:
             self._logger.debug("WorkspaceEdit: %s", str(edit.to_json()))
@@ -393,8 +479,14 @@ class Workspace(WorkspaceRequestHandler):
                 continue
             client.send_workspace_did_create_files(params)
 
-    @operation(name="create_node", start_message="Creating file {path}...", get_logger_from_context=_get_logger_from_context)
-    async def _handle_create_file(self, path: Union[Path, str], overwrite: bool, ignore_if_exists: bool) -> None:
+    @operation(
+        name="create_node",
+        start_message="Creating file {path}...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    async def _handle_create_file(
+        self, path: Union[Path, str], overwrite: bool, ignore_if_exists: bool
+    ) -> None:
         full_path, uri = self._normalize_path_parameter(path)
 
         if full_path.exists() and not overwrite:
@@ -423,11 +515,15 @@ class Workspace(WorkspaceRequestHandler):
         self._send_did_create_file_notifications(uri)
         self.logger.info(f"File '{full_path}' is ready!")
 
-    async def create_text_document(self, path: Union[Path, str], *,
-                                   overwrite: bool = False,
-                                   ignore_if_exists: bool = False,
-                                   encoding: Optional[str] = None,
-                                   language_id: Optional[str] = None) -> "td.TextDocument":
+    async def create_text_document(
+        self,
+        path: Union[Path, str],
+        *,
+        overwrite: bool = False,
+        ignore_if_exists: bool = False,
+        encoding: Optional[str] = None,
+        language_id: Optional[str] = None,
+    ) -> "td.TextDocument":
         """
         Creates a new :class:`TextDocument` and opens it. Any required directories which do not already
         exist will be created as well.
@@ -489,11 +585,20 @@ class Workspace(WorkspaceRequestHandler):
             elif doc := self._opened_text_documents.get(source_item.as_uri()):
                 doc._set_path(destination_item)  # type: ignore
 
-    @operation(name="rename_node", start_message="Renaming file '{source}' to '{destination}'...", get_logger_from_context=_get_logger_from_context)
-    async def _handle_rename(self, source: Union[Path, str], destination: Union[Path, str], *,
-                             overwrite: bool = False,
-                             ignore_if_exists: bool = False,
-                             expect_directory: Optional[bool] = None) -> None:
+    @operation(
+        name="rename_node",
+        start_message="Renaming file '{source}' to '{destination}'...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    async def _handle_rename(
+        self,
+        source: Union[Path, str],
+        destination: Union[Path, str],
+        *,
+        overwrite: bool = False,
+        ignore_if_exists: bool = False,
+        expect_directory: Optional[bool] = None,
+    ) -> None:
         path_source, uri_source = self._normalize_path_parameter(source)
         path_destination, uri_destination = self._normalize_path_parameter(destination)
 
@@ -524,9 +629,14 @@ class Workspace(WorkspaceRequestHandler):
         self._send_did_rename_notifications(uri_source, uri_destination)
         self.logger.info(f"Renamed file '{path_source}' to '{path_destination}'!")
 
-    async def rename_text_document(self, source: Union[Path, str], destination: Union[Path, str], *,
-                                   overwrite: bool = False,
-                                   ignore_if_exists: bool = False) -> None:
+    async def rename_text_document(
+        self,
+        source: Union[Path, str],
+        destination: Union[Path, str],
+        *,
+        overwrite: bool = False,
+        ignore_if_exists: bool = False,
+    ) -> None:
         """
         Renames a document.
 
@@ -539,11 +649,22 @@ class Workspace(WorkspaceRequestHandler):
             ``ignore_if_exists`` are given, ``overwrite`` takes priority.
         :param ignore_if_exists: If the destination already exists, no rename should be performed.
         """
-        await self._handle_rename(source, destination, overwrite=overwrite, ignore_if_exists=ignore_if_exists, expect_directory=False)
+        await self._handle_rename(
+            source,
+            destination,
+            overwrite=overwrite,
+            ignore_if_exists=ignore_if_exists,
+            expect_directory=False,
+        )
 
-    async def rename_directory(self, source: Union[Path, str], destination: Union[Path, str], *,
-                               overwrite: bool = False,
-                               ignore_if_exists: bool = False) -> None:
+    async def rename_directory(
+        self,
+        source: Union[Path, str],
+        destination: Union[Path, str],
+        *,
+        overwrite: bool = False,
+        ignore_if_exists: bool = False,
+    ) -> None:
         """
         Renames a directory.
 
@@ -556,7 +677,13 @@ class Workspace(WorkspaceRequestHandler):
             ``ignore_if_exists`` are given, ``overwrite`` takes priority.
         :param ignore_if_exists: If the destination already exists, no rename should be performed.
         """
-        await self._handle_rename(source, destination, overwrite=overwrite, ignore_if_exists=ignore_if_exists, expect_directory=True)
+        await self._handle_rename(
+            source,
+            destination,
+            overwrite=overwrite,
+            ignore_if_exists=ignore_if_exists,
+            expect_directory=True,
+        )
 
     async def _send_will_delete_file_requests(self, uri: str) -> None:
         params = DeleteFilesParams(files=[FileDelete(uri=uri)])
@@ -574,12 +701,19 @@ class Workspace(WorkspaceRequestHandler):
                 continue
             client.send_workspace_did_delete_files(params)
 
-    @operation(name="delete_node", start_message="Deleting file '{path}'...", get_logger_from_context=_get_logger_from_context)
-    async def _handle_delete_file(self, path: Union[Path, str],
-                                  recursive: bool,
-                                  ignore_if_not_exists: bool,
-                                  *,
-                                  expect_directory: Optional[bool] = None) -> None:
+    @operation(
+        name="delete_node",
+        start_message="Deleting file '{path}'...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    async def _handle_delete_file(
+        self,
+        path: Union[Path, str],
+        recursive: bool,
+        ignore_if_not_exists: bool,
+        *,
+        expect_directory: Optional[bool] = None,
+    ) -> None:
         full_path, uri = self._normalize_path_parameter(path)
 
         if not full_path.exists():
@@ -615,7 +749,9 @@ class Workspace(WorkspaceRequestHandler):
         self._send_did_delete_file_notifications(uri)
         self.logger.info(f"Deleted '{full_path}'!")
 
-    async def delete_text_document(self, path: Union[Path, str], *, ignore_if_not_exists: bool = False) -> None:
+    async def delete_text_document(
+        self, path: Union[Path, str], *, ignore_if_not_exists: bool = False
+    ) -> None:
         """
         Deletes a document from this :class:`Workspace`. If the document is currently open, it will be
         closed automatically.
@@ -626,7 +762,9 @@ class Workspace(WorkspaceRequestHandler):
         """
         await self._handle_delete_file(path, False, ignore_if_not_exists, expect_directory=False)
 
-    async def delete_directory(self, path: Union[Path, str], *, recursive: bool = False, ignore_if_not_exists: bool = False) -> None:
+    async def delete_directory(
+        self, path: Union[Path, str], *, recursive: bool = False, ignore_if_not_exists: bool = False
+    ) -> None:
         """
         Deletes a directory from this :class:`Workspace`. Any opened :class:`TextDocuments` which are below ``path``
         will be closed.
@@ -639,30 +777,42 @@ class Workspace(WorkspaceRequestHandler):
         """
         await self._handle_delete_file(path, recursive, ignore_if_not_exists, expect_directory=True)
 
-    async def _query_unresolved_symbols(self, query: str, client: Optional[Client]) -> List["symbol.UnresolvedWorkspaceSymbol"]:
+    async def _query_unresolved_symbols(
+        self, query: str, client: Optional[Client]
+    ) -> List["symbol.UnresolvedWorkspaceSymbol"]:
         client = self._resolve_client_parameter(client)
         if not client.check_feature("workspace/symbol"):
-            raise ChangeLSError(f"Language server {client.server_info} does not support querying workspace symbols.")
+            raise ChangeLSError(
+                f"Language server {client.server_info} does not support querying workspace symbols."
+            )
         raw_result = await client.send_workspace_symbol(WorkspaceSymbolParams(query=query))
         if raw_result is None:
             self.logger.warning(
-                f"Language server {client.server_info} returned null for workspace/symbol with query '{query}'.")
+                f"Language server {client.server_info} returned null for workspace/symbol with query '{query}'."
+            )
             return []
 
         return [symbol.UnresolvedWorkspaceSymbol(client, self, sym) for sym in raw_result]
 
     @overload
-    async def query_symbols(self, query: str, *,
-                            resolve: Literal[True] = True, client: Optional[Client] = None) -> List["symbol.WorkspaceSymbol"]: ...
+    async def query_symbols(
+        self, query: str, *, resolve: Literal[True] = True, client: Optional[Client] = None
+    ) -> List["symbol.WorkspaceSymbol"]:
+        ...
 
     @overload
-    async def query_symbols(self, query: str, *,
-                            resolve: Literal[False] = False, client: Optional[Client] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]: ...
+    async def query_symbols(
+        self, query: str, *, resolve: Literal[False] = False, client: Optional[Client] = None
+    ) -> List["symbol.UnresolvedWorkspaceSymbol"]:
+        ...
 
-    @operation(start_message="Querying symbols using query '{query}'...", get_logger_from_context=_get_logger_from_context)
-    async def query_symbols(self, query: str, *,
-                            resolve: bool = True,
-                            client: Optional[Client] = None) -> Union[List["symbol.WorkspaceSymbol"], List["symbol.UnresolvedWorkspaceSymbol"]]:
+    @operation(
+        start_message="Querying symbols using query '{query}'...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    async def query_symbols(
+        self, query: str, *, resolve: bool = True, client: Optional[Client] = None
+    ) -> Union[List["symbol.WorkspaceSymbol"], List["symbol.UnresolvedWorkspaceSymbol"]]:
         """
         Queries the ``Workspace`` for symbols using the given query string.
 
@@ -678,7 +828,8 @@ class Workspace(WorkspaceRequestHandler):
 
         if query == "":
             warnings.warn(
-                "Querying symbols with an empty query will return ALL symbols in the workspace. Consider using load_all_symbols() instead.")
+                "Querying symbols with an empty query will return ALL symbols in the workspace. Consider using load_all_symbols() instead."
+            )
 
         unresolved_symbols = await self._query_unresolved_symbols(query, client)
         if resolve:
@@ -691,8 +842,13 @@ class Workspace(WorkspaceRequestHandler):
             self.logger.info(f"Found {len(unresolved_symbols)} Symbols!")
             return unresolved_symbols
 
-    @operation(start_message="Loading all symbols for the workspace...", get_logger_from_context=_get_logger_from_context)
-    async def load_all_symbols(self, *, client: Optional[Client] = None) -> List["symbol.UnresolvedWorkspaceSymbol"]:
+    @operation(
+        start_message="Loading all symbols for the workspace...",
+        get_logger_from_context=_get_logger_from_context,
+    )
+    async def load_all_symbols(
+        self, *, client: Optional[Client] = None
+    ) -> List["symbol.UnresolvedWorkspaceSymbol"]:
         """
         Returns all symbols in this ``Workspace``. The symbols are returned as a List
         of :class:`UnresolvedWorkspaceSymbols <UnresolvedWorkspaceSymbol>` so they need to

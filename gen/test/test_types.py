@@ -9,23 +9,17 @@ def test_parse_enumeration() -> None:
         "proposed": False,
         "since": "0.1.0",
         "supportsCustomValues": False,
-        "type": {
-            "kind": "base",
-            "name": "string"
-        },
+        "type": {"kind": "base", "name": "string"},
         "values": [
             {
                 "documentation": "A test EnumerationEntry",
                 "name": "Test1",
                 "proposed": True,
                 "since": "0.1.1",
-                "value": "value1"
+                "value": "value1",
             },
-            {
-                "name": "Test2",
-                "value": "value2"
-            }
-        ]
+            {"name": "Test2", "value": "value2"},
+        ],
     }
 
     res1 = Enumeration.from_json(test_json1)
@@ -38,27 +32,25 @@ def test_parse_enumeration() -> None:
         EnumerationType("string"),
         (
             EnumerationEntry("A test EnumerationEntry", "Test1", True, "0.1.1", "value1"),
-            EnumerationEntry(None, "Test2", None, None, "value2")
-        )
+            EnumerationEntry(None, "Test2", None, None, "value2"),
+        ),
     )
 
     test_json2 = {
         "name": "Test2",
-        "type": {
-            "kind": "base",
-            "name": "integer"
-        },
-        "values": [
-            {
-                "name": "Test2_1",
-                "value": 1
-            }
-        ]
+        "type": {"kind": "base", "name": "integer"},
+        "values": [{"name": "Test2_1", "value": 1}],
     }
 
     res2 = Enumeration.from_json(test_json2)
     assert res2 == Enumeration(
-        None, "Test2", None, None, None, EnumerationType("integer"), (EnumerationEntry(None, "Test2_1", None, None, 1),)
+        None,
+        "Test2",
+        None,
+        None,
+        None,
+        EnumerationType("integer"),
+        (EnumerationEntry(None, "Test2_1", None, None, 1),),
     )
 
 
@@ -67,17 +59,11 @@ def test_parse_notification() -> None:
         "documentation": "A test Notification",
         "messageDirection": "clientToServer",
         "method": "test/test",
-        "params": {
-            "kind": "base",
-            "name": "string"
-        },
+        "params": {"kind": "base", "name": "string"},
         "proposed": True,
-        "registrationOptions": {
-            "kind": "base",
-            "name": "integer"
-        },
+        "registrationOptions": {"kind": "base", "name": "integer"},
         "registrationMethod": "test/x",
-        "since": "0.1.0"
+        "since": "0.1.0",
     }
 
     res1 = Notification.from_json(test_json1)
@@ -89,64 +75,48 @@ def test_parse_notification() -> None:
         True,
         AnyType("base", BaseType("integer")),
         "test/x",
-        "0.1.0"
+        "0.1.0",
     )
 
-    test_json2 = {
-        "method": "test/test",
-        "messageDirection": "serverToClient"
-    }
+    test_json2 = {"method": "test/test", "messageDirection": "serverToClient"}
     res2 = Notification.from_json(test_json2)
     assert res2 == Notification(None, "serverToClient", "test/test", None, None, None, None, None)
 
     test_json3 = {
         "method": "test/test",
         "messageDirection": "both",
-        "params": [
-            {
-                "kind": "base",
-                "name": "string"
-            },
-            {
-                "kind": "base",
-                "name": "integer"
-            }
-        ]
+        "params": [{"kind": "base", "name": "string"}, {"kind": "base", "name": "integer"}],
     }
 
     res3 = Notification.from_json(test_json3)
-    assert res3 == Notification(None, "both", "test/test", (AnyType("base", BaseType("string")),
-                                AnyType("base", BaseType("integer"))), None, None, None, None)
+    assert res3 == Notification(
+        None,
+        "both",
+        "test/test",
+        (AnyType("base", BaseType("string")), AnyType("base", BaseType("integer"))),
+        None,
+        None,
+        None,
+        None,
+    )
 
 
 def test_parse_request() -> None:
     test_json1 = {
         "documentation": "A test Request",
-        "errorData": {
-            "kind": "base",
-            "name": "string"
-        },
+        "errorData": {"kind": "base", "name": "string"},
         "messageDirection": "clientToServer",
         "method": "test/test",
-        "params": {
-            "kind": "base",
-            "name": "string"
-        },
+        "params": {"kind": "base", "name": "string"},
         "partialResult": {
             "kind": "base",
             "name": "integer",
         },
         "proposed": False,
-        "registrationOptions": {
-            "kind": "base",
-            "name": "boolean"
-        },
+        "registrationOptions": {"kind": "base", "name": "boolean"},
         "registrationMethod": "testing",
-        "result": {
-            "kind": "base",
-            "name": "URI"
-        },
-        "since": "0.1.0"
+        "result": {"kind": "base", "name": "URI"},
+        "since": "0.1.0",
     }
 
     res1 = Request.from_json(test_json1)
@@ -161,39 +131,35 @@ def test_parse_request() -> None:
         AnyType("base", BaseType("boolean")),
         "testing",
         AnyType("base", BaseType("URI")),
-        "0.1.0"
+        "0.1.0",
     )
 
     test_json2 = {
         "method": "test/test",
         "messageDirection": "serverToClient",
-        "result": {
-            "kind": "base",
-            "name": "boolean"
-        }
+        "result": {"kind": "base", "name": "boolean"},
     }
 
     res2 = Request.from_json(test_json2)
-    assert res2 == Request(None, None, "serverToClient", "test/test", None, None,
-                           None, None, None, AnyType("base", BaseType("boolean")), None)
+    assert res2 == Request(
+        None,
+        None,
+        "serverToClient",
+        "test/test",
+        None,
+        None,
+        None,
+        None,
+        None,
+        AnyType("base", BaseType("boolean")),
+        None,
+    )
 
     test_json3 = {
         "method": "test/test",
         "messageDirection": "both",
-        "params": [
-            {
-                "kind": "base",
-                "name": "string"
-            },
-            {
-                "kind": "base",
-                "name": "integer"
-            }
-        ],
-        "result": {
-            "kind": "base",
-            "name": "DocumentUri"
-        }
+        "params": [{"kind": "base", "name": "string"}, {"kind": "base", "name": "integer"}],
+        "result": {"kind": "base", "name": "DocumentUri"},
     }
 
     res3 = Request.from_json(test_json3)
@@ -208,37 +174,19 @@ def test_parse_request() -> None:
         None,
         None,
         AnyType("base", BaseType("DocumentUri")),
-        None
+        None,
     )
 
 
 def test_parse_structure() -> None:
     test_json1 = {
         "documentation": "A test Structure",
-        "extends": [
-            {
-                "kind": "base",
-                "name": "string"
-            }
-        ],
-        "mixins": [
-            {
-                "kind": "base",
-                "name": "integer"
-            }
-        ],
+        "extends": [{"kind": "base", "name": "string"}],
+        "mixins": [{"kind": "base", "name": "integer"}],
         "name": "Test",
-        "properties": [
-            {
-                "name": "test",
-                "type": {
-                    "kind": "base",
-                    "name": "boolean"
-                }
-            }
-        ],
+        "properties": [{"name": "test", "type": {"kind": "base", "name": "boolean"}}],
         "proposed": True,
-        "since": "0.1.0"
+        "since": "0.1.0",
     }
 
     res1 = Structure.from_json(test_json1)
@@ -249,20 +197,12 @@ def test_parse_structure() -> None:
         "Test",
         (Property(None, "test", None, None, None, AnyType("base", BaseType("boolean"))),),
         True,
-        "0.1.0"
+        "0.1.0",
     )
 
     test_json2 = {
         "name": "Test2",
-        "properties": [
-            {
-                "name": "test",
-                "type": {
-                    "kind": "base",
-                    "name": "boolean"
-                }
-            }
-        ]
+        "properties": [{"name": "test", "type": {"kind": "base", "name": "boolean"}}],
     }
 
     res2 = Structure.from_json(test_json2)
@@ -273,7 +213,7 @@ def test_parse_structure() -> None:
         "Test2",
         (Property(None, "test", None, None, None, AnyType("base", BaseType("boolean"))),),
         None,
-        None
+        None,
     )
 
 
@@ -283,34 +223,15 @@ def test_parse_typealias() -> None:
         "name": "Test",
         "proposed": False,
         "since": "0.1.0",
-        "type": {
-            "kind": "base",
-            "name": "URI"
-        }
+        "type": {"kind": "base", "name": "URI"},
     }
 
     res1 = TypeAlias.from_json(test_json1)
     assert res1 == TypeAlias(
-        "A test TypeAlias",
-        "Test",
-        False,
-        "0.1.0",
-        AnyType("base", BaseType("URI"))
+        "A test TypeAlias", "Test", False, "0.1.0", AnyType("base", BaseType("URI"))
     )
 
-    test_json2 = {
-        "name": "Test2",
-        "type": {
-            "kind": "base",
-            "name": "integer"
-        }
-    }
+    test_json2 = {"name": "Test2", "type": {"kind": "base", "name": "integer"}}
 
     res2 = TypeAlias.from_json(test_json2)
-    assert res2 == TypeAlias(
-        None,
-        "Test2",
-        None,
-        None,
-        AnyType("base", BaseType("integer"))
-    )
+    assert res2 == TypeAlias(None, "Test2", None, None, AnyType("base", BaseType("integer")))

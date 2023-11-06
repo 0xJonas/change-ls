@@ -3,13 +3,20 @@ from pathlib import Path
 import pytest
 
 import change_ls._languages as languages
-from change_ls import (Workspace, install_language,
-                       matches_file_operation_filter,
-                       matches_text_document_filter)
+from change_ls import (
+    Workspace,
+    install_language,
+    matches_file_operation_filter,
+    matches_text_document_filter,
+)
 from change_ls.tokens import Grammar, GrammarFormat
-from change_ls.types import (FileOperationFilter, FileOperationPattern,
-                             FileOperationPatternKind,
-                             FileOperationPatternOptions, TextDocumentFilter)
+from change_ls.types import (
+    FileOperationFilter,
+    FileOperationPattern,
+    FileOperationPatternKind,
+    FileOperationPatternOptions,
+    TextDocumentFilter,
+)
 
 
 @pytest.fixture
@@ -18,27 +25,20 @@ def test_workspace() -> Workspace:
 
 
 def test_matches_text_document_filter(test_workspace: Workspace) -> None:
-    filter1: TextDocumentFilter = {
-        "pattern": "**/test_*.py"
-    }
+    filter1: TextDocumentFilter = {"pattern": "**/test_*.py"}
 
-    with test_workspace.open_text_document(Path("test/test_util.py")) as doc1,\
-            test_workspace.open_text_document(Path("test/test_empty.json")) as doc2:
-
+    with test_workspace.open_text_document(
+        Path("test/test_util.py")
+    ) as doc1, test_workspace.open_text_document(Path("test/test_empty.json")) as doc2:
         assert matches_text_document_filter(doc1, filter1)
         assert not matches_text_document_filter(doc2, filter1)
 
-        filter2: TextDocumentFilter = {
-            "language": "python",
-            "scheme": "file"
-        }
+        filter2: TextDocumentFilter = {"language": "python", "scheme": "file"}
 
         assert matches_text_document_filter(doc1, filter2)
         assert not matches_text_document_filter(doc2, filter2)
 
-        filter3: TextDocumentFilter = {
-            "pattern": "**/test_{util,empty}.json"
-        }
+        filter3: TextDocumentFilter = {"pattern": "**/test_{util,empty}.json"}
 
         assert not matches_text_document_filter(doc1, filter3)
         assert matches_text_document_filter(doc2, filter3)
@@ -47,9 +47,14 @@ def test_matches_text_document_filter(test_workspace: Workspace) -> None:
 def test_matches_file_operation_filter() -> None:
     filter1 = FileOperationFilter(pattern=FileOperationPattern(glob="**/test.py"))
     filter2 = FileOperationFilter(pattern=FileOperationPattern(glob="**/test.{py,json}"))
-    filter3 = FileOperationFilter(pattern=FileOperationPattern(glob="**/test", matches=FileOperationPatternKind.folder))
-    filter4 = FileOperationFilter(pattern=FileOperationPattern(
-        glob="**/test/xxx", options=FileOperationPatternOptions(ignoreCase=True)))
+    filter3 = FileOperationFilter(
+        pattern=FileOperationPattern(glob="**/test", matches=FileOperationPatternKind.folder)
+    )
+    filter4 = FileOperationFilter(
+        pattern=FileOperationPattern(
+            glob="**/test/xxx", options=FileOperationPatternOptions(ignoreCase=True)
+        )
+    )
 
     base = Path(".").absolute()
     path1 = base / "test/test.py"
@@ -94,10 +99,7 @@ def test_install_language_success() -> None:
     assert "source.madeup" not in languages.scope_to_grammar
 
     grammar = MockGrammar("source.madeup", "")
-    install_language(
-        language_id="madeup",
-        extensions=[".madeup"],
-        grammar=grammar)
+    install_language(language_id="madeup", extensions=[".madeup"], grammar=grammar)
 
     assert languages.extension_to_language_id[".madeup"] == "madeup"
     assert languages.language_id_to_scope["madeup"] == "source.madeup"
@@ -112,27 +114,16 @@ def test_install_language_override() -> None:
     grammar = MockGrammar("source.madeup", "")
 
     with pytest.raises(ValueError):
-        install_language(
-            language_id="c",
-            extensions=[".madeup"],
-            grammar=grammar)
+        install_language(language_id="c", extensions=[".madeup"], grammar=grammar)
+
+    with pytest.raises(ValueError):
+        install_language(language_id="madeup", extensions=[".c"], grammar=grammar)
 
     with pytest.raises(ValueError):
         install_language(
-            language_id="madeup",
-            extensions=[".c"],
-            grammar=grammar)
+            language_id="madeup", extensions=[".madeup"], grammar=MockGrammar("source.c", "")
+        )
 
-    with pytest.raises(ValueError):
-        install_language(
-            language_id="madeup",
-            extensions=[".madeup"],
-            grammar=MockGrammar("source.c", ""))
-
-    install_language(
-        language_id="c",
-        extensions=[".madeup"],
-        grammar=grammar,
-        allow_overwrite=True)
+    install_language(language_id="c", extensions=[".madeup"], grammar=grammar, allow_overwrite=True)
 
     assert languages.language_id_to_scope["c"] == "source.madeup"

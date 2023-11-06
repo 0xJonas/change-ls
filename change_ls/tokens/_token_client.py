@@ -2,9 +2,16 @@ import atexit
 import re
 import shutil
 import subprocess
-from asyncio import (AbstractEventLoop, Event, Future, get_running_loop,
-                     new_event_loop, run_coroutine_threadsafe, set_event_loop,
-                     wrap_future)
+from asyncio import (
+    AbstractEventLoop,
+    Event,
+    Future,
+    get_running_loop,
+    new_event_loop,
+    run_coroutine_threadsafe,
+    set_event_loop,
+    wrap_future,
+)
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock, Thread
@@ -15,11 +22,15 @@ from change_ls._protocol import LSSubprocessProtocol
 from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter
 from change_ls.tokens._token_list import SyntacticToken, TokenList
-from change_ls.types._util import (JSON_VALUE, json_assert_type_array,
-                                   json_assert_type_int,
-                                   json_assert_type_object,
-                                   json_assert_type_string, json_get_array,
-                                   json_get_string)
+from change_ls.types._util import (
+    JSON_VALUE,
+    json_assert_type_array,
+    json_assert_type_int,
+    json_assert_type_object,
+    json_assert_type_string,
+    json_get_array,
+    json_get_string,
+)
 
 version_pattern = re.compile(r"^v(\d+)\.(\d+)\.(\d+)\s*$")
 
@@ -71,10 +82,7 @@ class TextDocumentTokenizeParams:
         return cls(scope_name, text)
 
     def to_json(self) -> JSON_VALUE:
-        return {
-            "scopeName": self.scope_name,
-            "text": self.text
-        }
+        return {"scopeName": self.scope_name, "text": self.text}
 
 
 @dataclass
@@ -85,19 +93,17 @@ class TextDocumentTokenizeResult:
     @classmethod
     def from_json(cls, json: Mapping[str, JSON_VALUE]) -> "TextDocumentTokenizeResult":
         scopes = [json_assert_type_string(s) for s in json_get_array(json, "scopes")]
-        tokens = [[json_assert_type_int(s) for s in json_assert_type_array(a)]
-                  for a in json_get_array(json, "tokens")]
+        tokens = [
+            [json_assert_type_int(s) for s in json_assert_type_array(a)]
+            for a in json_get_array(json, "tokens")
+        ]
         return cls(scopes, tokens)
 
     def to_json(self) -> JSON_VALUE:
-        return {
-            "scopes": self.scopes,
-            "tokens": self.tokens
-        }
+        return {"scopes": self.scopes, "tokens": self.tokens}
 
 
 class _TokenClient:
-
     _protocol: LSSubprocessProtocol
     _logger: OperationLoggerAdapter
 
@@ -110,13 +116,16 @@ class _TokenClient:
             raise TokenClientException(
                 "node with at least version "
                 f"v{MIN_NODE_VERSION[0]}.{MIN_NODE_VERSION[1]}.{MIN_NODE_VERSION[2]} "
-                "must be on PATH.")
+                "must be on PATH."
+            )
 
         token_server_path = get_token_server_path()
         (_, self._protocol) = await get_running_loop().subprocess_exec(
             lambda: LSSubprocessProtocol(self.dispatch_request, self.dispatch_notification),
-            node_path, str(token_server_path / "main.js"),
-            cwd=str(token_server_path))
+            node_path,
+            str(token_server_path / "main.js"),
+            cwd=str(token_server_path),
+        )
         self._protocol._set_loggers(self._logger, self._logger, self._logger)  # type: ignore
 
     async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
@@ -154,16 +163,15 @@ class _TokenClient:
         self._logger.info("Token Server requested grammar %s", scope_name)
 
         if grammar := languages.scope_to_grammar.get(scope_name):
-            return {
-                "rawGrammar": grammar.get_content(),
-                "format": grammar.get_format()
-            }
+            return {"rawGrammar": grammar.get_content(), "format": grammar.get_format()}
         else:
             self._logger.warning("Grammar %s not found", scope_name)
             # raise LSPException(LSPErrorCodes.RequestFailed.value, f"Grammar {scope_name} not found", scope_name)
             return None
 
-    async def send_text_document_tokenize_request(self, params: TextDocumentTokenizeParams) -> TextDocumentTokenizeResult:
+    async def send_text_document_tokenize_request(
+        self, params: TextDocumentTokenizeParams
+    ) -> TextDocumentTokenizeResult:
         res_json = await self.send_request("textDocument/tokenize", params.to_json())
         res = json_assert_type_object(res_json)
         return TextDocumentTokenizeResult.from_json(res)
@@ -189,7 +197,8 @@ async def _start_token_client() -> None:
         _token_client_event_loop.run_until_complete(_token_client_instance.launch())
         _token_client_event_loop.run_until_complete(_token_client_instance.initialize())
         _token_client_event_loop.call_soon(
-            lambda: main_event_loop.call_soon_threadsafe(token_client_ready.set))
+            lambda: main_event_loop.call_soon_threadsafe(token_client_ready.set)
+        )
         _token_client_event_loop.run_forever()
 
     async def shutdown_token_client_internal() -> None:
@@ -206,7 +215,9 @@ async def _start_token_client() -> None:
         if token_client_thread.is_alive():
             raise Exception("Unable to stop token_client thread")
 
-    token_client_thread = Thread(target=start_token_client_internal, name="token_client", daemon=True)
+    token_client_thread = Thread(
+        target=start_token_client_internal, name="token_client", daemon=True
+    )
     atexit.register(shutdown_token_client)
     token_client_thread.start()
     await token_client_ready.wait()
@@ -225,23 +236,30 @@ async def _get_token_client() -> _TokenClient:
 
 def _find_line_break(text: str, offset: int) -> Tuple[int, str]:
     for i in range(offset, len(text)):
-        if text[i:i+2] == "\r\n":
-            return i, text[i:i+2]
+        if text[i : i + 2] == "\r\n":
+            return i, text[i : i + 2]
         elif text[i] in ["\n", "\r"]:
             return i, text[i]
     return len(text), ""
 
 
-async def tokenize(text: str, language_id: str, *, include_whitespace: bool = False) -> TokenList[SyntacticToken]:
+async def tokenize(
+    text: str, language_id: str, *, include_whitespace: bool = False
+) -> TokenList[SyntacticToken]:
     scope_name = languages.language_id_to_scope[language_id]
     params = TextDocumentTokenizeParams(scope_name, text)
     instance = await _get_token_client()
-    result = await wrap_future(run_coroutine_threadsafe(
-        instance.send_text_document_tokenize_request(params), _token_client_event_loop))
+    result = await wrap_future(
+        run_coroutine_threadsafe(
+            instance.send_text_document_tokenize_request(params), _token_client_event_loop
+        )
+    )
 
     offset = 0
     tokens: List[SyntacticToken] = []
-    for (delta_line, delta_col, length), scopes_indices in zip(result.tokens[::2], result.tokens[1::2]):
+    for (delta_line, delta_col, length), scopes_indices in zip(
+        result.tokens[::2], result.tokens[1::2]
+    ):
         for _ in range(delta_line):
             line_break_index, line_break_str = _find_line_break(text, offset)
 
@@ -254,7 +272,7 @@ async def tokenize(text: str, language_id: str, *, include_whitespace: bool = Fa
 
         offset += delta_col
 
-        lexeme = text[offset:offset + length]
+        lexeme = text[offset : offset + length]
 
         if not include_whitespace and lexeme.isspace():
             continue

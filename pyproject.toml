@@ -69,7 +69,16 @@ disable = ["protected-access", "no-else-return", "no-else-raise", "fixme"]
 max-line-length = 120
 
 
+### isort ###
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+
 ### Black ###
 
 [tool.black]
-exclude = "**/change_ls/types/*,**/change_ls/_languages.py"
+exclude = ".*change_ls/types/.*|.*change_ls/_languages.py"
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311"]

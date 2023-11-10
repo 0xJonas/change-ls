@@ -1,4 +1,4 @@
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 from logging import DEBUG, Logger, LoggerAdapter, getLogger
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
@@ -160,23 +160,27 @@ class SemanticTokensMixin:
     def get_text_document_identifier(self) -> TextDocumentIdentifier:
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def text(self) -> str:
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def uri(self) -> str:
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def language_id(self) -> str:
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def logger(self) -> _LoggerAdapter:
         ...
 
-    def _get_logger_from_context(self, *args: Any, **kwargs: Any) -> _LoggerAdapter:
+    def _get_logger_from_context(self, *_args: Any, **_kwargs: Any) -> _LoggerAdapter:
         return self.logger
 
     def _parse_semantic_tokens_relative(

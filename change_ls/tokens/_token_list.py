@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import (
@@ -181,13 +182,12 @@ class SyntacticToken(_BaseSemanticToken, TokenMatcher):
         offset: int,
         scopes: Set[str],
         sem_type: Optional[str] = None,
-        sem_modifiers: Set[str] = set(),
+        sem_modifiers: Optional[Set[str]] = None,
     ) -> None:
-        self.lexeme = lexeme
-        self.offset = offset
+        if sem_modifiers is None:
+            sem_modifiers = set()
+        _BaseSemanticToken.__init__(self, lexeme, offset, sem_type, sem_modifiers)
         self.scopes = scopes
-        self.sem_type = sem_type
-        self.sem_modifiers = set(sem_modifiers)
 
     def matches_token(self, token: "_BaseToken") -> bool:
         if not isinstance(token, SyntacticToken):

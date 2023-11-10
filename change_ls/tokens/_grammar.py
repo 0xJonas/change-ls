@@ -68,14 +68,12 @@ class Grammar(ABC):
         """
         Returns the raw content of the `Grammar`.
         """
-        pass
 
     @abstractmethod
     def get_format(self) -> GrammarFormat:
         """
         Returns the format of the Grammar's raw content, e.g. "json" or "plist".
         """
-        pass
 
 
 class _UserGrammar(Grammar):

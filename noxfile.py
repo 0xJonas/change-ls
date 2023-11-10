@@ -3,10 +3,10 @@ import nox
 nox.options.sessions = ["test", "quality"]
 
 
-DEP_PYTEST = ["pytest"]
+DEP_PYTEST = ["pytest~=7.4"]
 DEP_TEST = ["pytest-asyncio", *DEP_PYTEST]
-DEP_PYLINT = ["pylint"]
-DEP_BLACK = ["black"]
+DEP_PYLINT = ["pylint~=3.0"]
+DEP_BLACK = ["black~=23.11"]
 
 
 @nox.session
@@ -36,12 +36,14 @@ def check_node_version(session: nox.Session) -> None:
     Checks if the currently installed node version is sufficient for change-ls.
     """
     session.install("-e", ".")
-    res = bool(session.run(
-        "python",
-        "-c",
-        "from change_ls.tokens import check_node_version; print(check_node_version())",
-        silent=True
-    ))
+    res = bool(
+        session.run(
+            "python",
+            "-c",
+            "from change_ls.tokens import check_node_version; print(check_node_version())",
+            silent=True,
+        )
+    )
     if not res:
         session.skip("The installed node version is not compatible with change-ls.")
 
@@ -53,6 +55,7 @@ def build_mock_server(session: nox.Session) -> None:
     """
     check_node_version(session)
     with session.chdir("mock-server"):
+        session.run("npm", "ci", external=True)
         session.run("npm", "run", "build", external=True)
 
 
@@ -63,6 +66,7 @@ def build_token_server(session: nox.Session) -> None:
     """
     check_node_version(session)
     with session.chdir("token-server"):
+        session.run("npm", "ci", external=True)
         session.run("npm", "run", "build", external=True)
 
 
@@ -110,5 +114,5 @@ def typecheck(session: nox.Session) -> None:
     check_node_version(session)
     session.install(*DEP_PYTEST)
     session.run(
-        "npm", "exec", "--package", "pyright", "--yes", "--", "pyright", external=True
+        "npm", "exec", "--package", "pyright@1.1.335", "--yes", "--", "pyright", external=True
     )

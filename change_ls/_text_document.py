@@ -32,8 +32,8 @@ from change_ls.types import (
     TextDocumentItem,
     TextDocumentSaveReason,
     TextDocumentSyncKind,
-    VersionedTextDocumentIdentifier,
     TextEdit,
+    VersionedTextDocumentIdentifier,
     WillSaveTextDocumentParams,
 )
 
@@ -262,7 +262,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
     def logger(self) -> _LoggerAdapter:
         return self._logger
 
-    def _get_logger_from_context(self, *args: Any, **kwargs: Any) -> _LoggerAdapter:
+    def _get_logger_from_context(self, *_args: Any, **_kwargs: Any) -> _LoggerAdapter:
         return self._logger
 
     def _reopen(self) -> None:

@@ -92,7 +92,7 @@ class _LSPEnum(metaclass=_LSPEnumMeta):
 
     @classmethod
     def _create_member(cls: Type[T], value: Any) -> T:
-        new_member = super().__new__(cls)
+        new_member = object.__new__(cls)
         new_member.__init__(value)
         cls._value_to_member[value] = new_member
         return new_member
@@ -113,4 +113,4 @@ class TypedLSPEnum(Generic[U], _LSPEnum):
         return super().__new__(cls, value)
 
     def __init__(self, value: U) -> None:
-        self.value = value
+        super().__init__(value)

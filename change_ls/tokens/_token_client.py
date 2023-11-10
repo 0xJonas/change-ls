@@ -106,9 +106,11 @@ class TextDocumentTokenizeResult:
 class _TokenClient:
     _protocol: LSSubprocessProtocol
     _logger: OperationLoggerAdapter
+    _event_loop: AbstractEventLoop
 
-    def __init__(self) -> None:
+    def __init__(self, event_loop: AbstractEventLoop) -> None:
         self._logger = get_change_ls_default_logger("change-ls.tokens")
+        self._event_loop = event_loop
 
     async def launch(self) -> None:
         node_path = shutil.which("node")
@@ -128,8 +130,8 @@ class _TokenClient:
         )
         self._protocol._set_loggers(self._logger, self._logger, self._logger)  # type: ignore
 
-    async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
-        future: Future[JSON_VALUE] = get_running_loop().create_future()
+    async def _send_request_internal(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+        future: Future[JSON_VALUE] = self._event_loop.create_future()
         self._logger.info("Sending request (%s)", method)
         self._protocol.send_request(method, params, future)
 
@@ -142,10 +144,16 @@ class _TokenClient:
         else:
             return future.result()
 
+    async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+        return await wrap_future(
+            run_coroutine_threadsafe(self._send_request_internal(method, params), self._event_loop)
+        )
+
     async def initialize(self) -> None:
         await self.send_request("initialize", None)
 
-    async def exit(self) -> None:
+    async def _exit_internal(self) -> None:
+        # This must be called from the TokenClient's thread.
         self._logger.info("Stopping token server...")
         self._protocol.send_notification("exit", None)
         await self._protocol.wait_for_disconnect()
@@ -178,59 +186,68 @@ class _TokenClient:
 
 
 _token_client_instance: Optional[_TokenClient] = None
-_token_client_event_loop: AbstractEventLoop
 _token_client_lock = Lock()
 
 
-async def _start_token_client() -> None:
+async def _launch_token_client() -> _TokenClient:
+    token_client: Optional[_TokenClient] = None
     token_client_ready = Event()
     main_event_loop = get_running_loop()
 
     def start_token_client_internal() -> None:
-        global _token_client_event_loop, _token_client_instance
-        nonlocal token_client_ready, main_event_loop
+        # Runs on the token client's thread
+        nonlocal token_client, token_client_ready, main_event_loop
 
         _token_client_event_loop = new_event_loop()
         set_event_loop(_token_client_event_loop)
 
-        _token_client_instance = _TokenClient()
-        _token_client_event_loop.run_until_complete(_token_client_instance.launch())
-        _token_client_event_loop.run_until_complete(_token_client_instance.initialize())
+        token_client = _TokenClient(_token_client_event_loop)
+        _token_client_event_loop.run_until_complete(token_client.launch())
+        _token_client_event_loop.run_until_complete(token_client.initialize())
         _token_client_event_loop.call_soon(
             lambda: main_event_loop.call_soon_threadsafe(token_client_ready.set)
         )
         _token_client_event_loop.run_forever()
 
     async def shutdown_token_client_internal() -> None:
-        global _token_client_instance
-        assert _token_client_instance
-        await _token_client_instance.exit()
+        # Runs on the token client's thread
+        assert token_client
+        await token_client._exit_internal()
         get_running_loop().stop()
 
     def shutdown_token_client() -> None:
-        global _token_client_event_loop
-        nonlocal token_client_thread
-        run_coroutine_threadsafe(shutdown_token_client_internal(), _token_client_event_loop)
+        # Does not run on the token client's thread
+        nonlocal token_client_thread, token_client
+        assert token_client
+        run_coroutine_threadsafe(shutdown_token_client_internal(), token_client._event_loop)
         token_client_thread.join(timeout=10.0)
         if token_client_thread.is_alive():
-            raise Exception("Unable to stop token_client thread")
+            raise TokenClientException("Unable to stop token_client thread")
 
+    # The TokenClient needs to run in its own thread, because it has to manage its own
+    # event loop. If the main thread's event loop is stopped while the token server
+    # is still running, the TokenClient is unable to properly shut down the server,
+    # causing exceptions when the user's script exits.
+    # The thread needs to be a daemon thread so it does not otherwise prevent
+    # the Python interpreter from exiting when the script is done.
     token_client_thread = Thread(
         target=start_token_client_internal, name="token_client", daemon=True
     )
     atexit.register(shutdown_token_client)
     token_client_thread.start()
     await token_client_ready.wait()
+    assert token_client
+    return token_client
 
 
 async def _get_token_client() -> _TokenClient:
-    global _token_client_instance
+    global _token_client_instance  # pylint: disable=global-statement
 
     with _token_client_lock:
         if not _token_client_instance:
-            await _start_token_client()
-            assert _token_client_instance
+            _token_client_instance = await _launch_token_client()
 
+        assert _token_client_instance
         return _token_client_instance
 
 
@@ -249,11 +266,7 @@ async def tokenize(
     scope_name = languages.language_id_to_scope[language_id]
     params = TextDocumentTokenizeParams(scope_name, text)
     instance = await _get_token_client()
-    result = await wrap_future(
-        run_coroutine_threadsafe(
-            instance.send_text_document_tokenize_request(params), _token_client_event_loop
-        )
-    )
+    result = await instance.send_text_document_tokenize_request(params)
 
     offset = 0
     tokens: List[SyntacticToken] = []

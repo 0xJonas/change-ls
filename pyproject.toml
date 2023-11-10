@@ -63,7 +63,23 @@ ignore-paths = [
 ]
 
 [tool.pylint.messages_control]
-disable = ["protected-access", "no-else-return", "no-else-raise", "fixme"]
+disable = [
+    # 'private' methods are used a lot for interactions between classes that should
+    # not be exposed as public API.
+    "protected-access",
+
+    # Debatable
+    "no-else-return",
+    "no-else-raise",
+
+    # Would keep it, but since this has category warning it would fail the CI.
+    "fixme",
+
+    # A lot of built-ins are common names for local variables such as 'any',
+    # 'next' or 'property'. We risk redefining these for ease of naming and
+    # rely on the typechecker to catch accidental wrong usages.
+    "redefined-builtin"
+]
 
 [tool.pylint.format]
 max-line-length = 120

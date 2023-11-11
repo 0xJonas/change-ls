@@ -1,6 +1,7 @@
 import nox
 
 nox.options.sessions = ["test", "quality"]
+nox.options.pythons = ["3.8"]
 
 
 DEP_PYTEST = ["pytest~=7.4"]
@@ -10,7 +11,7 @@ DEP_BLACK = ["black~=23.11"]
 DEP_LINT = [*DEP_PYLINT, *DEP_PYTEST]
 
 
-@nox.session
+@nox.session(python=["3.8", "3.9", "3.10"])
 def test(session: nox.Session) -> None:
     """
     Run unit tests for change-ls
@@ -22,7 +23,7 @@ def test(session: nox.Session) -> None:
     session.run("pytest", "-m", "not uses_external_resources", "test")
 
 
-@nox.session
+@nox.session(python=["3.8"])
 def quality(session: nox.Session) -> None:
     """
     Run various code quality checks (type checking, linting).
@@ -49,7 +50,7 @@ def check_node_version(session: nox.Session) -> None:
         session.skip("The installed node version is not compatible with change-ls.")
 
 
-@nox.session
+@nox.session(python=["3.8"])
 def build_mock_server(session: nox.Session) -> None:
     """
     Builds the mock language server used for testing.
@@ -60,7 +61,7 @@ def build_mock_server(session: nox.Session) -> None:
         session.run("npm", "run", "build", external=True)
 
 
-@nox.session
+@nox.session(python=["3.8"])
 def build_token_server(session: nox.Session) -> None:
     """
     Builds the token server used for syntactic tokenization.
@@ -71,16 +72,25 @@ def build_token_server(session: nox.Session) -> None:
         session.run("npm", "run", "build", external=True)
 
 
-@nox.session
+@nox.session(python=["3.8"])
 def test_generator(session: nox.Session) -> None:
     """
     Runs the tests for the change-ls code generator.
     """
-    session.install(*DEP_PYTEST)
-    session.run("pytest", "-m", "gen/test")
+    session.install(*DEP_TEST)
+    session.run("pytest", "gen/test")
 
 
-@nox.session
+@nox.session(python=["3.8"])
+def generate_lsp_types(session: nox.Session) -> None:
+    """
+    Generates the code for the LSP types at ``change_ls/types``.
+    """
+    test_generator(session)
+    session.run("python", "-m", "gen.main", "./res", "./change_ls/types")
+
+
+@nox.session(python=["3.8"])
 def reformat(session: nox.Session) -> None:
     """
     Reformat the code using Black.
@@ -89,7 +99,7 @@ def reformat(session: nox.Session) -> None:
     session.run("black", "change_ls", "gen", "test")
 
 
-@nox.session
+@nox.session(python=["3.8"])
 def check_formatting(session: nox.Session) -> None:
     """
     Check whether the code adheres to the configured style using Black.
@@ -98,7 +108,7 @@ def check_formatting(session: nox.Session) -> None:
     session.run("black", "--check", "change_ls", "gen", "test")
 
 
-@nox.session
+@nox.session(python=["3.8"])
 def lint(session: nox.Session) -> None:
     """
     Perform linting using pylint.
@@ -107,7 +117,7 @@ def lint(session: nox.Session) -> None:
     session.run("pylint", "--disable=R,C", "change_ls", "gen")
 
 
-@nox.session
+@nox.session(python=["3.8"])
 def typecheck(session: nox.Session) -> None:
     """
     Perform type checking using pyright.

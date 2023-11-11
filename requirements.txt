@@ -1,3 +1,2 @@
 setuptools
-pytest
-pytest-asyncio
+nox~=2023.04

@@ -7,6 +7,7 @@ DEP_PYTEST = ["pytest~=7.4"]
 DEP_TEST = ["pytest-asyncio", *DEP_PYTEST]
 DEP_PYLINT = ["pylint~=3.0"]
 DEP_BLACK = ["black~=23.11"]
+DEP_LINT = [*DEP_PYLINT, *DEP_PYTEST]
 
 
 @nox.session
@@ -102,7 +103,7 @@ def lint(session: nox.Session) -> None:
     """
     Perform linting using pylint.
     """
-    session.install(*DEP_PYLINT)
+    session.install(*DEP_LINT)
     session.run("pylint", "--disable=R,C", "change_ls", "gen")
 
 

@@ -1,5 +1,23 @@
-from gen.schema.anytype import *
 from pytest import raises
+
+from gen.schema.anytype import (
+    AndType,
+    AnyType,
+    ArrayType,
+    BaseType,
+    BooleanLiteralType,
+    IntegerLiteralType,
+    MapKeyType,
+    MapType,
+    OrType,
+    Property,
+    ReferenceType,
+    StringLiteralType,
+    StructureLiteral,
+    StructureLiteralType,
+    TupleType,
+)
+from gen.schema.util import LSPMetaModelException
 
 
 def test_parse_basetype() -> None:

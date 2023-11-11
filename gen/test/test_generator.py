@@ -1,3 +1,4 @@
+# pylint: disable=exec-used,eval-used
 from typing import Any, Dict
 
 import pytest
@@ -8,8 +9,8 @@ from gen.generate_enumerations import generate_enumeration_definition
 from gen.generate_structures import _get_referenced_definitions  # type: ignore
 from gen.generate_structures import generate_structures_py
 from gen.generator import Generator, LSPGeneratorException
-from gen.schema.anytype import AnyType
-from gen.schema.types import MetaModel, ReferenceType
+from gen.schema.anytype import AnyType, ReferenceType
+from gen.schema.types import MetaModel
 from gen.schema.util import JSON_VALUE
 from gen.static._lsp_enum import LSPEnumException
 from gen.static._util import LSPKeyNotFoundException, LSPLiteralException, LSPTypeException
@@ -537,12 +538,10 @@ def test_generator_generate_enum_definition() -> None:
             "typeAliases": [],
         }
     )
-    generator = Generator(model)
-
     names = get_test_default_names()
 
-    exec(generate_enumeration_definition(generator, model.enumerations[0]), names)
-    exec(generate_enumeration_definition(generator, model.enumerations[1]), names)
+    exec(generate_enumeration_definition(model.enumerations[0]), names)
+    exec(generate_enumeration_definition(model.enumerations[1]), names)
 
     assert eval("TestEnum1.testStr1.value", names) == "Hello"
     assert eval("TestEnum1.testStr2.value", names) == "World"

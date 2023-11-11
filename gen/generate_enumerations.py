@@ -5,7 +5,7 @@ from gen.generator import Generator
 from gen.schema.types import Enumeration
 
 
-def generate_enumeration_definition(gen: Generator, enum: Enumeration) -> str:
+def generate_enumeration_definition(enum: Enumeration) -> str:
     superclasses: List[str] = []
     if enum.type.name == "string":
         superclasses.append("TypedLSPEnum[str]")
@@ -68,6 +68,6 @@ def generate_enumerations_py(gen: Generator) -> str:
 
     return template.format(
         definitions="\n\n\n".join(
-            generate_enumeration_definition(gen, e) for e in gen.get_meta_model().enumerations
+            generate_enumeration_definition(e) for e in gen.get_meta_model().enumerations
         )
     )

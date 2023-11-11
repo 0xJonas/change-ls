@@ -1,7 +1,17 @@
 from dataclasses import dataclass
 from typing import Literal, Mapping, Optional, Tuple, Union
 
-from .util import *
+from gen.schema.util import (
+    JSON_VALUE,
+    LSPMetaModelException,
+    json_get_array_of_objects,
+    json_get_bool,
+    json_get_int,
+    json_get_object,
+    json_get_optional_bool,
+    json_get_optional_string,
+    json_get_string,
+)
 
 
 @dataclass(frozen=True)

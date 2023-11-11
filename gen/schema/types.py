@@ -1,8 +1,18 @@
 from dataclasses import dataclass
-from typing import List, Literal, Mapping, MutableSequence, Optional, Union
+from typing import List, Literal, Mapping, MutableSequence, Optional, Tuple, Union
 
-from .anytype import *
-from .util import *
+from gen.schema.anytype import AnyType, Property
+from gen.schema.util import (
+    JSON_VALUE,
+    LSPKeyNotFoundException,
+    LSPMetaModelException,
+    json_get_array_of_objects,
+    json_get_object,
+    json_get_optional_bool,
+    json_get_optional_object,
+    json_get_optional_string,
+    json_get_string,
+)
 
 MessageDirection = Literal["clientToServer", "serverToClient", "both"]
 

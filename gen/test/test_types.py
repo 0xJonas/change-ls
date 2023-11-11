@@ -1,5 +1,13 @@
-from gen.schema.anytype import *
-from gen.schema.types import *
+from gen.schema.anytype import AnyType, BaseType, Property
+from gen.schema.types import (
+    Enumeration,
+    EnumerationEntry,
+    EnumerationType,
+    Notification,
+    Request,
+    Structure,
+    TypeAlias,
+)
 
 
 def test_parse_enumeration() -> None:

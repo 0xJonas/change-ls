@@ -12,7 +12,7 @@ from gen.gen_util import (
     json_type_to_get_optional_function,
     ref_target,
 )
-from gen.generator import Generator, LSPGeneratorException
+from gen.generator import Generator
 from gen.schema.anytype import (
     AndType,
     AnyType,

@@ -190,9 +190,7 @@ def _generate_server_request_method(gen: Generator, request: Request) -> str:
     )
 
 
-def _generate_server_request_branches(
-    gen: Generator, requests: Sequence[Request], send_method_name: str
-) -> List[str]:
+def _generate_server_request_branches(gen: Generator, requests: Sequence[Request]) -> List[str]:
     branches: List[str] = []
     for r in requests:
         assert not isinstance(r.params, Tuple)  # TODO implement
@@ -285,12 +283,12 @@ def generate_server_requests_mixin(gen: Generator) -> str:
     server_requests = [
         r
         for r in gen.get_meta_model().requests
-        if r.message_direction == "serverToClient" or r.message_direction == "both"
+        if r.message_direction in ["serverToClient", "both"]
     ]
     server_notifications = [
         n
         for n in gen.get_meta_model().notifications
-        if n.message_direction == "serverToClient" or n.message_direction == "both"
+        if n.message_direction in ["serverToClient", "both"]
     ]
 
     request_methods = map(lambda r: _generate_server_request_method(gen, r), server_requests)
@@ -298,7 +296,7 @@ def generate_server_requests_mixin(gen: Generator) -> str:
         lambda n: _generate_server_notification_method(gen, n), server_notifications
     )
 
-    request_branches = _generate_server_request_branches(gen, server_requests, "send_result")
+    request_branches = _generate_server_request_branches(gen, server_requests)
     notification_branches = _generate_server_notification_branches(gen, server_notifications)
 
     template = dedent_ignore_empty(

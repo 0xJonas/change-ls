@@ -18,12 +18,13 @@ from gen.schema.anytype import (
     MapType,
     OrType,
     Property,
+    ReferenceType,
     StringLiteralType,
     StructureLiteral,
     StructureLiteralType,
     TupleType,
 )
-from gen.schema.types import Enumeration, MetaModel, ReferenceType, Structure, TypeAlias
+from gen.schema.types import Enumeration, MetaModel, Structure, TypeAlias
 from gen.schema.util import JSON_TYPE_NAME
 
 
@@ -38,8 +39,10 @@ class ReferenceResolver:
         self._type_alias_index = {t.name: t for t in meta_model.type_aliases}
 
     def resolve_reference(
-        self, name: str, resolve_typealiases: bool, stack: List[str] = []
+        self, name: str, resolve_typealiases: bool, stack: Optional[List[str]] = None
     ) -> Optional[ref_target]:
+        if stack is None:
+            stack = []
         if name in stack:
             raise LSPGeneratorException(f"Circular references: {stack + [name]}")
         if name in self._enumeration_index:
@@ -146,7 +149,7 @@ class Generator:
     #              Parse Expressions
     # --------------------------------------------
 
-    def _generate_parse_expression_base(self, base: BaseType, arg: str) -> str:
+    def _generate_parse_expression_base(self, _base: BaseType, arg: str) -> str:
         # TODO validate URIs
         return arg
 

@@ -3,7 +3,7 @@ name: Run Checks on Push
 on: push
 
 jobs:
-  run-unit-tests:
+  run-checks-on-push:
     strategy:
       matrix:
         runner: [windows-latest, ubuntu-latest]
@@ -18,6 +18,9 @@ jobs:
           node-version: 14
           cache: npm
           cache-dependency-path: "**/package-lock.json"
+
+      - name: Update npm (required for npm exec)
+        run: npm -g install npm@9.9.1
 
       - name: Setup Python
         uses: actions/setup-python@v4

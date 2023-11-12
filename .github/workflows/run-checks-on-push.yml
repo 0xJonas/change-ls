@@ -1,0 +1,49 @@
+name: Run Checks on Push
+
+on: push
+
+jobs:
+  run-checks-on-push:
+    strategy:
+      matrix:
+        runner: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js/npm
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Update npm (required for npm exec)
+        run: npm -g install npm@9.9.1
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: |
+            3.8
+            3.9
+            3.10
+          cache: pip
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Code Generator Tests and Generate Code for LSP Types
+        run: python -m nox -s generate_lsp_types
+
+      - name: Initialize Repository
+        run: python -m nox -s init
+
+      - name: Run Unit Tests
+        run: python -m nox -p 3.8 3.9 3.10 -s test -- --initialized
+
+      - name: Run Code Quality Checks
+        run: python -m nox -s quality -- --initialized

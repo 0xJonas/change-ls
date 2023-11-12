@@ -131,7 +131,7 @@ class _TokenClient:
         self._protocol._set_loggers(self._logger, self._logger, self._logger)  # type: ignore
 
     async def _send_request_internal(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
-        future: Future[JSON_VALUE] = self._event_loop.create_future()
+        future: "Future[JSON_VALUE]" = self._event_loop.create_future()
         self._logger.info("Sending request (%s)", method)
         self._protocol.send_request(method, params, future)
 

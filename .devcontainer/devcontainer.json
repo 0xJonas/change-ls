@@ -1,0 +1,48 @@
+{
+    "name": "change-ls-dev",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "updateContentCommand": {
+        "initialize": ["python3", "-m", "nox", "-s", "init"]
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                // The Python extension seeems want this to be explicitly set
+                "python.defaultInterpreterPath": "/usr/local/bin/python3",
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    }
+                },
+                "editor.semanticTokenColorCustomizations": {
+                    "enabled": true
+                },
+                "isort.check": true,
+
+
+                "python.testing.unittestEnabled": false,
+                "python.testing.pytestEnabled": true,
+                "black-formatter.importStrategy": "fromEnvironment",
+                "pylint.importStrategy": "fromEnvironment",
+
+                "files.eol": "\n",
+                "files.trimFinalNewlines": true,
+                "files.insertFinalNewline": true,
+                "files.trimTrailingWhitespace": true
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.pylint",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                "eamodio.gitlens"
+            ]
+        }
+    }
+}

@@ -17,6 +17,8 @@ DEP_BLACK = ["black~=23.11"]
 DEP_LINT = [*DEP_PYLINT, *DEP_PYTEST]
 DEP_ALL = [*DEP_TEST, *DEP_PYLINT, *DEP_BLACK]
 
+DEP_PYRIGHT = ["pyright@1.1.335"]
+
 
 _initialized = False
 
@@ -157,7 +159,7 @@ def typecheck(session: nox.Session) -> None:
     init(session)
     session.install(*DEP_PYTEST)
     session.run(
-        "npm", "exec", "--package", "pyright@1.1.335", "--yes", "--", "pyright", external=True
+        "npm", "exec", "--package", *DEP_PYRIGHT, "--yes", "--", "pyright", external=True
     )
 
 
@@ -180,9 +182,19 @@ def _get_python_in_virtualenv(session: nox.Session) -> str:
 
 
 @nox.session(python=MIN_PYTHON)
+def install_dev_dependencies(session: nox.Session) -> None:
+    """
+    Installs development dependencies.
+    """
+    # This is called from the Dockerfile, so it needs to be able to
+    # install packages globally.
+    session.run("pip", "install", *DEP_ALL)
+
+
+@nox.session(python=MIN_PYTHON)
 def devenv(session: nox.Session) -> None:
     """
-    Set up a virtual development environemnt.
+    Sets up a virtual development environemnt.
 
     Use ``--global`` to install into the global environment.
 
@@ -192,7 +204,7 @@ def devenv(session: nox.Session) -> None:
     init(session)
 
     if "--global" in session.posargs:
-        python = "python"
+        python = "python3"
     else:
         python = _get_python_in_virtualenv(session)
 

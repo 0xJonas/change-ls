@@ -2,6 +2,8 @@ from ._change_ls_error import ChangeLSError
 from ._client import (
     CHANGE_LS_VERSION,
     Client,
+    CustomNotification,
+    CustomRequest,
     PipeConnectionParams,
     SocketConnectionParams,
     StdIOConnectionParams,
@@ -28,6 +30,8 @@ from ._workspace import Workspace
 __all__ = [
     "CHANGE_LS_VERSION",
     "Client",
+    "CustomRequest",
+    "CustomNotification",
     "WorkspaceRequestHandler",
     "StdIOConnectionParams",
     "SocketConnectionParams",

@@ -13,24 +13,22 @@ from dataclasses import dataclass
 from json import JSONDecodeError, dumps, loads
 from logging import DEBUG
 from sys import getdefaultencoding
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
+
+import cattrs
+import lsprotocol.types as lsp
 
 from change_ls.logging import OperationLoggerAdapter
-from change_ls.types import JSON_VALUE, ErrorCodes, LSPErrorCodes
+from change_ls.types import JSON_VALUE
 
 
 class LSPException(Exception):
-    error_code: Union[ErrorCodes, LSPErrorCodes, int]
+    error_code: int
     message: str
     data: Any
 
     def __init__(self, error_code: int, message: str, data: Any = None) -> None:
-        if error_code >= -32099 and error_code <= -32000:
-            self.error_code = ErrorCodes(error_code)
-        elif error_code >= -32899 and error_code <= -32800:
-            self.error_code = LSPErrorCodes(error_code)
-        else:
-            self.error_code = error_code
+        self.error_code = error_code
         self.message = message
         self.data = data
 
@@ -102,19 +100,54 @@ def _json_to_packet(data: JSON_VALUE) -> bytes:
     return header.to_bytes() + content
 
 
-_RequestHandler = Callable[
-    [str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], JSON_VALUE
-]
-_NotificationHandler = Callable[
-    [str, Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None]], None
-]
+def _is_request(instance: Any) -> bool:
+    return hasattr(instance, "id") and hasattr(instance, "method") and hasattr(instance, "jsonrpc")
+
+
+def _is_notification(instance: Any) -> bool:
+    return hasattr(instance, "method") and hasattr(instance, "jsonrpc")
+
+
+def _extract_id(json_data: Mapping[str, JSON_VALUE]) -> Union[int, str]:
+    id = json_data["id"]
+    if not isinstance(id, str) and not isinstance(id, int):
+        raise LSPException(lsp.ErrorCodes.InvalidRequest, "'id' must be of type number or string")
+    return id
+
+
+def _extract_method(json_data: Mapping[str, JSON_VALUE]) -> str:
+    method = json_data["method"]
+    if not isinstance(method, str):
+        raise LSPException(lsp.ErrorCodes.InvalidRequest, "'method' must be of type string")
+    return method
+
+
+def _extract_params(
+    json_data: Mapping[str, JSON_VALUE]
+) -> Optional[Union[Sequence[JSON_VALUE], Dict[str, JSON_VALUE]]]:
+    if "params" in json_data:
+        params_json = json_data["params"]
+        if not isinstance(params_json, Sequence) and not isinstance(params_json, Dict):
+            raise LSPException(
+                lsp.ErrorCodes.InvalidParams,
+                "params field must be a dictionary or a sequence",
+                params_json,
+            )
+        return params_json
+    else:
+        return None
+
+
+_RequestHandler = Callable[[str, Any], Any]
+_NotificationHandler = Callable[[str, Any], None]
 
 
 class LSProtocol(ABC):
     # Maps the ids of currently active requests to their corresponding
     # Future objects provided by the client.
-    _active_requests: Dict[Union[int, str], "Future[JSON_VALUE]"]
+    _active_requests: Dict[Union[int, str], Tuple[str, "Future[Any]"]]
 
+    _converter: cattrs.Converter
     _request_handler: _RequestHandler
     _notification_handler: _NotificationHandler
 
@@ -130,9 +163,13 @@ class LSProtocol(ABC):
     _disconnect_event: Event
 
     def __init__(
-        self, request_handler: _RequestHandler, notification_handler: _NotificationHandler
+        self,
+        converter: cattrs.Converter,
+        request_handler: _RequestHandler,
+        notification_handler: _NotificationHandler,
     ) -> None:
         self._active_requests = {}
+        self._converter = converter
         self._request_handler = request_handler
         self._notification_handler = notification_handler
         self._logger_client = None
@@ -161,36 +198,31 @@ class LSProtocol(ABC):
                 "Dropping %d currently active requests", len(self._active_requests)
             )
         for f in self._active_requests.values():
-            f.set_exception(exc)
+            f[1].set_exception(exc)
+        self._active_requests = {}
 
     def _send_error_response(
         self,
-        request_id: Union[str, int, None],
-        code: Union[ErrorCodes, LSPErrorCodes, int],
+        id: Union[str, int, None],
+        code: int,
         message: str,
         data: Optional[JSON_VALUE] = None,
     ) -> None:
-        if not isinstance(code, int):
-            error_code = code.value
-        else:
-            error_code = code
-        message_json = {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {"code": error_code, "message": message, "data": data},
-        }
+        message_json = self._converter.unstructure(
+            lsp.ResponseErrorMessage(id=id, error=lsp.ResponseError(code, message, data))
+        )
         self._write_data(_json_to_packet(message_json))
 
     def _try_read_message(self) -> Optional[Dict[str, JSON_VALUE]]:
         if not self._pending_header:
             maybe_header = _LSPHeader.try_from_bytes(self._read_buffer)
             if not maybe_header:
-                return
+                return None
             (self._pending_header, self._content_offset) = maybe_header
 
         if len(self._read_buffer) - self._content_offset < self._pending_header.content_length:
             # Content has not yet been fully received, wait for more data.
-            return
+            return None
 
         content_from = self._content_offset
         content_to = content_from + self._pending_header.content_length
@@ -211,169 +243,113 @@ class LSProtocol(ABC):
         try:
             return loads(content)
         except JSONDecodeError as e:
-            self._send_error_response(None, ErrorCodes.ParseError, e.msg)
-            return
+            self._send_error_response(None, lsp.ErrorCodes.ParseError, e.msg)
+            return None
 
-    def _process_request(
-        self,
-        request_id: Union[int, str],
-        method: str,
-        params: Union[Sequence[JSON_VALUE], Mapping[str, JSON_VALUE], None],
-    ) -> None:
+    def _process_request(self, json_data: Mapping[str, JSON_VALUE]) -> None:
+        id = None
         try:
+            id = _extract_id(json_data)
+            method = _extract_method(json_data)
+            params_json = _extract_params(json_data)
+
+            if method in lsp.METHOD_TO_TYPES:
+                _, response_type, param_type, _ = lsp.METHOD_TO_TYPES[method]
+                try:
+                    params = self._converter.structure(params_json, param_type)
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    raise LSPException(lsp.ErrorCodes.InvalidParams, str(e), None) from e
+            else:
+                # For unknown methods, pass the json data through as-is, so any
+                # dispatch method on the other end can handle it.
+                param_type = None
+                response_type = None
+                params = params_json
+
             result = self._request_handler(method, params)
         except LSPException as e:
-            self._send_error_response(request_id, e.error_code, e.message, e.data)
+            self._send_error_response(id, e.error_code, e.message, e.data)
             return
 
-        request_content: Dict[str, JSON_VALUE] = {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "result": result,
-        }
+        if response_type is not None:
+            # TODO: This is technically not guaranteed to work
+            response = response_type(id=id, result=result)  # type: ignore
+            response_json = self._converter.unstructure(response)
+        else:
+            response_json = {"id": id, "result": result, "jsonrpc": "2.0"}
 
-        self._write_data(_json_to_packet(request_content))
+        self._write_data(_json_to_packet(response_json))
 
-    def _process_response(self, request_id: Union[int, str], result: JSON_VALUE) -> None:
-        future = self._active_requests.get(request_id)
-        if not future:
+    def _process_notification(self, json_data: Mapping[str, JSON_VALUE]) -> None:
+        method = json_data["method"]
+        if not isinstance(method, str):
+            # No error response for notifications
+            return
+
+        if method in lsp.METHOD_TO_TYPES:
+            notification = self._converter.structure(json_data, lsp.METHOD_TO_TYPES[method][0])
+            self._notification_handler(method, notification.params)
+        elif "params" not in json_data:
+            self._notification_handler(method, None)
+        else:
+            self._notification_handler(method, json_data["params"])
+
+    def _process_response(self, json_data: Mapping[str, JSON_VALUE]) -> None:
+        id = json_data["id"]
+        if not isinstance(id, str) and not isinstance(id, int):
             _ = self._logger_client and self._logger_client.warning(
-                f"Received response for unknown request id {request_id}."
-            )
-            return
-        future.set_result(result)
-        del self._active_requests[request_id]
-
-    def _process_notification(
-        self, method: str, params: Union[List[JSON_VALUE], Mapping[str, JSON_VALUE], None]
-    ) -> None:
-        self._notification_handler(method, params)
-
-    def _process_error(
-        self, request_id: Union[int, str, None], error: Mapping[str, JSON_VALUE]
-    ) -> None:
-        code = error.get("code")
-        message = error.get("message")
-        data = error.get("data")
-        if not code and not message:
-            self._send_error_response(
-                None,
-                ErrorCodes.InvalidRequest,
-                "Error object must contain members 'code' and 'message'",
-            )
-            return
-        if type(code) is not int:
-            self._send_error_response(
-                None, ErrorCodes.InvalidRequest, "'code' must be of type number"
-            )
-            return
-        if type(message) is not str:
-            self._send_error_response(
-                None, ErrorCodes.InvalidRequest, "'message' must be of type string"
+                "id field in LSP must be an int or string."
             )
             return
 
-        if request_id is not None:
-            future = self._active_requests.get(request_id)
-            if not future:
+        pending_request = self._active_requests.get(id)
+        if not pending_request:
+            _ = self._logger_client and self._logger_client.warning(
+                f"Received response for unknown request id {id}."
+            )
+            return
+
+        method = pending_request[0]
+        if method in lsp.METHOD_TO_TYPES:
+            response_msg = self._converter.structure(
+                json_data, lsp.METHOD_TO_TYPES[pending_request[0]][1]
+            )
+            pending_request[1].set_result(response_msg.result)
+        else:
+            pending_request[1].set_result(json_data["result"])
+
+        del self._active_requests[id]
+
+    def _process_error(self, json_data: Mapping[str, JSON_VALUE]) -> None:
+        error_msg = self._converter.structure(json_data, lsp.ResponseErrorMessage)
+        assert error_msg.error is not None
+        if error_msg.id is not None:
+            pending_request = self._active_requests.get(error_msg.id)
+            if not pending_request:
                 _ = self._logger_client and self._logger_client.warning(
-                    f"Received error for unknown request id {request_id}."
+                    f"Received error for unknown request id {error_msg.id}."
                 )
                 return
-            future.set_exception(LSPException(code, message, data))
-            del self._active_requests[request_id]
+            pending_request[1].set_exception(
+                LSPException(error_msg.error.code, error_msg.error.message, error_msg.error.data)
+            )
+            del self._active_requests[error_msg.id]
         else:
-            raise LSPException(code, message, data)
+            raise LSPException(error_msg.error.code, error_msg.error.message, error_msg.error.data)
 
     def _process_message(self, json_data: Mapping[str, JSON_VALUE]) -> None:
-        method = json_data.get("method")
-        request_id = json_data.get("id")
-
-        if request_id is not None and (type(request_id) is not str and type(request_id) is not int):
-            self._send_error_response(
-                None, ErrorCodes.InvalidRequest, "'id' must be of type number or string"
-            )
-            return
-
-        # Determine whether the message is a request, notification, response or error
-        if method is not None:
-            # Use ellipsis for undefined to differentiate from null
-            params = json_data.get("params", ...)
-
-            if request_id is not None:
-                if type(method) is not str:
-                    self._send_error_response(
-                        request_id, ErrorCodes.InvalidRequest, "'method' must be of type string"
-                    )
-                    return
-
-                if (
-                    not isinstance(params, List)
-                    and not isinstance(params, Mapping)
-                    and params is not ...
-                ):
-                    self._send_error_response(
-                        request_id,
-                        ErrorCodes.InvalidRequest,
-                        "'params' must be of type array or object",
-                    )
-                    return
-
-                if params == ...:
-                    params = None
-                self._process_request(request_id, method, params)
-            else:
-                # No error responses for notifications
-                if type(method) is not str:
-                    return
-
-                if (
-                    not isinstance(params, List)
-                    and not isinstance(params, Mapping)
-                    and params is not ...
-                ):
-                    return
-
-                if params == ...:
-                    params = None
-                self._process_notification(method, params)
-
+        if "method" in json_data and "id" in json_data:
+            self._process_request(json_data)
+        elif "method" in json_data and "id" not in json_data:
+            self._process_notification(json_data)
+        elif "result" in json_data:
+            self._process_response(json_data)
+        elif "error" in json_data:
+            self._process_error(json_data)
         else:
-            error = json_data.get("error", ...)
-            has_result = "result" in json_data
-
-            if error is not ... and has_result:
-                self._send_error_response(
-                    None,
-                    ErrorCodes.InvalidRequest,
-                    "Only one of 'result' or 'error' may be included",
-                )
-                return
-
-            if error is not ...:
-                if not isinstance(error, Mapping):
-                    self._send_error_response(
-                        None, ErrorCodes.InvalidRequest, "'error' must be of type object."
-                    )
-                    return
-                self._process_error(request_id, error)
-
-            elif request_id is not None:
-                if not has_result:
-                    self._send_error_response(
-                        request_id,
-                        ErrorCodes.InvalidRequest,
-                        "Expected either 'method' or 'result'.",
-                    )
-                    return
-
-                self._process_response(request_id, json_data["result"])
-
-            else:
-                self._send_error_response(
-                    None, ErrorCodes.InvalidRequest, "At least one of 'id' or 'method' must exist."
-                )
-                return
+            _ = self._logger_client and self._logger_client.warning(
+                f"Received malformed data: {json_data}"
+            )
 
     def _on_data(self, data: bytes) -> None:
         "Called by subclasses when new data has been received."
@@ -388,7 +364,7 @@ class LSProtocol(ABC):
     def _write_data(self, data: bytes) -> None:
         pass
 
-    def send_request(self, method: str, params: JSON_VALUE, future: "Future[JSON_VALUE]") -> None:
+    def send_request(self, request: Any, future: "Future[JSON_VALUE]") -> None:
         """
         Sends a request to the language server, using the given `method` and `params`.
         This function should only run on the LSProtocol's thread.
@@ -397,25 +373,22 @@ class LSProtocol(ABC):
             future.set_exception(LSPClientException("No connection to server"))
             return
 
-        request_id = self._request_counter
-        self._request_counter += 1
+        if not _is_request(request):
+            raise TypeError("Argument must be a request object.")
 
-        message_json: Dict[str, JSON_VALUE] = {"jsonrpc": "2.0", "id": request_id, "method": method}
-        if params is not None:
-            message_json["params"] = params
+        self._active_requests[request.id] = (request.method, future)
 
-        self._active_requests[request_id] = future
+        message_json = self._converter.unstructure(request)
         self._write_data(_json_to_packet(message_json))
 
-    def send_notification(self, method: str, params: JSON_VALUE) -> None:
+    def send_notification(self, notification: Any) -> None:
         """
         Sends a notification to the language server, using the given `method` and `params`.
         This function should only run on the LSProtocol's thread.
         """
-        message_json: Dict[str, JSON_VALUE] = {"jsonrpc": "2.0", "method": method}
-        if params is not None:
-            message_json["params"] = params
-
+        if not _is_notification(notification):
+            raise TypeError("Argument must be a notification object.")
+        message_json = self._converter.unstructure(notification)
         self._write_data(_json_to_packet(message_json))
 
     def _on_connection_lost(self) -> None:
@@ -434,9 +407,12 @@ class LSStreamingProtocol(Protocol, LSProtocol):
     _connection_event: Event
 
     def __init__(
-        self, request_handler: _RequestHandler, notification_handler: _NotificationHandler
+        self,
+        converter: cattrs.Converter,
+        request_handler: _RequestHandler,
+        notification_handler: _NotificationHandler,
     ) -> None:
-        super().__init__(request_handler, notification_handler)
+        super().__init__(converter, request_handler, notification_handler)
         self._connection_event = Event()
 
     def set_server(self, server: Any) -> None:

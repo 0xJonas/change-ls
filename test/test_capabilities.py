@@ -4,7 +4,7 @@ from typing import Any
 
 from pytest import mark
 
-from change_ls import Client, StdIOConnectionParams, TextDocumentInfo
+from change_ls import Client, CustomNotification, StdIOConnectionParams, TextDocumentInfo
 
 
 async def test_server_capabilities() -> None:
@@ -44,10 +44,10 @@ async def test_server_capabilities() -> None:
         assert not client.check_feature("textDocument/implementation")
 
 
-async def run_dynamic_registration(client: Client, method: str, **kwargs: Any) -> None:
+async def _run_dynamic_registration(client: Client, method: str, **kwargs: Any) -> None:
     async def schedule_registration() -> None:
         await sleep(0.2)
-        client.send_notification("$/go", None)
+        client.send_notification(CustomNotification("$/go"))
 
     assert not client.check_feature(method, **kwargs)
     # Run the delayed trigger for the registration and require_feature at the same time,
@@ -64,7 +64,7 @@ async def test_dynamic_registration() -> None:
     async with Client(params) as client:
         repo_uri = Path(".").resolve().as_uri()
 
-        await run_dynamic_registration(
+        await _run_dynamic_registration(
             client,
             "workspace/didCreateFiles",
             file_operations=[
@@ -72,10 +72,10 @@ async def test_dynamic_registration() -> None:
                 repo_uri + "/TEST/test_capabilities.py",
             ],
         )
-        await run_dynamic_registration(
+        await _run_dynamic_registration(
             client,
             "textDocument/semanticTokens",
             text_documents=[TextDocumentInfo(repo_uri + "/test/test_capabilities.py", None)],
             semantic_tokens=["full"],
         )
-        await run_dynamic_registration(client, "textDocument/documentColor")
+        await _run_dynamic_registration(client, "textDocument/documentColor")

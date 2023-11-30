@@ -5,9 +5,10 @@ from pathlib import Path, WindowsPath
 from typing import Generator, List, Optional
 from urllib.parse import urlsplit
 
+from lsprotocol.types import FileOperationFilter, FileOperationPatternKind, TextDocumentFilter
+
 import change_ls._languages as languages
 from change_ls.tokens import Grammar
-from change_ls.types import FileOperationFilter, FileOperationPatternKind, TextDocumentFilter
 
 
 @dataclass
@@ -121,19 +122,19 @@ def matches_text_document_filter(
 
     (scheme, _, path_raw, _, _) = urlsplit(info.uri, scheme="file")
 
-    if "scheme" in document_filter and document_filter["scheme"] != scheme:
+    if document_filter.scheme is not None and document_filter.scheme != scheme:
         return False
 
-    if filter_language_id := document_filter.get("language"):
+    if document_filter.language is not None:
         language_id = (
             guess_language_id(Path(path_raw)) if not info.language_id else info.language_id
         )
-        if not language_id or language_id != filter_language_id:
+        if not language_id or language_id != document_filter.language:
             return False
 
-    if lsp_glob := document_filter.get("pattern"):
+    if document_filter.pattern is not None:
         found = False
-        for glob in _expand_lsp_glob(lsp_glob):
+        for glob in _expand_lsp_glob(document_filter.pattern):
             if fnmatch(path_raw, glob):
                 found = True
                 break
@@ -154,7 +155,9 @@ def matches_file_operation_filter(uri: str, document_filter: FileOperationFilter
         return False
 
     if document_filter.pattern:
-        ignore_case = document_filter.pattern.options and document_filter.pattern.options.ignoreCase
+        ignore_case = (
+            document_filter.pattern.options and document_filter.pattern.options.ignore_case
+        )
         lsp_glob = document_filter.pattern.glob
 
         if ignore_case:
@@ -177,10 +180,10 @@ def matches_file_operation_filter(uri: str, document_filter: FileOperationFilter
             path = Path(path_raw[1:])
 
         is_directory = path.is_dir()
-        if document_filter.pattern.matches is FileOperationPatternKind.file and is_directory:
+        if document_filter.pattern.matches == FileOperationPatternKind.File and is_directory:
             return False
         elif (
-            document_filter.pattern.matches is FileOperationPatternKind.folder and not is_directory
+            document_filter.pattern.matches == FileOperationPatternKind.Folder and not is_directory
         ):
             return False
 

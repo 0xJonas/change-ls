@@ -1,7 +1,15 @@
 from os import getpid
 
+from lsprotocol.types import (
+    ClientCapabilities,
+    InitializedNotification,
+    InitializedParams,
+    InitializeParams,
+    InitializeRequest,
+    ShutdownRequest,
+)
+
 from change_ls import Client, StdIOConnectionParams
-from change_ls.types import ClientCapabilities, InitializedParams, InitializeParams
 
 
 async def test_client_assumes_correct_states() -> None:
@@ -14,15 +22,18 @@ async def test_client_assumes_correct_states() -> None:
     await client.launch()
     assert client.get_state() == "uninitialized"
 
-    await client.send_initialize(
-        InitializeParams(processId=getpid(), rootUri=None, capabilities=ClientCapabilities())
+    await client.send_request(
+        InitializeRequest(
+            client.generate_request_id(),
+            InitializeParams(process_id=getpid(), root_uri=None, capabilities=ClientCapabilities()),
+        )
     )
     assert client.get_state() == "initializing"
 
-    client.send_initialized(InitializedParams())
+    client.send_notification(InitializedNotification(InitializedParams()))
     assert client.get_state() == "running"
 
-    await client.send_shutdown()
+    await client.send_request(ShutdownRequest(client.generate_request_id()))
     assert client.get_state() == "shutdown"
 
     await client.send_exit()
@@ -58,15 +69,18 @@ async def test_client_state_callbacks() -> None:
     await client.launch()
     assert marker == 1
 
-    await client.send_initialize(
-        InitializeParams(processId=getpid(), rootUri=None, capabilities=ClientCapabilities())
+    await client.send_request(
+        InitializeRequest(
+            client.generate_request_id(),
+            InitializeParams(process_id=getpid(), root_uri=None, capabilities=ClientCapabilities()),
+        )
     )
     assert marker == 2
 
-    client.send_initialized(InitializedParams())
+    client.send_notification(InitializedNotification(InitializedParams()))
     assert marker == 3
 
-    await client.send_shutdown()
+    await client.send_request(ShutdownRequest(client.generate_request_id()))
     assert marker == 4
 
     await client.send_exit()

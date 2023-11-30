@@ -3,9 +3,9 @@ import os
 import subprocess
 import sys
 import uuid
+import warnings
 from abc import ABC, abstractmethod
 from asyncio import AbstractEventLoop, get_running_loop, wait_for
-from dataclasses import dataclass
 from os import getpid
 from pathlib import Path
 from socket import AF_INET
@@ -13,17 +13,10 @@ from sys import argv
 from types import TracebackType
 from typing import Any, Callable, Dict, List, Literal, Mapping, Optional, Sequence, Type, Union
 
-from change_ls._capabilities_mixin import CapabilitiesMixin
-from change_ls._protocol import (
-    LSPClientException,
-    LSProtocol,
-    LSStreamingProtocol,
-    LSSubprocessProtocol,
-)
-from change_ls.logging import get_change_ls_default_logger  # type: ignore
-from change_ls.logging import OperationLoggerAdapter, operation
-from change_ls.types import (
-    JSON_VALUE,
+import attrs
+import lsprotocol.converters
+from cattrs import Converter
+from lsprotocol.types import (
     ApplyWorkspaceEditParams,
     ApplyWorkspaceEditResult,
     CancelParams,
@@ -32,12 +25,18 @@ from change_ls.types import (
     DeclarationClientCapabilities,
     DefinitionClientCapabilities,
     DocumentSymbolClientCapabilities,
+    DocumentSymbolClientCapabilitiesSymbolKindType,
+    DocumentSymbolClientCapabilitiesTagSupportType,
+    ExitNotification,
     FailureHandlingKind,
     FileOperationClientCapabilities,
     GeneralClientCapabilities,
     ImplementationClientCapabilities,
+    InitializedNotification,
     InitializedParams,
     InitializeParams,
+    InitializeParamsClientInfoType,
+    InitializeRequest,
     InitializeResult,
     LogMessageParams,
     LogTraceParams,
@@ -51,10 +50,13 @@ from change_ls.types import (
     RegistrationParams,
     ResourceOperationKind,
     SemanticTokensClientCapabilities,
+    SemanticTokensClientCapabilitiesRequestsType,
+    SemanticTokensClientCapabilitiesRequestsTypeFullType1,
     ShowDocumentParams,
     ShowDocumentResult,
     ShowMessageParams,
     ShowMessageRequestParams,
+    ShutdownRequest,
     SymbolKind,
     SymbolTag,
     TextDocumentClientCapabilities,
@@ -66,8 +68,20 @@ from change_ls.types import (
     WorkspaceEditClientCapabilities,
     WorkspaceFolder,
     WorkspaceSymbolClientCapabilities,
+    WorkspaceSymbolClientCapabilitiesResolveSupportType,
+    WorkspaceSymbolClientCapabilitiesSymbolKindType,
+    WorkspaceSymbolClientCapabilitiesTagSupportType,
 )
-from change_ls.types._client_requests import ClientRequestsMixin, ServerRequestsMixin
+
+from change_ls._capabilities_mixin import CapabilitiesMixin
+from change_ls._protocol import (
+    LSPClientException,
+    LSProtocol,
+    LSStreamingProtocol,
+    LSSubprocessProtocol,
+)
+from change_ls.logging import get_change_ls_default_logger  # type: ignore
+from change_ls.logging import OperationLoggerAdapter, operation
 
 if sys.platform == "win32":
     from asyncio import ProactorEventLoop
@@ -157,7 +171,11 @@ class StdIOConnectionParams(ServerLaunchParams):
                 "Launching language server %s with arguments %s.", self.server_path, str(self.args)
             )
             _, protocol = await loop.subprocess_exec(
-                lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification),
+                lambda: LSSubprocessProtocol(
+                    client._converter,
+                    client._dispatch_request,
+                    client._dispatch_notification,
+                ),
                 self.server_path,
                 *self.args,
                 cwd=self.cwd,
@@ -166,7 +184,11 @@ class StdIOConnectionParams(ServerLaunchParams):
         elif self.launch_command:
             client.logger.info("Launching language server using '%s'.", self.launch_command)
             _, protocol = await loop.subprocess_shell(
-                lambda: LSSubprocessProtocol(client.dispatch_request, client.dispatch_notification),
+                lambda: LSSubprocessProtocol(
+                    client._converter,
+                    client._dispatch_request,
+                    client._dispatch_notification,
+                ),
                 self.launch_command,
                 cwd=self.cwd,
             )
@@ -207,7 +229,11 @@ class SocketConnectionParams(ServerLaunchParams):
         client.logger.info("Using TCP socket connection.")
 
         loop = get_running_loop()
-        protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
+        protocol = LSStreamingProtocol(
+            client._converter,
+            client._dispatch_request,
+            client._dispatch_notification,
+        )
         server = await loop.create_server(
             lambda: protocol, host="127.0.0.1", port=self.port, family=AF_INET
         )
@@ -254,7 +280,11 @@ class PipeConnectionParams(ServerLaunchParams):
                 raise LSPClientException("Pipe connections on Windows require a ProactorEventLoop")
 
             # typeshed expects this to be a StreamReaderProtocol, but that does not make sense.
-            protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
+            protocol = LSStreamingProtocol(
+                client._converter,
+                client._dispatch_request,
+                client._dispatch_notification,
+            )
             [server] = await loop.start_serving_pipe(
                 lambda: protocol, self.pipe_name  # type: ignore
             )
@@ -268,7 +298,11 @@ class PipeConnectionParams(ServerLaunchParams):
             client.logger.info(f"Using UNIX Domain Socket connection with name '{self.pipe_name}'")
 
             loop = get_running_loop()
-            protocol = LSStreamingProtocol(client.dispatch_request, client.dispatch_notification)
+            protocol = LSStreamingProtocol(
+                client._converter,
+                client._dispatch_request,
+                client._dispatch_notification,
+            )
             server = await loop.create_unix_server(lambda: protocol, self.pipe_name)
             protocol.set_server(server)
 
@@ -279,6 +313,82 @@ class PipeConnectionParams(ServerLaunchParams):
             raise LSPClientException(
                 f"PipeConnectionParams are not support on platform {sys.platform}"
             )
+
+
+class CustomRequest:
+    """
+    Custom LSP request. The ``params`` member must be serializable
+    by ``cattrs.unstructure``.
+    """
+
+    # This has to be a regular class (as opposed to an attrs/dataclasses class)
+    # to prevent the hooks in lsprotocol.converters from messing up the
+    # unstructuring.
+
+    id: Union[str, int]
+    method: str
+    params: Optional[Union[Sequence[Any], Dict[str, Any]]]
+    jsonrpc: str
+
+    def __init__(
+        self,
+        id: Union[str, int],
+        method: str,
+        params: Optional[Union[Sequence[Any], Dict[str, Any]]] = None,
+        jsonrpc: str = "2.0",
+    ) -> None:
+        self.id = id
+        self.method = method
+        self.params = params
+        self.jsonrpc = jsonrpc
+
+
+class CustomNotification:
+    """
+    Custom LSP notification. The ``params`` member must be serializable
+    by ``cattrs.unstructure``.
+    """
+
+    # This has to be a regular class (as opposed to an attrs/dataclasses class)
+    # to prevent the hooks in lsprotocol.converters from messing up the
+    # unstructuring.
+
+    method: str
+    params: Optional[Union[Sequence[Any], Dict[str, Any]]] = None
+    jsonrpc: str = "2.0"
+
+    def __init__(
+        self,
+        method: str,
+        params: Optional[Union[Sequence[Any], Dict[str, Any]]] = None,
+        jsonrpc: str = "2.0",
+    ) -> None:
+        self.method = method
+        self.params = params
+        self.jsonrpc = jsonrpc
+
+
+def _get_change_ls_converter() -> Converter:
+    def unstructure_custom_request(request: CustomRequest) -> Dict[str, Any]:
+        out: Dict[str, Any] = {
+            "id": request.id,
+            "method": request.method,
+            "jsonrpc": request.jsonrpc,
+        }
+        if request.params:
+            out["params"] = request.params
+        return out
+
+    def unstructure_custom_notification(request: CustomNotification) -> Dict[str, Any]:
+        out: Dict[str, Any] = {"method": request.method, "jsonrpc": request.jsonrpc}
+        if request.params:
+            out["params"] = request.params
+        return out
+
+    converter = Converter()
+    converter.register_unstructure_hook(CustomRequest, unstructure_custom_request)
+    converter.register_unstructure_hook(CustomNotification, unstructure_custom_notification)
+    return lsprotocol.converters.get_converter(converter)
 
 
 class WorkspaceRequestHandler(ABC):
@@ -324,7 +434,7 @@ def get_default_client_capabilities() -> ClientCapabilities:
     Returns the :class:`ClientCapabilities` which are used for the default
     :class:`InitializeParams` (see `get_default_initialize_params`).
     """
-    all_symbols_kinds = [
+    all_symbol_kinds = [
         SymbolKind.Array,
         SymbolKind.Boolean,
         SymbolKind.Class,
@@ -356,50 +466,62 @@ def get_default_client_capabilities() -> ClientCapabilities:
 
     return ClientCapabilities(
         general=GeneralClientCapabilities(
-            positionEncodings=[
-                PositionEncodingKind.UTF32,
-                PositionEncodingKind.UTF8,
-                PositionEncodingKind.UTF16,
+            position_encodings=[
+                PositionEncodingKind.Utf32,
+                PositionEncodingKind.Utf8,
+                PositionEncodingKind.Utf16,
             ]
         ),
         workspace=WorkspaceClientCapabilities(
-            workspaceEdit=WorkspaceEditClientCapabilities(
-                documentChanges=True,
-                resourceOperations=[
+            workspace_edit=WorkspaceEditClientCapabilities(
+                document_changes=True,
+                resource_operations=[
                     ResourceOperationKind.Create,
                     ResourceOperationKind.Rename,
                     ResourceOperationKind.Delete,
                 ],
-                failureHandling=FailureHandlingKind.Abort,
+                failure_handling=FailureHandlingKind.Abort,
             ),
-            fileOperations=FileOperationClientCapabilities(
-                willCreate=True,
-                didCreate=True,
-                willRename=True,
-                didRename=True,
-                willDelete=True,
-                didDelete=True,
+            file_operations=FileOperationClientCapabilities(
+                will_create=True,
+                did_create=True,
+                will_rename=True,
+                did_rename=True,
+                will_delete=True,
+                did_delete=True,
             ),
             symbol=WorkspaceSymbolClientCapabilities(
-                symbolKind={"valueSet": all_symbols_kinds},
-                tagSupport={"valueSet": all_symbol_tags},
-                resolveSupport={"properties": ["location.range", "containerName", "tags"]},
+                symbol_kind=WorkspaceSymbolClientCapabilitiesSymbolKindType(
+                    value_set=all_symbol_kinds
+                ),
+                tag_support=WorkspaceSymbolClientCapabilitiesTagSupportType(
+                    value_set=all_symbol_tags
+                ),
+                resolve_support=WorkspaceSymbolClientCapabilitiesResolveSupportType(
+                    properties=["location.range", "containerName", "tags"]
+                ),
             ),
         ),
-        textDocument=TextDocumentClientCapabilities(
+        text_document=TextDocumentClientCapabilities(
             references=ReferenceClientCapabilities(),
-            declaration=DeclarationClientCapabilities(linkSupport=True),
-            definition=DefinitionClientCapabilities(linkSupport=True),
-            typeDefinition=TypeDefinitionClientCapabilities(linkSupport=True),
-            implementation=ImplementationClientCapabilities(linkSupport=True),
-            documentSymbol=DocumentSymbolClientCapabilities(
-                symbolKind={"valueSet": all_symbols_kinds},
-                tagSupport={"valueSet": all_symbol_tags},
-                hierarchicalDocumentSymbolSupport=True,
+            declaration=DeclarationClientCapabilities(link_support=True),
+            definition=DefinitionClientCapabilities(link_support=True),
+            type_definition=TypeDefinitionClientCapabilities(link_support=True),
+            implementation=ImplementationClientCapabilities(link_support=True),
+            document_symbol=DocumentSymbolClientCapabilities(
+                symbol_kind=DocumentSymbolClientCapabilitiesSymbolKindType(
+                    value_set=all_symbol_kinds
+                ),
+                tag_support=DocumentSymbolClientCapabilitiesTagSupportType(
+                    value_set=all_symbol_tags
+                ),
+                hierarchical_document_symbol_support=True,
             ),
-            semanticTokens=SemanticTokensClientCapabilities(
-                requests={"full": {"delta": True}},
-                tokenTypes=[
+            semantic_tokens=SemanticTokensClientCapabilities(
+                requests=SemanticTokensClientCapabilitiesRequestsType(
+                    full=SemanticTokensClientCapabilitiesRequestsTypeFullType1(delta=True)
+                ),
+                token_types=[
                     "namespace",
                     "type",
                     "class",
@@ -424,7 +546,7 @@ def get_default_client_capabilities() -> ClientCapabilities:
                     "operator",
                     "decorator",
                 ],
-                tokenModifiers=[
+                token_modifiers=[
                     "declaration",
                     "definition",
                     "readonly",
@@ -448,9 +570,11 @@ def get_default_initialize_params() -> InitializeParams:
     constructed without explicit ``InitializeParams``.
     """
     return InitializeParams(
-        processId=getpid(),
-        clientInfo={"name": "[change_ls]: " + argv[0], "version": CHANGE_LS_VERSION},
-        rootUri=None,
+        process_id=getpid(),
+        client_info=InitializeParamsClientInfoType(
+            name="[change_ls]: " + argv[0], version=CHANGE_LS_VERSION
+        ),
+        root_uri=None,
         capabilities=get_default_client_capabilities(),
     )
 
@@ -458,16 +582,22 @@ def get_default_initialize_params() -> InitializeParams:
 ClientState = Literal["disconnected", "uninitialized", "initializing", "running", "shutdown"]
 
 
-@dataclass(frozen=True)
+@attrs.define(frozen=True)
 class ServerInfo:
     name: str
-    version: str
+    version: Optional[str]
 
     def __str__(self) -> str:
-        return f"{self.name} version {self.version}"
+        if self.version is None:
+            return self.name
+        else:
+            return f"{self.name} version {self.version}"
 
 
-class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
+JSON_VALUE = Union[int, float, bool, str, Sequence["JSON_VALUE"], Mapping[str, "JSON_VALUE"], None]
+
+
+class Client(CapabilitiesMixin):
     """
     A Client manages the low-level communication with a language server using the Language Server Protocol.
 
@@ -520,6 +650,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
     _logger_client: OperationLoggerAdapter
     _logger_server: OperationLoggerAdapter
     _logger_messages: OperationLoggerAdapter
+    _json_converter: Converter
+    _request_counter: int
 
     # Whether or not an 'exit' notification was sent. This is used
     # to distinguish a normal termination of the server from a crash.
@@ -551,6 +683,8 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._logger_messages = get_change_ls_default_logger(
             "change-ls.messages", cls_client=str(self._id), cls_server=None
         )
+        self._json_converter = _get_change_ls_converter()
+        self._request_counter = 0
         self._initialize_params = initialize_params
         self._server_info = None
         self._workspace_request_handler = None
@@ -567,6 +701,10 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
 
     def __hash__(self) -> int:
         return self._id.int
+
+    @property
+    def _converter(self) -> Converter:
+        return self._json_converter
 
     @property
     def logger(self) -> OperationLoggerAdapter:
@@ -645,118 +783,172 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self._protocol._set_loggers(self._logger_client, self._logger_server, self._logger_messages)  # type: ignore
         self._set_state("uninitialized")
 
+    def generate_request_id(self) -> str:
+        self._request_counter += 1
+        return "change-ls::" + str(self._request_counter)
+
+    def _dispatch_request(self, method: str, params: Any) -> Any:
+        if method == "workspace/workspaceFolders":
+            return self._on_workspace_workspace_folders()
+        elif method == "workspace/configuration":
+            return self._on_workspace_configuration(params)
+        elif method == "window/workDoneProgress/create":
+            return self._on_window_work_done_progress_create(params)
+        elif method == "workspace/semanticTokens/refresh":
+            return self._on_workspace_semantic_tokens_refresh()
+        elif method == "window/showDocument":
+            return self._on_window_show_document(params)
+        elif method == "workspace/inlineValue/refresh":
+            return self._on_workspace_inline_value_refresh()
+        elif method == "workspace/inlayHint/refresh":
+            return self._on_workspace_inlay_hint_refresh()
+        elif method == "workspace/diagnostic/refresh":
+            return self._on_workspace_diagnostic_refresh()
+        elif method == "client/registerCapability":
+            return self._on_client_register_capability(params)
+        elif method == "client/unregisterCapability":
+            return self._on_client_unregister_capability(params)
+        elif method == "window/showMessageRequest":
+            return self._on_window_show_message_request(params)
+        elif method == "workspace/codeLens/refresh":
+            return self._on_workspace_code_lens_refresh()
+        elif method == "workspace/applyEdit":
+            return self._on_workspace_apply_edit(params)
+
+    def _dispatch_notification(self, method: str, params: Any) -> None:
+        if method == "window/showMessage":
+            self._on_window_show_message(params)
+        elif method == "window/logMessage":
+            self._on_window_log_message(params)
+        elif method == "telemetry/event":
+            self._on_telemetry_event(params)
+        elif method == "textDocument/publishDiagnostics":
+            self._on_text_document_publish_diagnostics(params)
+        elif method == "$/logTrace":
+            self._on_s_log_trace(params)
+        elif method == "$/cancelRequest":
+            self._on_s_cancel_request(params)
+        elif method == "$/progress":
+            self._on_s_progress(params)
+
     async def _send_request_internal(
-        self, method: str, params: JSON_VALUE, timeout: Optional[float] = 10.0
-    ) -> JSON_VALUE:
+        self,
+        request: Any,
+        *,
+        timeout: Optional[float] = 10.0,
+    ) -> Any:
         assert self._protocol
 
         future = get_running_loop().create_future()
-        self._protocol.send_request(method, params, future)
+        self._protocol.send_request(request, future)
         await wait_for(future, timeout)
 
         assert not future.cancelled()
         if exception := future.exception():
-            self._logger_client.info("Request failed (%s)", method)
+            self._logger_client.info("Request failed (%s)", request.method)
             raise exception
         else:
             return future.result()
 
-    @operation(
-        start_message="Sending request {method}.", get_logger_from_context=_get_logger_from_context
-    )
-    async def send_request(self, method: str, params: JSON_VALUE, **kwargs: Any) -> JSON_VALUE:
+    @operation
+    async def send_request(
+        self,
+        request: Any,
+        *,
+        timeout: float = 10.0,
+    ) -> Any:
         """
-        Sends a request to the server and returns the result.
-        The method and contents of the request are arbitrary and need not be defined in the LSP.
+        Sends a request to the language server and returns the result.
 
         :param timeout: Number of seconds after which the request must be resolved. A value of
             ``None`` indicates an infinite timeout. If the request is not resolved before the given
             timeout, an ``asyncio.exceptions.TimeoutError`` is raised (not to be confused with ``TimeoutError(OSError)``).
         """
+        method = request.method
+        self._logger_client.info(f"Sending request {method}.")
+        if method == "initialize":
+            return await self._send_initialize(request)
+        elif method == "shutdown":
+            return await self._send_shutdown(request)
+
         if self._state != "running":
             raise LSPClientException("Invalid state, expected 'running'.")
-        return await self._send_request_internal(method, params, **kwargs)
+        return self._send_request_internal(request, timeout=timeout)
 
-    async def send_request_iter(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
-        # Version of send_request which returns an async iterator.
-        # This method is used when partial results are requested.
-        pass
-
-    def _send_notification_internal(self, method: str, params: JSON_VALUE) -> None:
+    def _send_notification_internal(self, notification: Any) -> None:
         assert self._protocol
-        self._protocol.send_notification(method, params)
+        self._protocol.send_notification(notification)
 
-    @operation(
-        start_message="Sending notification {method}.",
-        get_logger_from_context=_get_logger_from_context,
-    )
-    def send_notification(self, method: str, params: JSON_VALUE) -> None:
+    @operation
+    def send_notification(self, notification: Any) -> None:
         """
-        Sends a notification to the server. The method and contents of the notification are arbitrary
-        and need not be defined in the LSP.
+        Sends a notification to the server.
         """
+        method = notification.method
+        self._logger_client.info(f"Sending notification {method}.")
+
+        if method == "initialized":
+            self._send_initialized(notification)
+            return
+        elif method == "exit":
+            warnings.warn(
+                "Do not send an exit notification via send_notification, as this will"
+                "not wait for the language server process to terminate. "
+                "Use send_exit instead."
+            )
+            self._send_notification_internal(notification)
+            return
+
         if self._state != "running":
             raise LSPClientException("Invalid state, expected 'running'.")
-        self._send_notification_internal(method, params)
+        self._send_notification_internal(notification)
 
-    @operation(
-        start_message="Sending initialize request.",
-        get_logger_from_context=_get_logger_from_context,
-    )
-    async def send_initialize(
-        self, params: Optional[InitializeParams] = None, **kwargs: Any
+    async def _send_initialize(
+        self, request: InitializeRequest, *, timeout: Optional[float] = 10.0
     ) -> InitializeResult:
         if self._state != "uninitialized":
             raise LSPClientException("Invalid state, expected 'uninitialized'.")
 
-        if not params:
-            params = self._initialize_params
+        result = await self._send_request_internal(request, timeout=timeout)
+        if result.server_info:
+            self._server_info = ServerInfo(result.server_info.name, result.server_info.version)
 
-        # We need to call _send_request_internal directly here, since the
-        # normal send_request method requires the state to be "running".
-        out_json = await self._send_request_internal("initialize", params.to_json(), **kwargs)
-        assert isinstance(out_json, Mapping)
-        out = InitializeResult.from_json(out_json)
-        if out.serverInfo:
-            self._server_info = ServerInfo(out.serverInfo["name"], out.serverInfo["version"])
-
-        self._set_server_capabilities(out.capabilities)
+        self._set_server_capabilities(result.capabilities)
 
         self._set_state("initializing")
-        return out
+        return result
 
     @operation(
         start_message="Sending initialized notification.",
         get_logger_from_context=_get_logger_from_context,
     )
-    def send_initialized(self, params: InitializedParams) -> None:
+    def _send_initialized(self, notification: InitializedNotification, **kwargs: Any) -> None:
         if self._state != "initializing":
             raise LSPClientException("Invalid state, expected 'initializing'.")
 
-        self._send_notification_internal("initialized", params.to_json())
+        self._send_notification_internal(notification, **kwargs)
         self._set_state("running")
 
     @operation(
         start_message="Sending shutdown request.", get_logger_from_context=_get_logger_from_context
     )
-    async def send_shutdown(self, **kwargs: Any) -> None:
-        await super().send_shutdown(**kwargs)
+    async def _send_shutdown(self, request: ShutdownRequest, **kwargs: Any) -> None:
+        await self._send_request_internal(request, **kwargs)
         self._set_state("shutdown")
 
     @operation(
         start_message="Sending exit notification.", get_logger_from_context=_get_logger_from_context
     )
-    async def send_exit(self) -> None:  # type: ignore  # pylint: disable=invalid-overridden-method
+    async def send_exit(self) -> None:
         """
         The exit event is sent from the client to the server to ask the server to exit its process.
 
-        .. warning: This method is ``async``, despite only sending a notification, as it also waits for
-            the language server process to exit.
+        This method will also wait for the language server process to terminate.
         """
         if self._state != "shutdown":
             raise LSPClientException("Invalid state, expected 'shutdown'.")
 
-        self._send_notification_internal("exit", None)
+        self._send_notification_internal(ExitNotification())
 
         try:
             assert self._protocol
@@ -775,9 +967,11 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         if self._state == "disconnected":
             await self.launch()
         if self._state == "uninitialized":
-            await self.send_initialize()
+            await self.send_request(
+                InitializeRequest(self.generate_request_id(), self._initialize_params)
+            )
         if self._state == "initializing":
-            self.send_initialized(InitializedParams())
+            self.send_notification(InitializedNotification(InitializedParams()))
 
         assert self._state == "running"
         return self
@@ -786,7 +980,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType
     ) -> bool:
         if self._state in ["uninitialized", "initializing", "running"]:
-            await self.send_shutdown()
+            await self.send_request(ShutdownRequest(self.generate_request_id()))
         if self._state == "shutdown":
             await self.send_exit()
         assert self._state == "disconnected"
@@ -800,23 +994,23 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         if self._state not in ["initializing", "running"]:
             raise LSPClientException("Invalid state, expected 'initializing' or 'running'.")
         assert self._server_capabilities
-        out = self._server_capabilities.positionEncoding
+        out = self._server_capabilities.position_encoding
         if not out:
-            return PositionEncodingKind.UTF16
+            return PositionEncodingKind.Utf16
         else:
-            return out
+            return PositionEncodingKind(out)
 
     # -----------------------------
     # Callbacks for server requests
     # -----------------------------
 
-    def on_workspace_workspace_folders(self) -> Union[List[WorkspaceFolder], None]:
+    def _on_workspace_workspace_folders(self) -> Union[List[WorkspaceFolder], None]:
         if self._workspace_request_handler:
             return self._workspace_request_handler.on_workspace_folders()
         else:
             return None
 
-    def on_workspace_configuration(self, params: ConfigurationParams) -> List[LSPAny]:
+    def _on_workspace_configuration(self, params: ConfigurationParams) -> List[LSPAny]:
         if self._workspace_request_handler:
             return self._workspace_request_handler.on_configuration(
                 ConfigurationParams(items=params.items)
@@ -824,59 +1018,61 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         else:
             return []
 
-    def on_workspace_semantic_tokens_refresh(self) -> None:
+    def _on_workspace_semantic_tokens_refresh(self) -> None:
         if self._workspace_request_handler:
             self._workspace_request_handler.on_semantic_tokens_refresh()
 
-    def on_workspace_inline_value_refresh(self) -> None:
+    def _on_workspace_inline_value_refresh(self) -> None:
         if self._workspace_request_handler:
             self._workspace_request_handler.on_inline_value_refresh()
 
-    def on_workspace_inlay_hint_refresh(self) -> None:
+    def _on_workspace_inlay_hint_refresh(self) -> None:
         if self._workspace_request_handler:
             self._workspace_request_handler.on_inlay_hint_refresh()
 
-    def on_workspace_diagnostic_refresh(self) -> None:
+    def _on_workspace_diagnostic_refresh(self) -> None:
         if self._workspace_request_handler:
             self._workspace_request_handler.on_diagnostic_refresh()
 
-    def on_workspace_code_lens_refresh(self) -> None:
+    def _on_workspace_code_lens_refresh(self) -> None:
         if self._workspace_request_handler:
             self._workspace_request_handler.on_code_lens_refresh()
 
-    def on_workspace_apply_edit(self, params: ApplyWorkspaceEditParams) -> ApplyWorkspaceEditResult:
+    def _on_workspace_apply_edit(
+        self, params: ApplyWorkspaceEditParams
+    ) -> ApplyWorkspaceEditResult:
         if self._workspace_request_handler:
             return self._workspace_request_handler.on_apply_edit(params)
         else:
             return ApplyWorkspaceEditResult(
-                applied=False, failureReason="Client is not registered with a Workspace."
+                applied=False, failure_reason="Client is not registered with a Workspace."
             )
 
-    def on_text_document_publish_diagnostics(self, params: PublishDiagnosticsParams) -> None:
+    def _on_text_document_publish_diagnostics(self, params: PublishDiagnosticsParams) -> None:
         if self._workspace_request_handler:
             self._workspace_request_handler.on_publish_diagnostics(params)
 
-    def on_client_register_capability(self, params: RegistrationParams) -> None:
+    def _on_client_register_capability(self, params: RegistrationParams) -> None:
         for r in params.registrations:
             self._add_dynamic_registration(r)
         self._check_pending_feature_requests()
 
-    def on_client_unregister_capability(self, params: UnregistrationParams) -> None:
+    def _on_client_unregister_capability(self, params: UnregistrationParams) -> None:
         for r in params.unregisterations:
             self._remove_dynamic_registration(r)
 
-    def on_window_work_done_progress_create(self, params: WorkDoneProgressCreateParams) -> None:
+    def _on_window_work_done_progress_create(self, params: WorkDoneProgressCreateParams) -> None:
         pass
 
-    def on_window_show_document(self, params: ShowDocumentParams) -> ShowDocumentResult:
+    def _on_window_show_document(self, params: ShowDocumentParams) -> ShowDocumentResult:
         return NotImplemented
 
-    def on_window_show_message_request(
+    def _on_window_show_message_request(
         self, params: ShowMessageRequestParams
     ) -> Union[MessageActionItem, None]:
         return NotImplemented
 
-    def on_window_show_message(self, params: ShowMessageParams) -> None:
+    def _on_window_show_message(self, params: ShowMessageParams) -> None:
         if params.type is MessageType.Log:
             self._logger_server.debug("window/showMessage: %s", params.message)
         elif params.type is MessageType.Info:
@@ -886,7 +1082,7 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         elif params.type is MessageType.Error:
             self._logger_server.error("window/showMessage: %s", params.message)
 
-    def on_window_log_message(self, params: LogMessageParams) -> None:
+    def _on_window_log_message(self, params: LogMessageParams) -> None:
         if params.type is MessageType.Log:
             self._logger_server.debug("window/logMessage: %s", params.message)
         elif params.type is MessageType.Info:
@@ -896,16 +1092,16 @@ class Client(ClientRequestsMixin, ServerRequestsMixin, CapabilitiesMixin):
         elif params.type is MessageType.Error:
             self._logger_server.error("window/logMessage: %s", params.message)
 
-    def on_telemetry_event(self, params: LSPAny) -> None:
+    def _on_telemetry_event(self, params: LSPAny) -> None:
         pass
 
-    def on_s_log_trace(self, params: LogTraceParams) -> None:
+    def _on_s_log_trace(self, params: LogTraceParams) -> None:
         self._logger_server.debug("$/logTrace: %s", params.message)
 
-    def on_s_cancel_request(self, params: CancelParams) -> None:
+    def _on_s_cancel_request(self, params: CancelParams) -> None:
         pass
 
-    def on_s_progress(self, params: ProgressParams) -> None:
+    def _on_s_progress(self, params: ProgressParams) -> None:
         pass
 
     def __str__(self) -> str:

@@ -1,6 +1,6 @@
+from .__version__ import CHANGE_LS_VERSION
 from ._change_ls_error import ChangeLSError
 from ._client import (
-    CHANGE_LS_VERSION,
     Client,
     CustomNotification,
     CustomRequest,

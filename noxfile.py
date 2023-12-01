@@ -38,7 +38,6 @@ def init(session: nox.Session) -> None:
     global _initialized
     if _initialized or "--initialized" in session.posargs:
         return
-    generate_lsp_types(session)
     build_token_server(session)
     build_mock_server(session)
     _initialized = True
@@ -104,31 +103,13 @@ def build_token_server(session: nox.Session) -> None:
 
 
 @nox.session(python=MIN_PYTHON)
-def test_generator(session: nox.Session) -> None:
-    """
-    Runs the tests for the change-ls code generator.
-    """
-    session.install(*DEP_TEST)
-    session.run("pytest", "gen/test")
-
-
-@nox.session(python=MIN_PYTHON)
-def generate_lsp_types(session: nox.Session) -> None:
-    """
-    Generates the code for the LSP types at ``change_ls/types``.
-    """
-    test_generator(session)
-    session.run("python", "-m", "gen.main", "./res", "./change_ls/types")
-
-
-@nox.session(python=MIN_PYTHON)
 def reformat(session: nox.Session) -> None:
     """
     Reformat the code using Black.
     """
     init(session)
     session.install(*DEP_BLACK)
-    session.run("black", "change_ls", "gen", "test")
+    session.run("black", "change_ls", "test")
 
 
 @nox.session(python=MIN_PYTHON)
@@ -138,7 +119,7 @@ def check_formatting(session: nox.Session) -> None:
     """
     init(session)
     session.install(*DEP_BLACK)
-    session.run("black", "--check", "change_ls", "gen", "test")
+    session.run("black", "--check", "change_ls", "test")
 
 
 @nox.session(python=MIN_PYTHON)
@@ -148,7 +129,7 @@ def lint(session: nox.Session) -> None:
     """
     init(session)
     session.install(*DEP_LINT)
-    session.run("pylint", "--disable=R,C", "change_ls", "gen")
+    session.run("pylint", "--disable=R,C", "change_ls")
 
 
 @nox.session(python=MIN_PYTHON)
@@ -158,9 +139,7 @@ def typecheck(session: nox.Session) -> None:
     """
     init(session)
     session.install(*DEP_PYTEST)
-    session.run(
-        "npm", "exec", "--package", *DEP_PYRIGHT, "--yes", "--", "pyright", external=True
-    )
+    session.run("npm", "exec", "--package", *DEP_PYRIGHT, "--yes", "--", "pyright", external=True)
 
 
 def _get_python_in_virtualenv(session: nox.Session) -> str:

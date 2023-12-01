@@ -14,7 +14,7 @@ from asyncio import (
 )
 from pathlib import Path
 from threading import Lock, Thread
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Union
 
 import attrs
 import cattrs
@@ -25,7 +25,6 @@ from change_ls._protocol import LSSubprocessProtocol
 from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter
 from change_ls.tokens._token_list import SyntacticToken, TokenList
-from change_ls.types._util import JSON_VALUE, json_assert_type_object, json_get_string
 
 version_pattern = re.compile(r"^v(\d+)\.(\d+)\.(\d+)\s*$")
 
@@ -75,6 +74,9 @@ class TextDocumentTokenizeParams:
 class TextDocumentTokenizeResult:
     scopes: List[str]
     tokens: List[List[int]]
+
+
+JSON_VALUE = Union[int, float, bool, str, Sequence["JSON_VALUE"], Mapping[str, "JSON_VALUE"], None]
 
 
 class _TokenClient:
@@ -153,7 +155,10 @@ class _TokenClient:
         pass
 
     def grammar_request_raw(self, params: JSON_VALUE) -> JSON_VALUE:
-        scope_name = json_get_string(json_assert_type_object(params), "scopeName")
+        assert isinstance(params, Mapping)
+        assert "scopeName" in params
+        scope_name = params["scopeName"]
+        assert isinstance(scope_name, str)
         self._logger.info("Token Server requested grammar %s", scope_name)
 
         if grammar := languages.scope_to_grammar.get(scope_name):

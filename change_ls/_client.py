@@ -83,10 +83,10 @@ from change_ls._protocol import (
 from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter, operation
 
+from .__version__ import CHANGE_LS_VERSION
+
 if sys.platform == "win32":
     from asyncio import ProactorEventLoop
-
-CHANGE_LS_VERSION = "0.1.0"
 
 
 class ServerLaunchParams(ABC):
@@ -1064,11 +1064,11 @@ class Client(CapabilitiesMixin):
     def _on_window_work_done_progress_create(self, params: WorkDoneProgressCreateParams) -> None:
         pass
 
-    def _on_window_show_document(self, params: ShowDocumentParams) -> ShowDocumentResult:
+    def _on_window_show_document(self, _params: ShowDocumentParams) -> ShowDocumentResult:
         return NotImplemented
 
     def _on_window_show_message_request(
-        self, params: ShowMessageRequestParams
+        self, _params: ShowMessageRequestParams
     ) -> Union[MessageActionItem, None]:
         return NotImplemented
 

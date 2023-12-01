@@ -19,7 +19,6 @@ import cattrs
 import lsprotocol.types as lsp
 
 from change_ls.logging import OperationLoggerAdapter
-from change_ls.types import JSON_VALUE
 
 
 class LSPException(Exception):
@@ -38,6 +37,9 @@ class LSPException(Exception):
 
 class LSPClientException(Exception):
     pass
+
+
+JSON_VALUE = Union[int, float, bool, str, Sequence["JSON_VALUE"], Mapping[str, "JSON_VALUE"], None]
 
 
 @dataclass
@@ -256,7 +258,7 @@ class LSProtocol(ABC):
             if method in lsp.METHOD_TO_TYPES:
                 _, response_type, param_type, _ = lsp.METHOD_TO_TYPES[method]
                 try:
-                    params = self._converter.structure(params_json, param_type)
+                    params = self._converter.structure(params_json, param_type)  # type: ignore
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     raise LSPException(lsp.ErrorCodes.InvalidParams, str(e), None) from e
             else:

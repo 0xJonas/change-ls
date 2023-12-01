@@ -9,6 +9,11 @@ authors = [
     { name = "Delphy", email = "delphi1024@gmail.com" }
 ]
 dynamic = ["version"]
+dependencies = [
+    "lsprotocol~=2023.0",
+    "attrs~=23.1",
+    "cattrs~=23.2"
+]
 
 
 ### setuptools ###
@@ -23,7 +28,7 @@ include = ["change_ls*"]
 "change_ls.token_server" = ["*.js", "*.wasm"]
 
 [tool.setuptools.dynamic]
-version = { attr = "change_ls.CHANGE_LS_VERSION" }
+version = { attr = "change_ls.__version__.CHANGE_LS_VERSION" }
 
 
 ### pytest ###
@@ -45,7 +50,6 @@ markers = [
 [tool.pyright]
 include = [
     "change_ls",
-    "gen",
     "test"
 ]
 typeCheckingMode = "strict"
@@ -57,7 +61,6 @@ reportPrivateUsage = false
 [tool.pylint.main]
 load-plugins = "pylint.extensions.mccabe"
 ignore-paths = [
-    '.*change_ls/types/.*',
     '.*change_ls/_languages.py',
     '.*test/.*/test_.*',
 ]
@@ -95,6 +98,6 @@ line_length = 100
 ### Black ###
 
 [tool.black]
-exclude = ".*change_ls/types/.*|.*change_ls/_languages.py"
+exclude = ".*change_ls/_languages.py"
 line-length = 100
 target-version = ["py38", "py39", "py310", "py311"]

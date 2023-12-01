@@ -2,12 +2,7 @@ from abc import abstractmethod
 from logging import DEBUG, Logger, LoggerAdapter, getLogger
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
-from change_ls._change_ls_error import ChangeLSError
-from change_ls._client import Client
-from change_ls._util import TextDocumentInfo
-from change_ls.logging import OperationLoggerAdapter, operation
-from change_ls.tokens._token_list import SemanticToken, SyntacticToken, TokenList
-from change_ls.types import (
+from lsprotocol.types import (
     Position,
     SemanticTokens,
     SemanticTokensDelta,
@@ -15,7 +10,15 @@ from change_ls.types import (
     SemanticTokensLegend,
     SemanticTokensParams,
     TextDocumentIdentifier,
+    TextDocumentSemanticTokensFullDeltaRequest,
+    TextDocumentSemanticTokensFullRequest,
 )
+
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import Client
+from change_ls._util import TextDocumentInfo
+from change_ls.logging import OperationLoggerAdapter, operation
+from change_ls.tokens._token_list import SemanticToken, SyntacticToken, TokenList
 
 if TYPE_CHECKING:
     _LoggerAdapter = LoggerAdapter[Any]
@@ -126,18 +129,18 @@ def _apply_semantic_token_delta(base: SemanticTokens, delta: SemanticTokensDelta
             new_data += base.data[data_offset : edit.start]
         if edit.data:
             new_data += edit.data
-        data_offset = edit.start + edit.deleteCount
+        data_offset = edit.start + edit.delete_count
     if data_offset < len(base.data):
         new_data += base.data[data_offset:]
 
-    return SemanticTokens(resultId=delta.resultId, data=new_data)
+    return SemanticTokens(result_id=delta.result_id, data=new_data)
 
 
 def _get_semantic_tokens_legend(client: Client) -> SemanticTokensLegend:
     server_capabilities = client._server_capabilities  # type: ignore
     assert server_capabilities is not None
-    assert server_capabilities.semanticTokensProvider is not None
-    return server_capabilities.semanticTokensProvider.legend
+    assert server_capabilities.semantic_tokens_provider is not None
+    return server_capabilities.semantic_tokens_provider.legend
 
 
 class SemanticTokensMixin:
@@ -214,13 +217,13 @@ class SemanticTokensMixin:
                 raise ChangeLSError("Invalid semantic token data: Token is out of bounds") from e
 
             try:
-                token_type = legend.tokenTypes[token_type_idx]
+                token_type = legend.token_types[token_type_idx]
             except IndexError as e:
                 raise ChangeLSError("Invalid semantic token data: Invalid token type") from e
 
             try:
                 token_modifiers = {
-                    legend.tokenModifiers[i] for i in _get_set_bits(token_modifiers_bits)
+                    legend.token_modifiers[i] for i in _get_set_bits(token_modifiers_bits)
                 }
             except IndexError as e:
                 raise ChangeLSError("Invalid semantic token data: Invalid token modifier") from e
@@ -232,20 +235,23 @@ class SemanticTokensMixin:
         return TokenList(tokens)
 
     def _cache_result(self, result: SemanticTokens, client: Client) -> None:
-        self.logger.info(f"Saving result '{result.resultId}' for Client '{client}'.")
+        self.logger.info(f"Saving result '{result.result_id}' for Client '{client}'.")
         self._cached_results[client] = result
 
     async def _load_semantic_tokens_full(self, client: Client) -> TokenList[SemanticToken]:
         self.logger.info("Loading full semantic token list for Client '{client}'.")
-        params = SemanticTokensParams(textDocument=self.get_text_document_identifier())
-        result = await client.send_text_document_semantic_tokens_full(params)
+        request = TextDocumentSemanticTokensFullRequest(
+            client.generate_request_id(),
+            SemanticTokensParams(text_document=self.get_text_document_identifier()),
+        )
+        result = await client.send_request(request)
         if result is None:
             self.logger.warning(
                 f"Language server {client.server_info} did not send semantic tokens, no semantic information available."
             )
             return TokenList([])
 
-        if result.resultId is not None:
+        if result.result_id is not None:
             # Only cache results with a known resultId, since without a resultId
             # we cannot use this result for textDocument/semanticTokens/full/delta requests.
             self._cache_result(result, client)
@@ -257,12 +263,15 @@ class SemanticTokensMixin:
     async def _load_semantic_tokens_delta(self, client: Client) -> TokenList[SemanticToken]:
         self.logger.info(f"Loading semantic token delta for Client '{client}'.")
         previous_result = self._cached_results[client]
-        assert previous_result.resultId is not None
-        params = SemanticTokensDeltaParams(
-            textDocument=self.get_text_document_identifier(),
-            previousResultId=previous_result.resultId,
+        assert previous_result.result_id is not None
+        request = TextDocumentSemanticTokensFullDeltaRequest(
+            client.generate_request_id(),
+            SemanticTokensDeltaParams(
+                text_document=self.get_text_document_identifier(),
+                previous_result_id=previous_result.result_id,
+            ),
         )
-        delta = await client.send_text_document_semantic_tokens_full_delta(params)
+        delta = await client.send_request(request)
 
         if delta is None:
             self.logger.warning(
@@ -274,13 +283,13 @@ class SemanticTokensMixin:
 
         if isinstance(delta, SemanticTokensDelta):
             self.logger.info(
-                f"Applying semantic token delta to result '{previous_result.resultId}'."
+                f"Applying semantic token delta to result '{previous_result.result_id}'."
             )
             result = _apply_semantic_token_delta(previous_result, delta)
         else:
             result = delta
 
-        if result.resultId is not None:
+        if result.result_id is not None:
             # Only cache results with a known resultId, since without a resultId
             # we cannot use this result for textDocument/semanticTokens/full/delta requests.
             self._cache_result(result, client)

@@ -69,10 +69,10 @@ class TokenLSPError extends Error {
     }
 }
 
-const INITIALIZE_REQUEST = new rpc.RequestType0<null, void>("initialize");
+const INITIALIZE_REQUEST = new rpc.RequestType0<null, void>("tokenServer/initialize");
 const GRAMMAR_REQUEST_RAW_REQUEST = new rpc.RequestType<GrammarRequestRawParams, GrammarRequestRawResult, void>("grammar/requestRaw")
 const TEXTDOCUMENT_TOKENIZE_REQUEST = new rpc.RequestType<TextDocumentTokenizeParams, TextDocumentTokenizeResult, void>("textDocument/tokenize");
-const EXIT_NOTIFICATION = new rpc.NotificationType0("exit");
+const EXIT_NOTIFICATION = new rpc.NotificationType0("tokenServer/exit");
 
 class TokenServer {
     private readonly connection: rpc.MessageConnection;

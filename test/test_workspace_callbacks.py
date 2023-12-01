@@ -1,8 +1,7 @@
 from asyncio import Event, wait_for
 from typing import List
 
-from change_ls import Client, StdIOConnectionParams, WorkspaceRequestHandler
-from change_ls.types import (
+from lsprotocol.types import (
     ApplyWorkspaceEditParams,
     ApplyWorkspaceEditResult,
     ConfigurationParams,
@@ -11,6 +10,8 @@ from change_ls.types import (
     PublishDiagnosticsParams,
     WorkspaceFolder,
 )
+
+from change_ls import Client, CustomNotification, StdIOConnectionParams, WorkspaceRequestHandler
 
 
 class MockWorkspaceRequestHandler(WorkspaceRequestHandler):
@@ -44,9 +45,9 @@ class MockWorkspaceRequestHandler(WorkspaceRequestHandler):
 
     def on_configuration(self, params: ConfigurationParams) -> List[LSPAny]:
         assert len(params.items) == 2
-        assert params.items[0].scopeUri == "file://config"
+        assert params.items[0].scope_uri == "file://config"
         assert params.items[0].section == "test-section-1"
-        assert params.items[1].scopeUri == "file://config"
+        assert params.items[1].scope_uri == "file://config"
         assert params.items[1].section == "test-section-2"
 
         self.on_configuration_event.set()
@@ -76,7 +77,7 @@ class MockWorkspaceRequestHandler(WorkspaceRequestHandler):
         assert params.edit.changes["file://module_1"][0].range.start.character == 0
         assert params.edit.changes["file://module_1"][0].range.end.line == 1
         assert params.edit.changes["file://module_1"][0].range.end.character == 5
-        assert params.edit.changes["file://module_1"][0].newText == "Hey"
+        assert params.edit.changes["file://module_1"][0].new_text == "Hey"
 
         self.on_apply_edit_event.set()
         return ApplyWorkspaceEditResult(applied=True)
@@ -99,31 +100,32 @@ async def test_workspace_callbacks() -> None:
     )
     async with Client(params) as client:
         handler = MockWorkspaceRequestHandler()
+        go_notification = CustomNotification("$/go")
         client.set_workspace_request_handler(handler)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_workspace_folders_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_configuration_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_semantic_tokens_refresh_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_inline_value_refresh_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_inlay_hint_refresh_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_diagnostic_refresh_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_code_lens_refresh_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_apply_edit_event.wait(), 2.0)
 
-        client.send_notification("$/go", None)
+        client.send_notification(go_notification)
         await wait_for(handler.on_publish_diagnostics_event.wait(), 2.0)

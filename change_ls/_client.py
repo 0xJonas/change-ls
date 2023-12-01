@@ -855,7 +855,7 @@ class Client(CapabilitiesMixin):
         self,
         request: Any,
         *,
-        timeout: float = 10.0,
+        timeout: Optional[float] = 10.0,
     ) -> Any:
         """
         Sends a request to the language server and returns the result.
@@ -873,7 +873,7 @@ class Client(CapabilitiesMixin):
 
         if self._state != "running":
             raise LSPClientException("Invalid state, expected 'running'.")
-        return self._send_request_internal(request, timeout=timeout)
+        return await self._send_request_internal(request, timeout=timeout)
 
     def _send_notification_internal(self, notification: Any) -> None:
         assert self._protocol

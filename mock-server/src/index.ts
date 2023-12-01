@@ -140,8 +140,9 @@ function assertTemplateParams(params: any): asserts params is TemplateParams {
 function handleCustomRequests(method: string, params: JSONValue): any {
     switch (method) {
         case "$/sleep": {
-            assert(typeof params === "number")
-            return handleSleep(params);
+            assert(typeof params === "object" && params !== null)
+            assert("time" in params && typeof params["time"] === "number");
+            return handleSleep(params["time"]);
         }
         case "$/terminate": {
             assert(typeof params === "number")

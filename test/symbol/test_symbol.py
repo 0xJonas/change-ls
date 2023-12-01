@@ -2,17 +2,7 @@ from pathlib import Path
 from typing import AsyncGenerator, Tuple
 
 import pytest
-
-from change_ls import (
-    ChangeLSError,
-    Client,
-    CustomSymbol,
-    StdIOConnectionParams,
-    UnresolvedWorkspaceSymbol,
-    Workspace,
-    WorkspaceSymbol,
-)
-from change_ls.types import (
+from lsprotocol.types import (
     OptionalVersionedTextDocumentIdentifier,
     Position,
     Range,
@@ -20,6 +10,17 @@ from change_ls.types import (
     TextDocumentEdit,
     TextEdit,
     WorkspaceEdit,
+)
+
+from change_ls import (
+    ChangeLSError,
+    Client,
+    CustomRequest,
+    CustomSymbol,
+    StdIOConnectionParams,
+    UnresolvedWorkspaceSymbol,
+    Workspace,
+    WorkspaceSymbol,
 )
 
 
@@ -32,7 +33,13 @@ async def test_symbol_invalid_anchor() -> None:
         client = await ws.launch_client(launch_params)
 
         repo_uri = Path(".").resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+        await client.send_request(
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"REPO_URI": repo_uri}},
+            )
+        )
 
         doc = ws.open_text_document(Path("./test-2.py"), encoding="utf-8")
         symbol = doc.create_symbol_at(4, 8, SymbolKind.Function)
@@ -60,7 +67,13 @@ async def mock_ws_1(
         client = await ws.launch_client(launch_params)
 
         repo_uri = Path(".").resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+        await client.send_request(
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"REPO_URI": repo_uri}},
+            )
+        )
         yield ws, client
 
 
@@ -77,18 +90,18 @@ async def test_symbol_rename(custom_symbol: CustomSymbol) -> None:
 
     document_uri = Path("./test/mock-ws-1/test-2.py").resolve().as_uri()
     expected = WorkspaceEdit(
-        documentChanges=[
+        document_changes=[
             TextDocumentEdit(
-                textDocument=OptionalVersionedTextDocumentIdentifier(uri=document_uri, version=1),
+                text_document=OptionalVersionedTextDocumentIdentifier(uri=document_uri, version=1),
                 edits=[
                     TextEdit(
-                        newText="test",
+                        new_text="test",
                         range=Range(
                             start=Position(line=0, character=4), end=Position(line=0, character=8)
                         ),
                     ),
                     TextEdit(
-                        newText="test",
+                        new_text="test",
                         range=Range(
                             start=Position(line=6, character=4), end=Position(line=6, character=8)
                         ),

@@ -3,15 +3,13 @@ from dataclasses import dataclass
 from types import TracebackType
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-import change_ls._location_list as ll
-import change_ls._text_document as td
-import change_ls._workspace as ws
-import change_ls.types as lsptypes
-from change_ls._change_ls_error import ChangeLSError
-from change_ls._client import Client
-from change_ls.logging import operation
-from change_ls.types import (
+import lsprotocol.types as lsptypes
+from lsprotocol.types import (
+    Declaration,
+    DeclarationLink,
     DeclarationParams,
+    Definition,
+    DefinitionLink,
     DefinitionParams,
     ImplementationParams,
     Location,
@@ -21,10 +19,24 @@ from change_ls.types import (
     RenameParams,
     SymbolKind,
     SymbolTag,
+    TextDocumentDeclarationRequest,
+    TextDocumentDefinitionRequest,
     TextDocumentIdentifier,
+    TextDocumentImplementationRequest,
+    TextDocumentReferencesRequest,
+    TextDocumentRenameRequest,
+    TextDocumentTypeDefinitionRequest,
     TypeDefinitionParams,
     WorkspaceEdit,
+    WorkspaceSymbolResolveRequest,
 )
+
+import change_ls._location_list as ll
+import change_ls._text_document as td
+import change_ls._workspace as ws
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import Client
+from change_ls.logging import operation
 
 
 @dataclass
@@ -161,12 +173,15 @@ class Symbol(ABC):
         ):
             raise ChangeLSError(f"Client {self._client} does not support renaming.")
 
-        params = RenameParams(
-            textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
-            position=anchor.position,
-            newName=new_name,
+        request = TextDocumentRenameRequest(
+            self._client.generate_request_id(),
+            RenameParams(
+                text_document=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                position=anchor.position,
+                new_name=new_name,
+            ),
         )
-        return await self._client.send_text_document_rename(params)
+        return await self._client.send_request(request)
 
     @operation
     async def find_references(self, *, include_declaration: bool = True) -> "ll.LocationList":
@@ -183,13 +198,15 @@ class Symbol(ABC):
         ):
             raise ChangeLSError(f"Client {self._client} does not support find_references.")
 
-        res = await self._client.send_text_document_references(
+        request = TextDocumentReferencesRequest(
+            self._client.generate_request_id(),
             ReferenceParams(
-                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                text_document=TextDocumentIdentifier(uri=anchor.text_document.uri),
                 position=anchor.position,
-                context=ReferenceContext(includeDeclaration=include_declaration),
-            )
+                context=ReferenceContext(include_declaration=include_declaration),
+            ),
         )
+        res: Union[List[Location], None] = await self._client.send_request(request)
         if res is None:
             res = []
         return ll.LocationList.from_lsp_locations(self._workspace, res)
@@ -211,11 +228,15 @@ class Symbol(ABC):
         ):
             raise ChangeLSError(f"Client {self._client} does not support find_declaration.")
 
-        res = await self._client.send_text_document_declaration(
+        request = TextDocumentDeclarationRequest(
+            self._client.generate_request_id(),
             DeclarationParams(
-                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                text_document=TextDocumentIdentifier(uri=anchor.text_document.uri),
                 position=anchor.position,
-            )
+            ),
+        )
+        res: Union[Declaration, List[DeclarationLink], None] = await self._client.send_request(
+            request
         )
         if res is None:
             res = []
@@ -238,11 +259,15 @@ class Symbol(ABC):
         ):
             raise ChangeLSError(f"Client {self._client} does not support find_definition.")
 
-        res = await self._client.send_text_document_definition(
+        request = TextDocumentDefinitionRequest(
+            self._client.generate_request_id(),
             DefinitionParams(
-                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                text_document=TextDocumentIdentifier(uri=anchor.text_document.uri),
                 position=anchor.position,
-            )
+            ),
+        )
+        res: Union[Definition, List[DefinitionLink], None] = await self._client.send_request(
+            request
         )
         if res is None:
             res = []
@@ -265,11 +290,15 @@ class Symbol(ABC):
         ):
             raise ChangeLSError(f"Client {self._client} does not support find_type_definition.")
 
-        res = await self._client.send_text_document_type_definition(
+        request = TextDocumentTypeDefinitionRequest(
+            self._client.generate_request_id(),
             TypeDefinitionParams(
-                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                text_document=TextDocumentIdentifier(uri=anchor.text_document.uri),
                 position=anchor.position,
-            )
+            ),
+        )
+        res: Union[Definition, List[DefinitionLink], None] = await self._client.send_request(
+            request
         )
         if res is None:
             res = []
@@ -292,11 +321,15 @@ class Symbol(ABC):
         ):
             raise ChangeLSError(f"Client {self._client} does not support find_implementation.")
 
-        res = await self._client.send_text_document_implementation(
+        request = TextDocumentImplementationRequest(
+            self._client.generate_request_id(),
             ImplementationParams(
-                textDocument=TextDocumentIdentifier(uri=anchor.text_document.uri),
+                text_document=TextDocumentIdentifier(uri=anchor.text_document.uri),
                 position=anchor.position,
-            )
+            ),
+        )
+        res: Union[Definition, List[DefinitionLink], None] = await self._client.send_request(
+            request
         )
         if res is None:
             res = []
@@ -307,7 +340,7 @@ class Symbol(ABC):
             anchor = self._get_anchor()
             return f"{self.name}@{anchor.text_document.uri}:{anchor.position.line}:{anchor.position.character}"
         else:
-            return "INVALIDED SYMBOL!"
+            return "INVALITADED SYMBOL!"
 
     def _get_repr_dict(self) -> Dict[str, Any]:
         return {
@@ -434,9 +467,10 @@ class UnresolvedWorkspaceSymbol:
         if isinstance(
             self._lsp_workspace_symbol, lsptypes.WorkspaceSymbol
         ) and self._client.check_feature("workspace/symbol", workspace_symbol_resolve=True):
-            resolved_symbol = await self._client.send_workspace_symbol_resolve(
-                self._lsp_workspace_symbol
+            request = WorkspaceSymbolResolveRequest(
+                self._client.generate_request_id(), self._lsp_workspace_symbol
             )
+            resolved_symbol: lsptypes.WorkspaceSymbol = await self._client.send_request(request)
             return WorkspaceSymbol(self._client, self._workspace, resolved_symbol)
         else:
             return WorkspaceSymbol(self._client, self._workspace, self._lsp_workspace_symbol)
@@ -447,10 +481,7 @@ class UnresolvedWorkspaceSymbol:
 
     @property
     def uri(self) -> str:
-        if isinstance(self._lsp_workspace_symbol.location, Location):
-            return self._lsp_workspace_symbol.location.uri
-        else:
-            return self._lsp_workspace_symbol.location["uri"]
+        return self._lsp_workspace_symbol.location.uri
 
     @property
     def kind(self) -> SymbolKind:
@@ -464,7 +495,7 @@ class UnresolvedWorkspaceSymbol:
 
     @property
     def container_name(self) -> Optional[str]:
-        return self._lsp_workspace_symbol.containerName
+        return self._lsp_workspace_symbol.container_name
 
     def __str__(self) -> str:
         return f"{self.name}@{self.uri}"
@@ -621,11 +652,11 @@ class DocumentSymbol(Symbol):
                 text_document.position_to_offset(lsp_symbol.range.end),
             )
             self._symbol_range = (
-                text_document.position_to_offset(lsp_symbol.selectionRange.start),
-                text_document.position_to_offset(lsp_symbol.selectionRange.end),
+                text_document.position_to_offset(lsp_symbol.selection_range.start),
+                text_document.position_to_offset(lsp_symbol.selection_range.end),
             )
 
-            self._anchor = _SymbolAnchor(text_document, lsp_symbol.selectionRange.start)
+            self._anchor = _SymbolAnchor(text_document, lsp_symbol.selection_range.start)
         else:
             self._children = None
             self._context_range = (
@@ -679,7 +710,7 @@ class DocumentSymbol(Symbol):
         if self._parent is not None:
             return self._parent.name
         elif isinstance(self._lsp_symbol, lsptypes.SymbolInformation):
-            return self._lsp_symbol.containerName
+            return self._lsp_symbol.container_name
         else:
             return None
 

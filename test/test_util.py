@@ -1,6 +1,14 @@
 from pathlib import Path
 
 import pytest
+from lsprotocol.types import (
+    FileOperationFilter,
+    FileOperationPattern,
+    FileOperationPatternKind,
+    FileOperationPatternOptions,
+    TextDocumentFilter_Type1,
+    TextDocumentFilter_Type3,
+)
 
 import change_ls._languages as languages
 from change_ls import (
@@ -10,13 +18,6 @@ from change_ls import (
     matches_text_document_filter,
 )
 from change_ls.tokens import Grammar, GrammarFormat
-from change_ls.types import (
-    FileOperationFilter,
-    FileOperationPattern,
-    FileOperationPatternKind,
-    FileOperationPatternOptions,
-    TextDocumentFilter,
-)
 
 
 @pytest.fixture
@@ -25,7 +26,7 @@ def test_workspace() -> Workspace:
 
 
 def test_matches_text_document_filter(test_workspace: Workspace) -> None:
-    filter1: TextDocumentFilter = {"pattern": "**/test_*.py"}
+    filter1 = TextDocumentFilter_Type3(pattern="**/test_*.py")
 
     with test_workspace.open_text_document(
         Path("test/test_util.py")
@@ -33,12 +34,12 @@ def test_matches_text_document_filter(test_workspace: Workspace) -> None:
         assert matches_text_document_filter(doc1, filter1)
         assert not matches_text_document_filter(doc2, filter1)
 
-        filter2: TextDocumentFilter = {"language": "python", "scheme": "file"}
+        filter2 = TextDocumentFilter_Type1(language="python", scheme="file")
 
         assert matches_text_document_filter(doc1, filter2)
         assert not matches_text_document_filter(doc2, filter2)
 
-        filter3: TextDocumentFilter = {"pattern": "**/test_{util,empty}.json"}
+        filter3 = TextDocumentFilter_Type3(pattern="**/test_{util,empty}.json")
 
         assert not matches_text_document_filter(doc1, filter3)
         assert matches_text_document_filter(doc2, filter3)
@@ -48,11 +49,11 @@ def test_matches_file_operation_filter() -> None:
     filter1 = FileOperationFilter(pattern=FileOperationPattern(glob="**/test.py"))
     filter2 = FileOperationFilter(pattern=FileOperationPattern(glob="**/test.{py,json}"))
     filter3 = FileOperationFilter(
-        pattern=FileOperationPattern(glob="**/test", matches=FileOperationPatternKind.folder)
+        pattern=FileOperationPattern(glob="**/test", matches=FileOperationPatternKind.Folder)
     )
     filter4 = FileOperationFilter(
         pattern=FileOperationPattern(
-            glob="**/test/xxx", options=FileOperationPatternOptions(ignoreCase=True)
+            glob="**/test/xxx", options=FileOperationPatternOptions(ignore_case=True)
         )
     )
 

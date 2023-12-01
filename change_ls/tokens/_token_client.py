@@ -12,25 +12,20 @@ from asyncio import (
     set_event_loop,
     wrap_future,
 )
-from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock, Thread
-from typing import List, Mapping, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
+import attrs
+import cattrs
+
+import change_ls._client as cls_client
 import change_ls._languages as languages
 from change_ls._protocol import LSSubprocessProtocol
 from change_ls.logging import get_change_ls_default_logger  # type: ignore
 from change_ls.logging import OperationLoggerAdapter
 from change_ls.tokens._token_list import SyntacticToken, TokenList
-from change_ls.types._util import (
-    JSON_VALUE,
-    json_assert_type_array,
-    json_assert_type_int,
-    json_assert_type_object,
-    json_assert_type_string,
-    json_get_array,
-    json_get_string,
-)
+from change_ls.types._util import JSON_VALUE, json_assert_type_object, json_get_string
 
 version_pattern = re.compile(r"^v(\d+)\.(\d+)\.(\d+)\s*$")
 
@@ -70,47 +65,34 @@ class TokenClientException(Exception):
     pass
 
 
-@dataclass
+@attrs.define
 class TextDocumentTokenizeParams:
     scope_name: str
     text: str
 
-    @classmethod
-    def from_json(cls, json: Mapping[str, JSON_VALUE]) -> "TextDocumentTokenizeParams":
-        scope_name = json_get_string(json, "scopeName")
-        text = json_get_string(json, "text")
-        return cls(scope_name, text)
 
-    def to_json(self) -> JSON_VALUE:
-        return {"scopeName": self.scope_name, "text": self.text}
-
-
-@dataclass
+@attrs.define
 class TextDocumentTokenizeResult:
     scopes: List[str]
     tokens: List[List[int]]
-
-    @classmethod
-    def from_json(cls, json: Mapping[str, JSON_VALUE]) -> "TextDocumentTokenizeResult":
-        scopes = [json_assert_type_string(s) for s in json_get_array(json, "scopes")]
-        tokens = [
-            [json_assert_type_int(s) for s in json_assert_type_array(a)]
-            for a in json_get_array(json, "tokens")
-        ]
-        return cls(scopes, tokens)
-
-    def to_json(self) -> JSON_VALUE:
-        return {"scopes": self.scopes, "tokens": self.tokens}
 
 
 class _TokenClient:
     _protocol: LSSubprocessProtocol
     _logger: OperationLoggerAdapter
     _event_loop: AbstractEventLoop
+    _converter: cattrs.Converter
+    _request_counter: int
 
     def __init__(self, event_loop: AbstractEventLoop) -> None:
         self._logger = get_change_ls_default_logger("change-ls.tokens")
         self._event_loop = event_loop
+        self._converter = cls_client._get_change_ls_converter()
+        self._request_counter = 0
+
+    def generate_request_id(self) -> str:
+        self._request_counter += 1
+        return "change-ls::tokens::" + str(self._request_counter)
 
     async def launch(self) -> None:
         node_path = shutil.which("node")
@@ -123,39 +105,43 @@ class _TokenClient:
 
         token_server_path = get_token_server_path()
         (_, self._protocol) = await get_running_loop().subprocess_exec(
-            lambda: LSSubprocessProtocol(self.dispatch_request, self.dispatch_notification),
+            lambda: LSSubprocessProtocol(
+                self._converter, self.dispatch_request, self.dispatch_notification
+            ),
             node_path,
             str(token_server_path / "main.js"),
             cwd=str(token_server_path),
         )
         self._protocol._set_loggers(self._logger, self._logger, self._logger)  # type: ignore
 
-    async def _send_request_internal(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+    async def _send_request_internal(self, request: Any) -> Any:
         future: "Future[JSON_VALUE]" = self._event_loop.create_future()
-        self._logger.info("Sending request (%s)", method)
-        self._protocol.send_request(method, params, future)
+        self._logger.info("Sending request (%s)", request.method)
+        self._protocol.send_request(request, future)
 
         await future
 
         assert not future.cancelled()
         if exception := future.exception():
-            self._logger.info("Request failed (%s)", method)
+            self._logger.info("Request failed (%s)", request.method)
             raise exception
         else:
             return future.result()
 
-    async def send_request(self, method: str, params: JSON_VALUE) -> JSON_VALUE:
+    async def send_request(self, request: Any) -> Any:
         return await wrap_future(
-            run_coroutine_threadsafe(self._send_request_internal(method, params), self._event_loop)
+            run_coroutine_threadsafe(self._send_request_internal(request), self._event_loop)
         )
 
     async def initialize(self) -> None:
-        await self.send_request("initialize", None)
+        await self.send_request(
+            cls_client.CustomRequest(self.generate_request_id(), "tokenServer/initialize")
+        )
 
     async def _exit_internal(self) -> None:
         # This must be called from the TokenClient's thread.
         self._logger.info("Stopping token server...")
-        self._protocol.send_notification("exit", None)
+        self._protocol.send_notification(cls_client.CustomNotification("tokenServer/exit", None))
         await self._protocol.wait_for_disconnect()
         self._logger.info("Token server stopped!")
 
@@ -180,9 +166,14 @@ class _TokenClient:
     async def send_text_document_tokenize_request(
         self, params: TextDocumentTokenizeParams
     ) -> TextDocumentTokenizeResult:
-        res_json = await self.send_request("textDocument/tokenize", params.to_json())
-        res = json_assert_type_object(res_json)
-        return TextDocumentTokenizeResult.from_json(res)
+        res_json = await self.send_request(
+            cls_client.CustomRequest(
+                self.generate_request_id(),
+                "textDocument/tokenize",
+                self._converter.unstructure(params),
+            )
+        )
+        return self._converter.structure(res_json, TextDocumentTokenizeResult)
 
 
 _token_client_instance: Optional[_TokenClient] = None

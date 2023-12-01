@@ -1,9 +1,9 @@
 from pathlib import Path
 
 import pytest
+from lsprotocol.types import Location, Position, Range
 
-from change_ls import LocationList, StdIOConnectionParams, Workspace
-from change_ls.types import Location, Position, Range
+from change_ls import CustomRequest, LocationList, StdIOConnectionParams, Workspace
 
 
 async def test_location_list_iteration() -> None:
@@ -78,7 +78,11 @@ async def test_location_list_from_lsp_locations() -> None:
         )
         client = await ws.launch_client(params)
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
         doc1_uri = (workspace_path / Path("test-1.py")).as_uri()
         lsp_locations = [

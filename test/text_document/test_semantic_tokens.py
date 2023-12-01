@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 
 import pytest
 
-from change_ls import StdIOConnectionParams, TextDocument, Workspace
+from change_ls import CustomRequest, StdIOConnectionParams, TextDocument, Workspace
 
 
 @pytest.fixture
@@ -19,7 +19,13 @@ async def mock_workspace_1(request: pytest.FixtureRequest) -> AsyncGenerator[Wor
     )
     async with workspace.create_client(launch_params) as client:
         repo_uri = Path(".").resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+        await client.send_request(
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"REPO_URI": repo_uri}},
+            )
+        )
         yield workspace
 
 

@@ -3,10 +3,11 @@ from itertools import groupby
 from types import TracebackType
 from typing import Dict, Iterator, List, Mapping, Sequence, Tuple, Type, Union
 
+from lsprotocol.types import Location, LocationLink
+
 import change_ls._text_document as td
 import change_ls._workspace as ws
 from change_ls._change_ls_error import ChangeLSError
-from change_ls.types import Location, LocationLink
 
 
 def _text_document_matches_uri_posix(doc: "td.TextDocument", uri: str) -> bool:
@@ -105,7 +106,7 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
             lsp_locations = [lsp_locations]
 
         grouped_locations = groupby(
-            lsp_locations, lambda l: l.uri if isinstance(l, Location) else l.targetUri
+            lsp_locations, lambda l: l.uri if isinstance(l, Location) else l.target_uri
         )
         text_documents: List["td.TextDocument"] = []
         locations: List[List[Tuple[int, int]]] = []
@@ -118,7 +119,7 @@ class LocationList(Mapping["td.TextDocument", List[Tuple[int, int]]]):
                 if isinstance(l, Location):
                     location_range = l.range
                 else:
-                    location_range = l.targetSelectionRange
+                    location_range = l.target_selection_range
                 start = doc.position_to_offset(location_range.start)
                 end = doc.position_to_offset(location_range.end)
                 offset_locations_in_document.append((start, end))

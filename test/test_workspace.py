@@ -3,9 +3,7 @@ from pathlib import Path
 from typing import Any, Generator, Optional
 
 import pytest
-
-from change_ls import StdIOConnectionParams, Workspace
-from change_ls.types import (
+from lsprotocol.types import (
     CreateFile,
     DeleteFile,
     LSPAny,
@@ -18,6 +16,8 @@ from change_ls.types import (
     WorkspaceEdit,
 )
 
+from change_ls import CustomRequest, StdIOConnectionParams, Workspace
+
 
 async def test_workspace_launch_clients() -> None:
     workspace = Workspace(
@@ -28,8 +28,14 @@ async def test_workspace_launch_clients() -> None:
     )
     async with workspace.create_client(launch_params) as client:
         repo_uri = Path(".").resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
-        await client.send_request("$/go", None)
+        await client.send_request(
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"REPO_URI": repo_uri}},
+            )
+        )
+        await client.send_request(CustomRequest(client.generate_request_id(), "$/go"))
 
 
 def mock_config_provider(scope_uri: Optional[str], section: Optional[str]) -> LSPAny:
@@ -50,7 +56,7 @@ async def test_workspace_configuration_provider() -> None:
         launch_command="node mock-server/out/index.js --stdio test/test_configuration_provider.json"
     )
     async with workspace.create_client(launch_params) as client:
-        await client.send_request("$/go", None)
+        await client.send_request(CustomRequest(client.generate_request_id(), "$/go"))
 
 
 async def test_workspace_context_manager() -> None:
@@ -64,7 +70,13 @@ async def test_workspace_context_manager() -> None:
         assert client.get_state() == "running"
 
         repo_uri = Path(".").resolve().as_uri()
-        await client.send_request("$/setTemplateParams", {"expand": {"REPO_URI": repo_uri}})
+        await client.send_request(
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"REPO_URI": repo_uri}},
+            )
+        )
 
         doc = ws.open_text_document(Path("test-1.py"))
 
@@ -91,7 +103,11 @@ async def test_workspace_edit_changes(scratch_workspace_path: Path) -> None:
 
         workspace_uri = scratch_workspace_path.resolve().as_uri()
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
 
         edit = WorkspaceEdit(
@@ -101,7 +117,7 @@ async def test_workspace_edit_changes(scratch_workspace_path: Path) -> None:
                         range=Range(
                             start=Position(line=0, character=7), end=Position(line=0, character=12)
                         ),
-                        newText="Good morning",
+                        new_text="Good morning",
                     )
                 ]
             }
@@ -129,25 +145,29 @@ async def test_workspace_edit_document_changes(scratch_workspace_path: Path) -> 
 
         workspace_uri = scratch_workspace_path.resolve().as_uri()
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
 
         edit = WorkspaceEdit(
-            documentChanges=[
+            document_changes=[
                 TextDocumentEdit(
-                    textDocument=OptionalVersionedTextDocumentIdentifier(uri=doc1_uri, version=0),
+                    text_document=OptionalVersionedTextDocumentIdentifier(uri=doc1_uri, version=0),
                     edits=[
                         TextEdit(
                             range=Range(
                                 start=Position(line=0, character=7),
                                 end=Position(line=0, character=12),
                             ),
-                            newText="Good morning",
+                            new_text="Good morning",
                         )
                     ],
                 ),
                 CreateFile(kind="create", uri=temp_doc1_uri),
-                RenameFile(kind="rename", oldUri=temp_doc1_uri, newUri=temp_doc2_uri),
+                RenameFile(kind="rename", old_uri=temp_doc1_uri, new_uri=temp_doc2_uri),
                 DeleteFile(kind="delete", uri=temp_doc2_uri),
             ]
         )

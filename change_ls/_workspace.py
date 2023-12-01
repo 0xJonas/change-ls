@@ -20,18 +20,8 @@ from typing import (
 )
 from urllib.parse import urlsplit
 
-import change_ls._symbol as symbol
-import change_ls._text_document as td
-from change_ls._change_ls_error import ChangeLSError
-from change_ls._client import (
-    Client,
-    ServerLaunchParams,
-    WorkspaceRequestHandler,
-    get_default_initialize_params,
-)
-from change_ls.logging import get_change_ls_default_logger  # type: ignore
-from change_ls.logging import OperationLoggerAdapter, operation
-from change_ls.types import (
+from lsprotocol.types import (
+    AnnotatedTextEdit,
     ApplyWorkspaceEditParams,
     ApplyWorkspaceEditResult,
     ConfigurationParams,
@@ -48,12 +38,32 @@ from change_ls.types import (
     PublishDiagnosticsParams,
     RenameFile,
     RenameFilesParams,
+    TextDocumentDidOpenNotification,
     TextDocumentEdit,
     TextEdit,
+    WorkspaceDidCreateFilesNotification,
+    WorkspaceDidDeleteFilesNotification,
+    WorkspaceDidRenameFilesNotification,
     WorkspaceEdit,
     WorkspaceFolder,
     WorkspaceSymbolParams,
+    WorkspaceSymbolRequest,
+    WorkspaceWillCreateFilesRequest,
+    WorkspaceWillDeleteFilesRequest,
+    WorkspaceWillRenameFilesRequest,
 )
+
+import change_ls._symbol as symbol
+import change_ls._text_document as td
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import (
+    Client,
+    ServerLaunchParams,
+    WorkspaceRequestHandler,
+    get_default_initialize_params,
+)
+from change_ls.logging import get_change_ls_default_logger  # type: ignore
+from change_ls.logging import OperationLoggerAdapter, operation
 
 ConfigurationProvider = Callable[[Optional[str], Optional[str]], LSPAny]
 
@@ -174,8 +184,8 @@ class Workspace(WorkspaceRequestHandler):
             self._logger.info("Using default InitializeParams.")
             initialize_params = get_default_initialize_params()
         else:
-            self._logger.info("Using InitializeParams %s.", str(initialize_params.to_json()))
-        initialize_params.workspaceFolders = self._get_workspace_folders()
+            self._logger.info("Using InitializeParams %s.", str(initialize_params))
+        initialize_params.workspace_folders = self._get_workspace_folders()
         client = Client(launch_params, initialize_params)
         self._register_client(client)
         self.logger.info(f"Client {client} created!")
@@ -211,8 +221,10 @@ class Workspace(WorkspaceRequestHandler):
             for doc in self._opened_text_documents.values():
                 if not client.check_feature("textDocument/didOpen", text_documents=[doc]):
                     continue
-                client.send_text_document_did_open(
-                    DidOpenTextDocumentParams(textDocument=doc.get_text_document_item())
+                client.send_notification(
+                    TextDocumentDidOpenNotification(
+                        DidOpenTextDocumentParams(text_document=doc.get_text_document_item())
+                    )
                 )
 
         def unregister_client() -> None:
@@ -341,8 +353,10 @@ class Workspace(WorkspaceRequestHandler):
         for client in self._clients:
             if not client.check_feature("textDocument/didOpen", text_documents=[text_document]):
                 continue
-            client.send_text_document_did_open(
-                DidOpenTextDocumentParams(textDocument=text_document.get_text_document_item())
+            client.send_notification(
+                TextDocumentDidOpenNotification(
+                    DidOpenTextDocumentParams(text_document=text_document.get_text_document_item())
+                )
             )
 
         self._opened_text_documents[uri] = text_document
@@ -384,7 +398,10 @@ class Workspace(WorkspaceRequestHandler):
 
     @operation
     async def _perform_text_document_edits(
-        self, uri: str, edits: List[TextEdit], version: Optional[int] = None
+        self,
+        uri: str,
+        edits: Sequence[Union[TextEdit, AnnotatedTextEdit]],
+        version: Optional[int] = None,
     ) -> None:
         with self.open_text_document(uri) as doc:
             self.logger.info(f"Performing {len(edits)} edits on TextDocument {doc.path}...")
@@ -409,24 +426,24 @@ class Workspace(WorkspaceRequestHandler):
         for action in document_changes:
             if isinstance(action, TextDocumentEdit):
                 await self._perform_text_document_edits(
-                    action.textDocument.uri, action.edits, action.textDocument.version
+                    action.text_document.uri, action.edits, action.text_document.version
                 )
             elif isinstance(action, CreateFile):
                 overwrite = bool(action.options and action.options.overwrite)
-                ignore_if_exists = bool(action.options and action.options.ignoreIfExists)
+                ignore_if_exists = bool(action.options and action.options.ignore_if_exists)
                 await self._handle_create_file(action.uri, overwrite, ignore_if_exists)
             elif isinstance(action, RenameFile):
                 overwrite = bool(action.options and action.options.overwrite)
-                ignore_if_exists = bool(action.options and action.options.ignoreIfExists)
+                ignore_if_exists = bool(action.options and action.options.ignore_if_exists)
                 await self._handle_rename(
-                    action.oldUri,
-                    action.newUri,
+                    action.old_uri,
+                    action.new_uri,
                     overwrite=overwrite,
                     ignore_if_exists=ignore_if_exists,
                 )
             else:
                 recursive = bool(action.options and action.options.recursive)
-                ignore_if_not_exists = bool(action.options and action.options.ignoreIfNotExists)
+                ignore_if_not_exists = bool(action.options and action.options.ignore_if_not_exists)
                 await self._handle_delete_file(action.uri, recursive, ignore_if_not_exists)
 
     @operation(
@@ -446,16 +463,16 @@ class Workspace(WorkspaceRequestHandler):
 
         :param edit: The :class:`WorkspaceEdit` to perform.
         """
-        if edit.changes is not None and edit.documentChanges is not None:
+        if edit.changes is not None and edit.document_changes is not None:
             raise ChangeLSError(
                 "Only one of WorkspaceEdit.changes and WorkspaceEdit.documentChanges may be set."
             )
 
         if self._logger.getEffectiveLevel() <= DEBUG:
-            self._logger.debug("WorkspaceEdit: %s", str(edit.to_json()))
+            self._logger.debug("WorkspaceEdit: %s", str(edit))
 
-        if edit.documentChanges:
-            await self._perform_document_changes_and_save(edit.documentChanges)
+        if edit.document_changes:
+            await self._perform_document_changes_and_save(edit.document_changes)
         elif edit.changes:
             self.logger.info("Using WorkspaceEdit.changes.")
             for path, edits in edit.changes.items():
@@ -468,16 +485,19 @@ class Workspace(WorkspaceRequestHandler):
         for client in self.clients:
             if not client.check_feature("workspace/willCreateFiles", file_operations=[uri]):
                 continue
-            edit = await client.send_workspace_will_create_files(params)
+            request = WorkspaceWillCreateFilesRequest(client.generate_request_id(), params)
+            edit = await client.send_request(request)
             if edit:
                 await self.perform_edit_and_save(edit)
 
     def _send_did_create_file_notifications(self, uri: str) -> None:
-        params = CreateFilesParams(files=[FileCreate(uri=uri)])
+        notification = WorkspaceDidCreateFilesNotification(
+            CreateFilesParams(files=[FileCreate(uri=uri)])
+        )
         for client in self.clients:
             if not client.check_feature("workspace/didCreateFiles", file_operations=[uri]):
                 continue
-            client.send_workspace_did_create_files(params)
+            client.send_notification(notification)
 
     @operation(
         name="create_node",
@@ -543,20 +563,23 @@ class Workspace(WorkspaceRequestHandler):
         return self.open_text_document(path, encoding=encoding, language_id=language_id)
 
     async def _send_will_rename_requests(self, source_uri: str, destination_uri: str) -> None:
-        params = RenameFilesParams(files=[FileRename(oldUri=source_uri, newUri=destination_uri)])
+        params = RenameFilesParams(files=[FileRename(old_uri=source_uri, new_uri=destination_uri)])
         for client in self.clients:
             if not client.check_feature("workspace/willRenameFiles", file_operations=[source_uri]):
                 continue
-            edit = await client.send_workspace_will_rename_files(params)
+            request = WorkspaceWillRenameFilesRequest(client.generate_request_id(), params)
+            edit = await client.send_request(request)
             if edit:
                 await self.perform_edit_and_save(edit)
 
     def _send_did_rename_notifications(self, source_uri: str, destination_uri: str) -> None:
-        params = RenameFilesParams(files=[FileRename(oldUri=source_uri, newUri=destination_uri)])
+        notification = WorkspaceDidRenameFilesNotification(
+            RenameFilesParams(files=[FileRename(old_uri=source_uri, new_uri=destination_uri)])
+        )
         for client in self.clients:
             if not client.check_feature("workspace/didRenameFiles", file_operations=[source_uri]):
                 continue
-            client.send_workspace_did_rename_files(params)
+            client.send_notification(notification)
 
     def _delete_directory_recursive(self, path: Path) -> None:
         if not path.exists():
@@ -690,16 +713,19 @@ class Workspace(WorkspaceRequestHandler):
         for client in self.clients:
             if not client.check_feature("workspace/willDeleteFiles", file_operations=[uri]):
                 continue
-            edit = await client.send_workspace_will_delete_files(params)
+            request = WorkspaceWillDeleteFilesRequest(client.generate_request_id(), params)
+            edit = await client.send_request(request)
             if edit:
                 await self.perform_edit_and_save(edit)
 
     def _send_did_delete_file_notifications(self, uri: str) -> None:
-        params = DeleteFilesParams(files=[FileDelete(uri=uri)])
+        notification = WorkspaceDidDeleteFilesNotification(
+            DeleteFilesParams(files=[FileDelete(uri=uri)])
+        )
         for client in self.clients:
             if not client.check_feature("workspace/didCreateFiles", file_operations=[uri]):
                 continue
-            client.send_workspace_did_delete_files(params)
+            client.send_notification(notification)
 
     @operation(
         name="delete_node",
@@ -785,7 +811,10 @@ class Workspace(WorkspaceRequestHandler):
             raise ChangeLSError(
                 f"Language server {client.server_info} does not support querying workspace symbols."
             )
-        raw_result = await client.send_workspace_symbol(WorkspaceSymbolParams(query=query))
+        request = WorkspaceSymbolRequest(
+            client.generate_request_id(), WorkspaceSymbolParams(query=query)
+        )
+        raw_result = await client.send_request(request)
         if raw_result is None:
             self.logger.warning(
                 f"Language server {client.server_info} returned null for workspace/symbol with query '{query}'."
@@ -866,7 +895,7 @@ class Workspace(WorkspaceRequestHandler):
 
     def on_configuration(self, params: ConfigurationParams) -> List[LSPAny]:
         if self._configuration_provider:
-            return [self._configuration_provider(i.scopeUri, i.section) for i in params.items]
+            return [self._configuration_provider(i.scope_uri, i.section) for i in params.items]
         else:
             return []
 
@@ -892,7 +921,7 @@ class Workspace(WorkspaceRequestHandler):
 
     def on_apply_edit(self, params: ApplyWorkspaceEditParams) -> ApplyWorkspaceEditResult:
         # TODO
-        return ApplyWorkspaceEditResult(applied=False, failureReason="Not Implemented")
+        return ApplyWorkspaceEditResult(applied=False, failure_reason="Not Implemented")
 
     def on_publish_diagnostics(self, params: PublishDiagnosticsParams) -> None:
         # TODO

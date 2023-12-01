@@ -5,7 +5,7 @@ from typing import Any, Generator, Optional, Type
 
 import pytest
 
-from change_ls import StdIOConnectionParams, Workspace
+from change_ls import CustomRequest, StdIOConnectionParams, Workspace
 
 
 @pytest.fixture
@@ -95,7 +95,11 @@ async def test_file_create(
         client = await ws.launch_client(params)
         workspace_uri = scratch_workspace_path.resolve().as_uri()
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
 
         open_doc = None
@@ -221,7 +225,11 @@ async def test_file_rename(
         client = await ws.launch_client(params)
         workspace_uri = scratch_workspace_path.resolve().as_uri()
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
 
         source_doc = None
@@ -366,7 +374,11 @@ async def test_rename_directory(
         client = await ws.launch_client(params)
         workspace_uri = scratch_workspace_path.resolve().as_uri()
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
 
         source_doc = None
@@ -459,7 +471,11 @@ async def test_delete_file(
         client = await ws.launch_client(params)
         workspace_uri = scratch_workspace_path.resolve().as_uri()
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
 
         doc = None
@@ -540,7 +556,11 @@ async def test_delete_directory(
         client = await ws.launch_client(params)
         workspace_uri = scratch_workspace_path.resolve().as_uri()
         await client.send_request(
-            "$/setTemplateParams", {"expand": {"WORKSPACE_URI": workspace_uri}}
+            CustomRequest(
+                client.generate_request_id(),
+                "$/setTemplateParams",
+                {"expand": {"WORKSPACE_URI": workspace_uri}},
+            )
         )
 
         doc = None

@@ -5,18 +5,21 @@ from dataclasses import dataclass, field
 from logging import LoggerAdapter
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Type,
+    Union,
+    overload,
+)
 
-import change_ls._symbol as sym
-import change_ls._workspace as ws
-from change_ls._change_ls_error import ChangeLSError
-from change_ls._client import Client
-from change_ls._util import TextDocumentInfo, guess_language_id
-from change_ls.logging import get_change_ls_default_logger  # type: ignore
-from change_ls.logging import operation
-from change_ls.tokens import SyntacticToken, TokenList, tokenize
-from change_ls.tokens._semantic_tokens_mixin import SemanticTokensMixin, enrich_syntactic_tokens
-from change_ls.types import (
+from lsprotocol.types import (
+    AnnotatedTextEdit,
     DidChangeTextDocumentParams,
     DidCloseTextDocumentParams,
     DidSaveTextDocumentParams,
@@ -28,14 +31,32 @@ from change_ls.types import (
     SymbolKind,
     SymbolTag,
     TextDocumentContentChangeEvent,
+    TextDocumentContentChangeEvent_Type1,
+    TextDocumentContentChangeEvent_Type2,
+    TextDocumentDidChangeNotification,
+    TextDocumentDidCloseNotification,
+    TextDocumentDidSaveNotification,
+    TextDocumentDocumentSymbolRequest,
     TextDocumentIdentifier,
     TextDocumentItem,
     TextDocumentSaveReason,
     TextDocumentSyncKind,
+    TextDocumentWillSaveNotification,
+    TextDocumentWillSaveWaitUntilRequest,
     TextEdit,
     VersionedTextDocumentIdentifier,
     WillSaveTextDocumentParams,
 )
+
+import change_ls._symbol as sym
+import change_ls._workspace as ws
+from change_ls._change_ls_error import ChangeLSError
+from change_ls._client import Client
+from change_ls._util import TextDocumentInfo, guess_language_id
+from change_ls.logging import get_change_ls_default_logger  # type: ignore
+from change_ls.logging import operation
+from change_ls.tokens import SyntacticToken, TokenList, tokenize
+from change_ls.tokens._semantic_tokens_mixin import SemanticTokensMixin, enrich_syntactic_tokens
 
 
 @dataclass(order=True)
@@ -66,7 +87,9 @@ class _Edit:
         to_line = bisect_right(line_offsets, self.to_offset) - 1
         to_character = self.to_offset - line_offsets[to_line]
         to_position = Position(line=to_line, character=to_character)
-        return {"text": self.new_text, "range": Range(start=from_position, end=to_position)}
+        return TextDocumentContentChangeEvent_Type1(
+            text=self.new_text, range=Range(start=from_position, end=to_position)
+        )
 
     def __str__(self) -> str:
         if self.from_offset == self.to_offset:
@@ -122,9 +145,9 @@ def _utf_16_character_length(char: int) -> int:
 
 
 _code_units_to_character_length: Dict[PositionEncodingKind, Callable[[int], int]] = {
-    PositionEncodingKind.UTF8: _utf_8_character_length,
-    PositionEncodingKind.UTF16: _utf_16_character_length,
-    PositionEncodingKind.UTF32: lambda _: 1,
+    PositionEncodingKind.Utf8: _utf_8_character_length,
+    PositionEncodingKind.Utf16: _utf_16_character_length,
+    PositionEncodingKind.Utf32: lambda _: 1,
 }
 
 
@@ -300,7 +323,8 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         self.logger.info(f"Closing TextDocument {self.path}...")
         if len(self._pending_edits) > 0:
             warnings.warn(
-                f"Dropping {len(self._pending_edits)} uncommitted edits for Textdocument '{self.uri}'. Call text_document.commit_edits() followed by text_document.save() to save the changes.",
+                f"Dropping {len(self._pending_edits)} uncommitted edits for Textdocument '{self.uri}'."
+                "Call text_document.commit_edits() followed by text_document.save() to save the changes.",
                 DroppedChangesWarning,
             )
         if not self._content_saved:
@@ -312,8 +336,10 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         for client in self._workspace.clients:
             if not client.check_feature("textDocument/didClose", text_documents=[self]):
                 continue
-            params = DidCloseTextDocumentParams(textDocument=self.get_text_document_identifier())
-            client.send_text_document_did_close(params)
+            notification = TextDocumentDidCloseNotification(
+                DidCloseTextDocumentParams(text_document=self.get_text_document_identifier())
+            )
+            client.send_notification(notification)
 
         # Set the reference_count to 0 explicitly, so documents from a closed
         # Workspace return True on is_closed().
@@ -475,8 +501,11 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         if not client.check_feature("textDocument/documentSymbol", text_document=self):
             raise ChangeLSError(f"Client '{client}' does not support document outlines.")
 
-        res = await client.send_text_document_document_symbol(
-            DocumentSymbolParams(textDocument=self.get_text_document_identifier())
+        res = await client.send_request(
+            TextDocumentDocumentSymbolRequest(
+                client.generate_request_id(),
+                DocumentSymbolParams(text_document=self.get_text_document_identifier()),
+            )
         )
         if res is None:
             raise ChangeLSError(f"Client '{client}' returned an empty outline.")
@@ -492,7 +521,7 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         Returns a :class:`TextDocumentItem` for this ``TextDocument``.
         """
         return TextDocumentItem(
-            uri=self.uri, languageId=self.language_id, version=self._version, text=self._text
+            uri=self.uri, language_id=self.language_id, version=self._version, text=self._text
         )
 
     def get_text_document_identifier(self) -> TextDocumentIdentifier:
@@ -669,26 +698,30 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             assert length is not None
             self.edit("", from_offset, length=length)
 
-    def push_text_edit(self, text_edit: TextEdit) -> None:
+    def push_text_edit(self, text_edit: Union[TextEdit, AnnotatedTextEdit]) -> None:
         """
         Queue an edit which performs the given :class:`TextEdit`.
         """
         from_offset = self.position_to_offset(text_edit.range.start)
         to_offset = self.position_to_offset(text_edit.range.end)
-        self.edit(text_edit.newText, from_offset, to_offset)
+        self.edit(text_edit.new_text, from_offset, to_offset)
 
     def _edit_to_text_document_change_event(
         self, edit: _Edit, client: Client
     ) -> TextDocumentContentChangeEvent:
         from_position = self.offset_to_position(edit.from_offset, client)
         to_position = self.offset_to_position(edit.to_offset, client)
-        return {"text": edit.new_text, "range": Range(start=from_position, end=to_position)}
+        return TextDocumentContentChangeEvent_Type1(
+            text=edit.new_text, range=Range(start=from_position, end=to_position)
+        )
 
     def _handle_text_change(self, client: Client) -> None:
         self.logger.info(f"Updating document content for Client '{client}'")
 
         if client.check_feature("textDocument/didChange", sync_kind=TextDocumentSyncKind.Full):
-            content_changes: List[TextDocumentContentChangeEvent] = [{"text": self._text}]
+            content_changes: List[TextDocumentContentChangeEvent] = [
+                TextDocumentContentChangeEvent_Type2(text=self._text)
+            ]
         elif client.check_feature(
             "textDocument/didChange", sync_kind=TextDocumentSyncKind.Incremental
         ):
@@ -703,11 +736,13 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             # Document Sync is disabled for this client
             return
 
-        params = DidChangeTextDocumentParams(
-            textDocument=self.get_versioned_text_document_identifier(),
-            contentChanges=content_changes,
+        notification = TextDocumentDidChangeNotification(
+            DidChangeTextDocumentParams(
+                text_document=self.get_versioned_text_document_identifier(),
+                content_changes=content_changes,
+            )
         )
-        client.send_text_document_did_change(params)
+        client.send_notification(notification)
 
     def commit_edits(self) -> None:
         """
@@ -773,18 +808,22 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
         clients = self._workspace.clients
 
         will_save_params = WillSaveTextDocumentParams(
-            textDocument=self.get_text_document_identifier(), reason=TextDocumentSaveReason.Manual
+            text_document=self.get_text_document_identifier(),
+            reason=TextDocumentSaveReason.Manual,
         )
+        will_save_notification = TextDocumentWillSaveNotification(will_save_params)
 
         self.logger.info("Sending textDocument/willSave notifications.")
         for client in clients:
             if not client.check_feature("textDocument/willSave", text_document=self):
                 continue
-            client.send_text_document_will_save(will_save_params)
+            client.send_notification(will_save_notification)
 
         self.logger.info("Sending textDocument/willSaveWaitUntil requests.")
         requests = [
-            client.send_text_document_will_save_wait_until(will_save_params)
+            client.send_request(
+                TextDocumentWillSaveWaitUntilRequest(client.generate_request_id(), will_save_params)
+            )
             for client in clients
             if client.check_feature("textDocument/willSaveWaitUntil", text_document=self)
         ]
@@ -803,19 +842,21 @@ class TextDocument(TextDocumentInfo, SemanticTokensMixin):
             file.write(self._text)
 
         self.logger.info("Sending textDocument/didSave notifications.")
-        did_save_params = DidSaveTextDocumentParams(
-            textDocument=self.get_text_document_identifier()
+        did_save_notification = TextDocumentDidSaveNotification(
+            DidSaveTextDocumentParams(text_document=self.get_text_document_identifier())
         )
-        did_save_params_include_text = DidSaveTextDocumentParams(
-            textDocument=self.get_text_document_identifier(), text=self._text
+        did_save_notification_include_text = TextDocumentDidSaveNotification(
+            DidSaveTextDocumentParams(
+                text_document=self.get_text_document_identifier(), text=self._text
+            )
         )
         for client in clients:
             if client.check_feature("textDocument/didSave", include_text=True, text_document=self):
-                client.send_text_document_did_save(did_save_params_include_text)
+                client.send_notification(did_save_notification_include_text)
             elif client.check_feature(
                 "textDocument/didSave", include_text=False, text_document=self
             ):
-                client.send_text_document_did_save(did_save_params)
+                client.send_notification(did_save_notification)
 
         self._content_saved = True
         self.logger.info("TextDocument saved!")
